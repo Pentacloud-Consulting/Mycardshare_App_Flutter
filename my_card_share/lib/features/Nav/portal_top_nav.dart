@@ -7,6 +7,7 @@ class PortalTopNav extends StatelessWidget implements PreferredSizeWidget {
   final String? title;
   final String? subtitle;
   final Widget? customAction;
+  final bool showBackButton;
 
   const PortalTopNav({
     super.key,
@@ -14,6 +15,7 @@ class PortalTopNav extends StatelessWidget implements PreferredSizeWidget {
     this.title,
     this.subtitle,
     this.customAction,
+    this.showBackButton = false,
   });
 
   @override
@@ -22,7 +24,7 @@ class PortalTopNav extends StatelessWidget implements PreferredSizeWidget {
   static const Map<String, Map<String, String>> _routeTitles = {
     '/portal': {'title': 'Home'},
     '/portal/vault': {'title': 'Contact Vault'},
-    '/portal/profile': {'title': 'Edit Profile', 'subtitle': 'LIVE PREVIEW'},
+    '/portal/profile': {'title': 'My Profile'},
     '/portal/scanner': {'title': 'Card & Voice Scanner'},
     '/portal/leads': {'title': 'Leads'},
     '/portal/analytics': {'title': 'Analytics & Insights'},
@@ -31,6 +33,10 @@ class PortalTopNav extends StatelessWidget implements PreferredSizeWidget {
     '/portal/settings': {'title': 'Settings'},
     '/portal/subscription': {'title': 'MyCardShare Pro', 'subtitle': 'SUBSCRIPTION PLAN'},
     '/portal/notifications': {'title': 'Notifications'},
+    '/portal/support/help': {'title': 'Help & Support'},
+    '/portal/support/terms': {'title': 'Terms of Service'},
+    '/portal/support/privacy': {'title': 'Privacy Policy'},
+    '/portal/support/about': {'title': 'About MyCardShare'},
     '/portal/approvals': {'title': 'Approvals'},
     '/portal/companies': {'title': 'Companies'},
     '/portal/workforce': {'title': 'Workforce'},
@@ -136,7 +142,13 @@ class PortalTopNav extends StatelessWidget implements PreferredSizeWidget {
                 Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onTap: () => _openMenuModal(context),
+                    onTap: () {
+                      if (showBackButton) {
+                        Navigator.pop(context);
+                      } else {
+                        _openMenuModal(context);
+                      }
+                    },
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
                       width: 40,
@@ -145,9 +157,9 @@ class PortalTopNav extends StatelessWidget implements PreferredSizeWidget {
                         color: Color(0xFFE2E8F0),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.menu_rounded,
-                        color: Color(0xFF334155),
+                      child: Icon(
+                        showBackButton ? Icons.arrow_back_rounded : Icons.menu_rounded,
+                        color: const Color(0xFF334155),
                         size: 22,
                       ),
                     ),

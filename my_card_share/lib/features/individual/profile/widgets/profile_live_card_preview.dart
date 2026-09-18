@@ -7,6 +7,7 @@ class ProfileLiveCardPreview extends StatelessWidget {
   final String status;
   final int selectedTemplateIndex;
   final VoidCallback? onAvatarEditTap;
+  final bool isPublished; // Added this
 
   const ProfileLiveCardPreview({
     super.key,
@@ -16,6 +17,7 @@ class ProfileLiveCardPreview extends StatelessWidget {
     required this.status,
     this.selectedTemplateIndex = 0,
     this.onAvatarEditTap,
+    this.isPublished = true, // Default to true
   });
 
   List<Color> _getGradientForTemplate(int index) {
@@ -203,7 +205,7 @@ class ProfileLiveCardPreview extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFDCFCE7),
+                    color: isPublished ? const Color(0xFFDCFCE7) : const Color(0xFFFEF9C3), // Green-100 or Yellow-100
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -212,18 +214,18 @@ class ProfileLiveCardPreview extends StatelessWidget {
                       Container(
                         width: 6,
                         height: 6,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF22C55E),
+                        decoration: BoxDecoration(
+                          color: isPublished ? const Color(0xFF22C55E) : const Color(0xFFEAB308), // Green-500 or Yellow-500
                           shape: BoxShape.circle,
                         ),
                       ),
                       const SizedBox(width: 5),
                       Text(
-                        status.toUpperCase(),
-                        style: const TextStyle(
+                        isPublished ? status.toUpperCase() : "INACTIVE",
+                        style: TextStyle(
                           fontSize: 9.5,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF15803D),
+                          color: isPublished ? const Color(0xFF15803D) : const Color(0xFFA16207), // Green-700 or Yellow-700
                           letterSpacing: 0.5,
                         ),
                       ),

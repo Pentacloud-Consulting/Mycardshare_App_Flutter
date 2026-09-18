@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/app_style_widgets.dart';
 import '../../../providers/auth_provider.dart';
 
 class OnboardingWizardScreen extends ConsumerStatefulWidget {
@@ -114,7 +116,7 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFD),
+      backgroundColor: AppColors.background,
       body: Stack(
         children: [
           // Top Right Ambient Blue Gradient Circle
@@ -128,7 +130,7 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFF38B6FF).withValues(alpha: 0.22),
+                    AppColors.primaryLight.withValues(alpha: 0.22),
                     Colors.transparent,
                   ],
                 ),
@@ -147,7 +149,7 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFF0066FF).withValues(alpha: 0.16),
+                    AppColors.primary.withValues(alpha: 0.16),
                     Colors.transparent,
                   ],
                 ),
@@ -160,7 +162,7 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
               children: [
                 // Fixed Top Header: Progress Indicator Bar
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(24.0, 16.0, 24.0, 12.0),
+                  padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 12.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -176,20 +178,21 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
                       const SizedBox(height: 12),
                       Text(
                         "Step $_currentStep of 3",
-                        style: const TextStyle(
+                        style: AppTextStyles.textTheme.bodySmall?.copyWith(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF64748B),
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ],
                   ),
                 ),
 
-                // Middle Scrollable Body Content
+                // Middle Scrollable Body Content (Mobile Responsive)
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 4.0),
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 4.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -202,43 +205,51 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
                   ),
                 ),
 
-                // Sticky Bottom Bar Container: Continue & Skip
-                Container(
-                  padding: const EdgeInsets.fromLTRB(24.0, 20.0, 24.0, 16.0),
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      stops: [0.0, 0.3, 1.0],
-                      colors: [
-                        Color(0x00F8FAFD),
-                        Color(0xF0F8FAFD),
-                        Color(0xFFF8FAFD),
-                      ],
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildGradientButton(
-                        text: _currentStep == 3 ? "Complete Setup" : "Continue",
-                        onPressed: _nextStep,
+                // Sticky Bottom Bar Container: Continue & Skip (SafeArea padded for all phone sizes)
+                SafeArea(
+                  top: false,
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(20.0, 14.0, 20.0, 12.0),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        stops: const [0.0, 0.3, 1.0],
+                        colors: [
+                          AppColors.background.withValues(alpha: 0.0),
+                          AppColors.background.withValues(alpha: 0.85),
+                          AppColors.background,
+                        ],
                       ),
-                      const SizedBox(height: 10),
-                      Center(
-                        child: TextButton(
-                          onPressed: _nextStep,
-                          child: const Text(
-                            "Skip for now",
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF94A3B8),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ClayButton(
+                          label: _currentStep == 3 ? "Complete Setup" : "Continue",
+                          icon: Icons.arrow_forward_rounded,
+                          onTap: _nextStep,
+                        ),
+                        const SizedBox(height: 8),
+                        Center(
+                          child: TextButton(
+                            onPressed: _nextStep,
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: Text(
+                              "Skip for now",
+                              style: AppTextStyles.textTheme.bodyMedium?.copyWith(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textMuted,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -262,7 +273,7 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
           duration: const Duration(milliseconds: 300),
           height: 5,
           decoration: BoxDecoration(
-            color: isActive ? const Color(0xFF0066FF) : const Color(0xFFCBD5E1),
+            color: isActive ? AppColors.primary : const Color(0xFFCBD5E1),
             borderRadius: BorderRadius.circular(3),
           ),
         ),
@@ -275,21 +286,21 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           "Set Up Your Profile",
-          style: TextStyle(
-            fontSize: 32,
+          style: AppTextStyles.textTheme.headlineLarge?.copyWith(
+            fontSize: 28,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF0F172A),
+            color: AppColors.textPrimary,
             letterSpacing: -0.5,
           ),
         ),
         const SizedBox(height: 6),
-        const Text(
+        Text(
           "This is how people will see you",
-          style: TextStyle(
+          style: AppTextStyles.textTheme.bodyMedium?.copyWith(
             fontSize: 15,
-            color: Color(0xFF64748B),
+            color: AppColors.textSecondary,
             fontWeight: FontWeight.w400,
           ),
         ),
@@ -320,7 +331,7 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
                       child: const Icon(
                         Icons.person_rounded,
                         size: 52,
-                        color: Color(0xFF94A3B8),
+                        color: AppColors.textMuted,
                       ),
                     ),
                     Positioned(
@@ -330,14 +341,14 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0066FF),
+                          color: AppColors.primary,
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 2.5),
-                          boxShadow: const [
+                          boxShadow: [
                             BoxShadow(
-                              color: Color(0x1F000000),
+                              color: AppColors.primary.withValues(alpha: 0.3),
                               blurRadius: 6,
-                              offset: Offset(0, 3),
+                              offset: const Offset(0, 3),
                             ),
                           ],
                         ),
@@ -352,12 +363,12 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 "Upload Photo",
-                style: TextStyle(
+                style: AppTextStyles.textTheme.bodyMedium?.copyWith(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0066FF),
+                  color: AppColors.primary,
                 ),
               ),
             ],
@@ -369,38 +380,38 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
         // Job Title Field
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
-            boxShadow: const [
+            boxShadow: [
               BoxShadow(
-                color: Color(0x0A000000),
+                color: AppColors.primary.withValues(alpha: 0.05),
                 blurRadius: 10,
-                offset: Offset(0, 4),
+                offset: const Offset(0, 4),
               ),
             ],
           ),
           child: TextField(
             controller: _jobTitleController,
-            style: const TextStyle(
+            style: AppTextStyles.textTheme.bodyMedium?.copyWith(
               fontSize: 15,
-              color: Color(0xFF0F172A),
+              color: AppColors.textPrimary,
               fontWeight: FontWeight.w500,
             ),
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: "Job Title",
-              hintStyle: TextStyle(
-                color: Color(0xFF94A3B8),
+              hintStyle: AppTextStyles.textTheme.bodyMedium?.copyWith(
+                color: AppColors.textMuted,
                 fontSize: 15,
                 fontWeight: FontWeight.w400,
               ),
-              prefixIcon: Icon(
+              prefixIcon: const Icon(
                 Icons.work_outline_rounded,
-                color: Color(0xFF94A3B8),
+                color: AppColors.textMuted,
                 size: 22,
               ),
               border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             ),
           ),
         ),
@@ -410,39 +421,39 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
         // Phone Number Field
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
-            boxShadow: const [
+            boxShadow: [
               BoxShadow(
-                color: Color(0x0A000000),
+                color: AppColors.primary.withValues(alpha: 0.05),
                 blurRadius: 10,
-                offset: Offset(0, 4),
+                offset: const Offset(0, 4),
               ),
             ],
           ),
           child: TextField(
             controller: _phoneController,
             keyboardType: TextInputType.phone,
-            style: const TextStyle(
+            style: AppTextStyles.textTheme.bodyMedium?.copyWith(
               fontSize: 15,
-              color: Color(0xFF0F172A),
+              color: AppColors.textPrimary,
               fontWeight: FontWeight.w500,
             ),
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: "Phone Number",
-              hintStyle: TextStyle(
-                color: Color(0xFF94A3B8),
+              hintStyle: AppTextStyles.textTheme.bodyMedium?.copyWith(
+                color: AppColors.textMuted,
                 fontSize: 15,
                 fontWeight: FontWeight.w400,
               ),
-              prefixIcon: Icon(
+              prefixIcon: const Icon(
                 Icons.phone_outlined,
-                color: Color(0xFF94A3B8),
+                color: AppColors.textMuted,
                 size: 22,
               ),
               border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             ),
           ),
         ),
@@ -450,12 +461,12 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
         const SizedBox(height: 24),
 
         // Choose a Template Header
-        const Text(
+        Text(
           "Choose a Template",
-          style: TextStyle(
+          style: AppTextStyles.textTheme.titleLarge?.copyWith(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF0F172A),
+            color: AppColors.textPrimary,
           ),
         ),
 
@@ -463,6 +474,7 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
 
         // Template Cards Horizontal Scroll Row
         SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
@@ -471,7 +483,7 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
                 name: "Alex Carter",
                 role: "Product Designer",
                 gradient: const [Color(0xFFE0F2FE), Color(0xFFBAE6FD)],
-                badgeColor: const Color(0xFF0066FF),
+                badgeColor: AppColors.primary,
               ),
               const SizedBox(width: 12),
               _buildTemplateCard(
@@ -514,18 +526,18 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
           children: [
             IconButton(
               onPressed: _prevStep,
-              icon: const Icon(Icons.arrow_back_ios_rounded, size: 20, color: Color(0xFF64748B)),
+              icon: const Icon(Icons.arrow_back_ios_rounded, size: 20, color: AppColors.textSecondary),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
             ),
             const SizedBox(width: 8),
-            const Expanded(
+            Expanded(
               child: Text(
                 "Add Your Links",
-                style: TextStyle(
-                  fontSize: 30,
+                style: AppTextStyles.textTheme.headlineLarge?.copyWith(
+                  fontSize: 28,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
+                  color: AppColors.textPrimary,
                   letterSpacing: -0.5,
                 ),
               ),
@@ -533,11 +545,11 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
           ],
         ),
         const SizedBox(height: 6),
-        const Text(
+        Text(
           "People can tap to connect with you instantly",
-          style: TextStyle(
+          style: AppTextStyles.textTheme.bodyMedium?.copyWith(
             fontSize: 15,
-            color: Color(0xFF64748B),
+            color: AppColors.textSecondary,
             fontWeight: FontWeight.w400,
           ),
         ),
@@ -652,7 +664,7 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
           _buildSocialLinkRow(
             label: "Custom",
             iconWidget: _buildBrandIcon(
-              backgroundColor: const Color(0xFF0066FF),
+              backgroundColor: AppColors.primary,
               child: const Icon(Icons.link_rounded, color: Colors.white, size: 22),
             ),
             hintText: "https://link.com",
@@ -665,7 +677,7 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
         // + Add Custom Link Dashed Button
         CustomPaint(
           painter: DashedRectPainter(
-            color: const Color(0xFF0066FF),
+            color: AppColors.primary,
             strokeWidth: 1.5,
             gap: 5,
             radius: 16,
@@ -674,7 +686,7 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
             width: double.infinity,
             height: 52,
             decoration: BoxDecoration(
-              color: const Color(0xFFF0F7FF),
+              color: AppColors.primary.withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(16),
             ),
             child: InkWell(
@@ -682,15 +694,15 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
               onTap: _addCustomLink,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Icon(Icons.add_rounded, color: Color(0xFF0066FF), size: 22),
-                  SizedBox(width: 8),
+                children: [
+                  const Icon(Icons.add_rounded, color: AppColors.primary, size: 22),
+                  const SizedBox(width: 8),
                   Text(
                     "Add Custom Link",
-                    style: TextStyle(
+                    style: AppTextStyles.textTheme.bodyMedium?.copyWith(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0066FF),
+                      color: AppColors.primary,
                     ),
                   ),
                 ],
@@ -715,64 +727,69 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
     );
   }
 
-  // Helper method to build social link row container
+  // Helper method to build social link row container (Fully Responsive for narrow screens)
   Widget _buildSocialLinkRow({
     required String label,
     required Widget iconWidget,
     required String hintText,
     required TextEditingController controller,
   }) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final labelWidth = screenWidth < 360 ? 68.0 : 84.0;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x06000000),
+            color: AppColors.primary.withValues(alpha: 0.04),
             blurRadius: 10,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Row(
         children: [
           iconWidget,
-          const SizedBox(width: 14),
+          const SizedBox(width: 10),
           SizedBox(
-            width: 84,
+            width: labelWidth,
             child: Text(
               label,
-              style: const TextStyle(
-                fontSize: 15,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.textTheme.bodyMedium?.copyWith(
+                fontSize: screenWidth < 360 ? 13.5 : 15,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF0F172A),
+                color: AppColors.textPrimary,
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Expanded(
             child: Container(
               height: 44,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFD),
+                color: AppColors.background,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
               ),
               child: Center(
                 child: TextField(
                   controller: controller,
-                  style: const TextStyle(
+                  style: AppTextStyles.textTheme.bodyMedium?.copyWith(
                     fontSize: 13.5,
-                    color: Color(0xFF0F172A),
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w500,
                   ),
                   decoration: InputDecoration(
                     hintText: hintText,
-                    hintStyle: const TextStyle(
-                      color: Color(0xFF94A3B8),
+                    hintStyle: AppTextStyles.textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textMuted,
                       fontSize: 13.5,
                       fontWeight: FontWeight.w400,
                     ),
@@ -797,7 +814,7 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
     final jobTitleText = _jobTitleController.text.trim();
     final displayRole = jobTitleText.isNotEmpty ? jobTitleText : "Product Designer";
 
-    final userName = ref.watch(authProvider).user?.name ?? "Alex Carter";
+    final userName = ref.watch(authProvider).user?.name ?? "Alex Stanton";
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -806,18 +823,18 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
           children: [
             IconButton(
               onPressed: _prevStep,
-              icon: const Icon(Icons.arrow_back_ios_rounded, size: 20, color: Color(0xFF64748B)),
+              icon: const Icon(Icons.arrow_back_ios_rounded, size: 20, color: AppColors.textSecondary),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
             ),
             const SizedBox(width: 8),
-            const Expanded(
+            Expanded(
               child: Text(
                 "Almost There!",
-                style: TextStyle(
-                  fontSize: 32,
+                style: AppTextStyles.textTheme.headlineLarge?.copyWith(
+                  fontSize: 28,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
+                  color: AppColors.textPrimary,
                   letterSpacing: -0.5,
                 ),
               ),
@@ -825,11 +842,11 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
           ],
         ),
         const SizedBox(height: 6),
-        const Text(
+        Text(
           "A few final details for your card",
-          style: TextStyle(
+          style: AppTextStyles.textTheme.bodyMedium?.copyWith(
             fontSize: 15,
-            color: Color(0xFF64748B),
+            color: AppColors.textSecondary,
             fontWeight: FontWeight.w400,
           ),
         ),
@@ -840,14 +857,14 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
-            boxShadow: const [
+            boxShadow: [
               BoxShadow(
-                color: Color(0x06000000),
+                color: AppColors.primary.withValues(alpha: 0.04),
                 blurRadius: 10,
-                offset: Offset(0, 4),
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -856,7 +873,7 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
             children: [
               const Icon(
                 Icons.apartment_rounded,
-                color: Color(0xFF64748B),
+                color: AppColors.textSecondary,
                 size: 26,
               ),
               const SizedBox(width: 16),
@@ -864,26 +881,26 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       "Company Name",
-                      style: TextStyle(
+                      style: AppTextStyles.textTheme.bodyMedium?.copyWith(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF475569),
+                        color: AppColors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 2),
                     TextField(
                       controller: _companyNameController,
-                      style: const TextStyle(
+                      style: AppTextStyles.textTheme.bodyMedium?.copyWith(
                         fontSize: 15,
-                        color: Color(0xFF0F172A),
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.w500,
                       ),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: "e.g. Acme Inc.",
-                        hintStyle: TextStyle(
-                          color: Color(0xFF94A3B8),
+                        hintStyle: AppTextStyles.textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textMuted,
                           fontSize: 15,
                           fontWeight: FontWeight.w400,
                         ),
@@ -905,14 +922,14 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
-            boxShadow: const [
+            boxShadow: [
               BoxShadow(
-                color: Color(0x06000000),
+                color: AppColors.primary.withValues(alpha: 0.04),
                 blurRadius: 10,
-                offset: Offset(0, 4),
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -924,7 +941,7 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
                 children: [
                   const Icon(
                     Icons.edit_outlined,
-                    color: Color(0xFF64748B),
+                    color: AppColors.textSecondary,
                     size: 24,
                   ),
                   const SizedBox(width: 16),
@@ -932,12 +949,12 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           "Short Bio",
-                          style: TextStyle(
+                          style: AppTextStyles.textTheme.bodyMedium?.copyWith(
                             fontSize: 13.5,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF475569),
+                            color: AppColors.textSecondary,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -946,15 +963,15 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
                           maxLength: 200,
                           maxLines: 3,
                           buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
-                          style: const TextStyle(
+                          style: AppTextStyles.textTheme.bodyMedium?.copyWith(
                             fontSize: 14,
-                            color: Color(0xFF0F172A),
+                            color: AppColors.textPrimary,
                             fontWeight: FontWeight.w400,
                           ),
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             hintText: "Tell people a bit about yourself...\ne.g. I design digital products and love building...",
-                            hintStyle: TextStyle(
-                              color: Color(0xFF94A3B8),
+                            hintStyle: AppTextStyles.textTheme.bodyMedium?.copyWith(
+                              color: AppColors.textMuted,
                               fontSize: 14,
                               fontWeight: FontWeight.w400,
                               height: 1.3,
@@ -973,9 +990,9 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
                 alignment: Alignment.centerRight,
                 child: Text(
                   "${_shortBioController.text.length}/200",
-                  style: const TextStyle(
+                  style: AppTextStyles.textTheme.bodySmall?.copyWith(
                     fontSize: 12,
-                    color: Color(0xFF94A3B8),
+                    color: AppColors.textMuted,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -990,14 +1007,14 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
-            boxShadow: const [
+            boxShadow: [
               BoxShadow(
-                color: Color(0x06000000),
+                color: AppColors.primary.withValues(alpha: 0.04),
                 blurRadius: 10,
-                offset: Offset(0, 4),
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -1005,17 +1022,17 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
             children: [
               const Icon(
                 Icons.bar_chart_rounded,
-                color: Color(0xFF64748B),
+                color: AppColors.textSecondary,
                 size: 24,
               ),
               const SizedBox(width: 14),
-              const Expanded(
+              Expanded(
                 child: Text(
                   "Networking Status",
-                  style: TextStyle(
+                  style: AppTextStyles.textTheme.bodyMedium?.copyWith(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF334155),
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ),
@@ -1031,40 +1048,9 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
                     child: Text(opt),
                   );
                 }).toList(),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDCFCE7),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF16A34A),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        _networkingStatus,
-                        style: const TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF16A34A),
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: Color(0xFF16A34A),
-                        size: 18,
-                      ),
-                    ],
-                  ),
+                child: GlassPill(
+                  label: _networkingStatus,
+                  dotColor: AppColors.success,
                 ),
               ),
             ],
@@ -1074,171 +1060,105 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
         const SizedBox(height: 24),
 
         // Live Preview Header
-        const Center(
+        Center(
           child: Text(
             "LIVE PREVIEW",
-            style: TextStyle(
+            style: AppTextStyles.textTheme.bodySmall?.copyWith(
               fontSize: 12,
               fontWeight: FontWeight.w800,
               letterSpacing: 1.5,
-              color: Color(0xFF94A3B8),
+              color: AppColors.textMuted,
             ),
           ),
         ),
 
         const SizedBox(height: 12),
 
-        // Live Card Preview Container
-        Container(
-          width: double.infinity,
+        // Live Card Preview Container (ClayCard / Morphic)
+        ClayCard(
           padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x120066FF),
-                blurRadius: 20,
-                offset: Offset(0, 8),
-              ),
-            ],
-          ),
+          radius: 24,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                      Container(
-                        width: 72,
-                        height: 72,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: const Color(0xFF0066FF).withValues(alpha: 0.2), width: 2),
-                        ),
-                        child: ClipOval(
-                          child: Image.network(
-                            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300",
-                            fit: BoxFit.cover,
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.2), width: 2),
+                    ),
+                    child: ClipOval(
+                      child: Image.network(
+                        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300",
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          userName,
+                          style: AppTextStyles.textTheme.titleLarge?.copyWith(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        const SizedBox(height: 2),
+                        Text(
+                          displayRole,
+                          style: AppTextStyles.textTheme.bodyMedium?.copyWith(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
                           children: [
-                            Text(
-                              userName,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF0F172A),
-                              ),
+                            const Icon(
+                              Icons.apartment_rounded,
+                              size: 14,
+                              color: AppColors.textSecondary,
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(width: 4),
                             Text(
-                              displayRole,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: Color(0xFF64748B),
-                                fontWeight: FontWeight.w400,
+                              displayCompany,
+                              style: AppTextStyles.textTheme.bodySmall?.copyWith(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w500,
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.apartment_rounded,
-                                  size: 14,
-                                  color: Color(0xFF64748B),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  displayCompany,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF64748B),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
                             ),
                           ],
                         ),
-                      ),
-                    ],
-                  ),
-                  if (_shortBioController.text.trim().isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      _shortBioController.text.trim(),
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF475569),
-                        height: 1.35,
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ],
               ),
-        ),
-      ],
-    );
-  }
-
-  // Generic Reusable Gradient Button
-  Widget _buildGradientButton({required String text, required VoidCallback onPressed}) {
-    return SizedBox(
-      width: double.infinity,
-      height: 56,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF0052FF), Color(0xFF00A2FF)],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF0066FF).withValues(alpha: 0.35),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: ElevatedButton(
-          onPressed: onPressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.transparent,
-            shadowColor: Colors.transparent,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(28),
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                text,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+              if (_shortBioController.text.trim().isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  _shortBioController.text.trim(),
+                  style: AppTextStyles.textTheme.bodyMedium?.copyWith(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                    height: 1.35,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              const Icon(
-                Icons.arrow_forward_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
+              ],
             ],
           ),
         ),
-      ),
+      ],
     );
   }
 
@@ -1266,12 +1186,12 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
           color: isDark ? const Color(0xFF0F172A) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? const Color(0xFF0066FF) : const Color(0xFFE2E8F0),
+            color: isSelected ? AppColors.primary : const Color(0xFFE2E8F0),
             width: isSelected ? 2.2 : 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: isSelected ? const Color(0xFF0066FF).withValues(alpha: 0.25) : const Color(0x0A000000),
+              color: isSelected ? AppColors.primary.withValues(alpha: 0.25) : const Color(0x0A000000),
               blurRadius: isSelected ? 12 : 6,
               offset: const Offset(0, 4),
             ),
@@ -1363,7 +1283,7 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
                   width: 18,
                   height: 18,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF0066FF),
+                    color: AppColors.primary,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.check, color: Colors.white, size: 12),
@@ -1393,7 +1313,7 @@ class DashedAvatarCirclePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFF0066FF)
+      ..color = AppColors.primary
       ..strokeWidth = 1.8
       ..style = PaintingStyle.stroke;
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../Nav/portal_bottom_nav.dart';
+import '../../auth/back/smart_back_handler.dart';
 import '../home/dashboard/dashboard_screen.dart';
 
 class PortalShell extends StatefulWidget {
@@ -22,16 +23,19 @@ class _PortalShellState extends State<PortalShell> {
   Future<bool> _handleBackPress(BuildContext context) async {
     final location = GoRouterState.of(context).matchedLocation;
 
-    // Rule 1: On any non-home tab → go to Home
-    if (location != '/portal') {
-      DashboardScreen.resetToDefaultHome();
-      context.go('/portal');
-      return false;
+    // Rule 1: On Home with a sub-view open → close it first
+    if (location == '/portal') {
+      final wasHandled = DashboardScreen.resetViewIfOpen();
+      if (wasHandled) return false;
     }
 
-    // Rule 2: On Home with a sub-view open → close it
-    final wasHandled = DashboardScreen.resetViewIfOpen();
-    if (wasHandled) return false;
+    // Rule 2: Pop to previous tab in history
+    final prevTab = SmartBackHandler.popTab();
+    if (prevTab != null) {
+      DashboardScreen.resetToDefaultHome();
+      context.go(prevTab);
+      return false;
+    }
 
     // Rule 3: Double-tap to exit from Home root
     final now = DateTime.now();
@@ -54,6 +58,9 @@ class _PortalShellState extends State<PortalShell> {
 
   @override
   Widget build(BuildContext context) {
+    final location = GoRouterState.of(context).matchedLocation;
+    SmartBackHandler.recordTabVisit(location);
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (bool didPop, dynamic result) {

@@ -4,86 +4,6 @@ import 'package:go_router/go_router.dart';
 class SettingsSupportSection extends StatelessWidget {
   const SettingsSupportSection({super.key});
 
-  void _showHelpModal(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  "Help & Support Center",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded, color: Color(0xFF64748B)),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ListTile(
-              leading: const Icon(Icons.mark_email_read_rounded, color: Color(0xFF2563EB)),
-              title: const Text("Email Customer Support", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5)),
-              subtitle: const Text("support@mycardshare.com (Response within 2 hours)", style: TextStyle(fontSize: 12)),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Opening support email client...")),
-                );
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.question_answer_rounded, color: Color(0xFF16A34A)),
-              title: const Text("FAQ & Knowledgebase", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5)),
-              subtitle: const Text("Guides on QR scanning, NFC cards & contact syncing", style: TextStyle(fontSize: 12)),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Opening FAQ knowledgebase...")),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showAboutDialog(BuildContext context) {
-    showAboutDialog(
-      context: context,
-      applicationName: "My Card Share",
-      applicationVersion: "v1.0.0",
-      applicationIcon: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: const Color(0xFF2563EB),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Icon(Icons.contact_phone_rounded, color: Colors.white, size: 26),
-      ),
-      children: const [
-        SizedBox(height: 10),
-        Text(
-          "My Card Share is the modern, smart digital business card and lead management platform built for professionals and teams.",
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -118,7 +38,7 @@ class SettingsSupportSection extends StatelessWidget {
             children: [
               // Help & Support
               ListTile(
-                onTap: () => _showHelpModal(context),
+                onTap: () => context.go('/portal/support/help'),
                 leading: Container(
                   width: 38,
                   height: 38,
@@ -150,7 +70,7 @@ class SettingsSupportSection extends StatelessWidget {
 
               // Terms of Service
               ListTile(
-                onTap: () => context.push('/terms'),
+                onTap: () => context.go('/portal/support/terms'),
                 leading: Container(
                   width: 38,
                   height: 38,
@@ -182,7 +102,7 @@ class SettingsSupportSection extends StatelessWidget {
 
               // Privacy Policy
               ListTile(
-                onTap: () => context.push('/privacy'),
+                onTap: () => context.go('/portal/support/privacy'),
                 leading: Container(
                   width: 38,
                   height: 38,
@@ -214,7 +134,7 @@ class SettingsSupportSection extends StatelessWidget {
 
               // About
               ListTile(
-                onTap: () => _showAboutDialog(context),
+                onTap: () => context.go('/portal/support/about'),
                 leading: Container(
                   width: 38,
                   height: 38,

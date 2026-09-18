@@ -4,17 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../providers/auth_provider.dart';
 
-// Public Web & Landing Imports
-import '../../features/public/landing/screen.dart';
-import '../../features/public/about/screen.dart';
-import '../../features/public/features/screen.dart';
-import '../../features/public/pricing/screen.dart';
-import '../../features/public/contact/screen.dart';
-import '../../features/public/blog/screen.dart';
-import '../../features/public/blog_detail/screen.dart';
-import '../../features/public/privacy/screen.dart';
-import '../../features/public/terms/screen.dart';
-import '../../features/public/enterprise_info/screen.dart';
 
 // Auth Imports
 import '../../features/auth/login/login.dart';
@@ -37,6 +26,10 @@ import '../../features/individual/campaigns/campaign.dart';
 import '../../features/individual/connectors/connectors.dart';
 import '../../features/individual/settings/settings.dart';
 import '../../features/individual/settings/subscription/subscription_screen.dart';
+import '../../features/individual/settings/widgets/support/help_and_support_screen.dart';
+import '../../features/individual/settings/widgets/support/terms_of_service_screen.dart';
+import '../../features/individual/settings/widgets/support/privacy_policy_screen.dart';
+import '../../features/individual/settings/widgets/support/about_screen.dart';
 import '../../features/individual/notification/notification.dart';
 import '../../features/individual/approvals/approvals.dart';
 import '../../features/individual/companies/companies.dart';
@@ -108,11 +101,18 @@ class RouterNotifier extends ChangeNotifier {
 
     final isPublicCard = path.startsWith('/card/');
 
+    // If logged in, redirect away from auth paths and root
+    if (loggedIn && (authPaths.contains(path) || path == '/')) {
+      if (role == 'master-admin') return '/master-admin/dashboard';
+      if (role == 'enterprise' || role == 'employee') return '/enterprise/dashboard';
+      return '/portal'; // individual
+    }
+
     if (publicPaths.contains(path) || authPaths.contains(path) || isPublicCard) {
       return null; // no guard needed
     }
 
-    if (!loggedIn) return '/login';
+    if (!loggedIn) return '/onboarding'; // unauthenticated users should see onboarding first
 
     if (path.startsWith('/master-admin') && role != 'master-admin') {
       return '/portal';
@@ -136,27 +136,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
   final notifier = ref.watch(routerNotifierProvider);
 
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: '/onboarding',
     refreshListenable: notifier,
     redirect: notifier.redirect,
     routes: [
       // Public & Marketing
-      GoRoute(path: '/', builder: (c, s) => const LandingScreen()),
-      GoRoute(path: '/about', builder: (c, s) => const AboutUsScreen()),
-      GoRoute(path: '/features', builder: (c, s) => const PublicFeaturesScreen()),
-      GoRoute(path: '/pricing', builder: (c, s) => const PricingPlansScreen()),
-      GoRoute(path: '/contact', builder: (c, s) => const PublicContactScreen()),
-      GoRoute(path: '/blog', builder: (c, s) => const BlogListingScreen()),
-      GoRoute(
-        path: '/blog/:slug',
-        builder: (c, s) => BlogDetailScreen(slug: s.pathParameters['slug']),
-      ),
-      GoRoute(path: '/privacy', builder: (c, s) => const PrivacyPolicyScreen()),
-      GoRoute(path: '/terms', builder: (c, s) => const TermsOfServiceScreen()),
-      GoRoute(
-        path: '/enterprise-info',
-        builder: (c, s) => const EnterpriseInfoScreen(),
-      ),
+      GoRoute(path: '/', builder: (c, s) => const OnboardingScreen()),
+      GoRoute(path: '/about', builder: (c, s) => const AboutScreen()),
+      GoRoute(path: '/privacy', builder: (c, s) => const SupportPrivacyPolicyScreen()),
+      GoRoute(path: '/terms', builder: (c, s) => const SupportTermsOfServiceScreen()),
 
       // Auth
       GoRoute(path: '/login', builder: (c, s) => const LoginScreen()),
@@ -220,6 +208,22 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/portal/settings',
             builder: (c, s) => const IndividualSettingsScreen(),
+          ),
+          GoRoute(
+            path: '/portal/support/help',
+            builder: (c, s) => const HelpAndSupportScreen(),
+          ),
+          GoRoute(
+            path: '/portal/support/terms',
+            builder: (c, s) => const SupportTermsOfServiceScreen(),
+          ),
+          GoRoute(
+            path: '/portal/support/privacy',
+            builder: (c, s) => const SupportPrivacyPolicyScreen(),
+          ),
+          GoRoute(
+            path: '/portal/support/about',
+            builder: (c, s) => const AboutScreen(),
           ),
           GoRoute(
             path: '/portal/subscription',

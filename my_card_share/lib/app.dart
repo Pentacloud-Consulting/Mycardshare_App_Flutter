@@ -13,7 +13,7 @@ class MainApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: AppStrings.appName,
-      theme: AppTheme.lightTheme,
+      theme: AppTheme.light,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );

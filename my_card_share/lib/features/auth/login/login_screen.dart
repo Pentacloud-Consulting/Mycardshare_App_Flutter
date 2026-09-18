@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/app_style_widgets.dart';
 import '../../../models/user_model.dart';
 import '../../../providers/auth_provider.dart';
 
@@ -52,7 +54,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFD),
+      backgroundColor: AppColors.background,
       body: Stack(
         children: [
           // Background Top-Left Ambient Blue Circle Glow
@@ -66,7 +68,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFF38B6FF).withValues(alpha: 0.18),
+                    AppColors.primaryLight.withValues(alpha: 0.18),
                     Colors.transparent,
                   ],
                 ),
@@ -83,7 +85,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               height: 24,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF38B6FF).withValues(alpha: 0.15),
+                color: AppColors.primaryLight.withValues(alpha: 0.15),
               ),
             ),
           ),
@@ -95,13 +97,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 children: [
                   const SizedBox(height: 60),
 
-                  // Center App Logo Badge
+                  // Center App Logo Badge with Morphism Soft Shadows
                   Container(
                     width: 90,
                     height: 90,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: const Color(0xFF0066FF).withValues(alpha: 0.08),
+                      color: AppColors.primary.withValues(alpha: 0.08),
                     ),
                     child: Center(
                       child: Container(
@@ -110,13 +112,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           gradient: const LinearGradient(
-                            colors: [Color(0xFF0052FF), Color(0xFF00A2FF)],
+                            colors: AppColors.primaryGradient,
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF0066FF).withValues(alpha: 0.3),
+                              color: AppColors.primary.withValues(alpha: 0.3),
                               blurRadius: 20,
                               offset: const Offset(0, 8),
                             ),
@@ -133,24 +135,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   const SizedBox(height: 24),
 
-                  // Title & Subtitle
-                  const Text(
+                  // Title & Subtitle using AppTextStyles
+                  Text(
                     "Welcome Back",
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: AppTextStyles.textTheme.displayLarge?.copyWith(
                       fontSize: 32,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
+                      color: AppColors.textPrimary,
                       letterSpacing: -0.5,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     "Login to manage your digital card",
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: AppTextStyles.textTheme.bodyMedium?.copyWith(
                       fontSize: 15,
-                      color: Color(0xFF64748B),
+                      color: AppColors.textSecondary,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
@@ -160,39 +162,39 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   // Email Address Input Field
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
-                      boxShadow: const [
+                      boxShadow: [
                         BoxShadow(
-                          color: Color(0x0A000000),
-                          blurRadius: 12,
-                          offset: Offset(0, 4),
+                          color: AppColors.primary.withValues(alpha: 0.05),
+                          blurRadius: 14,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
                     child: TextField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      style: const TextStyle(
+                      style: AppTextStyles.textTheme.bodyMedium?.copyWith(
                         fontSize: 15,
-                        color: Color(0xFF0F172A),
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.w500,
                       ),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: "Email Address",
-                        hintStyle: TextStyle(
-                          color: Color(0xFF94A3B8),
+                        hintStyle: AppTextStyles.textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textMuted,
                           fontSize: 15,
                           fontWeight: FontWeight.w400,
                         ),
-                        prefixIcon: Icon(
+                        prefixIcon: const Icon(
                           Icons.mail_outline_rounded,
-                          color: Color(0xFF94A3B8),
+                          color: AppColors.textMuted,
                           size: 22,
                         ),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                       ),
                     ),
                   ),
@@ -202,35 +204,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   // Password Input Field
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
-                      boxShadow: const [
+                      boxShadow: [
                         BoxShadow(
-                          color: Color(0x0A000000),
-                          blurRadius: 12,
-                          offset: Offset(0, 4),
+                          color: AppColors.primary.withValues(alpha: 0.05),
+                          blurRadius: 14,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
                     child: TextField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
-                      style: const TextStyle(
+                      style: AppTextStyles.textTheme.bodyMedium?.copyWith(
                         fontSize: 15,
-                        color: Color(0xFF0F172A),
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.w500,
                       ),
                       decoration: InputDecoration(
                         hintText: "Password",
-                        hintStyle: const TextStyle(
-                          color: Color(0xFF94A3B8),
+                        hintStyle: AppTextStyles.textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textMuted,
                           fontSize: 15,
                           fontWeight: FontWeight.w400,
                         ),
                         prefixIcon: const Icon(
                           Icons.lock_outline_rounded,
-                          color: Color(0xFF94A3B8),
+                          color: AppColors.textMuted,
                           size: 22,
                         ),
                         suffixIcon: IconButton(
@@ -238,7 +240,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             _obscurePassword
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined,
-                            color: const Color(0xFF64748B),
+                            color: AppColors.textSecondary,
                             size: 22,
                           ),
                           onPressed: () {
@@ -265,12 +267,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: const Text(
+                      child: Text(
                         "Forgot Password?",
-                        style: TextStyle(
+                        style: AppTextStyles.textTheme.bodyMedium?.copyWith(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF0066FF),
+                          color: AppColors.primary,
                         ),
                       ),
                     ),
@@ -278,90 +280,55 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   const SizedBox(height: 28),
 
-                  // Log In Primary Gradient Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(28),
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF0052FF), Color(0xFF00A2FF)],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF0066FF).withValues(alpha: 0.35),
-                            blurRadius: 16,
-                            offset: const Offset(0, 8),
+                  // Log In Primary Button using ClayButton
+                  _isLoading
+                      ? Container(
+                          width: double.infinity,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(18),
+                            gradient: const LinearGradient(colors: AppColors.primaryGradient),
                           ),
-                        ],
-                      ),
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _onLogin,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(28),
-                          ),
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2.5,
-                                ),
-                              )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
-                                  Text(
-                                    "Log In",
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  SizedBox(width: 8),
-                                  Icon(
-                                    Icons.arrow_forward,
-                                    color: Colors.white,
-                                    size: 22,
-                                  ),
-                                ],
+                          child: const Center(
+                            child: SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.5,
                               ),
-                      ),
-                    ),
-                  ),
+                            ),
+                          ),
+                        )
+                      : ClayButton(
+                          label: "Log In",
+                          icon: Icons.arrow_forward,
+                          onTap: _onLogin,
+                        ),
 
                   const SizedBox(height: 32),
 
                   // Divider: or continue with
                   Row(
-                    children: const [
-                      Expanded(
+                    children: [
+                      const Expanded(
                         child: Divider(
                           color: Color(0xFFE2E8F0),
                           thickness: 1,
                         ),
                       ),
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: Text(
                           "or continue with",
-                          style: TextStyle(
+                          style: AppTextStyles.textTheme.bodyMedium?.copyWith(
                             fontSize: 13,
-                            color: Color(0xFF64748B),
+                            color: AppColors.textSecondary,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
-                      Expanded(
+                      const Expanded(
                         child: Divider(
                           color: Color(0xFFE2E8F0),
                           thickness: 1,
@@ -372,43 +339,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   const SizedBox(height: 24),
 
-                  // Google Sign In Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(28),
-                        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x08000000),
-                            blurRadius: 12,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(28),
-                        onTap: _onLogin,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            GoogleLogoWidget(size: 22),
-                            SizedBox(width: 12),
-                            Text(
-                              "Continue with Google",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF0F172A),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                  // Google Sign In Button using ClayButton (Outlined variant)
+                  ClayButton(
+                    label: "Continue with Google",
+                    leadingWidget: const GoogleLogoWidget(size: 22),
+                    gradient: false,
+                    onTap: _onLogin,
                   ),
 
                   const SizedBox(height: 40),
@@ -417,21 +353,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
+                      Text(
                         "Don't have an account? ",
-                        style: TextStyle(
+                        style: AppTextStyles.textTheme.bodyMedium?.copyWith(
                           fontSize: 14,
-                          color: Color(0xFF64748B),
+                          color: AppColors.textSecondary,
                         ),
                       ),
                       GestureDetector(
                         onTap: () => context.go('/signup'),
-                        child: const Text(
+                        child: Text(
                           "Sign up",
-                          style: TextStyle(
+                          style: AppTextStyles.textTheme.bodyMedium?.copyWith(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF0066FF),
+                            color: AppColors.primary,
                           ),
                         ),
                       ),
@@ -444,21 +380,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
+                      Text(
                         "New Employee? ",
-                        style: TextStyle(
+                        style: AppTextStyles.textTheme.bodyMedium?.copyWith(
                           fontSize: 14,
-                          color: Color(0xFF64748B),
+                          color: AppColors.textSecondary,
                         ),
                       ),
                       GestureDetector(
                         onTap: () => context.go('/join-workspace'),
-                        child: const Text(
+                        child: Text(
                           "Join Workspace",
-                          style: TextStyle(
+                          style: AppTextStyles.textTheme.bodyMedium?.copyWith(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF10B981),
+                            color: AppColors.accentGreen,
                           ),
                         ),
                       ),

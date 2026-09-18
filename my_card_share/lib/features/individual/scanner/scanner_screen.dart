@@ -4,6 +4,7 @@ import 'widgets/manual_add_contact_dialog.dart';
 import 'widgets/manual_entry_button.dart';
 import 'widgets/scan_option_card.dart';
 import 'widgets/voice_scan_modal.dart';
+import '../../auth/back/smart_back_handler.dart';
 
 class ScannerScreen extends StatelessWidget {
   const ScannerScreen({super.key});
@@ -11,14 +12,14 @@ class ScannerScreen extends StatelessWidget {
   void _openCameraScan(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const CameraScanModal()),
+      SmoothPageRoute(page: const CameraScanModal()),
     );
   }
 
   void _openVoiceScan(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const VoiceScanModal()),
+      SmoothPageRoute(page: const VoiceScanModal()),
     );
   }
 

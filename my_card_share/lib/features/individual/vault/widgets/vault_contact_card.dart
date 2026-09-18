@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../view_vault/view_vault_modal.dart';
 
 class VaultContactCard extends StatelessWidget {
   final String name;
@@ -41,8 +42,18 @@ class VaultContactCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         onTap: onTap ??
             () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("Viewing $name's contact details")),
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => ViewVaultModal(
+                  name: name,
+                  role: role,
+                  company: company,
+                  dateAdded: dateAdded,
+                  tag: tag,
+                  initials: initials,
+                ),
               );
             },
         child: Padding(
@@ -106,18 +117,12 @@ class VaultContactCard extends StatelessWidget {
                 ),
               ),
 
-              // Right Column: Tag Badge & Chevron
+              // Right Column: Tag Badge
               Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   _buildTagBadge(tag),
-                  const SizedBox(height: 10),
-                  const Icon(
-                    Icons.chevron_right_rounded,
-                    color: Color(0xFFCBD5E1),
-                    size: 18,
-                  ),
                 ],
               ),
             ],

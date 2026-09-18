@@ -6,6 +6,7 @@ class CardFooterActions extends StatelessWidget {
   final VoidCallback? onAddToWalletTap;
   final VoidCallback? onExchangeContactTap;
   final VoidCallback? onQrTap;
+  final bool showBranding;
 
   const CardFooterActions({
     super.key,
@@ -14,6 +15,7 @@ class CardFooterActions extends StatelessWidget {
     this.onAddToWalletTap,
     this.onExchangeContactTap,
     this.onQrTap,
+    this.showBranding = true,
   });
 
   void _showQrModal(BuildContext context) {
@@ -308,29 +310,30 @@ class CardFooterActions extends StatelessWidget {
         const SizedBox(height: 28),
 
         // Footer Branding: CONNECT • COLLABORATE • GROW
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "CONNECT  •  COLLABORATE  •  GROW",
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF94A3B8),
-                  letterSpacing: 1.2,
+        if (showBranding)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "CONNECT  •  COLLABORATE  •  GROW",
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF94A3B8),
+                    letterSpacing: 1.2,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Container(
-                width: 24,
-                height: 2,
-                color: const Color(0xFF93C5FD),
-              ),
-            ],
+                const SizedBox(height: 2),
+                Container(
+                  width: 24,
+                  height: 2,
+                  color: const Color(0xFF93C5FD),
+                ),
+              ],
+            ),
           ),
-        ),
       ],
     );
   }

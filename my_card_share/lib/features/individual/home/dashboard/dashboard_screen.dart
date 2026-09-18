@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:my_card_share/features/Nav/portal_top_nav.dart';
+
 import 'package:my_card_share/features/individual/scanner/widgets/camera_scan_modal.dart';
 import 'package:my_card_share/features/individual/scanner/widgets/voice_scan_modal.dart';
 import 'package:my_card_share/features/public_card/public_card_screen.dart';
@@ -8,6 +8,8 @@ import 'dashboard_hero_card.dart';
 import 'dashboard_metrics_row.dart';
 import 'dashboard_quick_actions.dart';
 import 'dashboard_recent_leads.dart';
+
+import '../../../../core/theme/app_theme.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -83,16 +85,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     if (_showingCardView) {
       return const Scaffold(
-        backgroundColor: Color(0xFFF8FAFD),
-        appBar: PortalTopNav(
-          title: "My Digital Card",
-        ),
+        backgroundColor: AppColors.background,
         body: PublicCardScreen(showBottomNav: false),
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFD),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),

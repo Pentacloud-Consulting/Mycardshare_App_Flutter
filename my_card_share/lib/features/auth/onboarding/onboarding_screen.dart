@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../Nav/portal_bottom_nav.dart';
+import '../../Nav/portal_top_nav.dart';
+import '../../individual/home/View My card/home.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -320,31 +323,19 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     borderRadius: BorderRadius.circular(29),
                     child: Stack(
                       children: [
-                        // Top Vibrant Wave Mesh Gradient Header
-                        Positioned(
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          height: 100,
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Color(0xFFF97316),
-                                  Color(0xFFA855F7),
-                                  Color(0xFF0066FF),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.only(
-                                bottomLeft: Radius.circular(36),
-                                bottomRight: Radius.circular(36),
+                        Positioned.fill(
+                          child: FittedBox(
+                            fit: BoxFit.cover,
+                            alignment: Alignment.topCenter,
+                            child: const SizedBox(
+                              width: 390,
+                              height: 844,
+                              child: IgnorePointer(
+                                child: _MockIndividualCardScreen(showBottomNav: false),
                               ),
                             ),
                           ),
                         ),
-
                         // iPhone Notch at top center
                         Align(
                           alignment: Alignment.topCenter,
@@ -374,326 +365,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                             ),
                           ),
                         ),
-
-                        // Main Content Column
-                        Positioned.fill(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 12),
-
-                                // Top Right ACTIVELY NETWORKING Tag over gradient
-                                Align(
-                                  alignment: Alignment.topRight,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.88),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Container(
-                                          width: 4,
-                                          height: 4,
-                                          decoration: const BoxDecoration(
-                                            color: Color(0xFF10B981),
-                                            shape: BoxShape.circle,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 3),
-                                        const Text(
-                                          "ACTIVELY NETWORKING",
-                                          style: TextStyle(
-                                            fontSize: 5.5,
-                                            fontWeight: FontWeight.w800,
-                                            color: Color(0xFF0F172A),
-                                            letterSpacing: 0.2,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-
-                                const SizedBox(height: 25),
-
-                                // Profile Avatar + Name + Title + Network Pill
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    // Circular Avatar Image / Placeholder with warm tone
-                                    Container(
-                                      width: 58,
-                                      height: 58,
-                                      padding: const EdgeInsets.all(2.5),
-                                      decoration: const BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Color(0x1F000000),
-                                            blurRadius: 10,
-                                            offset: Offset(0, 3),
-                                          ),
-                                        ],
-                                      ),
-                                      child: const CircleAvatar(
-                                        backgroundColor: Color(0xFFFED7AA),
-                                        child: Icon(Icons.person_rounded, size: 36, color: Color(0xFF9A3412)),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-
-                                    // Name & Role Details
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          const Text(
-                                            "Alex Stanton",
-                                            style: TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w800,
-                                              color: Color(0xFF0F172A),
-                                              letterSpacing: -0.2,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 1),
-                                          const Text(
-                                            "Director of Partnerships",
-                                            style: TextStyle(
-                                              fontSize: 9.5,
-                                              color: Color(0xFF64748B),
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 3),
-                                          Row(
-                                            children: [
-                                              Container(
-                                                width: 4.5,
-                                                height: 4.5,
-                                                decoration: const BoxDecoration(
-                                                  color: Color(0xFF0066FF),
-                                                  shape: BoxShape.circle,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 3),
-                                              const Text(
-                                                "MY CARD SHARE NETW...",
-                                                style: TextStyle(
-                                                  fontSize: 7.5,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Color(0xFF0066FF),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-
-                                const SizedBox(height: 14),
-
-                                // EMAIL & CONTACT Large Curved Action Pills Row
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: _buildActionPill(
-                                        Icons.mail_outline_rounded,
-                                        "EMAIL",
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: _buildActionPill(
-                                        Icons.phone_outlined,
-                                        "CONTACT",
-                                      ),
-                                    ),
-                                  ],
-                                ),
-
-                                const SizedBox(height: 10),
-
-                                // Bio Paragraph Text
-                                const Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 4.0),
-                                  child: Text(
-                                    "Bridging the gap between enterprise solutions and global partners. Leading partnerships and growth at My Card Share.",
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: 7.5,
-                                      color: Color(0xFF64748B),
-                                      height: 1.25,
-                                    ),
-                                  ),
-                                ),
-
-                                const SizedBox(height: 10),
-
-                                // EXPERIENCE MATRIX Card Container
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(color: const Color(0xFFF1F5F9), width: 1),
-                                    boxShadow: const [
-                                      BoxShadow(
-                                        color: Color(0x0A000000),
-                                        blurRadius: 8,
-                                        offset: Offset(0, 3),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Container(
-                                            width: 4,
-                                            height: 4,
-                                            decoration: const BoxDecoration(
-                                              color: Color(0xFF0066FF),
-                                              shape: BoxShape.circle,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          const Text(
-                                            "EXPERIENCE MATRIX",
-                                            style: TextStyle(
-                                              fontSize: 7,
-                                              fontWeight: FontWeight.bold,
-                                              color: Color(0xFF0066FF),
-                                              letterSpacing: 0.2,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 5),
-                                      Row(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          const Icon(
-                                            Icons.diamond_outlined,
-                                            size: 12,
-                                            color: Color(0xFF10B981),
-                                          ),
-                                          const SizedBox(width: 5),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: const [
-                                                Text(
-                                                  "Enterprise Growth",
-                                                  style: TextStyle(
-                                                    fontSize: 8.5,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Color(0xFF0F172A),
-                                                  ),
-                                                ),
-                                                Text(
-                                                  "2021 — Present",
-                                                  style: TextStyle(
-                                                    fontSize: 6.5,
-                                                    color: Color(0xFF94A3B8),
-                                                  ),
-                                                ),
-                                                SizedBox(height: 1),
-                                                Text(
-                                                  "Scaled enterprise partnerships globally, achieving 400% ARR growth.",
-                                                  style: TextStyle(
-                                                    fontSize: 6.5,
-                                                    color: Color(0xFF64748B),
-                                                    height: 1.15,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                const Spacer(),
-
-                                // Social Icons Row
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    _buildSocialMiniIcon(Icons.business_center_outlined),
-                                    const SizedBox(width: 8),
-                                    _buildSocialMiniIcon(Icons.share_outlined),
-                                    const SizedBox(width: 8),
-                                    _buildSocialMiniIcon(Icons.camera_alt_outlined),
-                                    const SizedBox(width: 8),
-                                    _buildSocialMiniIcon(Icons.code_rounded),
-                                  ],
-                                ),
-
-                                const SizedBox(height: 8),
-
-                                // Bottom SAVE CONTACT Bar + Share Icon Button
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(vertical: 9),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFF0B132B),
-                                          borderRadius: BorderRadius.circular(16),
-                                        ),
-                                        child: const Center(
-                                          child: Text(
-                                            "SAVE CONTACT",
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 8.5,
-                                              fontWeight: FontWeight.w800,
-                                              letterSpacing: 0.4,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Container(
-                                      width: 28,
-                                      height: 28,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
-                                        boxShadow: const [
-                                          BoxShadow(
-                                            color: Color(0x0F000000),
-                                            blurRadius: 4,
-                                            offset: Offset(0, 2),
-                                          ),
-                                        ],
-                                      ),
-                                      child: const Icon(
-                                        Icons.share_outlined,
-                                        size: 13,
-                                        color: Color(0xFF0F172A),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -706,59 +377,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     );
   }
 
-  Widget _buildActionPill(IconData icon, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 5,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 12, color: const Color(0xFF0F172A)),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 6,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF0F172A),
-              letterSpacing: 0.3,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildSocialMiniIcon(IconData icon) {
-    return Container(
-      width: 16,
-      height: 16,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 3,
-            offset: Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Icon(icon, size: 8, color: const Color(0xFF64748B)),
-    );
-  }
 
   // --------------------------------------------------------------------------
   // SLIDE 2 GRAPHIC: Share Anywhere (Node Diagram & QR Card)
@@ -1347,4 +966,95 @@ class DashedNodeCirclePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// -----------------------------------------------------------------------------
+// Real Miniaturized Mock of IndividualCardScreen for Slide 1
+// -----------------------------------------------------------------------------
+class _MockIndividualCardScreen extends StatelessWidget {
+  final bool showBottomNav;
+
+  const _MockIndividualCardScreen({
+    this.showBottomNav = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final name = "Alex Stanton";
+    final role = "Director of Partnerships";
+    final company = "My Card Share";
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFD),
+      appBar: showBottomNav ? PortalTopNav(userName: name.split(' ').first) : null,
+      bottomNavigationBar: showBottomNav ? const PortalBottomNav() : null,
+      body: Stack(
+        children: [
+          // Soft baby-blue gradient ambient glow top right
+          Positioned(
+            top: -50,
+            right: -50,
+            child: IgnorePointer(
+              child: Container(
+                width: 280,
+                height: 280,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    center: Alignment.center,
+                    radius: 0.7,
+                    colors: [
+                      const Color(0xFF38BDF8).withValues(alpha: 0.18),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 12),
+
+                  // Image 1: Header Banner with Overlapping Avatar & Info
+                  CardHeaderBanner(
+                    name: name,
+                    role: role,
+                    company: company,
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  // Image 2: Quick Action Pill Buttons (Email & Call)
+                  const CardQuickActions(),
+
+                  const SizedBox(height: 14),
+
+                  // Image 3: Quote Bio Card
+                  const CardBioQuoteCard(),
+
+                  const SizedBox(height: 18),
+
+                  // Image 4: Social Icon Row
+                  const CardSocialRow(),
+
+                  const SizedBox(height: 20),
+
+                  // Image 5: Save Contact, Secondary Buttons & Center QR Button
+                  CardFooterActions(name: name, showBranding: false),
+
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

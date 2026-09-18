@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../public/landing/onboarding_screen.dart' as public_onboarding;
+import 'onboarding_screen.dart' as public_onboarding;
 import 'onboarding_wizard_screen.dart' as wizard;
 
 class OnboardingScreen extends StatelessWidget {

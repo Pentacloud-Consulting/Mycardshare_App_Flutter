@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_style_widgets.dart';
 
 class DashboardHeroCard extends StatelessWidget {
   final String name;
@@ -137,36 +139,8 @@ class DashboardHeroCard extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 6),
-                          // Status Badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.85),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 7,
-                                  height: 7,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF16A34A),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  status,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF15803D),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          // Status Badge using GlassPill
+                          GlassPill(label: status, dotColor: AppColors.success),
                         ],
                       ),
                     ),

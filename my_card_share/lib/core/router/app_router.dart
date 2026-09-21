@@ -11,6 +11,8 @@ import '../../features/auth/signup/signup.dart';
 import '../../features/auth/join_workspace/join_workspace.dart';
 import '../../features/auth/onboarding/onboarding.dart';
 import '../../features/auth/reset_password/reset_password.dart';
+import '../../features/auth/enterprice sign/registration_pending_screen.dart';
+import '../../features/auth/enterprice sign/enterprise_onboarding_screen.dart';
 
 // Public Card Import
 import '../../features/public_card/card.dart';
@@ -36,13 +38,14 @@ import '../../features/individual/companies/companies.dart';
 import '../../features/individual/workforce/workforce.dart';
 
 // Enterprise Imports
-import '../../features/enterprise/dashboard/dashboard.dart';
-import '../../features/enterprise/workspace/workspace.dart';
+import '../../features/enterprise/dashboard/enterprise_dashboard_screen.dart';
+import '../../features/enterprise/workspace/workspace_screen.dart';
 import '../../features/enterprise/leads/leads.dart';
 import '../../features/enterprise/campaigns/campaign.dart';
 import '../../features/enterprise/analytics/analytics.dart';
 import '../../features/enterprise/connectors/connectors.dart';
 import '../../features/enterprise/brand_profile/profile.dart';
+import '../../features/enterprise/notifications/notifications.dart';
 import '../../features/enterprise/settings/settings.dart';
 
 // Master Admin Imports
@@ -96,15 +99,18 @@ class RouterNotifier extends ChangeNotifier {
       '/join-workspace',
       '/onboarding',
       '/onboarding-wizard',
-      '/reset-password'
+      '/reset-password',
+      '/registration-pending',
+      '/enterprise-onboarding'
     ];
 
     final isPublicCard = path.startsWith('/card/');
 
-    // If logged in, redirect away from auth paths and root
+    // If logged in, redirect away from auth paths (except enterprise onboarding & registration pending)
     if (loggedIn && (authPaths.contains(path) || path == '/')) {
-      if (role == 'master-admin') return '/master-admin/dashboard';
-      if (role == 'enterprise' || role == 'employee') return '/enterprise/dashboard';
+      if (path == '/enterprise-onboarding' || path == '/registration-pending') {
+        return null; // allow viewing onboarding wizard & pending screens
+      }
       return '/portal'; // individual
     }
 
@@ -164,6 +170,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/reset-password',
         builder: (c, s) => const ResetPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/registration-pending',
+        builder: (c, s) => const RegistrationPendingScreen(),
+      ),
+      GoRoute(
+        path: '/enterprise-onboarding',
+        builder: (c, s) => const EnterpriseOnboardingScreen(),
       ),
 
       // Public Card
@@ -269,7 +283,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/enterprise/campaign',
-            builder: (c, s) => const EnterpriseCampaignScreen(),
+            builder: (c, s) => const EnterpriseCampaignsScreen(),
+          ),
+          GoRoute(
+            path: '/enterprise/campaigns',
+            builder: (c, s) => const EnterpriseCampaignsScreen(),
           ),
           GoRoute(
             path: '/enterprise/analytics',
@@ -282,6 +300,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/enterprise/profile',
             builder: (c, s) => const EnterpriseProfileScreen(),
+          ),
+          GoRoute(
+            path: '/enterprise/brand-profile',
+            builder: (c, s) => const EnterpriseBrandProfileScreen(),
+          ),
+          GoRoute(
+            path: '/enterprise/notifications',
+            builder: (c, s) => const EnterpriseNotificationsScreen(),
           ),
           GoRoute(
             path: '/enterprise/settings',

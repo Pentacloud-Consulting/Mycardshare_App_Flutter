@@ -18,7 +18,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  int _selectedTab = 0; // 0: Individual, 1: Enterprise, 2: Join Workspace
+  int _selectedTab = 0; // 0: Individual, 1: Enterprise, 2: Employee
   bool _obscurePassword = true;
   bool _agreeTerms = false;
   bool _isLoading = false;
@@ -68,11 +68,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         _isLoading = false;
       });
 
-      if (roleStr == 'enterprise') {
-        context.go('/enterprise/dashboard');
-      } else {
-        context.go('/portal');
-      }
+      context.go('/portal');
     }
   }
 
@@ -206,7 +202,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       children: [
                         _buildTabPill(index: 0, icon: Icons.person_outline_rounded, label: "Individual"),
                         _buildTabPill(index: 1, icon: Icons.domain_rounded, label: "Enterprise"),
-                        _buildTabPill(index: 2, icon: Icons.groups_outlined, label: "Join Workspace"),
+                        _buildTabPill(index: 2, icon: Icons.groups_outlined, label: "Employee"),
                       ],
                     ),
                   ),
@@ -591,7 +587,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
           decoration: BoxDecoration(
             color: isSelected ? const Color(0xFF0066FF) : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
@@ -599,33 +595,35 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 ? [
                     BoxShadow(
                       color: const Color(0xFF0066FF).withValues(alpha: 0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
                     ),
                   ]
                 : [],
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 16,
-                color: isSelected ? Colors.white : const Color(0xFF64748B),
-              ),
-              const SizedBox(width: 5),
-              Flexible(
-                child: Text(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 15,
+                  color: isSelected ? Colors.white : const Color(0xFF64748B),
+                ),
+                const SizedBox(width: 4),
+                Text(
                   label,
-                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11.5,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                     color: isSelected ? Colors.white : const Color(0xFF64748B),
+                    letterSpacing: -0.2,
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

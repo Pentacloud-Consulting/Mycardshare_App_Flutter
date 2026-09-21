@@ -17,6 +17,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  int _selectedTab = 0; // 0: Individual, 1: Enterprise, 2: Employee
   bool _obscurePassword = true;
   bool _isLoading = false;
 
@@ -33,11 +34,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     final email = _emailController.text.trim();
+    final roleStr = _selectedTab == 1
+        ? 'enterprise'
+        : _selectedTab == 2
+            ? 'employee'
+            : 'individual';
+
     final user = UserModel(
       id: 'user_1',
       name: 'Alex Stanton',
       email: email.isNotEmpty ? email : 'alex@example.com',
-      role: 'individual',
+      role: roleStr,
     );
 
     ref.read(authProvider.notifier).login(user);
@@ -47,7 +54,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         _isLoading = false;
       });
 
-      context.go('/onboarding-wizard');
+      if (roleStr == 'enterprise') {
+        context.go('/enterprise-onboarding');
+      } else {
+        context.go('/portal');
+      }
     }
   }
 
@@ -157,7 +168,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 36),
+                  const SizedBox(height: 20),
+
+                  // 3-Segmented Role Selection Pills Bar
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        _buildTabPill(index: 0, icon: Icons.person_outline_rounded, label: "Individual"),
+                        _buildTabPill(index: 1, icon: Icons.domain_rounded, label: "Enterprise"),
+                        _buildTabPill(index: 2, icon: Icons.groups_outlined, label: "Employee"),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
 
                   // Email Address Input Field
                   Container(
@@ -407,6 +436,64 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTabPill({
+    required int index,
+    required IconData icon,
+    required String label,
+  }) {
+    final isSelected = _selectedTab == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedTab = index;
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFF0066FF) : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFF0066FF).withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
+                : [],
+          ),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 15,
+                  color: isSelected ? Colors.white : const Color(0xFF64748B),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                    color: isSelected ? Colors.white : const Color(0xFF64748B),
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

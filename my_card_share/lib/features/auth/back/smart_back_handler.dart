@@ -25,6 +25,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import '../../individual/home/dashboard/dashboard_screen.dart';
 
 // ---------------------------------------------------------------------------
@@ -47,6 +48,45 @@ class SmartBackHandler {
     }
 
     // Rule 2: On root page → double-back-to-exit pattern
+    final now = DateTime.now();
+    if (_lastBackPress == null ||
+        now.difference(_lastBackPress!) > const Duration(seconds: 2)) {
+      _lastBackPress = now;
+      _showExitSnackBar(context);
+      return true;
+    }
+
+    // Second press within 2 s → exit
+    SystemNavigator.pop();
+    return true;
+  }
+
+  /// Call from EnterpriseShell / PopScope when back is triggered in Enterprise portal.
+  /// Returns true = event consumed.
+  static bool handleEnterpriseBack({
+    required BuildContext context,
+  }) {
+    String currentPath = '/enterprise/dashboard';
+    try {
+      currentPath = GoRouterState.of(context).uri.path;
+    } catch (_) {
+      try {
+        currentPath = GoRouter.of(context).routeInformationProvider.value.uri.path;
+      } catch (_) {}
+    }
+
+    final isMainDashboard = currentPath == '/enterprise/dashboard' || currentPath == '/enterprise';
+
+    if (!isMainDashboard) {
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/enterprise/dashboard');
+      }
+      return true;
+    }
+
+    // On main enterprise dashboard → double-back-to-exit pattern
     final now = DateTime.now();
     if (_lastBackPress == null ||
         now.difference(_lastBackPress!) > const Duration(seconds: 2)) {

@@ -45,8 +45,11 @@ class _AnalyticsDailyChartState extends State<AnalyticsDailyChart> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header Row with Legend
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
             children: [
               const Text(
                 "Views & Leads — Daily",
@@ -57,6 +60,7 @@ class _AnalyticsDailyChartState extends State<AnalyticsDailyChart> {
                 ),
               ),
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   _buildLegendItem(color: const Color(0xFF0066FF), label: "Views"),
                   const SizedBox(width: 12),
@@ -92,93 +96,120 @@ class _AnalyticsDailyChartState extends State<AnalyticsDailyChart> {
 
                 // Chart Grid & Dual Bars
                 Expanded(
-                  child: Stack(
-                    children: [
-                      // Dashed horizontal grid lines
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: List.generate(
-                          5,
-                          (_) => Container(
-                            height: 1,
-                            color: const Color(0xFFF1F5F9),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      const itemWidth = 44.0;
+                      final minWidth = itemWidth * _chartData.length;
+                      final contentWidth = constraints.maxWidth > minWidth ? constraints.maxWidth : minWidth;
+
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        child: SizedBox(
+                          width: contentWidth,
+                          height: 180,
+                          child: Stack(
+                            children: [
+                              // Dashed horizontal grid lines
+                              Positioned.fill(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: List.generate(
+                                    5,
+                                    (_) => Container(
+                                      height: 1,
+                                      color: const Color(0xFFF1F5F9),
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              // Bars Row
+                              Positioned.fill(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: List.generate(_chartData.length, (index) {
+                                    final item = _chartData[index];
+                                    final viewsH = (item['views'] as int) / maxVal * 135;
+                                    final leadsH = (item['leads'] as int) / maxVal * 135;
+                                    final isHovered = _hoveredIndex == index;
+
+                                    return GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          _hoveredIndex = isHovered ? null : index;
+                                        });
+                                      },
+                                      child: SizedBox(
+                                        width: itemWidth,
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.end,
+                                          children: [
+                                            if (isHovered)
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                margin: const EdgeInsets.only(bottom: 4),
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFF0F172A),
+                                                  borderRadius: BorderRadius.circular(6),
+                                                ),
+                                                child: FittedBox(
+                                                  fit: BoxFit.scaleDown,
+                                                  child: Text(
+                                                    "${item['views']}v / ${item['leads']}l",
+                                                    style: const TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.bold),
+                                                  ),
+                                                ),
+                                              ),
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              crossAxisAlignment: CrossAxisAlignment.end,
+                                              children: [
+                                                // Views Bar (Darker Blue)
+                                                AnimatedContainer(
+                                                  duration: const Duration(milliseconds: 300),
+                                                  width: 7,
+                                                  height: viewsH,
+                                                  decoration: BoxDecoration(
+                                                    color: isHovered ? const Color(0xFF1D4ED8) : const Color(0xFF0066FF),
+                                                    borderRadius: BorderRadius.circular(4),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 2),
+                                                // Leads Bar (Lighter Blue)
+                                                AnimatedContainer(
+                                                  duration: const Duration(milliseconds: 300),
+                                                  width: 7,
+                                                  height: leadsH,
+                                                  decoration: BoxDecoration(
+                                                    color: isHovered ? const Color(0xFF3B82F6) : const Color(0xFF60A5FA),
+                                                    borderRadius: BorderRadius.circular(4),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              item['date'] as String,
+                                              style: TextStyle(
+                                                fontSize: 9,
+                                                fontWeight: isHovered ? FontWeight.bold : FontWeight.w500,
+                                                color: isHovered ? const Color(0xFF0F172A) : const Color(0xFF94A3B8),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-
-                      // Bars Row
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: List.generate(_chartData.length, (index) {
-                          final item = _chartData[index];
-                          final viewsH = (item['views'] as int) / maxVal * 150;
-                          final leadsH = (item['leads'] as int) / maxVal * 150;
-                          final isHovered = _hoveredIndex == index;
-
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _hoveredIndex = isHovered ? null : index;
-                              });
-                            },
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                if (isHovered)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    margin: const EdgeInsets.only(bottom: 4),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF0F172A),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      "${item['views']}v / ${item['leads']}l",
-                                      style: const TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    // Views Bar (Darker Blue)
-                                    AnimatedContainer(
-                                      duration: const Duration(milliseconds: 300),
-                                      width: 8,
-                                      height: viewsH,
-                                      decoration: BoxDecoration(
-                                        color: isHovered ? const Color(0xFF1D4ED8) : const Color(0xFF0066FF),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 3),
-                                    // Leads Bar (Lighter Blue)
-                                    AnimatedContainer(
-                                      duration: const Duration(milliseconds: 300),
-                                      width: 8,
-                                      height: leadsH,
-                                      decoration: BoxDecoration(
-                                        color: isHovered ? const Color(0xFF3B82F6) : const Color(0xFF60A5FA),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  item['date'] as String,
-                                  style: TextStyle(
-                                    fontSize: 9.5,
-                                    fontWeight: isHovered ? FontWeight.bold : FontWeight.w500,
-                                    color: isHovered ? const Color(0xFF0F172A) : const Color(0xFF94A3B8),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }),
-                      ),
-                    ],
+                      );
+                    },
                   ),
                 ),
               ],

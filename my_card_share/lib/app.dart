@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
 import 'core/constants/app_strings.dart';
+import 'features/auth/font style/font_style.dart';
 
 class MainApp extends ConsumerWidget {
   const MainApp({super.key});
@@ -16,6 +17,7 @@ class MainApp extends ConsumerWidget {
       theme: AppTheme.light,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
+      builder: (context, child) => AppFontStyle.preventSystemFontScaling(context, child),
     );
   }
 }

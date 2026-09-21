@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import '../../features/Nav/portal_bottom_nav.dart';
 import '../../features/Nav/portal_top_nav.dart';
 import '../../features/auth/back/smart_back_handler.dart';
-import '../../features/individual/home/dashboard/dashboard_screen.dart';
 
 /// PortalShell — wraps all bottom-nav portal routes inside a single Scaffold.
 ///
@@ -21,32 +19,16 @@ class PortalShell extends StatefulWidget {
 }
 
 class _PortalShellState extends State<PortalShell> {
-  late GoRouter _router;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _router = GoRouter.of(context);
-  }
-
-  bool _handleBack() {
-    return SmartBackHandler.handleBack(
-      context: context,
-      router: _router,
-      onLeavingCurrentTab: () {
-        // Close any sub-view open on the Home dashboard
-        DashboardScreen.resetToDefaultHome();
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final bool canPop = Navigator.of(context).canPop();
+
     return PopScope(
-      // canPop: false ensures iOS swipe-back AND Android back are intercepted
-      canPop: false,
+      canPop: canPop,
       onPopInvokedWithResult: (bool didPop, dynamic result) {
-        if (!didPop) _handleBack();
+        if (!didPop) {
+          SmartBackHandler.handleRootBack(context: context);
+        }
       },
       child: Scaffold(
         appBar: const PortalTopNav(),

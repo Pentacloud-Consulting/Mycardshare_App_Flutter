@@ -2,11 +2,55 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../individual/home/dashboard/dashboard_screen.dart';
 
-class PortalBottomNav extends StatelessWidget {
+class PortalBottomNav extends StatefulWidget {
   const PortalBottomNav({super.key});
 
+  @override
+  State<PortalBottomNav> createState() => _PortalBottomNavState();
+}
+
+class _PortalBottomNavState extends State<PortalBottomNav> {
+  late final VoidCallback _routeListener;
+
+  @override
+  void initState() {
+    super.initState();
+    _routeListener = () {
+      if (mounted) {
+        setState(() {});
+      }
+    };
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    try {
+      GoRouter.of(context).routerDelegate.removeListener(_routeListener);
+      GoRouter.of(context).routerDelegate.addListener(_routeListener);
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    try {
+      GoRouter.of(context).routerDelegate.removeListener(_routeListener);
+    } catch (_) {}
+    super.dispose();
+  }
+
   int _calculateSelectedIndex(BuildContext context) {
-    final String location = GoRouterState.of(context).matchedLocation;
+    String location = '/portal';
+    try {
+      location = GoRouterState.of(context).uri.path;
+    } catch (_) {
+      try {
+        location = GoRouter.of(context).routeInformationProvider.value.uri.path;
+      } catch (_) {
+        location = '/portal';
+      }
+    }
+
     if (location.startsWith('/portal/vault')) return 1;
     if (location.startsWith('/portal/scanner')) return 2;
     if (location.startsWith('/portal/leads')) return 3;
@@ -25,7 +69,7 @@ class PortalBottomNav extends StatelessWidget {
   }
 
   void _onItemTapped(int index, BuildContext context) {
-    final String currentLocation = GoRouterState.of(context).matchedLocation;
+    final selectedIndex = _calculateSelectedIndex(context);
     final targetLocation = switch (index) {
       0 => '/portal',
       1 => '/portal/vault',
@@ -35,17 +79,18 @@ class PortalBottomNav extends StatelessWidget {
       _ => '/portal',
     };
 
-    if (currentLocation == targetLocation) {
-      if (targetLocation == '/portal') {
-        DashboardScreen.resetToDefaultHome();
-      }
-      return;
-    }
-
-    // Always reset home sub-view when switching tabs
+    // Reset home sub-view when switching tabs
     DashboardScreen.resetToDefaultHome();
-    // Use go() — the GoRouter-recommended approach for ShellRoute tab switching
-    context.go(targetLocation);
+
+    if (targetLocation == '/portal') {
+      while (context.canPop()) {
+        context.pop();
+      }
+      context.go('/portal');
+    } else {
+      if (selectedIndex == index) return;
+      context.push(targetLocation);
+    }
   }
 
   @override
@@ -88,37 +133,47 @@ class PortalBottomNav extends StatelessWidget {
                 onTap: () => _onItemTapped(2, context),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0052FF),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF0052FF).withValues(alpha: 0.35),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.qr_code_scanner_rounded,
-                        color: Colors.white,
-                        size: 24,
+                    AnimatedScale(
+                      scale: selectedIndex == 2 ? 1.06 : 1.0,
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.fastOutSlowIn,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.fastOutSlowIn,
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0052FF),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF0052FF).withValues(alpha: selectedIndex == 2 ? 0.45 : 0.25),
+                              blurRadius: selectedIndex == 2 ? 14 : 10,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.qr_code_scanner_rounded,
+                          color: Colors.white,
+                          size: 23,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Scan',
+                    const SizedBox(height: 3),
+                    AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 200),
                       style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: selectedIndex == 2 ? FontWeight.bold : FontWeight.w600,
+                        fontSize: 10.5,
+                        fontWeight: selectedIndex == 2 ? FontWeight.w700 : FontWeight.w500,
                         color: selectedIndex == 2
                             ? const Color(0xFF0052FF)
                             : const Color(0xFF64748B),
+                        letterSpacing: -0.1,
                       ),
+                      child: const Text('Scan'),
                     ),
                   ],
                 ),
@@ -152,26 +207,46 @@ class PortalBottomNav extends StatelessWidget {
     required String label,
   }) {
     final isSelected = selectedIndex == index;
-    final color =
-        isSelected ? const Color(0xFF0052FF) : const Color(0xFF94A3B8);
+    const activeColor = Color(0xFF0052FF);
+    const inactiveColor = Color(0xFF94A3B8);
 
     return InkWell(
       onTap: () => _onItemTapped(index, context),
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+      borderRadius: BorderRadius.circular(12),
+      splashColor: activeColor.withValues(alpha: 0.08),
+      highlightColor: Colors.transparent,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.fastOutSlowIn,
+        padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+        decoration: BoxDecoration(
+          color: isSelected ? activeColor.withValues(alpha: 0.08) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: color, size: 22),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: color,
+            AnimatedScale(
+              scale: isSelected ? 1.12 : 1.0,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.fastOutSlowIn,
+              child: Icon(
+                icon,
+                color: isSelected ? activeColor : inactiveColor,
+                size: 21,
               ),
+            ),
+            const SizedBox(height: 3),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 200),
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? activeColor : inactiveColor,
+                letterSpacing: -0.1,
+              ),
+              child: Text(label),
             ),
           ],
         ),

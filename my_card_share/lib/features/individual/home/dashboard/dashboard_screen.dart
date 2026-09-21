@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:my_card_share/core/router/app_router.dart';
 import 'package:my_card_share/features/individual/scanner/widgets/camera_scan_modal.dart';
-import 'package:my_card_share/features/individual/scanner/widgets/voice_scan_modal.dart';
+import 'package:my_card_share/services/Individual/voice/voice.dart';
 import 'package:my_card_share/features/public_card/public_card_screen.dart';
 import 'dashboard_hero_card.dart';
 import 'dashboard_metrics_row.dart';
@@ -32,7 +33,7 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
   bool _showingCardView = false;
 
   @override
@@ -42,11 +43,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null) {
+      appRouteObserver.subscribe(this, route);
+    }
+  }
+
+  @override
   void dispose() {
+    appRouteObserver.unsubscribe(this);
     if (DashboardScreen._activeState == this) {
       DashboardScreen._activeState = null;
     }
     super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    // When returning to Home from any secondary route, reset temporary Home UI state
+    _resetView();
   }
 
   void _resetView() {
@@ -110,12 +127,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               DashboardQuickActions(
                 onScanCardTap: _openScanCard,
                 onVoiceAddTap: _openVoiceAdd,
-                onAnalyticsTap: () => context.go('/portal/analytics'),
-                onVaultTap: () => context.go('/portal/vault'),
+                onAnalyticsTap: () => context.push('/portal/analytics'),
+                onVaultTap: () => context.push('/portal/vault'),
               ),
               const SizedBox(height: 24),
               DashboardRecentLeads(
-                onSeeAllTap: () => context.go('/portal/leads'),
+                onSeeAllTap: () => context.push('/portal/leads'),
               ),
               const SizedBox(height: 28),
             ],

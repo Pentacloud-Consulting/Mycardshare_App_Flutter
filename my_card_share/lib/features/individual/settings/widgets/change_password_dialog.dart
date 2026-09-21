@@ -47,107 +47,122 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFD),
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x1F000000),
+              blurRadius: 24,
+              offset: Offset(0, 10),
+            ),
+            BoxShadow(
+              color: Color(0x90FFFFFF),
+              blurRadius: 12,
+              offset: Offset(-4, -4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(22.0),
         child: Form(
           key: _formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Header Title & Close Button
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
                     "Change Password",
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
                       color: Color(0xFF0F172A),
+                      letterSpacing: -0.3,
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded, color: Color(0xFF64748B)),
-                    onPressed: () => Navigator.pop(context),
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => Navigator.pop(context),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFE2E8F0),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close_rounded, color: Color(0xFF475569), size: 18),
+                      ),
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 18),
 
-              // Current Password
-              TextFormField(
+              // Current Password Field (Clay Inset, No Black Border)
+              _buildClayInputField(
                 controller: _currentController,
                 obscureText: _obscureCurrent,
-                decoration: InputDecoration(
-                  labelText: "Current Password",
-                  prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscureCurrent ? Icons.visibility_off : Icons.visibility,
-                      size: 20,
-                    ),
-                    onPressed: () => setState(() => _obscureCurrent = !_obscureCurrent),
-                  ),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
+                hintText: "Current Password",
+                icon: Icons.lock_outline_rounded,
+                onToggleVisibility: () => setState(() => _obscureCurrent = !_obscureCurrent),
                 validator: (val) => val == null || val.isEmpty ? "Enter current password" : null,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
 
-              // New Password
-              TextFormField(
+              // New Password Field (Clay Inset, No Black Border)
+              _buildClayInputField(
                 controller: _newController,
                 obscureText: _obscureNew,
-                decoration: InputDecoration(
-                  labelText: "New Password",
-                  prefixIcon: const Icon(Icons.lock_reset_rounded, size: 20),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscureNew ? Icons.visibility_off : Icons.visibility,
-                      size: 20,
-                    ),
-                    onPressed: () => setState(() => _obscureNew = !_obscureNew),
-                  ),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
+                hintText: "New Password",
+                icon: Icons.lock_reset_rounded,
+                onToggleVisibility: () => setState(() => _obscureNew = !_obscureNew),
                 validator: (val) => val == null || val.length < 6 ? "Minimum 6 characters" : null,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
 
-              // Confirm Password
-              TextFormField(
+              // Confirm Password Field (Clay Inset, No Black Border)
+              _buildClayInputField(
                 controller: _confirmController,
                 obscureText: _obscureConfirm,
-                decoration: InputDecoration(
-                  labelText: "Confirm New Password",
-                  prefixIcon: const Icon(Icons.check_circle_outline_rounded, size: 20),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscureConfirm ? Icons.visibility_off : Icons.visibility,
-                      size: 20,
-                    ),
-                    onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
-                  ),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
+                hintText: "Confirm New Password",
+                icon: Icons.check_circle_outline_rounded,
+                onToggleVisibility: () => setState(() => _obscureConfirm = !_obscureConfirm),
                 validator: (val) {
                   if (val == null || val.isEmpty) return "Confirm your password";
                   if (val != _newController.text) return "Passwords do not match";
                   return null;
                 },
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 22),
 
-              // Save Button
-              SizedBox(
+              // 3D Clay Action Button
+              Container(
                 width: double.infinity,
-                height: 48,
+                height: 50,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x380052FF),
+                      blurRadius: 14,
+                      offset: Offset(0, 5),
+                    ),
+                  ],
+                ),
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _savePassword,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2563EB),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    backgroundColor: const Color(0xFF0052FF),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                   child: _isLoading
                       ? const SizedBox(
@@ -157,13 +172,75 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                         )
                       : const Text(
                           "Update Password",
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                          style: TextStyle(
+                            fontSize: 15.5,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: -0.1,
+                          ),
                         ),
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildClayInputField({
+    required TextEditingController controller,
+    required bool obscureText,
+    required String hintText,
+    required IconData icon,
+    required VoidCallback onToggleVisibility,
+    required String? Function(String?) validator,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: TextFormField(
+        controller: controller,
+        obscureText: obscureText,
+        style: const TextStyle(fontSize: 14.5, color: Color(0xFF0F172A), fontWeight: FontWeight.w600),
+        decoration: InputDecoration(
+          hintText: hintText,
+          hintStyle: const TextStyle(fontSize: 13.5, color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
+          prefixIcon: Icon(icon, color: const Color(0xFF64748B), size: 20),
+          suffixIcon: IconButton(
+            icon: Icon(
+              obscureText ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+              color: const Color(0xFF64748B),
+              size: 20,
+            ),
+            onPressed: onToggleVisibility,
+          ),
+          filled: true,
+          fillColor: const Color(0xFFF1F5F9),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Color(0xFF0052FF), width: 1.5),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+        ),
+        validator: validator,
       ),
     );
   }

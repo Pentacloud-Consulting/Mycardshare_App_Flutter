@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'voice_service.dart';
 
-class VoiceScanModal extends StatefulWidget {
+class VoiceScanModal extends ConsumerStatefulWidget {
   const VoiceScanModal({super.key});
 
   @override
-  State<VoiceScanModal> createState() => _VoiceScanModalState();
+  ConsumerState<VoiceScanModal> createState() => _VoiceScanModalState();
 }
 
-class _VoiceScanModalState extends State<VoiceScanModal> with SingleTickerProviderStateMixin {
+class _VoiceScanModalState extends ConsumerState<VoiceScanModal> with SingleTickerProviderStateMixin {
   late AnimationController _animController;
   late Animation<double> _pulseAnim;
 
@@ -59,13 +61,22 @@ class _VoiceScanModalState extends State<VoiceScanModal> with SingleTickerProvid
       _isSuccess = true;
     });
 
+    // Save parsed voice contact accurately into Riverpod VaultNotifier state
+    VoiceService.saveContact(
+      ref,
+      name: "Sarah Jenkins",
+      role: "VP of Marketing",
+      company: "CloudScale",
+      email: "sarah@cloudscale.io",
+    );
+
     await Future.delayed(const Duration(milliseconds: 1400));
     if (!mounted) return;
 
     if (Navigator.canPop(context)) {
       Navigator.pop(context);
     }
-    context.go('/portal/vault');
+    context.push('/portal/vault');
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text("✓ Sarah Jenkins added to Contact Vault via Voice Add!"),

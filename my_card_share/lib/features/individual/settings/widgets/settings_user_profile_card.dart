@@ -85,7 +85,7 @@ class SettingsUserProfileCard extends StatelessWidget {
 
           // Edit Button
           TextButton(
-            onPressed: () => context.go('/portal/profile'),
+            onPressed: () => context.push('/portal/profile'),
             style: TextButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               minimumSize: Size.zero,

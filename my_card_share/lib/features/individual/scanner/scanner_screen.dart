@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'widgets/camera_scan_modal.dart';
-import 'widgets/manual_add_contact_dialog.dart';
-import 'widgets/manual_entry_button.dart';
 import 'widgets/scan_option_card.dart';
-import 'widgets/voice_scan_modal.dart';
+import '../../../services/Individual/manual/manual.dart';
+import '../../../services/Individual/voice/voice.dart';
 import '../../auth/back/smart_back_handler.dart';
 
 class ScannerScreen extends StatelessWidget {

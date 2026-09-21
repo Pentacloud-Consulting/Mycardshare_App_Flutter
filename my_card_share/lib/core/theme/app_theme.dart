@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../features/auth/font style/font_style.dart';
 
 /// ============================================================
 /// APP COLORS — Light White & Blue Theme
@@ -50,85 +50,18 @@ class AppColors {
 }
 
 /// ============================================================
-/// APP TEXT STYLES — Plus Jakarta Sans
+/// APP TEXT STYLES — Powered by AppFontStyle
 /// ============================================================
 class AppTextStyles {
   AppTextStyles._();
 
   // Backwards compatibility getters
-  static TextStyle get headline => GoogleFonts.plusJakartaSans(
-        fontSize: 26,
-        fontWeight: FontWeight.w800,
-        color: AppColors.textPrimary,
-      );
-  static TextStyle get title => GoogleFonts.plusJakartaSans(
-        fontSize: 18,
-        fontWeight: FontWeight.w700,
-        color: AppColors.textPrimary,
-      );
-  static TextStyle get body => GoogleFonts.plusJakartaSans(
-        fontSize: 15,
-        fontWeight: FontWeight.w400,
-        color: AppColors.textSecondary,
-      );
-  static TextStyle get caption => GoogleFonts.plusJakartaSans(
-        fontSize: 12,
-        fontWeight: FontWeight.w400,
-        color: AppColors.textMuted,
-      );
+  static TextStyle get headline => AppFontStyle.headlineLarge;
+  static TextStyle get title => AppFontStyle.titleLarge;
+  static TextStyle get body => AppFontStyle.bodyLarge;
+  static TextStyle get caption => AppFontStyle.caption;
 
-  static TextTheme get textTheme =>
-      GoogleFonts.plusJakartaSansTextTheme().copyWith(
-        displayLarge: GoogleFonts.plusJakartaSans(
-          fontSize: 32,
-          fontWeight: FontWeight.w800,
-          color: AppColors.textPrimary,
-          height: 1.2,
-        ),
-        headlineLarge: GoogleFonts.plusJakartaSans(
-          fontSize: 26,
-          fontWeight: FontWeight.w800,
-          color: AppColors.textPrimary,
-          height: 1.25,
-        ),
-        headlineMedium: GoogleFonts.plusJakartaSans(
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary,
-        ),
-        titleLarge: GoogleFonts.plusJakartaSans(
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary,
-        ),
-        titleMedium: GoogleFonts.plusJakartaSans(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
-        ),
-        bodyLarge: GoogleFonts.plusJakartaSans(
-          fontSize: 15,
-          fontWeight: FontWeight.w400,
-          color: AppColors.textSecondary,
-          height: 1.5,
-        ),
-        bodyMedium: GoogleFonts.plusJakartaSans(
-          fontSize: 14,
-          fontWeight: FontWeight.w400,
-          color: AppColors.textSecondary,
-          height: 1.5,
-        ),
-        bodySmall: GoogleFonts.plusJakartaSans(
-          fontSize: 12,
-          fontWeight: FontWeight.w400,
-          color: AppColors.textMuted,
-        ),
-        labelLarge: GoogleFonts.plusJakartaSans(
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
-      );
+  static TextTheme get textTheme => AppFontStyle.textTheme;
 }
 
 /// ============================================================

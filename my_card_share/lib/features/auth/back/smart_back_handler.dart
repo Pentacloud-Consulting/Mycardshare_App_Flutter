@@ -25,7 +25,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
+import '../../individual/home/dashboard/dashboard_screen.dart';
 
 // ---------------------------------------------------------------------------
 // SmartBackHandler — core back-navigation logic
@@ -35,42 +35,18 @@ class SmartBackHandler {
   SmartBackHandler._();
 
   static DateTime? _lastBackPress;
-  static final List<String> _tabHistory = ['/portal'];
 
-  /// Record a visit to a main tab route to maintain a back stack
-  static void recordTabVisit(String location) {
-    if (_tabHistory.isNotEmpty && _tabHistory.last == location) return;
-    
-    // Avoid duplicate history entries by removing the old one before adding to top
-    _tabHistory.remove(location);
-    _tabHistory.add(location);
-  }
-
-  /// Pop the current tab and return the previous one
-  static String? popTab() {
-    if (_tabHistory.length > 1) {
-      _tabHistory.removeLast(); // pop current
-      return _tabHistory.last;  // return previous
-    }
-    return null;
-  }
-
-  /// Call from PortalShell / PopScope when back is triggered.
-  /// Returns true = event consumed (don't let Flutter pop anything).
-  static bool handleBack({
+  /// Call from PortalShell / PopScope when back is triggered on root page (Home).
+  /// Returns true = event consumed.
+  static bool handleRootBack({
     required BuildContext context,
-    required GoRouter router,
-    VoidCallback? onLeavingCurrentTab,
   }) {
-    // Pop to previous tab if available
-    final prevTab = popTab();
-    if (prevTab != null) {
-      onLeavingCurrentTab?.call();
-      router.go(prevTab);
+    // Rule 1: On Home with a sub-view open → close it first
+    if (DashboardScreen.resetViewIfOpen()) {
       return true;
     }
 
-    // Rule 2: on root with empty history → double-back-to-exit pattern
+    // Rule 2: On root page → double-back-to-exit pattern
     final now = DateTime.now();
     if (_lastBackPress == null ||
         now.difference(_lastBackPress!) > const Duration(seconds: 2)) {

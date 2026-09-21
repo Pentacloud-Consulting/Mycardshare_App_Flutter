@@ -132,11 +132,14 @@ final routerNotifierProvider = Provider<RouterNotifier>((ref) {
   return RouterNotifier(ref);
 });
 
+final appRouteObserver = RouteObserver<ModalRoute<void>>();
+
 final goRouterProvider = Provider<GoRouter>((ref) {
   final notifier = ref.watch(routerNotifierProvider);
 
   return GoRouter(
     initialLocation: '/onboarding',
+    observers: [appRouteObserver],
     refreshListenable: notifier,
     redirect: notifier.redirect,
     routes: [

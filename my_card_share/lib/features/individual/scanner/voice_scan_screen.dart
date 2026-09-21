@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'widgets/voice_scan_modal.dart';
+import '../../../services/Individual/voice/voice.dart';
 
 class VoiceScanScreen extends StatelessWidget {
   const VoiceScanScreen({super.key});

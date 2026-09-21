@@ -114,7 +114,7 @@ class SettingsAccountSection extends StatelessWidget {
 
               // Subscription
               ListTile(
-                onTap: () => context.go('/portal/subscription'),
+                onTap: () => context.push('/portal/subscription'),
                 leading: Container(
                   width: 38,
                   height: 38,

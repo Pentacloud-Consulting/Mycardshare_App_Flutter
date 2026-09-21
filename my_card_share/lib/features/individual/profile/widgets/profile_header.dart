@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class ProfileHeader extends StatelessWidget {
   final VoidCallback? onBackTap;
@@ -20,6 +21,8 @@ class ProfileHeader extends StatelessWidget {
           onTap: onBackTap ?? () {
             if (Navigator.canPop(context)) {
               Navigator.pop(context);
+            } else {
+              context.go('/portal');
             }
           },
           child: Container(

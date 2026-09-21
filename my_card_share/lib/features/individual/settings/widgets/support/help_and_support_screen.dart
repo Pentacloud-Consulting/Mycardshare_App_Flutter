@@ -170,13 +170,15 @@ class _HelpAndSupportScreenState extends State<HelpAndSupportScreen> {
               // FAQs List Expansion Tiles
               ...filteredFaqs.map((faq) => Container(
                     margin: const EdgeInsets.only(bottom: 10),
+                    clipBehavior: Clip.antiAlias,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: const Color(0xFFF1F5F9), width: 1.2),
                     ),
                     child: ExpansionTile(
-                      shape: const Border(),
+                      collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       iconColor: const Color(0xFF2563EB),
                       title: Text(
                         faq['question']!,

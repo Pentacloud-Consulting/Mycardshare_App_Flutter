@@ -46,7 +46,7 @@ class DashboardQuickActions extends StatelessWidget {
                     },
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             Expanded(
               child: _buildActionTile(
                 icon: Icons.mic_rounded,
@@ -64,7 +64,7 @@ class DashboardQuickActions extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(width: 12, height: 12),
+        const SizedBox(height: 8),
         Row(
           children: [
             Expanded(
@@ -74,10 +74,10 @@ class DashboardQuickActions extends StatelessWidget {
                 iconColor: const Color(0xFF059669),
                 title: "Analytics",
                 subtitle: "View detailed insights",
-                onTap: onAnalyticsTap ?? () => context.go('/portal/analytics'),
+                onTap: onAnalyticsTap ?? () => context.push('/portal/analytics'),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             Expanded(
               child: _buildActionTile(
                 icon: Icons.people_alt_rounded,
@@ -85,7 +85,7 @@ class DashboardQuickActions extends StatelessWidget {
                 iconColor: const Color(0xFFEA580C),
                 title: "Contact Vault",
                 subtitle: "Manage your contacts",
-                onTap: onVaultTap ?? () => context.go('/portal/vault'),
+                onTap: onVaultTap ?? () => context.push('/portal/vault'),
               ),
             ),
           ],
@@ -103,9 +103,10 @@ class DashboardQuickActions extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return Container(
+      height: 74,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFF1F5F9), width: 1.2),
         boxShadow: const [
           BoxShadow(
@@ -116,30 +117,33 @@ class DashboardQuickActions extends StatelessWidget {
         ],
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 34,
+                height: 34,
                 decoration: BoxDecoration(
                   color: iconBg,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: iconColor, size: 22),
+                child: Icon(icon, color: iconColor, size: 18),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 6),
               Expanded(
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       title,
+                      maxLines: 1,
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF0F172A),
                       ),
@@ -147,16 +151,16 @@ class DashboardQuickActions extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
+                      maxLines: 2,
                       style: const TextStyle(
-                        fontSize: 11.5,
+                        fontSize: 10,
+                        height: 1.25,
                         color: Color(0xFF64748B),
-                        height: 1.4,
                       ),
                     ),
                   ],
                 ),
               ),
-
             ],
           ),
         ),

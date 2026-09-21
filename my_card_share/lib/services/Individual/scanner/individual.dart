@@ -83,7 +83,7 @@ class _ReviewDetailsScreenState extends ConsumerState<ReviewDetailsScreen> {
     if (Navigator.canPop(context)) {
       Navigator.pop(context);
     }
-    context.go('/portal/vault');
+    context.push('/portal/vault');
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

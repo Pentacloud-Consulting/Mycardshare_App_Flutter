@@ -41,23 +41,25 @@ class SupportPrivacyPolicyScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text(
-                              "Privacy Policy",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF0F172A),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                "Privacy Policy",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF0F172A),
+                                ),
                               ),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              "GDPR & CCPA Compliant • Last Updated: Sept 2026",
-                              style: TextStyle(fontSize: 11.5, color: Color(0xFF16A34A), fontWeight: FontWeight.bold),
-                            ),
-                          ],
+                              SizedBox(height: 2),
+                              Text(
+                                "GDPR & CCPA Compliant • Last Updated: Sept 2026",
+                                style: TextStyle(fontSize: 11.5, color: Color(0xFF16A34A), fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),

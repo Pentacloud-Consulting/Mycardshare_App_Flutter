@@ -38,7 +38,7 @@ class SettingsSupportSection extends StatelessWidget {
             children: [
               // Help & Support
               ListTile(
-                onTap: () => context.go('/portal/support/help'),
+                onTap: () => context.push('/portal/support/help'),
                 leading: Container(
                   width: 38,
                   height: 38,
@@ -70,7 +70,7 @@ class SettingsSupportSection extends StatelessWidget {
 
               // Terms of Service
               ListTile(
-                onTap: () => context.go('/portal/support/terms'),
+                onTap: () => context.push('/portal/support/terms'),
                 leading: Container(
                   width: 38,
                   height: 38,
@@ -102,7 +102,7 @@ class SettingsSupportSection extends StatelessWidget {
 
               // Privacy Policy
               ListTile(
-                onTap: () => context.go('/portal/support/privacy'),
+                onTap: () => context.push('/portal/support/privacy'),
                 leading: Container(
                   width: 38,
                   height: 38,
@@ -134,7 +134,7 @@ class SettingsSupportSection extends StatelessWidget {
 
               // About
               ListTile(
-                onTap: () => context.go('/portal/support/about'),
+                onTap: () => context.push('/portal/support/about'),
                 leading: Container(
                   width: 38,
                   height: 38,

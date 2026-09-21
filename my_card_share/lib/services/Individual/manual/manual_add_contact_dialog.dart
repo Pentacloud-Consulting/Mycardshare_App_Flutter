@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'manual_service.dart';
 
-class ManualAddContactDialog extends StatefulWidget {
+class ManualAddContactDialog extends ConsumerStatefulWidget {
   const ManualAddContactDialog({super.key});
 
   @override
-  State<ManualAddContactDialog> createState() => _ManualAddContactDialogState();
+  ConsumerState<ManualAddContactDialog> createState() => _ManualAddContactDialogState();
 }
 
-class _ManualAddContactDialogState extends State<ManualAddContactDialog> {
+class _ManualAddContactDialogState extends ConsumerState<ManualAddContactDialog> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _titleController = TextEditingController();
@@ -29,11 +31,29 @@ class _ManualAddContactDialogState extends State<ManualAddContactDialog> {
   void _saveContact() {
     if (_formKey.currentState!.validate()) {
       final name = _nameController.text.trim();
-      Navigator.pop(context);
-      context.go('/portal/vault');
+      final title = _titleController.text.trim();
+      final company = _companyController.text.trim();
+      final phone = _phoneController.text.trim();
+      final email = _emailController.text.trim();
+
+      // Save manually created contact using ManualService to VaultNotifier
+      ManualService.saveContact(
+        ref,
+        name: name,
+        role: title,
+        company: company,
+        phone: phone,
+        email: email,
+      );
+
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+      context.push('/portal/vault');
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("✓ $name added to Contact Vault!"),
+          content: Text("✓ $name added to Contact Vault (Manual)!"),
           backgroundColor: const Color(0xFF0F172A),
           behavior: SnackBarBehavior.floating,
         ),

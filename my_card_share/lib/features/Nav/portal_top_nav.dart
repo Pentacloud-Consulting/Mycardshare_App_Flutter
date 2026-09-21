@@ -118,7 +118,14 @@ class PortalTopNav extends StatelessWidget implements PreferredSizeWidget {
       }
     }
 
+    final bool isMainTab = currentPath == '/portal' ||
+        currentPath == '/portal/vault' ||
+        currentPath == '/portal/scanner' ||
+        currentPath == '/portal/leads' ||
+        currentPath == '/portal/profile';
+
     final bool isHome = currentPath == '/portal';
+    final bool shouldShowBack = showBackButton || !isMainTab;
 
     final String resolvedTitle = title ??
         (_routeTitles[currentPath]?['title'] ?? _deriveTitleFromPath(currentPath));
@@ -135,16 +142,20 @@ class PortalTopNav extends StatelessWidget implements PreferredSizeWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Left Group: Hamburger Menu Button + Title or Greeting
+            // Left Group: Hamburger Menu / Back Button + Title or Greeting
             Row(
               children: [
-                // Circular Light-Gray Menu Button (Image 2)
+                // Circular Light-Gray Menu / Back Button
                 Material(
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: () {
-                      if (showBackButton) {
-                        Navigator.pop(context);
+                      if (shouldShowBack) {
+                        if (Navigator.canPop(context)) {
+                          Navigator.pop(context);
+                        } else {
+                          context.go('/portal');
+                        }
                       } else {
                         _openMenuModal(context);
                       }
@@ -158,7 +169,7 @@ class PortalTopNav extends StatelessWidget implements PreferredSizeWidget {
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        showBackButton ? Icons.arrow_back_rounded : Icons.menu_rounded,
+                        shouldShowBack ? Icons.arrow_back_rounded : Icons.menu_rounded,
                         color: const Color(0xFF334155),
                         size: 22,
                       ),
@@ -239,7 +250,7 @@ class PortalTopNav extends StatelessWidget implements PreferredSizeWidget {
                 Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onTap: () => context.go('/portal/notifications'),
+                    onTap: () => context.push('/portal/notifications'),
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
                       width: 40,

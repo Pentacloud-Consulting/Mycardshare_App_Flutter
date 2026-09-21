@@ -12,27 +12,6 @@ class SubscriptionHeroHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Top Close X Icon
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onCloseTap ?? () => Navigator.maybePop(context),
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                width: 38,
-                height: 38,
-                alignment: Alignment.center,
-                child: const Icon(
-                  Icons.close_rounded,
-                  color: Color(0xFF0F172A),
-                  size: 24,
-                ),
-              ),
-            ),
-          ),
-        ),
         const SizedBox(height: 10),
 
         // Glowing Crown Emblem with Sunburst Rays

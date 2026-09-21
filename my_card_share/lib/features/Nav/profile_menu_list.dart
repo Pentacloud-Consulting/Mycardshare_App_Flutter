@@ -76,7 +76,7 @@ class ProfileMenuList extends ConsumerWidget {
         GestureDetector(
           onTap: () {
             Navigator.pop(context);
-            context.go('/portal/subscription');
+            context.push('/portal/subscription');
           },
           child: Container(
           margin: const EdgeInsets.only(bottom: 12),
@@ -222,7 +222,7 @@ class ProfileMenuList extends ConsumerWidget {
                 ),
                 onTap: () {
                   Navigator.pop(context);
-                  context.go(item.route);
+                  context.push(item.route);
                 },
               ),
               if (!isLast)

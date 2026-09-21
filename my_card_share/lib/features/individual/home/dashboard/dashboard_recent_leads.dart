@@ -25,7 +25,7 @@ class DashboardRecentLeads extends StatelessWidget {
               ),
             ),
             GestureDetector(
-              onTap: onSeeAllTap ?? () => context.go('/portal/leads'),
+              onTap: onSeeAllTap ?? () => context.push('/portal/leads'),
               child: const Text(
                 "See All",
                 style: TextStyle(

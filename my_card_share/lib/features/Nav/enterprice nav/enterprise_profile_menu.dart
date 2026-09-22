@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../providers/auth_provider.dart';
 
-class EnterpriseProfileMenuHub extends StatelessWidget {
+class EnterpriseProfileMenuHub extends ConsumerWidget {
   const EnterpriseProfileMenuHub({super.key});
 
   void _copyInviteLink(BuildContext context) {
@@ -26,7 +28,7 @@ class EnterpriseProfileMenuHub extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -121,7 +123,7 @@ class EnterpriseProfileMenuHub extends StatelessWidget {
         ),
         const SizedBox(height: 10),
 
-        // Log Out
+        // Log Out of Enterprise -> Calls authProvider logout() and redirects to /login
         _buildMenuItem(
           context: context,
           icon: Icons.logout_rounded,
@@ -129,7 +131,10 @@ class EnterpriseProfileMenuHub extends StatelessWidget {
           bgColor: const Color(0xFFFEE2E2),
           title: "Log Out of Enterprise",
           subtitle: "Sign out of Admin Session",
-          onTap: () => context.go('/login'),
+          onTap: () {
+            ref.read(authProvider.notifier).logout();
+            context.go('/login');
+          },
         ),
       ],
     );

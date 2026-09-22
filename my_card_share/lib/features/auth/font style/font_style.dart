@@ -17,7 +17,7 @@ class AppFontStyle {
   /// Initializes font configuration to force bundled local asset loading
   /// and disable runtime HTTP fetching.
   static void init() {
-    GoogleFonts.config.allowRuntimeFetching = false;
+    GoogleFonts.config.allowRuntimeFetching = true;
   }
 
   /// Wraps MaterialApp builder to enforce fixed text scaling (TextScaler.noScaling)

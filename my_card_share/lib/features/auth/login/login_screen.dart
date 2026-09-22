@@ -430,6 +430,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ],
                   ),
 
+                  const SizedBox(height: 12),
+
+                  // Master Admin Access Link
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "System Administrator? ",
+                        style: AppTextStyles.textTheme.bodyMedium?.copyWith(
+                          fontSize: 13.5,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => context.push('/master-admin/login'),
+                        child: Text(
+                          "Master Admin Login",
+                          style: AppTextStyles.textTheme.bodyMedium?.copyWith(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
                   const SizedBox(height: 24),
                 ],
               ),

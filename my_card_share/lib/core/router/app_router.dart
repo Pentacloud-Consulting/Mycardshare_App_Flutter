@@ -13,6 +13,7 @@ import '../../features/auth/onboarding/onboarding.dart';
 import '../../features/auth/reset_password/reset_password.dart';
 import '../../features/auth/enterprice sign/registration_pending_screen.dart';
 import '../../features/auth/enterprice sign/enterprise_onboarding_screen.dart';
+import '../../features/auth/master_admin/master_admin_login.dart';
 
 // Public Card Import
 import '../../features/public_card/card.dart';
@@ -101,7 +102,8 @@ class RouterNotifier extends ChangeNotifier {
       '/onboarding-wizard',
       '/reset-password',
       '/registration-pending',
-      '/enterprise-onboarding'
+      '/enterprise-onboarding',
+      '/master-admin/login'
     ];
 
     final isPublicCard = path.startsWith('/card/');
@@ -110,6 +112,12 @@ class RouterNotifier extends ChangeNotifier {
     if (loggedIn && (authPaths.contains(path) || path == '/')) {
       if (path == '/enterprise-onboarding' || path == '/registration-pending') {
         return null; // allow viewing onboarding wizard & pending screens
+      }
+      if (role == 'master-admin') {
+        return '/master-admin/dashboard';
+      }
+      if (role == 'enterprise' || role == 'employee') {
+        return '/enterprise/dashboard';
       }
       return '/portal'; // individual
     }
@@ -178,6 +186,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/enterprise-onboarding',
         builder: (c, s) => const EnterpriseOnboardingScreen(),
+      ),
+      GoRoute(
+        path: '/master-admin/login',
+        builder: (c, s) => const MasterAdminLoginScreen(),
       ),
 
       // Public Card

@@ -100,6 +100,45 @@ class SmartBackHandler {
     return true;
   }
 
+  /// Call from MasterAdminShell / PopScope when back is triggered in Master Admin portal.
+  /// Returns true = event consumed.
+  static bool handleMasterAdminBack({
+    required BuildContext context,
+  }) {
+    String currentPath = '/master-admin/dashboard';
+    try {
+      currentPath = GoRouterState.of(context).uri.path;
+    } catch (_) {
+      try {
+        currentPath = GoRouter.of(context).routeInformationProvider.value.uri.path;
+      } catch (_) {}
+    }
+
+    final isMainDashboard = currentPath == '/master-admin/dashboard' || currentPath == '/master-admin';
+
+    if (!isMainDashboard) {
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/master-admin/dashboard');
+      }
+      return true;
+    }
+
+    // On main master admin dashboard → double-back-to-exit pattern
+    final now = DateTime.now();
+    if (_lastBackPress == null ||
+        now.difference(_lastBackPress!) > const Duration(seconds: 2)) {
+      _lastBackPress = now;
+      _showExitSnackBar(context);
+      return true;
+    }
+
+    // Second press within 2 s → exit
+    SystemNavigator.pop();
+    return true;
+  }
+
   static void _showExitSnackBar(BuildContext context) {
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(

@@ -6,14 +6,14 @@ import 'widgets/wallet_credentials_section.dart';
 import 'widgets/super_admin_accounts_section.dart';
 import 'widgets/system_status_section.dart';
 
-class MasterAdminSettingsScreen extends StatefulWidget {
-  const MasterAdminSettingsScreen({super.key});
+class PlatformSettingsScreen extends StatefulWidget {
+  const PlatformSettingsScreen({super.key});
 
   @override
-  State<MasterAdminSettingsScreen> createState() => _MasterAdminSettingsScreenState();
+  State<PlatformSettingsScreen> createState() => _PlatformSettingsScreenState();
 }
 
-class _MasterAdminSettingsScreenState extends State<MasterAdminSettingsScreen> {
+class _PlatformSettingsScreenState extends State<PlatformSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return SmartPopScope(

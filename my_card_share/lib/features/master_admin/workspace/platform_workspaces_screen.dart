@@ -5,14 +5,14 @@ import 'widgets/workspace_header_section.dart';
 import 'widgets/workspace_list_section.dart';
 import 'widgets/map_custom_domain_card.dart';
 
-class MasterAdminWorkspaceScreen extends StatefulWidget {
-  const MasterAdminWorkspaceScreen({super.key});
+class PlatformWorkspacesScreen extends StatefulWidget {
+  const PlatformWorkspacesScreen({super.key});
 
   @override
-  State<MasterAdminWorkspaceScreen> createState() => _MasterAdminWorkspaceScreenState();
+  State<PlatformWorkspacesScreen> createState() => _PlatformWorkspacesScreenState();
 }
 
-class _MasterAdminWorkspaceScreenState extends State<MasterAdminWorkspaceScreen> {
+class _PlatformWorkspacesScreenState extends State<PlatformWorkspacesScreen> {
   String _searchQuery = '';
 
   @override

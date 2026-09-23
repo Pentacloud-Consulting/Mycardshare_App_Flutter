@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../auth/back/smart_back_handler.dart';
 import '../../auth/font style/font_style.dart';
+import '../../master_admin/notifications/widgets/notification_item_card.dart';
 
 class MasterAdminTopNav extends StatelessWidget implements PreferredSizeWidget {
   final String? title;
@@ -38,6 +39,7 @@ class MasterAdminTopNav extends StatelessWidget implements PreferredSizeWidget {
     final isWorkspace = currentPath.startsWith('/master-admin/workspace');
     final isSettings = currentPath.startsWith('/master-admin/settings');
     final isProfile = currentPath.startsWith('/master-admin/profile');
+    final isNotifications = currentPath.startsWith('/master-admin/notifications');
 
     return Container(
       height: preferredSize.height + MediaQuery.of(context).padding.top,
@@ -161,12 +163,14 @@ class MasterAdminTopNav extends StatelessWidget implements PreferredSizeWidget {
                                                     : isAnalytics
                                                         ? "Platform Usage Analytics"
                                                         : isWorkspace
-                                                            ? "Platform Workspaces"
+                                                            ? "Workspaces"
                                                             : isSettings
-                                                                ? "Platform System Settings"
+                                                                ? "Platform Settings"
                                                                 : isProfile
                                                                     ? "Admin Profile"
-                                                                    : "Master Admin"),
+                                                                    : isNotifications
+                                                                        ? "Notifications"
+                                                                        : "Master Admin"),
                     style: const TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w800,
@@ -206,24 +210,66 @@ class MasterAdminTopNav extends StatelessWidget implements PreferredSizeWidget {
             children: [
               if (customRightAction != null)
                 customRightAction!
-              else
-                _buildIconButton(
-                  icon: Icons.notifications_none_rounded,
-                  showDot: true,
-                  onTap: () {
+              else if (isProfile)
+                TextButton(
+                  onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Row(
-                          children: [
-                            Icon(Icons.notifications_active_rounded, color: Colors.white, size: 18),
-                            SizedBox(width: 8),
-                            Text("3 new pending company approval requests"),
-                          ],
-                        ),
+                      const SnackBar(
+                        content: Text("Admin profile changes saved successfully!"),
                         behavior: SnackBarBehavior.floating,
-                        backgroundColor: const Color(0xFF0F172A),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        backgroundColor: Color(0xFF0F172A),
                       ),
+                    );
+                  },
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text(
+                    "Save",
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF2563EB),
+                    ),
+                  ),
+                )
+              else if (isNotifications)
+                GestureDetector(
+                  onTap: () {
+                    NotificationStore.markAllAsRead();
+                    ScaffoldMessenger.of(context).clearSnackBars();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("All notifications marked as read"),
+                        behavior: SnackBarBehavior.floating,
+                        backgroundColor: Color(0xFF0F172A),
+                      ),
+                    );
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                    child: Text(
+                      "Mark all read",
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF2563EB),
+                      ),
+                    ),
+                  ),
+                )
+              else
+                ValueListenableBuilder<bool>(
+                  valueListenable: NotificationStore.hasUnreadNotifier,
+                  builder: (context, hasUnread, _) {
+                    return _buildIconButton(
+                      icon: Icons.notifications_none_rounded,
+                      showDot: hasUnread,
+                      onTap: () {
+                        context.push('/master-admin/notifications');
+                      },
                     );
                   },
                 ),

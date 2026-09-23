@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../providers/auth_provider.dart';
 import 'profile_menu_list.dart';
 
-class PortalTopNav extends StatelessWidget implements PreferredSizeWidget {
+class PortalTopNav extends ConsumerWidget implements PreferredSizeWidget {
   final String userName;
   final String? title;
   final String? subtitle;
@@ -37,9 +39,9 @@ class PortalTopNav extends StatelessWidget implements PreferredSizeWidget {
     '/portal/support/terms': {'title': 'Terms of Service'},
     '/portal/support/privacy': {'title': 'Privacy Policy'},
     '/portal/support/about': {'title': 'About MyCardShare'},
-    '/portal/approvals': {'title': 'Approvals'},
-    '/portal/companies': {'title': 'Companies'},
-    '/portal/workforce': {'title': 'Workforce'},
+    '/portal/approvals': {'title': 'Request Approvals'},
+    '/portal/companies': {'title': 'My Company'},
+    '/portal/workforce': {'title': 'Team Workforce'},
   };
 
   String _deriveTitleFromPath(String path) {
@@ -106,7 +108,10 @@ class PortalTopNav extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final role = ref.watch(authProvider).role;
+    final isEmployee = role == 'employee';
+
     String currentPath = '/portal';
     try {
       currentPath = GoRouterState.of(context).uri.path;
@@ -179,32 +184,62 @@ class PortalTopNav extends StatelessWidget implements PreferredSizeWidget {
                 const SizedBox(width: 12),
 
                 if (isHome) ...[
-                  // Greeting Text on Home: "Hi, Alex"
-                  RichText(
-                    text: TextSpan(
-                      style: const TextStyle(
-                        fontFamily: 'sans-serif',
-                        fontSize: 20,
-                      ),
-                      children: [
-                        const TextSpan(
-                          text: "Hi, ",
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF0F172A),
-                          ),
-                        ),
-                        TextSpan(
-                          text: userName,
+                  // Greeting Text on Home: "Hi, Alex" + optional company badge
+                  Row(
+                    children: [
+                      RichText(
+                        text: TextSpan(
                           style: const TextStyle(
-                            fontStyle: FontStyle.italic,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF2563EB),
+                            fontFamily: 'sans-serif',
+                            fontSize: 19,
+                          ),
+                          children: [
+                            const TextSpan(
+                              text: "Hi, ",
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                            TextSpan(
+                              text: userName,
+                              style: const TextStyle(
+                                fontStyle: FontStyle.italic,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF2563EB),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (isEmployee) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEFF6FF),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFFBFDBFE), width: 1),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.business_rounded, size: 11, color: Color(0xFF0052FF)),
+                              SizedBox(width: 4),
+                              Text(
+                                "Acme Realty",
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF0052FF),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
-                    ),
+                    ],
                   ),
                 ] else ...[
                   // Page Title & Subtitle on Sub-pages
@@ -212,14 +247,41 @@ class PortalTopNav extends StatelessWidget implements PreferredSizeWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        resolvedTitle,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
-                          letterSpacing: -0.3,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            resolvedTitle,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF0F172A),
+                              letterSpacing: -0.4,
+                            ),
+                          ),
+                          if (isEmployee ||
+                              currentPath == '/portal/approvals' ||
+                              currentPath == '/portal/companies' ||
+                              currentPath == '/portal/workforce') ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFEF3C7),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: const Color(0xFFFDE68A)),
+                              ),
+                              child: const Text(
+                                "EMPLOYEE",
+                                style: TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFFD97706),
+                                  letterSpacing: 0.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       if (resolvedSubtitle != null &&
                           resolvedSubtitle.isNotEmpty) ...[

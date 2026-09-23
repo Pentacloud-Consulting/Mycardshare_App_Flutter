@@ -7,14 +7,14 @@ import 'widgets/profile_security_section.dart';
 import 'widgets/profile_activity_section.dart';
 import 'widgets/profile_logout_button.dart';
 
-class MasterAdminProfileScreen extends StatefulWidget {
-  const MasterAdminProfileScreen({super.key});
+class AdminProfileScreen extends StatefulWidget {
+  const AdminProfileScreen({super.key});
 
   @override
-  State<MasterAdminProfileScreen> createState() => _MasterAdminProfileScreenState();
+  State<AdminProfileScreen> createState() => _AdminProfileScreenState();
 }
 
-class _MasterAdminProfileScreenState extends State<MasterAdminProfileScreen> {
+class _AdminProfileScreenState extends State<AdminProfileScreen> {
   final TextEditingController _nameController =
       TextEditingController(text: "System Master Admin");
   final TextEditingController _emailController =
@@ -66,7 +66,7 @@ class _MasterAdminProfileScreenState extends State<MasterAdminProfileScreen> {
             ),
           ),
 
-        // Main Body Content
+        // Content
         DefaultTextStyle(
           style: AppFontStyle.bodyMedium,
           child: SingleChildScrollView(

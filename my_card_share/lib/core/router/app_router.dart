@@ -61,6 +61,7 @@ import '../../features/master_admin/analytics/analytics.dart';
 import '../../features/master_admin/workspace/workspace.dart';
 import '../../features/master_admin/profile/profile.dart';
 import '../../features/master_admin/settings/settings.dart';
+import '../../features/master_admin/notifications/master_admin_notifications_screen.dart';
 
 // Shell Layout Imports
 import '../../widgets/shells/portal_shell.dart';
@@ -377,6 +378,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/master-admin/settings',
             builder: (c, s) => const MasterAdminSettingsScreen(),
+          ),
+          GoRoute(
+            path: '/master-admin/notifications',
+            builder: (c, s) => const MasterAdminNotificationsScreen(),
           ),
         ],
       ),

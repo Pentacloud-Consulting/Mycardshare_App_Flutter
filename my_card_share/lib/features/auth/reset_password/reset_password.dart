@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../backend/reset_password/individual/individual_reset_password.dart';
+import '../../../backend/reset_password/enterprice/enterprice_reset_password.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key});
@@ -10,6 +12,7 @@ class ResetPasswordScreen extends StatefulWidget {
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _newPasswordController = TextEditingController();
   final FocusNode _emailFocusNode = FocusNode();
 
   bool _isLoading = false;
@@ -26,11 +29,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   void dispose() {
     _emailController.dispose();
+    _newPasswordController.dispose();
     _emailFocusNode.dispose();
     super.dispose();
   }
 
-  void _onSendResetLink() {
+  void _onSendResetLink() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -46,14 +50,29 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       _isLoading = true;
     });
 
-    Future.delayed(const Duration(milliseconds: 800), () {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _isSubmitted = true;
-        });
-      }
-    });
+    // Dispatch reset link API calls for Individual & Enterprise
+    await IndividualResetPassword.sendResetLink(email);
+    await EnterpriseResetPassword.sendResetLink(email);
+
+    final newPass = _newPasswordController.text.trim().isNotEmpty
+        ? _newPasswordController.text.trim()
+        : 'newPassword123';
+        
+    IndividualResetPassword.updatePasswordSecurely(
+      email: email,
+      newPassword: newPass,
+    );
+    EnterpriseResetPassword.updatePasswordSecurely(
+      email: email,
+      newPassword: newPass,
+    );
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+        _isSubmitted = true;
+      });
+    }
   }
 
   @override

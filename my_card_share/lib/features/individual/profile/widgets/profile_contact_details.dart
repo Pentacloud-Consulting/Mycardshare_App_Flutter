@@ -35,11 +35,13 @@ class ProfileContactDetails extends StatelessWidget {
         ),
         const SizedBox(height: 8),
 
-        // Email Field
+        // Email Field (Verified & Read-only)
         _buildInputField(
           icon: Icons.mail_outline_rounded,
           label: "Email",
           controller: emailController,
+          isReadOnly: true,
+          isVerified: true,
         ),
         const SizedBox(height: 8),
 
@@ -57,10 +59,12 @@ class ProfileContactDetails extends StatelessWidget {
     required IconData icon,
     required String label,
     required TextEditingController controller,
+    bool isReadOnly = false,
+    bool isVerified = false,
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isReadOnly ? const Color(0xFFF8FAFC) : Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
         boxShadow: const [
@@ -93,9 +97,11 @@ class ProfileContactDetails extends StatelessWidget {
             Expanded(
               child: TextField(
                 controller: controller,
-                style: const TextStyle(
+                readOnly: isReadOnly,
+                enabled: !isReadOnly,
+                style: TextStyle(
                   fontSize: 13,
-                  color: Color(0xFF0F172A),
+                  color: isReadOnly ? const Color(0xFF475569) : const Color(0xFF0F172A),
                   fontWeight: FontWeight.w500,
                 ),
                 decoration: const InputDecoration(
@@ -105,6 +111,31 @@ class ProfileContactDetails extends StatelessWidget {
                 ),
               ),
             ),
+            if (isVerified) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDCFCE7),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 12),
+                    SizedBox(width: 4),
+                    Text(
+                      "Verified",
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF15803D),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),

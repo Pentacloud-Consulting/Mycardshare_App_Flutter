@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_style_widgets.dart';
-import '../../../models/user_model.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../backend/master_admin/login/master_admin_login.dart';
 
 class MasterAdminLoginScreen extends ConsumerStatefulWidget {
   const MasterAdminLoginScreen({super.key});
@@ -39,35 +39,25 @@ class _MasterAdminLoginScreenState extends ConsumerState<MasterAdminLoginScreen>
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    // Validation
-    if (email.isEmpty || !email.contains('@')) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = "Please enter a valid admin email address.";
-      });
-      return;
-    }
-
-    if (password.isEmpty || password.length < 4) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = "Please enter your password (minimum 4 characters).";
-      });
-      return;
-    }
-
-    // Simulate authentication delay
-    await Future.delayed(const Duration(milliseconds: 600));
-
-    final user = UserModel(
-      id: 'admin_master_1',
-      name: 'System Master Admin',
+    // Authenticate via MasterAdminLoginService backend
+    final response = await MasterAdminLoginService.authenticateMasterAdmin(
       email: email,
-      role: 'master-admin',
+      password: password,
     );
 
-    // Update global AuthState
-    ref.read(authProvider.notifier).login(user);
+    if (!response.isSuccess) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = response.message;
+        });
+      }
+      return;
+    }
+
+    if (response.userModel != null) {
+      ref.read(authProvider.notifier).login(response.userModel!);
+    }
 
     if (mounted) {
       setState(() {

@@ -44,6 +44,12 @@ dependencies:
   cupertino_icons: ^1.0.8
   font_awesome_flutter: ^11.0.0
   camera: ^0.12.1
+  firebase_core: ^4.15.0
+  firebase_auth: ^6.7.0
+  google_sign_in: ^6.2.2
+  cloud_firestore: ^6.10.0
+  image_picker: ^1.1.2
+  qr_flutter: ^4.1.0
 
 dev_dependencies:
   flutter_test:
@@ -69,6 +75,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/Pics/
     - assets/icons/
     - assets/data/
     - assets/fonts/

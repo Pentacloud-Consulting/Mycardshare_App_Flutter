@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../../../backend/individual/profile/individual_profile_store.dart';
 
 class CardSocialRow extends StatelessWidget {
+  final List<SocialLinkItem>? links;
   final VoidCallback? onLinkedInTap;
   final VoidCallback? onInstagramTap;
   final VoidCallback? onWhatsAppTap;
@@ -10,6 +12,7 @@ class CardSocialRow extends StatelessWidget {
 
   const CardSocialRow({
     super.key,
+    this.links,
     this.onLinkedInTap,
     this.onInstagramTap,
     this.onWhatsAppTap,
@@ -19,85 +22,80 @@ class CardSocialRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        // LinkedIn - Official Blue #0A66C2
-        _buildSocialIconButton(
-          iconColor: const Color(0xFF0A66C2),
-          child: const FaIcon(
-            FontAwesomeIcons.linkedinIn,
-            color: Color(0xFF0A66C2),
-            size: 20,
-          ),
-          onTap: onLinkedInTap ?? () {},
-        ),
+    final activeLinks = links ?? IndividualProfileStore.instance.activeProfile?.socialLinks ?? [];
 
-        // Instagram - Authentic Multi-stop Sunset Gradient (ShaderMask)
-        _buildSocialIconButton(
-          child: ShaderMask(
-            shaderCallback: (Rect bounds) {
-              return const LinearGradient(
-                colors: [
-                  Color(0xFF405DE6),
-                  Color(0xFF833AB4),
-                  Color(0xFFC13584),
-                  Color(0xFFE1306C),
-                  Color(0xFFFD1D1D),
-                  Color(0xFFF77737),
-                  Color(0xFFFCCC63),
-                ],
-                begin: Alignment.bottomLeft,
-                end: Alignment.topRight,
-              ).createShader(bounds);
-            },
-            child: const FaIcon(
-              FontAwesomeIcons.instagram,
-              color: Colors.white, // Mask uses white base to apply shader gradient
-              size: 22,
+    if (activeLinks.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: activeLinks.map((item) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: _buildSocialIconButton(
+              child: _buildPlatformIconWidget(item.platform),
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("${item.platform}: ${item.url}"),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                );
+              },
             ),
-          ),
-          onTap: onInstagramTap ?? () {},
-        ),
-
-        // WhatsApp - Official Green #25D366
-        _buildSocialIconButton(
-          iconColor: const Color(0xFF25D366),
-          child: const FaIcon(
-            FontAwesomeIcons.whatsapp,
-            color: Color(0xFF25D366),
-            size: 22,
-          ),
-          onTap: onWhatsAppTap ?? () {},
-        ),
-
-        // Website - Ocean Blue #0284C7
-        _buildSocialIconButton(
-          iconColor: const Color(0xFF0284C7),
-          child: const FaIcon(
-            FontAwesomeIcons.globe,
-            color: Color(0xFF0284C7),
-            size: 20,
-          ),
-          onTap: onWebsiteTap ?? () {},
-        ),
-
-        // GitHub - Authentic Dark Charcoal #181717
-        _buildSocialIconButton(
-          iconColor: const Color(0xFF181717),
-          child: const FaIcon(
-            FontAwesomeIcons.github,
-            color: Color(0xFF181717),
-            size: 21,
-          ),
-          onTap: onGitHubTap ?? () {},
-        ),
-      ],
+          );
+        }).toList(),
+      ),
     );
   }
 
+  Widget _buildPlatformIconWidget(String platform) {
+    final p = platform.toLowerCase();
+    if (p.contains('linkedin')) {
+      return const FaIcon(FontAwesomeIcons.linkedinIn, color: Color(0xFF0A66C2), size: 20);
+    } else if (p.contains('instagram')) {
+      return ShaderMask(
+        shaderCallback: (Rect bounds) {
+          return const LinearGradient(
+            colors: [
+              Color(0xFF405DE6),
+              Color(0xFF833AB4),
+              Color(0xFFC13584),
+              Color(0xFFE1306C),
+              Color(0xFFFD1D1D),
+              Color(0xFFF77737),
+              Color(0xFFFCCC63),
+            ],
+            begin: Alignment.bottomLeft,
+            end: Alignment.topRight,
+          ).createShader(bounds);
+        },
+        child: const FaIcon(
+          FontAwesomeIcons.instagram,
+          color: Colors.white,
+          size: 22,
+        ),
+      );
+    } else if (p.contains('whatsapp')) {
+      return const FaIcon(FontAwesomeIcons.whatsapp, color: Color(0xFF25D366), size: 22);
+    } else if (p.contains('github')) {
+      return const FaIcon(FontAwesomeIcons.github, color: Color(0xFF181717), size: 21);
+    } else if (p.contains('twitter') || p.contains('x')) {
+      return const FaIcon(FontAwesomeIcons.xTwitter, color: Color(0xFF000000), size: 20);
+    } else if (p.contains('youtube')) {
+      return const FaIcon(FontAwesomeIcons.youtube, color: Color(0xFFFF0000), size: 20);
+    } else if (p.contains('portfolio')) {
+      return const Icon(Icons.folder_shared_rounded, color: Color(0xFF8B5CF6), size: 22);
+    } else {
+      return const FaIcon(FontAwesomeIcons.globe, color: Color(0xFF0284C7), size: 20);
+    }
+  }
+
   Widget _buildSocialIconButton({
-    Color? iconColor,
     required Widget child,
     required VoidCallback onTap,
   }) {

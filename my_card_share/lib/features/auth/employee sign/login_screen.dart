@@ -6,6 +6,8 @@ import '../back/smart_back_handler.dart';
 import '../font style/font_style.dart';
 import '../../../models/user_model.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../backend/individual/sign/login_identity.dart';
+import '../../../notifications/individual/login_popup.dart';
 
 class EmployeeLoginScreen extends ConsumerStatefulWidget {
   const EmployeeLoginScreen({super.key});
@@ -70,16 +72,66 @@ class _EmployeeLoginScreenState extends ConsumerState<EmployeeLoginScreen> {
   }
 
   void _onLogin() {
-    setState(() {
-      _isLoading = true;
-    });
-
     final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
     final roleStr = _selectedTab == 1
         ? 'enterprise'
         : _selectedTab == 2
             ? 'employee'
             : 'individual';
+
+    if (roleStr == 'individual') {
+      if (email.isEmpty) {
+        LoginPopupNotification.showEmailNotFoundDialog(
+          context,
+          onSignUpTap: () => context.go('/signup'),
+        );
+        return;
+      }
+
+      setState(() {
+        _isLoading = true;
+      });
+
+      final authResponse = LoginIdentity.authenticateUser(
+        email: email,
+        password: password,
+        role: roleStr,
+      );
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (authResponse.isEmailNotFound) {
+        LoginPopupNotification.showEmailNotFoundDialog(
+          context,
+          onSignUpTap: () => context.go('/signup'),
+        );
+        return;
+      }
+
+      if (authResponse.isWrongPassword) {
+        LoginPopupNotification.showWrongPasswordDialog(
+          context,
+          onForgotPasswordTap: () => context.push('/reset-password'),
+        );
+        return;
+      }
+
+      if (authResponse.isSuccess && authResponse.userModel != null) {
+        ref.read(authProvider.notifier).login(authResponse.userModel!);
+        if (mounted) {
+          context.go('/portal');
+        }
+      }
+      return;
+    }
+
+    // Default enterprise / employee login flow
+    setState(() {
+      _isLoading = true;
+    });
 
     final user = UserModel(
       id: 'emp_user_1',

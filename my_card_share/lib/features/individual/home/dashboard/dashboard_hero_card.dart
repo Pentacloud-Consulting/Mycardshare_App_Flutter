@@ -7,24 +7,46 @@ class DashboardHeroCard extends StatelessWidget {
   final String role;
   final String company;
   final String status;
+  final int selectedTemplateIndex;
   final VoidCallback onViewMyCardTap;
 
   const DashboardHeroCard({
     super.key,
-    this.name = "Alex Stanton",
-    this.role = "Product Designer",
-    this.company = "Acme Realty Group",
+    this.name = "User",
+    this.role = "Member",
+    this.company = "MyCardShare Member",
     this.status = "Actively Networking",
+    this.selectedTemplateIndex = 0,
     required this.onViewMyCardTap,
   });
 
+  List<Color> _getGradientForTemplate(int index) {
+    switch (index) {
+      case 1:
+        return const [Color(0xFF833AB4), Color(0xFFC13584)];
+      case 2:
+        return const [Color(0xFF0D9488), Color(0xFF2DD4BF)];
+      case 3:
+        return const [Color(0xFF0F172A), Color(0xFF334155)];
+      case 4:
+        return const [Color(0xFFF1F5F9), Color(0xFFE2E8F0)];
+      case 0:
+      default:
+        return const [Color(0xFF0052FF), Color(0xFF38BDF8)];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final gradientColors = _getGradientForTemplate(selectedTemplateIndex);
+    final isLightTemplate = selectedTemplateIndex == 4;
+    final textColor = isLightTemplate ? const Color(0xFF0F172A) : Colors.white;
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0052FF), Color(0xFF00A3FF)],
+        gradient: LinearGradient(
+          colors: gradientColors,
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -100,10 +122,10 @@ class DashboardHeroCard extends StatelessWidget {
                         children: [
                           Text(
                             name,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: textColor,
                               letterSpacing: 0.2,
                             ),
                           ),

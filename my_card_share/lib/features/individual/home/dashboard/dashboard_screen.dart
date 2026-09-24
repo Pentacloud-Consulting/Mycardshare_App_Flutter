@@ -11,6 +11,8 @@ import 'dashboard_quick_actions.dart';
 import 'dashboard_recent_leads.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../backend/individual/profile/individual_profile_store.dart';
+import '../../../../backend/individual/multiple store/individual_multi_store.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -107,6 +109,15 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
       );
     }
 
+    final activeProfile = IndividualProfileStore.instance.activeProfile;
+    final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
+
+    final displayName = activeProfile?.fullName ?? storedUser?.fullName ?? "User";
+    final displayRole = activeProfile?.jobTitle.isNotEmpty == true ? activeProfile!.jobTitle : "Member";
+    final displayCompany = activeProfile?.companyName.isNotEmpty == true ? activeProfile!.companyName : "MyCardShare Member";
+    final displayStatus = activeProfile?.networkingStatus.isNotEmpty == true ? activeProfile!.networkingStatus : "Actively Networking";
+    final templateIndex = IndividualProfileStore.getTemplateIndex(activeProfile?.templateStyle);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -116,9 +127,11 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               DashboardHeroCard(
-                name: "Alex Stanton",
-                role: "Product Designer",
-                company: "Acme Realty Group",
+                name: displayName,
+                role: displayRole,
+                company: displayCompany,
+                status: displayStatus,
+                selectedTemplateIndex: templateIndex,
                 onViewMyCardTap: _toggleViewMyCard,
               ),
               const SizedBox(height: 20),

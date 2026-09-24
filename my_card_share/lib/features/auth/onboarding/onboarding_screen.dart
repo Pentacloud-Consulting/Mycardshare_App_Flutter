@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import '../../Nav/portal_bottom_nav.dart';
 import '../../Nav/portal_top_nav.dart';
-import '../../individual/home/View My card/home.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -1021,8 +1021,8 @@ class _MockIndividualCardScreen extends StatelessWidget {
                 children: [
                   const SizedBox(height: 12),
 
-                  // Image 1: Header Banner with Overlapping Avatar & Info
-                  CardHeaderBanner(
+                  // Standalone Onboarding Header Banner Sample
+                  _OnboardingSampleHeaderBanner(
                     name: name,
                     role: role,
                     company: company,
@@ -1030,23 +1030,23 @@ class _MockIndividualCardScreen extends StatelessWidget {
 
                   const SizedBox(height: 18),
 
-                  // Image 2: Quick Action Pill Buttons (Email & Call)
-                  const CardQuickActions(),
+                  // Quick Action Pill Buttons (Email & Call)
+                  const _OnboardingSampleQuickActions(),
 
                   const SizedBox(height: 14),
 
-                  // Image 3: Quote Bio Card
-                  const CardBioQuoteCard(),
+                  // Quote Bio Card
+                  const _OnboardingSampleBioQuoteCard(),
 
                   const SizedBox(height: 18),
 
-                  // Image 4: Social Icon Row
-                  const CardSocialRow(),
+                  // Social Icon Row
+                  const _OnboardingSampleSocialRow(),
 
                   const SizedBox(height: 20),
 
-                  // Image 5: Save Contact, Secondary Buttons & Center QR Button
-                  CardFooterActions(name: name, showBranding: false),
+                  // Save Contact & Secondary Buttons
+                  _OnboardingSampleFooterActions(name: name),
 
                   const SizedBox(height: 20),
                 ],
@@ -1055,6 +1055,530 @@ class _MockIndividualCardScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Standalone Sample Header Banner for Onboarding Showcase Only
+// -----------------------------------------------------------------------------
+class _OnboardingSampleHeaderBanner extends StatelessWidget {
+  final String name;
+  final String role;
+  final String company;
+
+  const _OnboardingSampleHeaderBanner({
+    required this.name,
+    required this.role,
+    required this.company,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          height: 215,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                height: 160,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF0052FF), Color(0xFF6366F1), Color(0xFF38BDF8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x1A0052FF),
+                      blurRadius: 14,
+                      offset: Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Stack(
+                  children: [
+                    // Full-width Banner Cover Image Sample
+                    Positioned.fill(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Image.asset(
+                          'assets/images/Pics/banner.webp',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Image.network(
+                              "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=600",
+                              fit: BoxFit.cover,
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+
+                    // Soft Blue Gradient Mask to preserve left text legibility
+                    Positioned.fill(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                const Color(0xFF0052FF).withValues(alpha: 0.90),
+                                const Color(0xFF0052FF).withValues(alpha: 0.65),
+                                const Color(0xFF0038A8).withValues(alpha: 0.25),
+                              ],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    Positioned(
+                      top: 16,
+                      left: 18,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "People\nBuild\nBetter\nFutures",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              height: 1.15,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            width: 24,
+                            height: 2,
+                            color: Colors.white70,
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            "ACME REALTY GROUP\nPEOPLE  •  PLACES  •  POSSIBILITIES",
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.85),
+                              fontSize: 7,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x12000000),
+                              blurRadius: 6,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF16A34A),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            const Text(
+                              "ACTIVELY NETWORKING",
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
+                                color: Color(0xFF0066FF),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    width: 104,
+                    height: 104,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 4),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x20000000),
+                          blurRadius: 14,
+                          offset: Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/images/Pics/Profile pic.webp',
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Image.network(
+                            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400",
+                            fit: BoxFit.cover,
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        Text(
+          name,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF0F172A),
+            letterSpacing: -0.5,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          role,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF0066FF),
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          company,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 14,
+            color: Color(0xFF64748B),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _OnboardingSampleQuickActions extends StatelessWidget {
+  const _OnboardingSampleQuickActions();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildActionPill(Icons.mail_outline_rounded, "Email"),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildActionPill(Icons.phone_outlined, "Call"),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionPill(IconData icon, String label) {
+    return Container(
+      height: 46,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(23),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 8,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: const Color(0xFF0F172A), size: 19),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0F172A),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OnboardingSampleBioQuoteCard extends StatelessWidget {
+  const _OnboardingSampleBioQuoteCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          Icon(
+            Icons.format_quote_rounded,
+            color: Color(0xFF93C5FD),
+            size: 28,
+          ),
+          SizedBox(height: 2),
+          Text(
+            "Passionate about creating meaningful connections and building brands that make a difference. Always open to new opportunities and collaborations.",
+            style: TextStyle(
+              fontSize: 13.5,
+              color: Color(0xFF64748B),
+              height: 1.45,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OnboardingSampleSocialRow extends StatelessWidget {
+  const _OnboardingSampleSocialRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildSocialIcon(const FaIcon(FontAwesomeIcons.linkedinIn, color: Color(0xFF0A66C2), size: 20)),
+        _buildSocialIcon(
+          ShaderMask(
+            shaderCallback: (Rect bounds) {
+              return const LinearGradient(
+                colors: [
+                  Color(0xFF405DE6),
+                  Color(0xFF833AB4),
+                  Color(0xFFC13584),
+                  Color(0xFFE1306C),
+                  Color(0xFFFD1D1D),
+                  Color(0xFFF77737),
+                  Color(0xFFFCCC63),
+                ],
+                begin: Alignment.bottomLeft,
+                end: Alignment.topRight,
+              ).createShader(bounds);
+            },
+            child: const FaIcon(FontAwesomeIcons.instagram, color: Colors.white, size: 22),
+          ),
+        ),
+        _buildSocialIcon(const FaIcon(FontAwesomeIcons.whatsapp, color: Color(0xFF25D366), size: 22)),
+        _buildSocialIcon(const FaIcon(FontAwesomeIcons.globe, color: Color(0xFF0284C7), size: 20)),
+        _buildSocialIcon(const FaIcon(FontAwesomeIcons.github, color: Color(0xFF181717), size: 21)),
+      ],
+    );
+  }
+
+  Widget _buildSocialIcon(Widget child) {
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        border: Border.all(color: const Color(0xFFF1F5F9), width: 1.2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0F0F172A),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Center(child: child),
+    );
+  }
+}
+
+class _OnboardingSampleFooterActions extends StatelessWidget {
+  final String name;
+
+  const _OnboardingSampleFooterActions({required this.name});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0052FF), Color(0xFF0088FF)],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(26),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x350052FF),
+                  blurRadius: 14,
+                  offset: Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.download_rounded, color: Colors.white, size: 22),
+                  SizedBox(width: 8),
+                  Text(
+                    "Save Contact",
+                    style: TextStyle(
+                      fontSize: 16.5,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(25),
+                      border: Border.all(color: const Color(0xFF0066FF), width: 1.5),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.account_balance_wallet_rounded, color: Color(0xFF0066FF), size: 18),
+                        SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            "Add to Wallet",
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF0066FF),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Container(
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(25),
+                      border: Border.all(color: const Color(0xFF0066FF), width: 1.5),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.people_alt_rounded, color: Color(0xFF0066FF), size: 18),
+                        SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            "Exchange Contact",
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF0066FF),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFF38BDF8), width: 2.0),
+              ),
+              child: const Icon(
+                Icons.grid_view_rounded,
+                color: Color(0xFF0066FF),
+                size: 22,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

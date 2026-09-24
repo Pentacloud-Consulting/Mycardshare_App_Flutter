@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../../../backend/individual/profile/individual_profile_store.dart';
 
 class ProfileLiveCardPreview extends StatelessWidget {
   final String name;
@@ -6,8 +8,10 @@ class ProfileLiveCardPreview extends StatelessWidget {
   final String company;
   final String status;
   final int selectedTemplateIndex;
+  final String? profilePhoto;
+  final String? bannerPhoto;
   final VoidCallback? onAvatarEditTap;
-  final bool isPublished; // Added this
+  final bool isPublished;
 
   const ProfileLiveCardPreview({
     super.key,
@@ -16,8 +20,10 @@ class ProfileLiveCardPreview extends StatelessWidget {
     required this.company,
     required this.status,
     this.selectedTemplateIndex = 0,
+    this.profilePhoto,
+    this.bannerPhoto,
     this.onAvatarEditTap,
-    this.isPublished = true, // Default to true
+    this.isPublished = true,
   });
 
   List<Color> _getGradientForTemplate(int index) {
@@ -34,6 +40,55 @@ class ProfileLiveCardPreview extends StatelessWidget {
       default:
         return const [Color(0xFF0052FF), Color(0xFF38BDF8)];
     }
+  }
+
+  Widget _buildAvatarWidget() {
+    final activePhoto = profilePhoto ?? IndividualProfileStore.instance.activeProfile?.profilePhoto;
+    if (activePhoto != null && activePhoto.isNotEmpty) {
+      if (activePhoto.startsWith('http')) {
+        return Image.network(activePhoto, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => _buildAvatarFallback());
+      }
+      try {
+        final file = File(activePhoto);
+        if (file.existsSync()) {
+          return Image.file(file, fit: BoxFit.cover);
+        }
+      } catch (_) {}
+    }
+    return _buildAvatarFallback();
+  }
+
+  Widget _buildAvatarFallback() {
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
+    return Container(
+      color: const Color(0xFFEFF6FF),
+      child: Center(
+        child: Text(
+          initial,
+          style: const TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF0052FF),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBannerImageWidget() {
+    final activeBanner = bannerPhoto ?? IndividualProfileStore.instance.activeProfile?.bannerPhoto;
+    if (activeBanner != null && activeBanner.isNotEmpty) {
+      if (activeBanner.startsWith('http')) {
+        return Image.network(activeBanner, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => const SizedBox.shrink());
+      }
+      try {
+        final file = File(activeBanner);
+        if (file.existsSync()) {
+          return Image.file(file, fit: BoxFit.cover);
+        }
+      } catch (_) {}
+    }
+    return const SizedBox.shrink();
   }
 
   @override
@@ -76,33 +131,44 @@ class ProfileLiveCardPreview extends StatelessWidget {
                     topRight: Radius.circular(20),
                   ),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                  child: Stack(
                     children: [
-                      Text(
-                        "Good\nPeople\nBetter\nOpportunities",
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: isLightTemplate
-                              ? const Color(0xFF475569)
-                              : Colors.white.withValues(alpha: 0.85),
-                          height: 1.2,
-                        ),
-                      ),
-                      Text(
-                        "Let's\nConnect",
-                        textAlign: TextAlign.right,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontStyle: FontStyle.italic,
-                          fontWeight: FontWeight.bold,
-                          color: isLightTemplate
-                              ? const Color(0xFF0052FF)
-                              : Colors.white.withValues(alpha: 0.9),
-                          height: 1.2,
+                      Positioned.fill(child: _buildBannerImageWidget()),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Good\nPeople\nBetter\nOpportunities",
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: isLightTemplate
+                                    ? const Color(0xFF475569)
+                                    : Colors.white.withValues(alpha: 0.85),
+                                height: 1.2,
+                              ),
+                            ),
+                            Text(
+                              "Let's\nConnect",
+                              textAlign: TextAlign.right,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontStyle: FontStyle.italic,
+                                fontWeight: FontWeight.bold,
+                                color: isLightTemplate
+                                    ? const Color(0xFF0052FF)
+                                    : Colors.white.withValues(alpha: 0.9),
+                                height: 1.2,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -121,10 +187,6 @@ class ProfileLiveCardPreview extends StatelessWidget {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 3),
-                        image: const DecorationImage(
-                          image: NetworkImage("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80"),
-                          fit: BoxFit.cover,
-                        ),
                         boxShadow: const [
                           BoxShadow(
                             color: Color(0x15000000),
@@ -132,6 +194,9 @@ class ProfileLiveCardPreview extends StatelessWidget {
                             offset: Offset(0, 3),
                           ),
                         ],
+                      ),
+                      child: ClipOval(
+                        child: _buildAvatarWidget(),
                       ),
                     ),
                     Positioned(

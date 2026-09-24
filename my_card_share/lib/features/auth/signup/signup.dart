@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../models/user_model.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../backend/individual/sign/user_sign_up_store.dart';
+import '../../../backend/enterprise/sign/user_sign_up_store.dart';
 import '../login/login_screen.dart'; // import GoogleLogoWidget
+import '../../../backend/sign/google_sign.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
@@ -42,24 +45,61 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       return;
     }
 
+    final name = _fullNameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please enter both email address and password"),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
 
-    final name = _fullNameController.text.trim();
-    final email = _emailController.text.trim();
     final roleStr = _selectedTab == 1
         ? 'enterprise'
         : _selectedTab == 2
             ? 'employee'
             : 'individual';
 
-    final user = UserModel(
-      id: 'user_new',
-      name: name.isNotEmpty ? name : 'New User',
-      email: email.isNotEmpty ? email : 'user@example.com',
-      role: roleStr,
-    );
+    UserModel user;
+
+    if (_selectedTab == 1) {
+      // Save Enterprise User data in EnterpriseUserSignUpStore
+      final record = EnterpriseUserSignUpStore.saveUserSignUp(
+        companyName: name.isNotEmpty ? name : 'Enterprise Account',
+        email: email,
+        password: password,
+        role: roleStr,
+      );
+      user = UserModel(
+        id: record.id,
+        name: record.companyName,
+        email: record.email,
+        role: roleStr,
+      );
+    } else {
+      // Save Individual User data in UserSignUpStore
+      final record = UserSignUpStore.saveUserSignUp(
+        fullName: name.isNotEmpty ? name : 'New User',
+        email: email,
+        password: password,
+        role: roleStr,
+      );
+      user = UserModel(
+        id: record.id,
+        name: record.fullName,
+        email: record.email,
+        role: roleStr,
+      );
+    }
 
     ref.read(authProvider.notifier).login(user);
 
@@ -68,9 +108,46 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         _isLoading = false;
       });
 
-      context.go('/portal');
+      if (roleStr == 'enterprise') {
+        context.go('/enterprise-onboarding');
+      } else {
+        context.go('/individual/form');
+      }
     }
   }
+
+
+  void _onGoogleSignup() async {
+    final roleStr = _selectedTab == 1
+        ? 'enterprise'
+        : _selectedTab == 2
+            ? 'employee'
+            : 'individual';
+
+    // Triggers the real native OS Google Account chooser
+    final response = await GoogleSignUpService.signUpWithGoogle(role: roleStr);
+
+    if (!mounted) return;
+
+    if (response.isSuccess && response.userModel != null) {
+      ref.read(authProvider.notifier).login(response.userModel!);
+      if (roleStr == 'enterprise') {
+        context.go('/enterprise-onboarding');
+      } else {
+        context.go('/individual/form');
+      }
+    } else {
+      // Show error to user
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(response.message),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -515,7 +592,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       ),
                       child: InkWell(
                         borderRadius: BorderRadius.circular(28),
-                        onTap: _onSignup,
+                        onTap: _onGoogleSignup,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: const [

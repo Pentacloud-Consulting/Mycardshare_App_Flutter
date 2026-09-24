@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../backend/individual/profile/individual_profile_store.dart';
 
 class CardQuickActions extends StatelessWidget {
   final VoidCallback? onEmailTap;
@@ -12,6 +13,10 @@ class CardQuickActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final activeProfile = IndividualProfileStore.instance.activeProfile;
+    final email = activeProfile?.email ?? "";
+    final phone = activeProfile?.phoneNumber ?? "";
+
     return Row(
       children: [
         Expanded(
@@ -21,7 +26,11 @@ class CardQuickActions extends StatelessWidget {
             onTap: onEmailTap ??
                 () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Opening email client...")),
+                    SnackBar(
+                      content: Text(email.isNotEmpty ? "Email: $email" : "No email provided"),
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
                   );
                 },
           ),
@@ -34,7 +43,11 @@ class CardQuickActions extends StatelessWidget {
             onTap: onCallTap ??
                 () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Dialing phone number...")),
+                    SnackBar(
+                      content: Text(phone.isNotEmpty ? "Calling: $phone" : "No phone provided"),
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
                   );
                 },
           ),

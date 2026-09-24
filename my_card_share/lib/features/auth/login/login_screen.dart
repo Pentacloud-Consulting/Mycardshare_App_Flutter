@@ -4,8 +4,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_style_widgets.dart';
-import '../../../models/user_model.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../backend/individual/sign/login_identity.dart';
+import '../../../notifications/individual/login_popup.dart';
+import '../../../backend/enterprise/sign/login_identity.dart';
+import '../../../notifications/enterprise/login_popup.dart';
+import '../../../backend/sign/google_login.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -29,38 +33,141 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _onLogin() {
-    setState(() {
-      _isLoading = true;
-    });
-
     final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
     final roleStr = _selectedTab == 1
         ? 'enterprise'
         : _selectedTab == 2
             ? 'employee'
             : 'individual';
 
-    final user = UserModel(
-      id: 'user_1',
-      name: 'Alex Stanton',
-      email: email.isNotEmpty ? email : 'alex@example.com',
-      role: roleStr,
-    );
+    if (email.isEmpty) {
+      if (_selectedTab == 1) {
+        EnterpriseLoginPopupNotification.showEmailNotFoundDialog(
+          context,
+          onSignUpTap: () => context.go('/signup'),
+        );
+      } else {
+        LoginPopupNotification.showEmailNotFoundDialog(
+          context,
+          onSignUpTap: () => context.go('/signup'),
+        );
+      }
+      return;
+    }
 
-    ref.read(authProvider.notifier).login(user);
+    setState(() {
+      _isLoading = true;
+    });
 
-    if (mounted) {
+    if (_selectedTab == 1) {
+      // Enterprise authentication
+      final authResponse = EnterpriseLoginIdentity.authenticateUser(
+        email: email,
+        password: password,
+        role: roleStr,
+      );
+
       setState(() {
         _isLoading = false;
       });
 
+      if (authResponse.isEmailNotFound) {
+        EnterpriseLoginPopupNotification.showEmailNotFoundDialog(
+          context,
+          onSignUpTap: () => context.go('/signup'),
+        );
+        return;
+      }
+
+      if (authResponse.isWrongPassword) {
+        EnterpriseLoginPopupNotification.showWrongPasswordDialog(
+          context,
+          onForgotPasswordTap: () => context.push('/reset-password'),
+        );
+        return;
+      }
+
+      if (authResponse.isSuccess && authResponse.userModel != null) {
+        ref.read(authProvider.notifier).login(authResponse.userModel!);
+        if (mounted) {
+          context.go('/enterprise-onboarding');
+        }
+      }
+    } else {
+      // Individual / Employee authentication
+      final authResponse = LoginIdentity.authenticateUser(
+        email: email,
+        password: password,
+        role: roleStr,
+      );
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (authResponse.isEmailNotFound) {
+        LoginPopupNotification.showEmailNotFoundDialog(
+          context,
+          onSignUpTap: () => context.go('/signup'),
+        );
+        return;
+      }
+
+      if (authResponse.isWrongPassword) {
+        LoginPopupNotification.showWrongPasswordDialog(
+          context,
+          onForgotPasswordTap: () => context.push('/reset-password'),
+        );
+        return;
+      }
+
+      if (authResponse.isSuccess && authResponse.userModel != null) {
+        ref.read(authProvider.notifier).login(authResponse.userModel!);
+        if (mounted) {
+          if (roleStr == 'enterprise') {
+            context.go('/enterprise-onboarding');
+          } else {
+            context.go('/portal');
+          }
+        }
+      }
+    }
+  }
+
+  void _onGoogleLogin() async {
+    final roleStr = _selectedTab == 1
+        ? 'enterprise'
+        : _selectedTab == 2
+            ? 'employee'
+            : 'individual';
+
+    // Triggers the real native OS Google Account chooser
+    final response = await GoogleLoginService.loginWithGoogle(
+      role: roleStr,
+      autoProvision: true,
+    );
+
+    if (!mounted) return;
+
+    if (response.isSuccess && response.userModel != null) {
+      ref.read(authProvider.notifier).login(response.userModel!);
       if (roleStr == 'enterprise') {
         context.go('/enterprise-onboarding');
       } else {
         context.go('/portal');
       }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(response.message),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -373,7 +480,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     label: "Continue with Google",
                     leadingWidget: const GoogleLogoWidget(size: 22),
                     gradient: false,
-                    onTap: _onLogin,
+                    onTap: _onGoogleLogin,
                   ),
 
                   const SizedBox(height: 40),

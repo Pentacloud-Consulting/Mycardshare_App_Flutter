@@ -1,4 +1,4 @@
-package com.example.my_card_share
+package com.pentacloud.mycardshare
 
 import io.flutter.embedding.android.FlutterActivity
 

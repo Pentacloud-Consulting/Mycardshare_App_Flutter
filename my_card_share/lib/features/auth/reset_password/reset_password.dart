@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../backend/reset_password/individual/individual_reset_password.dart';
 import '../../../backend/reset_password/enterprice/enterprice_reset_password.dart';
+import '../back/smart_back_handler.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key});
@@ -77,10 +78,19 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFD),
-      body: Stack(
-        children: [
+    return SmartPopScope(
+      onBack: () {
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/login');
+        }
+        return true;
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFD),
+        body: Stack(
+          children: [
           // Soft baby-blue gradient blob in bottom-right corner (smooth fade, no cutoff)
           Positioned(
             bottom: 0,
@@ -137,30 +147,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 12),
-
-                  // Top Navigation Bar (Back Arrow)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        color: Color(0xFF0F172A),
-                        size: 20,
-                      ),
-                      onPressed: () {
-                        if (context.canPop()) {
-                          context.pop();
-                        } else {
-                          context.go('/login');
-                        }
-                      },
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  ),
-
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 36),
 
                   // Centered Icon Badge (Blue Gradient Circle with Lock/Key Icon)
                   Container(
@@ -423,7 +410,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               ),
             ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }

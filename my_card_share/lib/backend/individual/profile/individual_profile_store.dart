@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../api_service.dart';
 
 class SocialLinkItem {
   String platform;
@@ -159,6 +160,8 @@ class IndividualProfileStore extends ChangeNotifier {
         ? generateCardSlug(customSlug)
         : generateCardSlug(fullName);
 
+    final cleanSocialLinks = socialLinks.where((l) => l.url.trim().isNotEmpty).toList();
+
     _activeProfile = IndividualProfileData(
       uid: uid,
       fullName: fullName,
@@ -170,7 +173,7 @@ class IndividualProfileStore extends ChangeNotifier {
       phoneNumber: phoneNumber,
       websiteUrl: websiteUrl,
       templateStyle: templateStyle,
-      socialLinks: socialLinks,
+      socialLinks: cleanSocialLinks,
       companyName: companyName,
       shortBio: shortBio,
       networkingStatus: networkingStatus,
@@ -194,7 +197,7 @@ class IndividualProfileStore extends ChangeNotifier {
             'phoneNumber': phoneNumber,
             'websiteUrl': websiteUrl,
             'templateStyle': templateStyle,
-            'socialLinks': socialLinks.map((l) => l.toJson()).toList(),
+            'socialLinks': cleanSocialLinks.map((l) => l.toJson()).toList(),
             'companyName': companyName,
             'shortBio': shortBio,
             'networkingStatus': networkingStatus,
@@ -208,42 +211,134 @@ class IndividualProfileStore extends ChangeNotifier {
     } catch (e) {
       debugPrint('[IndividualProfileStore] Firestore sync notice: $e');
     }
+
+    // Dual-write: also patch the MongoDB card via Next.js API (non-blocking)
+    // This keeps the web dashboard in sync per Individual_Auth_Integration.md §6
+    _syncToApiBackground(
+      fullName: fullName,
+      email: email,
+      slug: slug,
+      profilePhoto: profilePhoto ?? _activeProfile?.profilePhoto,
+      bannerPhoto: bannerPhoto ?? _activeProfile?.bannerPhoto,
+      jobTitle: jobTitle,
+      phoneNumber: phoneNumber,
+      websiteUrl: websiteUrl,
+      templateStyle: templateStyle,
+      socialLinks: cleanSocialLinks,
+      companyName: companyName,
+      shortBio: shortBio,
+      networkingStatus: networkingStatus,
+    );
   }
 
-  /// Load profile from Firestore or local defaults
+  /// Load profile from Next.js API (/api/cards) or Firestore
   Future<void> loadProfile(String uid, String email, String fullName) async {
     try {
-      if (uid.isNotEmpty) {
-        final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-        if (doc.exists && doc.data() != null) {
-          final data = doc.data()!;
-          if (data['onboardingCompleted'] == true) {
-            final rawLinks = (data['socialLinks'] as List<dynamic>?) ?? [];
+      // 1. Try fetching synced profile from Next.js API /api/cards
+      try {
+        final apiRes = await IndividualApiService.get('/api/cards');
+        if (apiRes['success'] == true && apiRes['data'] != null) {
+          final card = apiRes['data']['card'] ?? apiRes['data'];
+          if (card != null && card is Map<String, dynamic>) {
+            final rawLinks = (card['socialLinks'] as List<dynamic>?) ?? [];
             _activeProfile = IndividualProfileData(
               uid: uid,
-              fullName: data['fullName'] ?? fullName,
-              email: data['email'] ?? email,
-              cardSlug: data['cardSlug'] ?? generateCardSlug(fullName),
-              profilePhoto: data['profilePhoto'],
-              bannerPhoto: data['bannerPhoto'],
-              jobTitle: data['jobTitle'] ?? '',
-              phoneNumber: data['phoneNumber'] ?? '',
-              websiteUrl: data['websiteUrl'] ?? '',
-              templateStyle: data['templateStyle'] ?? 'Modern Glass',
+              fullName: card['fullName'] ?? card['name'] ?? fullName,
+              email: card['email'] ?? email,
+              cardSlug: card['cardSlug'] ?? generateCardSlug(fullName),
+              profilePhoto: card['avatarUrl'] ?? card['profilePhoto'] ?? card['photoUrl'],
+              bannerPhoto: card['bannerUrl'] ?? card['bannerPhoto'] ?? card['coverImage'],
+              jobTitle: card['jobTitle'] ?? card['role'] ?? '',
+              phoneNumber: card['phone'] ?? card['phoneNumber'] ?? '',
+              websiteUrl: card['website'] ?? card['websiteUrl'] ?? '',
+              templateStyle: card['templateStyle'] ?? card['themeColor'] ?? '0',
               socialLinks: rawLinks
                   .map((l) => SocialLinkItem.fromJson(Map<String, dynamic>.from(l)))
                   .toList(),
-              companyName: data['companyName'] ?? '',
-              shortBio: data['shortBio'] ?? '',
-              networkingStatus: data['networkingStatus'] ?? 'Actively Networking',
+              companyName: card['companyName'] ?? card['company'] ?? '',
+              shortBio: card['bio'] ?? card['shortBio'] ?? '',
+              networkingStatus: card['userStatus'] ?? card['networkingStatus'] ?? 'Actively Networking',
             );
             notifyListeners();
+            debugPrint('[IndividualProfileStore] Loaded profile from API /api/cards for: ${_activeProfile!.fullName}');
             return;
           }
         }
+      } catch (apiErr) {
+        debugPrint('[IndividualProfileStore] API /api/cards load notice: $apiErr');
+      }
+
+      // 2. Fallback to Firestore users/{uid} document
+      final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data()!;
+        final rawLinks = (data['socialLinks'] as List<dynamic>?) ?? [];
+        final photo = data['profilePhoto'] ?? data['avatarUrl'] ?? data['photoUrl'];
+        _activeProfile = IndividualProfileData(
+          uid: uid,
+          fullName: data['fullName'] ?? data['name'] ?? fullName,
+          email: data['email'] ?? email,
+          cardSlug: data['cardSlug'] ?? generateCardSlug(fullName),
+          profilePhoto: photo,
+          bannerPhoto: data['bannerPhoto'] ?? data['bannerUrl'] ?? data['coverImage'],
+          jobTitle: data['jobTitle'] ?? data['role'] ?? '',
+          phoneNumber: data['phoneNumber'] ?? data['phone'] ?? '',
+          websiteUrl: data['websiteUrl'] ?? data['website'] ?? '',
+          templateStyle: data['templateStyle'] ?? '0',
+          socialLinks: rawLinks
+              .map((l) => SocialLinkItem.fromJson(Map<String, dynamic>.from(l)))
+              .toList(),
+          companyName: data['companyName'] ?? data['company'] ?? '',
+          shortBio: data['shortBio'] ?? data['bio'] ?? '',
+          networkingStatus: data['networkingStatus'] ?? data['userStatus'] ?? 'Actively Networking',
+        );
+        notifyListeners();
+        debugPrint('[IndividualProfileStore] Loaded profile from Firestore users/$uid');
+        return;
       }
     } catch (e) {
       debugPrint('[IndividualProfileStore] Load error: $e');
     }
+  }
+
+  /// Fire-and-forget: push card data to Next.js API (MongoDB) in background.
+  /// Errors are non-fatal — Firestore remains the primary source of truth.
+  void _syncToApiBackground({
+    required String fullName,
+    required String email,
+    required String slug,
+    String? profilePhoto,
+    String? bannerPhoto,
+    required String jobTitle,
+    required String phoneNumber,
+    required String websiteUrl,
+    required String templateStyle,
+    required List<SocialLinkItem> socialLinks,
+    required String companyName,
+    required String shortBio,
+    required String networkingStatus,
+  }) {
+    IndividualApiService.patch('/api/cards', {
+      'fullName': fullName,
+      'email': email,
+      'cardSlug': slug,
+      'jobTitle': jobTitle,
+      'phone': phoneNumber,
+      'website': websiteUrl,
+      'bio': shortBio,
+      'companyName': companyName,
+      'templateStyle': templateStyle,
+      'userStatus': networkingStatus,
+      'avatarUrl': profilePhoto ?? '',
+      'bannerUrl': bannerPhoto ?? '',
+      'cardStatus': 'Published',
+      'socialLinks': socialLinks
+          .map((l) => {'platform': l.platform, 'url': l.url})
+          .toList(),
+    }).then((_) {
+      debugPrint('[IndividualProfileStore] API card sync successful');
+    }).catchError((e) {
+      debugPrint('[IndividualProfileStore] API card sync skipped (offline/no backend): $e');
+    });
   }
 }

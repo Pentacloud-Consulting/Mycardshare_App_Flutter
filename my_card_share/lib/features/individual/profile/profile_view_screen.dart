@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../backend/individual/profile/individual_profile_store.dart';
 import '../../../backend/individual/multiple store/individual_multi_store.dart';
+import '../../../backend/individual/previews/publish_unpublish.dart';
 import 'profile_editor_screen.dart';
 import 'widgets/profile_live_card_preview.dart';
 import 'widgets/profile_social_links.dart';
@@ -14,18 +16,30 @@ class ProfileViewScreen extends StatefulWidget {
 }
 
 class _ProfileViewScreenState extends State<ProfileViewScreen> {
-  bool _isPublished = true;
   bool _isBasicInfoExpanded = false;
   bool _isContactDetailsExpanded = false;
   final GlobalKey _publishBtnKey = GlobalKey();
 
   @override
+  void initState() {
+    super.initState();
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null && uid.isNotEmpty) {
+      PublishUnpublishService.instance.loadPublishStatus(uid);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: IndividualProfileStore.instance,
+      listenable: Listenable.merge([
+        IndividualProfileStore.instance,
+        PublishUnpublishService.instance,
+      ]),
       builder: (context, _) {
         final activeProfile = IndividualProfileStore.instance.activeProfile;
         final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
+        final isPublished = PublishUnpublishService.instance.isPublished;
 
         final name = activeProfile?.fullName ?? storedUser?.fullName ?? "User";
         final role = activeProfile?.jobTitle.isNotEmpty == true ? activeProfile!.jobTitle : "Not specified";
@@ -57,7 +71,7 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                     selectedTemplateIndex: templateIndex,
                     profilePhoto: activeProfile?.profilePhoto,
                     bannerPhoto: activeProfile?.bannerPhoto,
-                    isPublished: _isPublished,
+                    isPublished: isPublished,
                   ),
               const SizedBox(height: 20),
               
@@ -85,8 +99,12 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                       child: ElevatedButton.icon(
                         key: _publishBtnKey,
                         onPressed: () async {
+                          final messenger = ScaffoldMessenger.of(context);
+                          final navOverlay = Navigator.of(context).overlay;
+                          if (navOverlay == null) return;
+                          
                           final RenderBox button = _publishBtnKey.currentContext!.findRenderObject() as RenderBox;
-                          final RenderBox overlay = Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
+                          final RenderBox overlay = navOverlay.context.findRenderObject() as RenderBox;
                           final RelativeRect position = RelativeRect.fromRect(
                             Rect.fromPoints(
                               button.localToGlobal(button.size.bottomLeft(Offset.zero), ancestor: overlay),
@@ -125,18 +143,32 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                           );
                           
                           if (value != null && mounted) {
-                            setState(() {
-                              _isPublished = value;
-                            });
+                            final targetUid = activeProfile?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? '';
+                            await PublishUnpublishService.instance.setPublishStatus(
+                              uid: targetUid,
+                              published: value,
+                            );
+                            if (mounted) {
+                              messenger.showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    value ? "Card published successfully!" : "Card unpublished successfully!",
+                                  ),
+                                  backgroundColor: value ? const Color(0xFF0052FF) : const Color(0xFF475569),
+                                  behavior: SnackBarBehavior.floating,
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            }
                           }
                         },
                         icon: Icon(
-                          _isPublished ? Icons.language_rounded : Icons.public_off_rounded,
+                          isPublished ? Icons.language_rounded : Icons.public_off_rounded,
                           color: Colors.white,
                           size: 20,
                         ),
                         label: Text(
-                          _isPublished ? "Publish" : "Unpublished",
+                          isPublished ? "Publish" : "Unpublished",
                           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
                         ),
                         style: ElevatedButton.styleFrom(
@@ -192,9 +224,47 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
               
               const SizedBox(height: 24),
 
-              // Basic Info Section Header with Expand Button & Edit Pencil
+              // Basic Info Section Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Basic Info",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0x10000000),
+                          blurRadius: 8,
+                          offset: Offset(0, 2),
+                        )
+                      ],
+                    ),
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      icon: const Icon(Icons.edit_rounded, color: Color(0xFF0052FF), size: 20),
+                      onPressed: () async {
+                        await Navigator.of(context, rootNavigator: true).push(
+                          MaterialPageRoute(builder: (_) => const ProfileEditorScreen()),
+                        );
+                        setState(() {});
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _buildViewCard(
                 children: [
                   GestureDetector(
                     onTap: () {
@@ -202,112 +272,57 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                         _isBasicInfoExpanded = !_isBasicInfoExpanded;
                       });
                     },
+                    behavior: HitTestBehavior.opaque,
                     child: Row(
-                      children: const [
-                        Text(
-                          "Basic Info",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
-                          ),
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: _buildViewRow(Icons.person_rounded, "Full Name", name),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildSmallExpandButton(
+                          isExpanded: _isBasicInfoExpanded,
+                          onTap: () {
+                            setState(() {
+                              _isBasicInfoExpanded = !_isBasicInfoExpanded;
+                            });
+                          },
                         ),
                       ],
                     ),
                   ),
-                  Row(
-                    children: [
-                      // Expand / Collapse Pill Button on Right Side
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _isBasicInfoExpanded = !_isBasicInfoExpanded;
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: const Color(0xFFBAE6FD)),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                _isBasicInfoExpanded ? "Collapse" : "Expand",
-                                style: const TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0052FF),
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Icon(
-                                _isBasicInfoExpanded
-                                    ? Icons.keyboard_arrow_up_rounded
-                                    : Icons.keyboard_arrow_down_rounded,
-                                color: const Color(0xFF0052FF),
-                                size: 18,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        width: 38,
-                        height: 38,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0x10000000),
-                              blurRadius: 8,
-                              offset: Offset(0, 2),
-                            )
-                          ],
-                        ),
-                        child: IconButton(
-                          padding: EdgeInsets.zero,
-                          icon: const Icon(Icons.edit_rounded, color: Color(0xFF0052FF), size: 20),
-                          onPressed: () async {
-                            await Navigator.of(context, rootNavigator: true).push(
-                              MaterialPageRoute(builder: (_) => const ProfileEditorScreen()),
-                            );
-                            setState(() {});
-                          },
-                        ),
-                      ),
-                    ],
+                  AnimatedCrossFade(
+                    firstChild: const SizedBox(width: double.infinity),
+                    secondChild: Column(
+                      children: [
+                        const Divider(color: Color(0xFFF1F5F9), height: 24),
+                        _buildViewRow(Icons.work_rounded, "Job Title", role),
+                        const Divider(color: Color(0xFFF1F5F9), height: 24),
+                        _buildViewRow(Icons.business_rounded, "Company", company),
+                        const Divider(color: Color(0xFFF1F5F9), height: 24),
+                        _buildViewRow(Icons.edit_note_rounded, "Bio", bio, isMultiLine: true),
+                      ],
+                    ),
+                    crossFadeState: _isBasicInfoExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+                    duration: const Duration(milliseconds: 280),
+                    sizeCurve: Curves.fastOutSlowIn,
                   ),
                 ],
-              ),
-              const SizedBox(height: 12),
-              AnimatedSize(
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeInOut,
-                child: _buildViewCard(
-                  children: [
-                    _buildViewRow(Icons.person_rounded, "Full Name", name),
-                    if (_isBasicInfoExpanded) ...[
-                      const Divider(color: Color(0xFFF1F5F9), height: 24),
-                      _buildViewRow(Icons.work_rounded, "Job Title", role),
-                      const Divider(color: Color(0xFFF1F5F9), height: 24),
-                      _buildViewRow(Icons.business_rounded, "Company", company),
-                      const Divider(color: Color(0xFFF1F5F9), height: 24),
-                      _buildViewRow(Icons.edit_note_rounded, "Bio", bio, isMultiLine: true),
-                    ],
-                  ],
-                ),
               ),
 
               const SizedBox(height: 24),
 
-              // Contact Details Section Header with Expand Button
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              // Contact Details Section Header
+              const Text(
+                "Contact Details",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildViewCard(
                 children: [
                   GestureDetector(
                     onTap: () {
@@ -315,68 +330,40 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                         _isContactDetailsExpanded = !_isContactDetailsExpanded;
                       });
                     },
-                    child: const Text(
-                      "Contact Details",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
-                      ),
+                    behavior: HitTestBehavior.opaque,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: _buildViewRow(Icons.phone_rounded, "Phone", phone.isEmpty ? "Not provided" : phone),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildSmallExpandButton(
+                          isExpanded: _isContactDetailsExpanded,
+                          onTap: () {
+                            setState(() {
+                              _isContactDetailsExpanded = !_isContactDetailsExpanded;
+                            });
+                          },
+                        ),
+                      ],
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _isContactDetailsExpanded = !_isContactDetailsExpanded;
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFBAE6FD)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            _isContactDetailsExpanded ? "Collapse" : "Expand",
-                            style: const TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF0052FF),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            _isContactDetailsExpanded
-                                ? Icons.keyboard_arrow_up_rounded
-                                : Icons.keyboard_arrow_down_rounded,
-                            color: const Color(0xFF0052FF),
-                            size: 18,
-                          ),
-                        ],
-                      ),
+                  AnimatedCrossFade(
+                    firstChild: const SizedBox(width: double.infinity),
+                    secondChild: Column(
+                      children: [
+                        const Divider(color: Color(0xFFF1F5F9), height: 24),
+                        _buildViewRow(Icons.email_rounded, "Email", email.isEmpty ? "Not provided" : email),
+                        const Divider(color: Color(0xFFF1F5F9), height: 24),
+                        _buildViewRow(Icons.language_rounded, "Website", website.isEmpty ? "Not provided" : website),
+                      ],
                     ),
+                    crossFadeState: _isContactDetailsExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+                    duration: const Duration(milliseconds: 280),
+                    sizeCurve: Curves.fastOutSlowIn,
                   ),
                 ],
-              ),
-              const SizedBox(height: 12),
-              AnimatedSize(
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeInOut,
-                child: _buildViewCard(
-                  children: [
-                    _buildViewRow(Icons.phone_rounded, "Phone", phone.isEmpty ? "Not provided" : phone),
-                    if (_isContactDetailsExpanded) ...[
-                      const Divider(color: Color(0xFFF1F5F9), height: 24),
-                      _buildViewRow(Icons.email_rounded, "Email", email.isEmpty ? "Not provided" : email),
-                      const Divider(color: Color(0xFFF1F5F9), height: 24),
-                      _buildViewRow(Icons.language_rounded, "Website", website.isEmpty ? "Not provided" : website),
-                    ],
-                  ],
-                ),
               ),
               
               const SizedBox(height: 24),
@@ -443,6 +430,46 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: children,
+      ),
+    );
+  }
+
+  Widget _buildSmallExpandButton({
+    required bool isExpanded,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+        decoration: BoxDecoration(
+          color: isExpanded ? const Color(0xFFEFF6FF) : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isExpanded ? const Color(0xFFBAE6FD) : const Color(0xFFE2E8F0),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              isExpanded ? "Collapse" : "Expand",
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: isExpanded ? const Color(0xFF0052FF) : const Color(0xFF64748B),
+              ),
+            ),
+            const SizedBox(width: 2),
+            Icon(
+              isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+              color: isExpanded ? const Color(0xFF0052FF) : const Color(0xFF64748B),
+              size: 15,
+            ),
+          ],
+        ),
       ),
     );
   }

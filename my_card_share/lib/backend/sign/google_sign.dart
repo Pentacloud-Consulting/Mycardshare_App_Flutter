@@ -33,6 +33,7 @@ class GoogleSignUpService {
       '943022881240-igar8cpibfem295tuua1lhlkh24n4k4j.apps.googleusercontent.com';
 
   static final GoogleSignIn _googleSignIn = GoogleSignIn(
+    serverClientId: webClientId,
     clientId: kIsWeb ? webClientId : null,
     scopes: <String>[
       'email',
@@ -169,6 +170,14 @@ class GoogleSignUpService {
       );
     } catch (e) {
       debugPrint('[GoogleSignUpService] Error: $e');
+      final errorStr = e.toString();
+      if (errorStr.contains('10') || errorStr.contains('sign_in_failed')) {
+        return GoogleSignUpResponse(
+          isSuccess: false,
+          message:
+              'Google Sign-In configuration error (Code 10). Download updated google-services.json from Firebase Console after adding SHA-1.',
+        );
+      }
       return GoogleSignUpResponse(
         isSuccess: false,
         message: 'Google Sign-Up failed. Please try again.',

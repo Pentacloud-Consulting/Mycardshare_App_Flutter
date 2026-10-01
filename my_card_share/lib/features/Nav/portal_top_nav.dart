@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../providers/auth_provider.dart';
 import 'profile_menu_list.dart';
+import '../../backend/individual/profile/individual_profile_store.dart';
+import '../../backend/individual/multiple store/individual_multi_store.dart';
 
 class PortalTopNav extends ConsumerWidget implements PreferredSizeWidget {
   final String userName;
@@ -109,231 +112,251 @@ class PortalTopNav extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final role = ref.watch(authProvider).role;
-    final isEmployee = role == 'employee';
+    return ListenableBuilder(
+      listenable: IndividualProfileStore.instance,
+      builder: (context, _) {
+        final role = ref.watch(authProvider).role;
+        final isEmployee = role == 'employee';
 
-    String currentPath = '/portal';
-    try {
-      currentPath = GoRouterState.of(context).uri.path;
-    } catch (_) {
-      try {
-        currentPath = GoRouter.of(context).routeInformationProvider.value.uri.path;
-      } catch (_) {
-        currentPath = '/portal';
-      }
-    }
+        final activeProfile = IndividualProfileStore.instance.activeProfile;
+        final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
+        final firebaseUser = FirebaseAuth.instance.currentUser;
 
-    final bool isMainTab = currentPath == '/portal' ||
-        currentPath == '/portal/vault' ||
-        currentPath == '/portal/scanner' ||
-        currentPath == '/portal/leads' ||
-        currentPath == '/portal/profile';
+        String resolvedUserName = userName;
+        final realName = (activeProfile?.fullName.isNotEmpty == true ? activeProfile!.fullName : null) ??
+            (storedUser?.fullName.isNotEmpty == true ? storedUser!.fullName : null) ??
+            (firebaseUser?.displayName?.isNotEmpty == true ? firebaseUser!.displayName : null) ??
+            (firebaseUser?.email?.isNotEmpty == true ? firebaseUser!.email!.split('@').first : null);
+        if (realName != null && realName.isNotEmpty) {
+          resolvedUserName = realName.trim().split(' ').first;
+        } else if (resolvedUserName == "Alex") {
+          resolvedUserName = "User";
+        }
 
-    final bool isHome = currentPath == '/portal';
-    final bool shouldShowBack = showBackButton || !isMainTab;
+        String currentPath = '/portal';
+        try {
+          currentPath = GoRouterState.of(context).uri.path;
+        } catch (_) {
+          try {
+            currentPath = GoRouter.of(context).routeInformationProvider.value.uri.path;
+          } catch (_) {
+            currentPath = '/portal';
+          }
+        }
 
-    final String resolvedTitle = title ??
-        (_routeTitles[currentPath]?['title'] ?? _deriveTitleFromPath(currentPath));
-    final String? resolvedSubtitle =
-        subtitle ?? _routeTitles[currentPath]?['subtitle'];
+        final bool isMainTab = currentPath == '/portal' ||
+            currentPath == '/portal/vault' ||
+            currentPath == '/portal/scanner' ||
+            currentPath == '/portal/leads' ||
+            currentPath == '/portal/profile';
 
-    return SafeArea(
-      child: Container(
-        height: 64,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: const BoxDecoration(
-          color: Color(0xFFF8FAFD),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // Left Group: Hamburger Menu / Back Button + Title or Greeting
-            Row(
+        final bool isHome = currentPath == '/portal';
+        final bool shouldShowBack = showBackButton || !isMainTab;
+
+        final String resolvedTitle = title ??
+            (_routeTitles[currentPath]?['title'] ?? _deriveTitleFromPath(currentPath));
+        final String? resolvedSubtitle =
+            subtitle ?? _routeTitles[currentPath]?['subtitle'];
+
+        return SafeArea(
+          child: Container(
+            height: 64,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF8FAFD),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Circular Light-Gray Menu / Back Button
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () {
-                      if (shouldShowBack) {
-                        if (Navigator.canPop(context)) {
-                          Navigator.pop(context);
-                        } else {
-                          context.go('/portal');
-                        }
-                      } else {
-                        _openMenuModal(context);
-                      }
-                    },
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFE2E8F0),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        shouldShowBack ? Icons.arrow_back_rounded : Icons.menu_rounded,
-                        color: const Color(0xFF334155),
-                        size: 22,
+                // Left Group: Hamburger Menu / Back Button + Title or Greeting
+                Row(
+                  children: [
+                    // Circular Light-Gray Menu / Back Button
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          if (shouldShowBack) {
+                            if (Navigator.canPop(context)) {
+                              Navigator.pop(context);
+                            } else {
+                              context.go('/portal');
+                            }
+                          } else {
+                            _openMenuModal(context);
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFE2E8F0),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            shouldShowBack ? Icons.arrow_back_rounded : Icons.menu_rounded,
+                            color: const Color(0xFF334155),
+                            size: 22,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 12),
+                    const SizedBox(width: 12),
 
-                if (isHome) ...[
-                  // Greeting Text on Home: "Hi, Alex" + optional company badge
-                  Row(
-                    children: [
-                      RichText(
-                        text: TextSpan(
-                          style: const TextStyle(
-                            fontFamily: 'sans-serif',
-                            fontSize: 19,
-                          ),
-                          children: [
-                            const TextSpan(
-                              text: "Hi, ",
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF0F172A),
-                              ),
-                            ),
-                            TextSpan(
-                              text: userName,
-                              style: const TextStyle(
-                                fontStyle: FontStyle.italic,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF2563EB),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (isEmployee) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: const Color(0xFFBFDBFE), width: 1),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.business_rounded, size: 11, color: Color(0xFF0052FF)),
-                              SizedBox(width: 4),
-                              Text(
-                                "Acme Realty",
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF0052FF),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ] else ...[
-                  // Page Title & Subtitle on Sub-pages
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                    if (isHome) ...[
+                      // Greeting Text on Home: "Hi, Zuhaib" + optional company badge
                       Row(
                         children: [
-                          Text(
-                            resolvedTitle,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                              color: Color(0xFF0F172A),
-                              letterSpacing: -0.4,
+                          RichText(
+                            text: TextSpan(
+                              style: const TextStyle(
+                                fontFamily: 'sans-serif',
+                                fontSize: 19,
+                              ),
+                              children: [
+                                const TextSpan(
+                                  text: "Hi, ",
+                                  style: TextStyle(
+                                    fontStyle: FontStyle.italic,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF0F172A),
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: resolvedUserName,
+                                  style: const TextStyle(
+                                    fontStyle: FontStyle.italic,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF2563EB),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          if (isEmployee ||
-                              currentPath == '/portal/approvals' ||
-                              currentPath == '/portal/companies' ||
-                              currentPath == '/portal/workforce') ...[
+                          if (isEmployee) ...[
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFEF3C7),
+                                color: const Color(0xFFEFF6FF),
                                 borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: const Color(0xFFFDE68A)),
+                                border: Border.all(color: const Color(0xFFBFDBFE), width: 1),
                               ),
-                              child: const Text(
-                                "EMPLOYEE",
-                                style: TextStyle(
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFFD97706),
-                                  letterSpacing: 0.4,
-                                ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.business_rounded, size: 11, color: Color(0xFF0052FF)),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    "Acme Realty",
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF0052FF),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ],
                       ),
-                      if (resolvedSubtitle != null &&
-                          resolvedSubtitle.isNotEmpty) ...[
-                        const SizedBox(height: 1),
-                        Text(
-                          resolvedSubtitle.toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF94A3B8),
-                            letterSpacing: 1.2,
+                    ] else ...[
+                      // Page Title & Subtitle on Sub-pages
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                resolvedTitle,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF0F172A),
+                                  letterSpacing: -0.4,
+                                ),
+                              ),
+                              if (isEmployee ||
+                                  currentPath == '/portal/approvals' ||
+                                  currentPath == '/portal/companies' ||
+                                  currentPath == '/portal/workforce') ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFEF3C7),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: const Color(0xFFFDE68A)),
+                                  ),
+                                  child: const Text(
+                                    "EMPLOYEE",
+                                    style: TextStyle(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFFD97706),
+                                      letterSpacing: 0.4,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          if (resolvedSubtitle != null &&
+                              resolvedSubtitle.isNotEmpty) ...[
+                            const SizedBox(height: 1),
+                            Text(
+                              resolvedSubtitle.toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF94A3B8),
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+
+                // Right Group: Custom Action + Bell Icon
+                Row(
+                  children: [
+                    if (customAction != null) ...[
+                      customAction!,
+                      const SizedBox(width: 8),
+                    ],
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => context.push('/portal/notifications'),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFE2E8F0),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.notifications_none_rounded,
+                            color: Color(0xFF1E293B),
+                            size: 22,
                           ),
                         ),
-                      ],
-                    ],
-                  ),
-                ],
-              ],
-            ),
-
-            // Right Group: Custom Action + Bell Icon
-            Row(
-              children: [
-                if (customAction != null) ...[
-                  customAction!,
-                  const SizedBox(width: 8),
-                ],
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () => context.push('/portal/notifications'),
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFE2E8F0),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.notifications_none_rounded,
-                        color: Color(0xFF1E293B),
-                        size: 22,
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

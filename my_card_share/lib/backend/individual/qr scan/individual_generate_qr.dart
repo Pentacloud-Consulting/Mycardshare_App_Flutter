@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../profile/individual_profile_store.dart';
+import '../previews/users_view.dart';
 import 'individual_qr_service.dart';
 
 /// Flutter component for rendering dynamic QR codes and displaying the Scan QR modal
@@ -20,6 +22,11 @@ class IndividualGenerateQR extends StatelessWidget {
     final slug = cardSlug ?? active?.cardSlug ?? IndividualProfileStore.generateCardSlug('user');
     final displayName = name ?? active?.fullName ?? 'User';
     final shareUrl = IndividualQRService.generateShareUrl(slug);
+
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    if (uid.isNotEmpty) {
+      UsersViewService.instance.onQrCodeScanned(targetUid: uid, viewerName: displayName);
+    }
 
     showDialog(
       context: context,

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../features/Nav/portal_bottom_nav.dart';
 import '../../../features/Nav/portal_top_nav.dart';
 import '../../../features/individual/home/View My card/home.dart';
 import '../../../backend/individual/profile/individual_profile_store.dart';
 import '../../../backend/individual/multiple store/individual_multi_store.dart';
 import '../../../backend/individual/qr scan/individual_qr_service.dart';
+import '../../../backend/individual/previews/publish_unpublish.dart';
 
 class IndividualCardScreen extends StatefulWidget {
   final String? slug;
@@ -27,6 +29,10 @@ class _IndividualCardScreenState extends State<IndividualCardScreen> {
   @override
   void initState() {
     super.initState();
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null && uid.isNotEmpty) {
+      PublishUnpublishService.instance.loadPublishStatus(uid);
+    }
     if (widget.slug != null && widget.slug!.trim().isNotEmpty) {
       _loadProfileBySlug(widget.slug!.trim());
     }
@@ -46,10 +52,14 @@ class _IndividualCardScreenState extends State<IndividualCardScreen> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: IndividualProfileStore.instance,
+      listenable: Listenable.merge([
+        IndividualProfileStore.instance,
+        PublishUnpublishService.instance,
+      ]),
       builder: (context, _) {
         final activeProfile = _fetchedProfile ?? IndividualProfileStore.instance.activeProfile;
         final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
+        final isPublished = PublishUnpublishService.instance.isPublished;
 
         final name = activeProfile?.fullName ?? storedUser?.fullName ?? "User";
         final role = activeProfile?.jobTitle.isNotEmpty == true ? activeProfile!.jobTitle : "Member";
@@ -112,6 +122,7 @@ class _IndividualCardScreenState extends State<IndividualCardScreen> {
                         selectedTemplateIndex: templateIndex,
                         avatarUrl: activeProfile?.profilePhoto,
                         bannerUrl: activeProfile?.bannerPhoto,
+                        isPublished: isPublished,
                       ),
 
                       const SizedBox(height: 18),

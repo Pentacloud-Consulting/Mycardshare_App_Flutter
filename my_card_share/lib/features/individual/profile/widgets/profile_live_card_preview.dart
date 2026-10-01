@@ -94,7 +94,6 @@ class ProfileLiveCardPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gradientColors = _getGradientForTemplate(selectedTemplateIndex);
-    final isLightTemplate = selectedTemplateIndex == 4;
 
     return Container(
       width: double.infinity,
@@ -136,82 +135,48 @@ class ProfileLiveCardPreview extends StatelessWidget {
                     topLeft: Radius.circular(20),
                     topRight: Radius.circular(20),
                   ),
-                  child: Stack(
-                    children: [
-                      Positioned.fill(child: _buildBannerImageWidget()),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "Good\nPeople\nBetter\nOpportunities",
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: isLightTemplate
-                                    ? const Color(0xFF475569)
-                                    : Colors.white.withValues(alpha: 0.85),
-                                height: 1.2,
-                              ),
-                            ),
-                            Text(
-                              "Let's\nConnect",
-                              textAlign: TextAlign.right,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontStyle: FontStyle.italic,
-                                fontWeight: FontWeight.bold,
-                                color: isLightTemplate
-                                    ? const Color(0xFF0052FF)
-                                    : Colors.white.withValues(alpha: 0.9),
-                                height: 1.2,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                  child: _buildBannerImageWidget(),
                 ),
               ),
 
               // Overlapping Avatar with Camera Edit Badge
               Positioned(
                 bottom: -32,
-                child: Stack(
-                  children: [
-                    Container(
-                      width: 72,
-                      height: 72,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 3),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x15000000),
-                            blurRadius: 8,
-                            offset: Offset(0, 3),
-                          ),
-                        ],
+                child: GestureDetector(
+                  onTap: onAvatarEditTap ??
+                      () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Upload photo clicked")),
+                        );
+                      },
+                  behavior: HitTestBehavior.opaque,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 76,
+                        height: 76,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 3),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x15000000),
+                              blurRadius: 8,
+                              offset: Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: ClipOval(
+                          child: _buildAvatarWidget(),
+                        ),
                       ),
-                      child: ClipOval(
-                        child: _buildAvatarWidget(),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: GestureDetector(
-                        onTap: onAvatarEditTap ??
-                            () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("Upload photo clicked")),
-                              );
-                            },
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
                         child: Container(
-                          width: 24,
-                          height: 24,
+                          width: 26,
+                          height: 26,
                           decoration: BoxDecoration(
                             color: const Color(0xFF0052FF),
                             shape: BoxShape.circle,
@@ -220,12 +185,12 @@ class ProfileLiveCardPreview extends StatelessWidget {
                           child: const Icon(
                             Icons.camera_alt_rounded,
                             color: Colors.white,
-                            size: 12,
+                            size: 13,
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],

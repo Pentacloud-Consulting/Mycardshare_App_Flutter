@@ -11,6 +11,7 @@ class CardHeaderBanner extends StatelessWidget {
   final String? avatarUrl;
   final String? bannerAsset;
   final String? bannerUrl;
+  final bool isPublished;
 
   const CardHeaderBanner({
     super.key,
@@ -23,6 +24,7 @@ class CardHeaderBanner extends StatelessWidget {
     this.avatarUrl,
     this.bannerAsset,
     this.bannerUrl,
+    this.isPublished = true,
   });
 
   List<Color> _getGradientForTemplate(int index) {
@@ -94,12 +96,10 @@ class CardHeaderBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final uppercaseCompany = company.toUpperCase();
     final uppercaseStatus = status.toUpperCase();
     final gradientColors = _getGradientForTemplate(selectedTemplateIndex);
     final photo = bannerUrl ?? bannerAsset;
     final hasBannerImage = photo != null && photo.isNotEmpty;
-    final isLightTemplate = selectedTemplateIndex == 4;
 
     return Column(
       children: [
@@ -159,41 +159,7 @@ class CardHeaderBanner extends StatelessWidget {
                         ),
                       ),
 
-                    // Left Abstract Wave Lines & Brand Text
-                    Positioned(
-                      top: 16,
-                      left: 18,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "People\nBuild\nBetter\nFutures",
-                            style: TextStyle(
-                              color: (!hasBannerImage && isLightTemplate) ? const Color(0xFF0F172A) : Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              height: 1.15,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Container(
-                            width: 24,
-                            height: 2,
-                            color: (!hasBannerImage && isLightTemplate) ? const Color(0xFF0F172A) : Colors.white70,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            "$uppercaseCompany\nPEOPLE  •  PLACES  •  POSSIBILITIES",
-                            style: TextStyle(
-                              color: (!hasBannerImage && isLightTemplate) ? const Color(0xFF475569) : Colors.white.withValues(alpha: 0.85),
-                              fontSize: 7,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+
 
                     // Floating Badge Top Right
                     Positioned(
@@ -202,7 +168,7 @@ class CardHeaderBanner extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: isPublished ? Colors.white : const Color(0xFFFEF9C3),
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: const [
                             BoxShadow(
@@ -218,19 +184,19 @@ class CardHeaderBanner extends StatelessWidget {
                             Container(
                               width: 8,
                               height: 8,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF16A34A),
+                              decoration: BoxDecoration(
+                                color: isPublished ? const Color(0xFF16A34A) : const Color(0xFFEAB308),
                                 shape: BoxShape.circle,
                               ),
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              uppercaseStatus,
-                              style: const TextStyle(
+                              isPublished ? uppercaseStatus : "INACTIVE",
+                              style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 0.5,
-                                color: Color(0xFF0066FF),
+                                color: isPublished ? const Color(0xFF0066FF) : const Color(0xFFA16207),
                               ),
                             ),
                           ],

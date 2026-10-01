@@ -4,10 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../models/user_model.dart';
 import '../../../providers/auth_provider.dart';
-import '../../../backend/individual/sign/user_sign_up_store.dart';
+import '../../../backend/individual/sign/individual_auth_service.dart';
 import '../../../backend/enterprise/sign/user_sign_up_store.dart';
 import '../login/login_screen.dart'; // import GoogleLogoWidget
 import '../../../backend/sign/google_sign.dart';
+import '../back/smart_back_handler.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
@@ -34,7 +35,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     super.dispose();
   }
 
-  void _onSignup() {
+  void _onSignup() async {
     if (!_agreeTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -69,49 +70,54 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             ? 'employee'
             : 'individual';
 
-    UserModel user;
-
     if (_selectedTab == 1) {
-      // Save Enterprise User data in EnterpriseUserSignUpStore
+      // ── Enterprise: unchanged local store path ──
       final record = EnterpriseUserSignUpStore.saveUserSignUp(
         companyName: name.isNotEmpty ? name : 'Enterprise Account',
         email: email,
         password: password,
         role: roleStr,
       );
-      user = UserModel(
+      final user = UserModel(
         id: record.id,
         name: record.companyName,
         email: record.email,
         role: roleStr,
       );
+      ref.read(authProvider.notifier).login(user);
+      if (mounted) {
+        setState(() => _isLoading = false);
+        context.go('/enterprise-onboarding');
+      }
     } else {
-      // Save Individual User data in UserSignUpStore
-      final record = UserSignUpStore.saveUserSignUp(
+      // ── Individual: REAL Firebase Auth sign-up ──
+      final result = await IndividualAuthService.instance.signUp(
         fullName: name.isNotEmpty ? name : 'New User',
         email: email,
         password: password,
-        role: roleStr,
       );
-      user = UserModel(
-        id: record.id,
-        name: record.fullName,
-        email: record.email,
-        role: roleStr,
-      );
-    }
 
-    ref.read(authProvider.notifier).login(user);
+      if (!mounted) return;
+      setState(() => _isLoading = false);
 
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-
-      if (roleStr == 'enterprise') {
-        context.go('/enterprise-onboarding');
-      } else {
+      if (result.isSuccess && result.firebaseUser != null) {
+        final fbUser = result.firebaseUser!;
+        final user = UserModel(
+          id: fbUser.uid,
+          name: fbUser.displayName ?? name,
+          email: fbUser.email ?? email,
+          role: roleStr,
+        );
+        ref.read(authProvider.notifier).login(user);
         context.go('/individual/form');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.message),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     }
   }
@@ -124,23 +130,48 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             ? 'employee'
             : 'individual';
 
-    // Triggers the real native OS Google Account chooser
-    final response = await GoogleSignUpService.signUpWithGoogle(role: roleStr);
+    if (_selectedTab != 0) {
+      // Enterprise / Employee: use old GoogleSignUpService
+      final response = await GoogleSignUpService.signUpWithGoogle(role: roleStr);
+      if (!mounted) return;
+      if (response.isSuccess && response.userModel != null) {
+        ref.read(authProvider.notifier).login(response.userModel!);
+        context.go(roleStr == 'enterprise' ? '/enterprise-onboarding' : '/individual/form');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.message),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
 
+    // ── Individual: REAL Firebase Google Sign-In ──
+    final result = await IndividualAuthService.instance.signInWithGoogle();
     if (!mounted) return;
 
-    if (response.isSuccess && response.userModel != null) {
-      ref.read(authProvider.notifier).login(response.userModel!);
-      if (roleStr == 'enterprise') {
-        context.go('/enterprise-onboarding');
-      } else {
-        context.go('/individual/form');
-      }
+    if (result.isSuccess && result.firebaseUser != null) {
+      final fbUser = result.firebaseUser!;
+      final resolvedName = (fbUser.displayName != null && fbUser.displayName!.trim().isNotEmpty)
+          ? fbUser.displayName!.trim()
+          : (fbUser.email != null && fbUser.email!.isNotEmpty)
+              ? fbUser.email!.split('@').first
+              : 'Google User';
+      final user = UserModel(
+        id: fbUser.uid,
+        name: resolvedName,
+        email: fbUser.email ?? '',
+        role: roleStr,
+      );
+      ref.read(authProvider.notifier).login(user);
+      context.go('/individual/form');
     } else {
-      // Show error to user
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(response.message),
+          content: Text(result.message),
           backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
         ),
@@ -149,12 +180,18 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   }
 
 
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFD),
-      body: Stack(
-        children: [
+    return SmartPopScope(
+      onBack: () {
+        context.go('/login');
+        return true;
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFD),
+        body: Stack(
+          children: [
           // Top-Right Ambient Glow Circle
           Positioned(
             top: -60,
@@ -194,23 +231,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 12),
-
-                  // Top Navigation Bar with Back Button
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed: () => context.go('/login'),
-                        icon: const Icon(
-                          Icons.arrow_back_rounded,
-                          color: Color(0xFF0F172A),
-                          size: 24,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 24),
 
                   // App Logo & Brand Title
                   Container(
@@ -646,8 +667,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildTabPill({
     required int index,

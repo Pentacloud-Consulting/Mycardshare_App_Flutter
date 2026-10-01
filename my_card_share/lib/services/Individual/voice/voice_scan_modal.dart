@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'voice_service.dart';
+import '../../../backend/individual/scan/card_scan_service.dart';
+import '../../../backend/individual/scan/voice_add_service.dart';
 
 class VoiceScanModal extends ConsumerStatefulWidget {
   const VoiceScanModal({super.key});
@@ -61,7 +63,18 @@ class _VoiceScanModalState extends ConsumerState<VoiceScanModal> with SingleTick
       _isSuccess = true;
     });
 
-    // Save parsed voice contact accurately into Riverpod VaultNotifier state
+    // Save parsed voice contact accurately into Firestore & increment scan metric
+    final voiceContact = ScannedContactData(
+      id: 'voice_${DateTime.now().millisecondsSinceEpoch}',
+      name: "Sarah Jenkins",
+      role: "VP of Marketing",
+      company: "CloudScale",
+      email: "sarah@cloudscale.io",
+      phone: "+1 555 876 5432",
+      tag: 'Voice',
+    );
+    await VoiceAddService.instance.saveVoiceContact(voiceContact);
+
     VoiceService.saveContact(
       ref,
       name: "Sarah Jenkins",

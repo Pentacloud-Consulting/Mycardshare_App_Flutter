@@ -116,6 +116,14 @@ class RouterNotifier extends ChangeNotifier {
       if (path == '/enterprise-onboarding' || path == '/registration-pending' || path == '/individual/form') {
         return null; // allow viewing onboarding wizard & pending screens
       }
+      if (path == '/signup') {
+        if (role == 'enterprise') {
+          return '/enterprise-onboarding';
+        }
+        if (role == 'individual') {
+          return '/individual/form';
+        }
+      }
       if (role == 'master-admin') {
         return '/master-admin/dashboard';
       }

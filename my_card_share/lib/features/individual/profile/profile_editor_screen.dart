@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../backend/individual/api_service.dart';
 import '../../../backend/individual/profile/individual_profile_store.dart';
 import '../../../backend/individual/multiple store/individual_multi_store.dart';
+import '../../../backend/individual/previews/publish_unpublish.dart';
+import '../../../backend/individual/qr scan/slug_validator.dart';
+import '../../../backend/individual/qr scan/slug_backend_service.dart';
 import 'widgets/profile_basic_info.dart';
 import 'widgets/profile_contact_details.dart';
 import 'widgets/profile_live_card_preview.dart';
@@ -34,6 +38,7 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
   late List<SocialLinkItem> _socialLinks;
   late String _uid;
   String? _bannerImagePath;
+  String? _profileImagePath;
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -43,8 +48,10 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
     final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
 
     _uid = active?.uid ?? storedUser?.id ?? 'user_${DateTime.now().millisecondsSinceEpoch}';
+    PublishUnpublishService.instance.loadPublishStatus(_uid);
     _selectedTemplateIndex = IndividualProfileStore.getTemplateIndex(active?.templateStyle);
     _bannerImagePath = active?.bannerPhoto;
+    _profileImagePath = active?.profilePhoto;
 
     _nameController = TextEditingController(text: active?.fullName ?? storedUser?.fullName ?? "");
     _roleController = TextEditingController(text: active?.jobTitle ?? "");
@@ -64,10 +71,7 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
     if (active?.socialLinks != null && active!.socialLinks.isNotEmpty) {
       _socialLinks = active.socialLinks.map((l) => SocialLinkItem(platform: l.platform, url: l.url)).toList();
     } else {
-      _socialLinks = [
-        SocialLinkItem(platform: 'LinkedIn', url: ''),
-        SocialLinkItem(platform: 'Instagram', url: ''),
-      ];
+      _socialLinks = [];
     }
 
     _nameController.addListener(() => setState(() {}));
@@ -88,26 +92,169 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
     super.dispose();
   }
 
-  Future<void> _pickBannerImage() async {
-    try {
-      final XFile? pickedFile = await _picker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 1200,
-        maxHeight: 600,
-        imageQuality: 85,
-      );
-      if (pickedFile != null) {
-        setState(() {
-          _bannerImagePath = pickedFile.path;
-        });
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Banner image selected! Tap checkmark to save.')),
+  void _showImagePickerModal({
+    required String title,
+    required bool hasExistingImage,
+    required Function(ImageSource source) onSourceSelected,
+    required VoidCallback onRemoveImage,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFCBD5E1),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.camera_alt_rounded, color: Color(0xFF0052FF)),
+                  ),
+                  title: const Text("Take Photo", style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: const Text("Use camera to take a photo"),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    onSourceSelected(ImageSource.camera);
+                  },
+                ),
+                const SizedBox(height: 4),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0FDF4),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.photo_library_rounded, color: Color(0xFF16A34A)),
+                  ),
+                  title: const Text("Choose from Gallery", style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: const Text("Select image from your device gallery"),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    onSourceSelected(ImageSource.gallery);
+                  },
+                ),
+                if (hasExistingImage) ...[
+                  const SizedBox(height: 4),
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF2F2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+                    ),
+                    title: const Text("Remove Photo", style: TextStyle(fontWeight: FontWeight.w600, color: Colors.redAccent)),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      onRemoveImage();
+                    },
+                  ),
+                ],
+              ],
+            ),
+          ),
         );
-      }
-    } catch (e) {
-      debugPrint('Error picking banner: $e');
-    }
+      },
+    );
+  }
+
+  void _pickBannerImage() {
+    _showImagePickerModal(
+      title: "Update Banner Image",
+      hasExistingImage: _bannerImagePath != null && _bannerImagePath!.isNotEmpty,
+      onSourceSelected: (source) async {
+        try {
+          final XFile? pickedFile = await _picker.pickImage(
+            source: source,
+            maxWidth: 1200,
+            maxHeight: 600,
+            imageQuality: 85,
+          );
+          if (pickedFile != null) {
+            setState(() {
+              _bannerImagePath = pickedFile.path;
+            });
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Banner image selected! Tap checkmark to save.')),
+            );
+          }
+        } catch (e) {
+          debugPrint('Error picking banner image: $e');
+        }
+      },
+      onRemoveImage: () {
+        setState(() {
+          _bannerImagePath = "";
+        });
+      },
+    );
+  }
+
+  void _pickProfileImage() {
+    _showImagePickerModal(
+      title: "Update Profile Picture",
+      hasExistingImage: _profileImagePath != null && _profileImagePath!.isNotEmpty,
+      onSourceSelected: (source) async {
+        try {
+          final XFile? pickedFile = await _picker.pickImage(
+            source: source,
+            maxWidth: 800,
+            maxHeight: 800,
+            imageQuality: 85,
+          );
+          if (pickedFile != null) {
+            setState(() {
+              _profileImagePath = pickedFile.path;
+            });
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Profile picture selected! Tap checkmark to save.')),
+            );
+          }
+        } catch (e) {
+          debugPrint('Error picking profile picture: $e');
+        }
+      },
+      onRemoveImage: () {
+        setState(() {
+          _profileImagePath = "";
+        });
+      },
+    );
   }
 
   void _showManageSocialLinksSheet() {
@@ -274,12 +421,61 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
   Future<void> _saveChanges() async {
     setState(() => _isSaving = true);
 
+    final newSlug = _slugController.text.trim().toLowerCase();
+    final existingSlug = IndividualProfileStore.instance.activeProfile?.cardSlug ?? '';
+
+    // ── 1. Slug uniqueness check (skip if unchanged) ──────────────────────────
+    if (newSlug.isNotEmpty && newSlug != existingSlug) {
+      final slugResult = await SlugValidatorService.checkSlug(
+        newSlug,
+        currentUserSlug: existingSlug,
+      );
+      if (!slugResult.isAvailable) {
+        if (mounted) {
+          final takenBy = slugResult.existingCard?.fullName ?? 'another user';
+          setState(() => _isSaving = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Slug "$newSlug" is already taken by $takenBy. Please choose a different slug.'),
+              backgroundColor: const Color(0xFFDC2626),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          );
+        }
+        return;
+      }
+    }
+
+    // ── 2. Upload images ───────────────────────────────────────────────────────
+    String? uploadedAvatarUrl = _profileImagePath;
+    if (_profileImagePath != null && _profileImagePath!.isNotEmpty && !_profileImagePath!.startsWith('http')) {
+      try {
+        uploadedAvatarUrl = await IndividualApiService.uploadFile(_profileImagePath!, 'avatar');
+      } catch (e) {
+        debugPrint('[ProfileEditor] Avatar upload notice: $e');
+      }
+    }
+
+    String? uploadedBannerUrl = _bannerImagePath;
+    if (_bannerImagePath != null && _bannerImagePath!.isNotEmpty && !_bannerImagePath!.startsWith('http')) {
+      try {
+        uploadedBannerUrl = await IndividualApiService.uploadFile(_bannerImagePath!, 'banner');
+      } catch (e) {
+        debugPrint('[ProfileEditor] Banner upload notice: $e');
+      }
+    }
+
+    final finalSlug = newSlug.isNotEmpty ? newSlug : existingSlug;
+
+    // ── 3. Save to Firestore (primary) ────────────────────────────────────────
     await IndividualProfileStore.instance.saveProfile(
       uid: _uid,
       fullName: _nameController.text.trim(),
       email: _emailController.text.trim(),
-      customSlug: _slugController.text.trim(),
-      bannerPhoto: _bannerImagePath,
+      customSlug: finalSlug,
+      profilePhoto: uploadedAvatarUrl,
+      bannerPhoto: uploadedBannerUrl,
       jobTitle: _roleController.text.trim(),
       phoneNumber: _phoneController.text.trim(),
       websiteUrl: _websiteController.text.trim(),
@@ -289,6 +485,22 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
       shortBio: _bioController.text.trim(),
       networkingStatus: 'Actively Networking',
     );
+
+    // ── 4. Sync updated slug + profile to MongoDB so web QR page stays live ──
+    SlugBackendService.instance.ensureSlugSynced(finalSlug, {
+      'fullName': _nameController.text.trim(),
+      'email': _emailController.text.trim(),
+      'jobTitle': _roleController.text.trim(),
+      'phone': _phoneController.text.trim(),
+      'website': _websiteController.text.trim(),
+      'bio': _bioController.text.trim(),
+      'companyName': _companyController.text.trim(),
+      'avatarUrl': uploadedAvatarUrl ?? '',
+      'bannerUrl': uploadedBannerUrl ?? '',
+      'socialLinks': _socialLinks
+          .map((l) => {'platform': l.platform, 'url': l.url})
+          .toList(),
+    });
 
     if (mounted) {
       setState(() => _isSaving = false);
@@ -302,6 +514,7 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
       Navigator.of(context).pop();
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -393,13 +606,21 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Live Card Preview Banner
-              ProfileLiveCardPreview(
-                name: _nameController.text.isEmpty ? "Your Name" : _nameController.text,
-                role: _roleController.text.isEmpty ? "Your Role" : _roleController.text,
-                company: _companyController.text.isEmpty ? "Your Company" : _companyController.text,
-                status: "Actively Networking",
-                selectedTemplateIndex: _selectedTemplateIndex,
-                bannerPhoto: _bannerImagePath,
+              ListenableBuilder(
+                listenable: PublishUnpublishService.instance,
+                builder: (context, _) {
+                  return ProfileLiveCardPreview(
+                    name: _nameController.text.isEmpty ? "Your Name" : _nameController.text,
+                    role: _roleController.text.isEmpty ? "Your Role" : _roleController.text,
+                    company: _companyController.text.isEmpty ? "Your Company" : _companyController.text,
+                    status: "Actively Networking",
+                    selectedTemplateIndex: _selectedTemplateIndex,
+                    profilePhoto: _profileImagePath,
+                    bannerPhoto: _bannerImagePath,
+                    isPublished: PublishUnpublishService.instance.isPublished,
+                    onAvatarEditTap: _pickProfileImage,
+                  );
+                },
               ),
 
               const SizedBox(height: 16),
@@ -491,6 +712,7 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
               // Card Slug Section (Image 5)
               ProfileSlugSection(
                 slugController: _slugController,
+                currentUserSlug: IndividualProfileStore.instance.activeProfile?.cardSlug,
               ),
 
               const SizedBox(height: 30),

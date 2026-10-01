@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_style_widgets.dart';
 import '../../../providers/vault_provider.dart';
+import '../../../backend/individual/scan/card_scan_service.dart';
+import '../../../backend/individual/scan/voice_add_service.dart';
+import '../../../backend/individual/scan/manual_entry_service.dart';
 
 class ReviewDetailsScreen extends ConsumerStatefulWidget {
   final String tag; // 'OCR', 'Voice', 'Manual'
@@ -67,18 +70,44 @@ class _ReviewDetailsScreenState extends ConsumerState<ReviewDetailsScreen> {
     super.dispose();
   }
 
-  void _saveToVault() {
+  void _saveToVault() async {
     final name = _fullNameController.text.trim();
     final role = _jobTitleController.text.trim();
     final company = _companyController.text.trim();
+    final phone = _phoneController.text.trim();
+    final email = _emailController.text.trim();
+    final website = _websiteController.text.trim();
+    final address = _addressController.text.trim();
+
+    final contact = ScannedContactData(
+      id: 'scan_${DateTime.now().millisecondsSinceEpoch}',
+      name: name.isNotEmpty ? name : 'Robert Chen',
+      role: role.isNotEmpty ? role : 'Managing Director',
+      company: company.isNotEmpty ? company : 'Apex Global Ventures',
+      phone: phone.isNotEmpty ? phone : '+1 555 4321',
+      email: email.isNotEmpty ? email : 'r.chen@apexglobal.com',
+      website: website,
+      address: address,
+      tag: widget.tag,
+    );
+
+    if (widget.tag == 'Voice') {
+      await VoiceAddService.instance.saveVoiceContact(contact);
+    } else if (widget.tag == 'Manual') {
+      await ManualEntryService.instance.saveManualContact(contact);
+    } else {
+      await CardScanService.instance.saveScannedContact(contact);
+    }
 
     ref.read(vaultNotifierProvider.notifier).addContact({
-      'name': name.isNotEmpty ? name : 'Robert Chen',
-      'role': role.isNotEmpty ? role : 'Managing Director',
-      'company': company.isNotEmpty ? company : 'Apex Global Ventures',
+      'name': contact.name,
+      'role': contact.role,
+      'company': contact.company,
       'dateAdded': 'Just now',
-      'tag': widget.tag,
+      'tag': contact.tag,
     });
+
+    if (!mounted) return;
 
     if (Navigator.canPop(context)) {
       Navigator.pop(context);
@@ -87,7 +116,7 @@ class _ReviewDetailsScreenState extends ConsumerState<ReviewDetailsScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text("✓ $name saved to Contact Vault (${widget.tag})!"),
+        content: Text("✓ ${contact.name} saved to Contact Vault (${widget.tag})!"),
         backgroundColor: const Color(0xFF0F172A),
         behavior: SnackBarBehavior.floating,
       ),

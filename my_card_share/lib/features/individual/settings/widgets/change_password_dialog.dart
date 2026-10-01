@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../backend/individual/change_password/change_password_service.dart';
 
 class ChangePasswordDialog extends StatefulWidget {
   const ChangePasswordDialog({super.key});
@@ -30,18 +31,27 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 800));
+
+    final result = await ChangePasswordService.instance.changePassword(
+      currentPassword: _currentController.text.trim(),
+      newPassword: _newController.text.trim(),
+      context: context,
+    );
 
     if (!mounted) return;
-    Navigator.pop(context);
+    setState(() => _isLoading = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Password updated successfully!"),
-        backgroundColor: Color(0xFF16A34A),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    if (result.isSuccess) {
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.message),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override

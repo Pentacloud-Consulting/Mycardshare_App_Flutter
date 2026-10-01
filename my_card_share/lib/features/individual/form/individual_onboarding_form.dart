@@ -1,10 +1,17 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:my_card_share/core/theme/app_theme.dart';
+import 'package:my_card_share/backend/individual/api_service.dart';
 import 'package:my_card_share/backend/individual/profile/individual_profile_store.dart';
 import 'package:my_card_share/backend/individual/multiple store/individual_multi_store.dart';
+import 'package:my_card_share/backend/individual/qr scan/slug_backend_service.dart';
+import 'package:my_card_share/backend/individual/qr scan/slug_validator.dart';
+import 'package:my_card_share/features/auth/back/smart_back_handler.dart';
+import 'package:my_card_share/features/auth/font style/font_style.dart';
 
 class IndividualOnboardingFormScreen extends StatefulWidget {
   final String? initialFullName;
@@ -33,6 +40,7 @@ class _IndividualOnboardingFormScreenState
   late String _fullName;
   late String _email;
   late String _uid;
+  String? _profileImageUrl;
 
   // Step 1 & 2 Controllers & Real Image Upload State
   final TextEditingController _jobTitleController = TextEditingController();
@@ -57,6 +65,10 @@ class _IndividualOnboardingFormScreenState
   final TextEditingController _bioController = TextEditingController();
   final TextEditingController _slugController = TextEditingController();
   String _networkingStatus = 'Actively Networking';
+
+  // Slug validation state
+  String? _slugError;
+  bool _slugChecking = false;
 
   // Template Theme Color Swatches (Image 4)
   final List<List<Color>> _colorSwatches = [
@@ -94,13 +106,37 @@ class _IndividualOnboardingFormScreenState
   @override
   void initState() {
     super.initState();
+    final firebaseUser = FirebaseAuth.instance.currentUser;
     final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
-    _fullName = widget.initialFullName ?? storedUser?.fullName ?? 'Alex Stanton';
-    _email = widget.initialEmail ?? storedUser?.email ?? 'alex.stanton@example.com';
-    _uid = widget.uid ?? storedUser?.id ?? 'user_${DateTime.now().millisecondsSinceEpoch}';
+    final active = IndividualProfileStore.instance.activeProfile;
+
+    final resolvedName = widget.initialFullName ??
+        (active?.fullName.isNotEmpty == true ? active!.fullName : null) ??
+        (storedUser?.fullName.isNotEmpty == true ? storedUser!.fullName : null) ??
+        (firebaseUser?.displayName?.isNotEmpty == true ? firebaseUser!.displayName : null) ??
+        (firebaseUser?.email?.isNotEmpty == true ? firebaseUser!.email!.split('@').first : null) ??
+        'User';
+
+    final resolvedEmail = widget.initialEmail ??
+        (active?.email.isNotEmpty == true ? active!.email : null) ??
+        (storedUser?.email.isNotEmpty == true ? storedUser!.email : null) ??
+        firebaseUser?.email ??
+        '';
+
+    final resolvedUid = widget.uid ??
+        active?.uid ??
+        storedUser?.id ??
+        firebaseUser?.uid ??
+        'user_${DateTime.now().millisecondsSinceEpoch}';
+
+    _fullName = resolvedName;
+    _email = resolvedEmail;
+    _uid = resolvedUid;
+    _profileImageUrl = (active != null && active.profilePhoto != null && active.profilePhoto!.isNotEmpty)
+        ? active.profilePhoto
+        : firebaseUser?.photoURL;
 
     // Load active profile data if available
-    final active = IndividualProfileStore.instance.activeProfile;
     if (active != null) {
       _jobTitleController.text = active.jobTitle;
       _phoneController.text = active.phoneNumber;
@@ -390,21 +426,57 @@ class _IndividualOnboardingFormScreenState
   Future<void> _submitForm() async {
     setState(() => _isLoading = true);
 
+    final userSlug = _slugController.text.trim().isNotEmpty
+        ? _slugController.text.trim().toLowerCase()
+        : IndividualProfileStore.generateCardSlug(_fullName);
+
+    // ── 1. Slug uniqueness check ─────────────────────────────────────────────
+    final slugResult = await SlugValidatorService.checkSlug(userSlug);
+    if (!slugResult.isAvailable) {
+      if (mounted) {
+        final takenBy = slugResult.existingCard?.fullName ?? 'another user';
+        setState(() {
+          _isLoading = false;
+          _slugError = 'Slug "$userSlug" is already taken by $takenBy. Please choose a different slug.';
+        });
+        _showSnackBar('Slug "$userSlug" is already taken. Please choose a different one.');
+      }
+      return;
+    }
+
+    // ── 2. Upload images ──────────────────────────────────────────────────────
+    String? uploadedAvatarUrl = _profileImageUrl;
+    if (_profileImagePath != null && _profileImagePath!.isNotEmpty && !_profileImagePath!.startsWith('http')) {
+      try {
+        uploadedAvatarUrl = await IndividualApiService.uploadFile(_profileImagePath!, 'avatar');
+      } catch (e) {
+        debugPrint('[OnboardingForm] Avatar upload notice: $e');
+        uploadedAvatarUrl = _profileImagePath;
+      }
+    }
+
+    String? uploadedBannerUrl;
+    if (_bannerImagePath != null && _bannerImagePath!.isNotEmpty && !_bannerImagePath!.startsWith('http')) {
+      try {
+        uploadedBannerUrl = await IndividualApiService.uploadFile(_bannerImagePath!, 'banner');
+      } catch (e) {
+        debugPrint('[OnboardingForm] Banner upload notice: $e');
+        uploadedBannerUrl = _bannerImagePath;
+      }
+    }
+
     final validLinks = _socialLinks
         .where((link) => link.url.trim().isNotEmpty)
         .toList();
 
-    final userSlug = _slugController.text.trim().isNotEmpty
-        ? _slugController.text.trim()
-        : IndividualProfileStore.generateCardSlug(_fullName);
-
+    // ── 3. Save to Firestore (primary) ────────────────────────────────────────
     await IndividualProfileStore.instance.saveProfile(
       uid: _uid,
       fullName: _fullName,
       email: _email,
       customSlug: userSlug,
-      profilePhoto: _profileImagePath,
-      bannerPhoto: _bannerImagePath,
+      profilePhoto: uploadedAvatarUrl,
+      bannerPhoto: uploadedBannerUrl,
       jobTitle: _jobTitleController.text.trim(),
       phoneNumber: _phoneController.text.trim(),
       websiteUrl: _websiteController.text.trim(),
@@ -415,12 +487,29 @@ class _IndividualOnboardingFormScreenState
       networkingStatus: _networkingStatus,
     );
 
+    // ── 4. Ensure card is Published in MongoDB so web QR scan works ───────────
+    // (Non-blocking — runs in background after navigation)
+    SlugBackendService.instance.ensureSlugSynced(userSlug, {
+      'fullName': _fullName,
+      'email': _email,
+      'jobTitle': _jobTitleController.text.trim(),
+      'phone': _phoneController.text.trim(),
+      'website': _websiteController.text.trim(),
+      'bio': _bioController.text.trim(),
+      'companyName': _companyController.text.trim(),
+      'userStatus': _networkingStatus,
+      'avatarUrl': uploadedAvatarUrl ?? '',
+      'bannerUrl': uploadedBannerUrl ?? '',
+      'socialLinks': validLinks.map((l) => {'platform': l.platform, 'url': l.url}).toList(),
+    });
+
     if (mounted) {
       setState(() => _isLoading = false);
       _showSnackBar('Profile created successfully!');
       context.go('/portal');
     }
   }
+
 
   void _showSnackBar(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -434,12 +523,25 @@ class _IndividualOnboardingFormScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return SmartPopScope(
+      onBack: () {
+        if (_currentStep > 1) {
+          _previousStep();
+          return false;
+        }
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/portal');
+        }
+        return true;
+      },
+      child: Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Set Up Your Profile',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF0F172A)),
+          style: AppFontStyle.titleLarge,
         ),
         centerTitle: true,
         elevation: 0,
@@ -475,6 +577,7 @@ class _IndividualOnboardingFormScreenState
           ),
         ),
       ),
+    ),
     );
   }
 
@@ -775,19 +878,23 @@ class _IndividualOnboardingFormScreenState
                                   width: 96,
                                   height: 96,
                                 )
-                              : Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      _fullName.isNotEmpty ? _fullName[0].toUpperCase() : 'U',
-                                      style: const TextStyle(
-                                        fontSize: 32,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF0052FF),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                              : (_profileImageUrl != null && _profileImageUrl!.isNotEmpty)
+                                  ? (_profileImageUrl!.startsWith('http')
+                                      ? Image.network(
+                                          _profileImageUrl!,
+                                          fit: BoxFit.cover,
+                                          width: 96,
+                                          height: 96,
+                                          errorBuilder: (context, error, stackTrace) => _buildInitialsAvatar(),
+                                        )
+                                      : Image.file(
+                                          File(_profileImageUrl!),
+                                          fit: BoxFit.cover,
+                                          width: 96,
+                                          height: 96,
+                                          errorBuilder: (context, error, stackTrace) => _buildInitialsAvatar(),
+                                        ))
+                                  : _buildInitialsAvatar(),
                         ),
                       ),
                       Positioned(
@@ -1306,10 +1413,31 @@ class _IndividualOnboardingFormScreenState
                 Expanded(
                   child: TextField(
                     controller: _slugController,
-                    onChanged: (_) => setState(() {}),
-                    style: const TextStyle(
+                    onChanged: (value) {
+                      setState(() {
+                        _slugError = null;
+                      });
+                      // Debounced slug check — waits 800ms after user stops typing
+                      Future.delayed(const Duration(milliseconds: 800), () async {
+                        final slug = _slugController.text.trim().toLowerCase();
+                        if (slug.isEmpty) return;
+                        if (!mounted) return;
+                        setState(() => _slugChecking = true);
+                        final result = await SlugValidatorService.checkSlug(slug);
+                        if (!mounted) return;
+                        setState(() {
+                          _slugChecking = false;
+                          if (!result.isAvailable) {
+                            _slugError = 'Slug already taken by ${result.existingCard?.fullName ?? "another user"}';
+                          } else {
+                            _slugError = null;
+                          }
+                        });
+                      });
+                    },
+                    style: TextStyle(
                       fontSize: 14,
-                      color: Color(0xFF0052FF),
+                      color: _slugError != null ? const Color(0xFFDC2626) : const Color(0xFF0052FF),
                       fontWeight: FontWeight.bold,
                     ),
                     decoration: const InputDecoration(
@@ -1321,13 +1449,52 @@ class _IndividualOnboardingFormScreenState
                     ),
                   ),
                 ),
+                if (_slugChecking)
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0052FF)),
+                  )
+                else if (_slugError != null)
+                  const Icon(Icons.cancel_rounded, color: Color(0xFFDC2626), size: 18)
+                else if (_slugController.text.trim().isNotEmpty)
+                  const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 18),
               ],
             ),
           ),
+          // Slug error / taken-by info
+          if (_slugError != null) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFFCA5A5)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline_rounded, color: Color(0xFFDC2626), size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _slugError!,
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        color: Color(0xFFDC2626),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
+
 
   // Reusable Text Input Field
   Widget _buildTextField({
@@ -1371,6 +1538,23 @@ class _IndividualOnboardingFormScreenState
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildInitialsAvatar() {
+    return Container(
+      width: 96,
+      height: 96,
+      color: const Color(0xFFEFF6FF),
+      alignment: Alignment.center,
+      child: Text(
+        _fullName.trim().isNotEmpty ? _fullName.trim()[0].toUpperCase() : 'U',
+        style: const TextStyle(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF0052FF),
+        ),
+      ),
     );
   }
 }

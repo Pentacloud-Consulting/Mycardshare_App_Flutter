@@ -5,6 +5,7 @@ import '../../../auth/back/smart_back_handler.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_style_widgets.dart';
 import '../../../../services/Individual/scanner/individual.dart';
+import '../../dynamic_view/qr_redirect_handler.dart';
 
 class CameraScanModal extends StatefulWidget {
   const CameraScanModal({super.key});
@@ -105,6 +106,32 @@ class _CameraScanModalState extends State<CameraScanModal> with SingleTickerProv
           ),
         ),
       );
+    }
+  }
+
+  /// Called when the QR decoder decodes a string from the camera frame.
+  ///
+  /// If [scannedValue] is a MyCardShare card URL (`mycardshare.com/card/<slug>`)
+  /// → opens the rich in-app [ScannedProfileViewScreen].
+  /// Otherwise falls through to the OCR / physical card review flow.
+  Future<void> handleScannedQrCode(String scannedValue) async {
+    if (!mounted) return;
+    setState(() {
+      _isScanning = true;
+      _scanStatus = 'Reading card…';
+    });
+    _animController.forward();
+
+    // Let QrRedirectHandler decide: in-app profile OR browser launch
+    await QrRedirectHandler.handle(context, scannedValue);
+
+    // Reset state so camera is ready for the next scan
+    if (mounted) {
+      setState(() {
+        _isScanning = false;
+        _scanStatus = 'Position business card within the frame';
+      });
+      _animController.reset();
     }
   }
 

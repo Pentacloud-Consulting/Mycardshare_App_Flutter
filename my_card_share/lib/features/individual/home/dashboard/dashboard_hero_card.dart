@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_style_widgets.dart';
@@ -7,7 +8,10 @@ class DashboardHeroCard extends StatelessWidget {
   final String role;
   final String company;
   final String status;
+  final String? profilePhoto;
+  final String? bannerPhoto;
   final int selectedTemplateIndex;
+  final bool isPublished;
   final VoidCallback onViewMyCardTap;
 
   const DashboardHeroCard({
@@ -16,9 +20,67 @@ class DashboardHeroCard extends StatelessWidget {
     this.role = "Member",
     this.company = "MyCardShare Member",
     this.status = "Actively Networking",
+    this.profilePhoto,
+    this.bannerPhoto,
     this.selectedTemplateIndex = 0,
+    this.isPublished = true,
     required this.onViewMyCardTap,
   });
+
+  Widget _buildAvatarWidget(String? photo, String userName) {
+    if (photo != null && photo.trim().isNotEmpty) {
+      final p = photo.trim();
+      if (p.startsWith('http://') || p.startsWith('https://')) {
+        return Image.network(
+          p,
+          fit: BoxFit.cover,
+          errorBuilder: (ctx, err, st) => _buildAvatarFallback(userName),
+        );
+      } else {
+        try {
+          final file = File(p);
+          if (file.existsSync()) {
+            return Image.file(file, fit: BoxFit.cover);
+          }
+        } catch (_) {}
+      }
+    }
+    return _buildAvatarFallback(userName);
+  }
+
+  Widget _buildAvatarFallback(String userName) {
+    final initial = userName.trim().isNotEmpty ? userName.trim()[0].toUpperCase() : 'U';
+    return Container(
+      color: const Color(0xFF0052FF),
+      child: Center(
+        child: Text(
+          initial,
+          style: const TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBannerWidget(String? photo) {
+    if (photo != null && photo.trim().isNotEmpty) {
+      final p = photo.trim();
+      if (p.startsWith('http://') || p.startsWith('https://')) {
+        return Image.network(p, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => const SizedBox.shrink());
+      } else {
+        try {
+          final file = File(p);
+          if (file.existsSync()) {
+            return Image.file(file, fit: BoxFit.cover);
+          }
+        } catch (_) {}
+      }
+    }
+    return const SizedBox.shrink();
+  }
 
   List<Color> _getGradientForTemplate(int index) {
     switch (index) {
@@ -61,6 +123,34 @@ class DashboardHeroCard extends StatelessWidget {
       ),
       child: Stack(
         children: [
+          // Background custom banner photo if set
+          if (bannerPhoto != null && bannerPhoto!.trim().isNotEmpty)
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Stack(
+                  children: [
+                    Positioned.fill(child: _buildBannerWidget(bannerPhoto)),
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.black.withValues(alpha: 0.55),
+                              Colors.black.withValues(alpha: 0.25),
+                              Colors.transparent,
+                            ],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
           // Background ambient circular gradient overlay
           Positioned(
             top: -40,
@@ -92,10 +182,9 @@ class DashboardHeroCard extends StatelessWidget {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white, width: 2.5),
-                            image: const DecorationImage(
-                              image: NetworkImage("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80"),
-                              fit: BoxFit.cover,
-                            ),
+                          ),
+                          child: ClipOval(
+                            child: _buildAvatarWidget(profilePhoto, name),
                           ),
                         ),
                         Positioned(
@@ -162,7 +251,10 @@ class DashboardHeroCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 6),
                           // Status Badge using GlassPill
-                          GlassPill(label: status, dotColor: AppColors.success),
+                          GlassPill(
+                            label: isPublished ? status : "UNPUBLISHED",
+                            dotColor: isPublished ? AppColors.success : const Color(0xFFEAB308),
+                          ),
                         ],
                       ),
                     ),

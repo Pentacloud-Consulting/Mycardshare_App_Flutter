@@ -22,7 +22,10 @@ class ProfileSocialLinks extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeLinks = links ?? IndividualProfileStore.instance.activeProfile?.socialLinks ?? [];
+    final rawLinks = links ?? IndividualProfileStore.instance.activeProfile?.socialLinks ?? [];
+    final activeLinks = isEditable
+        ? rawLinks
+        : rawLinks.where((l) => l.url.trim().isNotEmpty).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

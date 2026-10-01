@@ -5,11 +5,13 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_style_widgets.dart';
 import '../../../providers/auth_provider.dart';
-import '../../../backend/individual/sign/login_identity.dart';
+import '../../../models/user_model.dart';
+import '../../../backend/individual/sign/individual_auth_service.dart';
 import '../../../notifications/individual/login_popup.dart';
 import '../../../backend/enterprise/sign/login_identity.dart';
 import '../../../notifications/enterprise/login_popup.dart';
 import '../../../backend/sign/google_login.dart';
+import '../back/smart_back_handler.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -32,7 +34,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  void _onLogin() {
+  void _onLogin() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final roleStr = _selectedTab == 1
@@ -94,44 +96,53 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           context.go('/enterprise-onboarding');
         }
       }
-    } else {
-      // Individual / Employee authentication
-      final authResponse = LoginIdentity.authenticateUser(
-        email: email,
-        password: password,
-        role: roleStr,
-      );
+      return;
+    }
 
-      setState(() {
-        _isLoading = false;
-      });
+    // ── Individual / Employee: REAL Firebase Auth login ──
+    final result = await IndividualAuthService.instance.login(
+      email: email,
+      password: password,
+    );
 
-      if (authResponse.isEmailNotFound) {
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (!result.isSuccess) {
+      // Map Firebase errors back to friendly dialogs
+      final msg = result.message;
+      if (msg.contains('No account') || msg.contains('not valid')) {
         LoginPopupNotification.showEmailNotFoundDialog(
           context,
           onSignUpTap: () => context.go('/signup'),
         );
-        return;
-      }
-
-      if (authResponse.isWrongPassword) {
+      } else if (msg.contains('Incorrect') || msg.contains('credentials')) {
         LoginPopupNotification.showWrongPasswordDialog(
           context,
           onForgotPasswordTap: () => context.push('/reset-password'),
         );
-        return;
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
+      return;
+    }
 
-      if (authResponse.isSuccess && authResponse.userModel != null) {
-        ref.read(authProvider.notifier).login(authResponse.userModel!);
-        if (mounted) {
-          if (roleStr == 'enterprise') {
-            context.go('/enterprise-onboarding');
-          } else {
-            context.go('/portal');
-          }
-        }
-      }
+    if (result.firebaseUser != null) {
+      final fbUser = result.firebaseUser!;
+      final user = UserModel(
+        id: fbUser.uid,
+        name: fbUser.displayName ?? email,
+        email: fbUser.email ?? email,
+        role: roleStr,
+      );
+      ref.read(authProvider.notifier).login(user);
+      if (mounted) context.go('/portal');
     }
   }
 
@@ -142,39 +153,63 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ? 'employee'
             : 'individual';
 
-    // Triggers the real native OS Google Account chooser
-    final response = await GoogleLoginService.loginWithGoogle(
-      role: roleStr,
-      autoProvision: true,
-    );
-
-    if (!mounted) return;
-
-    if (response.isSuccess && response.userModel != null) {
-      ref.read(authProvider.notifier).login(response.userModel!);
-      if (roleStr == 'enterprise') {
-        context.go('/enterprise-onboarding');
+    if (_selectedTab != 0) {
+      // Enterprise / Employee: old Google login service
+      final response = await GoogleLoginService.loginWithGoogle(
+        role: roleStr,
+        autoProvision: true,
+      );
+      if (!mounted) return;
+      if (response.isSuccess && response.userModel != null) {
+        ref.read(authProvider.notifier).login(response.userModel!);
+        context.go(roleStr == 'enterprise' ? '/enterprise-onboarding' : '/portal');
       } else {
-        context.go('/portal');
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(response.message),
           backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
-        ),
+        ));
+      }
+      return;
+    }
+
+    // ── Individual: REAL Firebase Google Sign-In ──
+    final result = await IndividualAuthService.instance.signInWithGoogle();
+    if (!mounted) return;
+
+    if (result.isSuccess && result.firebaseUser != null) {
+      final fbUser = result.firebaseUser!;
+      final resolvedName = (fbUser.displayName != null && fbUser.displayName!.trim().isNotEmpty)
+          ? fbUser.displayName!.trim()
+          : (fbUser.email != null && fbUser.email!.isNotEmpty)
+              ? fbUser.email!.split('@').first
+              : 'Google User';
+      final user = UserModel(
+        id: fbUser.uid,
+        name: resolvedName,
+        email: fbUser.email ?? '',
+        role: roleStr,
       );
+      ref.read(authProvider.notifier).login(user);
+      context.go('/portal');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(result.message),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+      ));
     }
   }
 
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Stack(
-        children: [
+    return SmartPopScope(
+      onBack: () => SmartBackHandler.handleRootBack(context: context),
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: Stack(
+          children: [
           // Background Top-Left Ambient Blue Circle Glow
           Positioned(
             top: -120,
@@ -569,7 +604,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }

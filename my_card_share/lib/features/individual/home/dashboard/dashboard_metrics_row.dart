@@ -1,60 +1,74 @@
 import 'package:flutter/material.dart';
+import '../../../../backend/individual/previews/individual_metrics_store.dart';
 
 class DashboardMetricsRow extends StatelessWidget {
-  final String views;
-  final String viewsTrend;
-  final String leads;
-  final String leadsTrend;
-  final String scans;
-  final String scansTrend;
+  final String? views;
+  final String? viewsTrend;
+  final String? leads;
+  final String? leadsTrend;
+  final String? scans;
+  final String? scansTrend;
 
   const DashboardMetricsRow({
     super.key,
-    this.views = "1,420",
-    this.viewsTrend = "+24%",
-    this.leads = "32",
-    this.leadsTrend = "+18%",
-    this.scans = "310",
-    this.scansTrend = "+42%",
+    this.views,
+    this.viewsTrend,
+    this.leads,
+    this.leadsTrend,
+    this.scans,
+    this.scansTrend,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildMetricCard(
-            icon: Icons.visibility_rounded,
-            iconBg: const Color(0xFFEFF6FF),
-            iconColor: const Color(0xFF0066FF),
-            title: "Views",
-            value: views,
-            trend: viewsTrend,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _buildMetricCard(
-            icon: Icons.person_add_rounded,
-            iconBg: const Color(0xFFF3E8FF),
-            iconColor: const Color(0xFF9333EA),
-            title: "Leads",
-            value: leads,
-            trend: leadsTrend,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _buildMetricCard(
-            icon: Icons.grid_view_rounded,
-            iconBg: const Color(0xFFECFDF5),
-            iconColor: const Color(0xFF10B981),
-            title: "Scans",
-            value: scans,
-            trend: scansTrend,
-          ),
-        ),
-      ],
+    return ListenableBuilder(
+      listenable: IndividualMetricsStore.instance,
+      builder: (context, _) {
+        final store = IndividualMetricsStore.instance;
+        final resolvedViews = views ?? store.formattedViews;
+        final resolvedViewsTrend = viewsTrend ?? store.metrics.viewsTrend;
+        final resolvedLeads = leads ?? store.formattedLeads;
+        final resolvedLeadsTrend = leadsTrend ?? store.metrics.leadsTrend;
+        final resolvedScans = scans ?? store.formattedScans;
+        final resolvedScansTrend = scansTrend ?? store.metrics.scansTrend;
+
+        return Row(
+          children: [
+            Expanded(
+              child: _buildMetricCard(
+                icon: Icons.visibility_rounded,
+                iconBg: const Color(0xFFEFF6FF),
+                iconColor: const Color(0xFF0066FF),
+                title: "Views",
+                value: resolvedViews,
+                trend: resolvedViewsTrend,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildMetricCard(
+                icon: Icons.person_add_rounded,
+                iconBg: const Color(0xFFF3E8FF),
+                iconColor: const Color(0xFF9333EA),
+                title: "Leads",
+                value: resolvedLeads,
+                trend: resolvedLeadsTrend,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildMetricCard(
+                icon: Icons.grid_view_rounded,
+                iconBg: const Color(0xFFECFDF5),
+                iconColor: const Color(0xFF10B981),
+                title: "Scans",
+                value: resolvedScans,
+                trend: resolvedScansTrend,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

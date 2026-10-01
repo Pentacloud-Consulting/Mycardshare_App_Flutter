@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../previews/individual_metrics_store.dart';
 
 /// Represents an individual user's stored account record.
 class IndividualUserRecord {
@@ -10,6 +11,7 @@ class IndividualUserRecord {
   final String provider; // 'email' or 'google'
   final DateTime createdAt;
   final DateTime lastLoginAt;
+  final IndividualMetricsData metrics;
 
   IndividualUserRecord({
     required this.id,
@@ -20,8 +22,10 @@ class IndividualUserRecord {
     this.provider = 'email',
     DateTime? createdAt,
     DateTime? lastLoginAt,
+    IndividualMetricsData? metrics,
   })  : createdAt = createdAt ?? DateTime.now(),
-        lastLoginAt = lastLoginAt ?? DateTime.now();
+        lastLoginAt = lastLoginAt ?? DateTime.now(),
+        metrics = metrics ?? const IndividualMetricsData();
 
   IndividualUserRecord copyWith({
     String? fullName,
@@ -29,6 +33,7 @@ class IndividualUserRecord {
     String? role,
     String? provider,
     DateTime? lastLoginAt,
+    IndividualMetricsData? metrics,
   }) {
     return IndividualUserRecord(
       id: id,
@@ -39,6 +44,7 @@ class IndividualUserRecord {
       provider: provider ?? this.provider,
       createdAt: createdAt,
       lastLoginAt: lastLoginAt ?? this.lastLoginAt,
+      metrics: metrics ?? this.metrics,
     );
   }
 
@@ -51,6 +57,7 @@ class IndividualUserRecord {
         'provider': provider,
         'createdAt': createdAt.toIso8601String(),
         'lastLoginAt': lastLoginAt.toIso8601String(),
+        'metrics': metrics.toJson(),
       };
 }
 
@@ -75,6 +82,7 @@ class IndividualMultiStore {
     required String password,
     String role = 'individual',
     String provider = 'email',
+    IndividualMetricsData? metrics,
   }) {
     final normalizedEmail = email.trim().toLowerCase();
     final existing = _userStore[normalizedEmail];
@@ -88,6 +96,7 @@ class IndividualMultiStore {
       provider: provider,
       createdAt: existing?.createdAt,
       lastLoginAt: DateTime.now(),
+      metrics: metrics ?? existing?.metrics ?? const IndividualMetricsData(),
     );
 
     _userStore[normalizedEmail] = record;

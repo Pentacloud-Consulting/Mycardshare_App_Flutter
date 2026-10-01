@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'manual_service.dart';
+import '../../../backend/individual/scan/manual_entry_service.dart';
 
 class ManualAddContactDialog extends ConsumerStatefulWidget {
   const ManualAddContactDialog({super.key});
@@ -28,7 +29,7 @@ class _ManualAddContactDialogState extends ConsumerState<ManualAddContactDialog>
     super.dispose();
   }
 
-  void _saveContact() {
+  void _saveContact() async {
     if (_formKey.currentState!.validate()) {
       final name = _nameController.text.trim();
       final title = _titleController.text.trim();
@@ -36,7 +37,17 @@ class _ManualAddContactDialogState extends ConsumerState<ManualAddContactDialog>
       final phone = _phoneController.text.trim();
       final email = _emailController.text.trim();
 
-      // Save manually created contact using ManualService to VaultNotifier
+      // Save manually created contact using ManualEntryService to Firestore & update metrics
+      final manualContact = ManualEntryService.instance.createManualContact(
+        name: name,
+        role: title,
+        company: company,
+        phone: phone,
+        email: email,
+      );
+      await ManualEntryService.instance.saveManualContact(manualContact);
+
+      // Save to Riverpod Vault state
       ManualService.saveContact(
         ref,
         name: name,
@@ -45,6 +56,8 @@ class _ManualAddContactDialogState extends ConsumerState<ManualAddContactDialog>
         phone: phone,
         email: email,
       );
+
+      if (!mounted) return;
 
       if (Navigator.canPop(context)) {
         Navigator.pop(context);

@@ -1,54 +1,56 @@
 import 'package:flutter/material.dart';
+import '../../../../backend/individual/previews/user_leads.dart';
 
 class LeadsMetricsRow extends StatelessWidget {
-  final String totalCount;
-  final String newCount;
-  final String thisWeekCount;
-
-  const LeadsMetricsRow({
-    super.key,
-    this.totalCount = "46",
-    this.newCount = "12",
-    this.thisWeekCount = "8",
-  });
+  const LeadsMetricsRow({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildMetricCard(
-            icon: Icons.people_alt_rounded,
-            iconBg: const Color(0xFFEFF6FF),
-            iconColor: const Color(0xFF0066FF),
-            cardBg: const Color(0xFFF8FAFC),
-            label: "Total",
-            value: totalCount,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _buildMetricCard(
-            icon: Icons.person_add_rounded,
-            iconBg: const Color(0xFFDCFCE7),
-            iconColor: const Color(0xFF16A34A),
-            cardBg: const Color(0xFFF0FDF4),
-            label: "New",
-            value: newCount,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _buildMetricCard(
-            icon: Icons.bar_chart_rounded,
-            iconBg: const Color(0xFFF3E8FF),
-            iconColor: const Color(0xFF9333EA),
-            cardBg: const Color(0xFFFAF5FF),
-            label: "This Week",
-            value: thisWeekCount,
-          ),
-        ),
-      ],
+    return ListenableBuilder(
+      listenable: UserLeadsService.instance,
+      builder: (context, _) {
+        final service = UserLeadsService.instance;
+        final totalCount = service.totalLeadsCount.toString();
+        final newCount = service.newLeadsCount.toString();
+        final thisWeekCount = service.thisWeekLeadsCount.toString();
+
+        return Row(
+          children: [
+            Expanded(
+              child: _buildMetricCard(
+                icon: Icons.people_alt_rounded,
+                iconBg: const Color(0xFFEFF6FF),
+                iconColor: const Color(0xFF0066FF),
+                cardBg: const Color(0xFFF8FAFC),
+                label: "Total",
+                value: totalCount,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildMetricCard(
+                icon: Icons.person_add_rounded,
+                iconBg: const Color(0xFFDCFCE7),
+                iconColor: const Color(0xFF16A34A),
+                cardBg: const Color(0xFFF0FDF4),
+                label: "New",
+                value: newCount,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildMetricCard(
+                icon: Icons.bar_chart_rounded,
+                iconBg: const Color(0xFFF3E8FF),
+                iconColor: const Color(0xFF9333EA),
+                cardBg: const Color(0xFFFAF5FF),
+                label: "This Week",
+                value: thisWeekCount,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

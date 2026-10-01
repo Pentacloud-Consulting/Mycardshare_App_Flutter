@@ -1,46 +1,40 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class VaultNotifier extends StateNotifier<List<Map<String, String>>> {
-  VaultNotifier()
-      : super([
-          {
-            'name': 'James Miller',
-            'role': 'CEO & Founder',
-            'company': 'TechNova Solutions',
-            'dateAdded': '2 days ago',
-            'tag': 'OCR',
-          },
-          {
-            'name': 'Priya Sharma',
-            'role': 'Marketing Manager',
-            'company': 'GrowthNest Media',
-            'dateAdded': '3 days ago',
-            'tag': 'Voice',
-            'initials': 'PS',
-          },
-          {
-            'name': 'Daniel Kim',
-            'role': 'Investment Analyst',
-            'company': 'Skyline Ventures',
-            'dateAdded': '5 days ago',
-            'tag': 'Manual',
-          },
-          {
-            'name': 'Sophia Lee',
-            'role': 'Business Development',
-            'company': 'Acme Realty Group',
-            'dateAdded': '1 week ago',
-            'tag': 'OCR',
-          },
-          {
-            'name': 'Rahul Jain',
-            'role': 'Product Manager',
-            'company': 'FlowSync Technologies',
-            'dateAdded': '1 week ago',
-            'tag': 'Voice',
-            'initials': 'RJ',
-          },
-        ]);
+  VaultNotifier() : super([]) {
+    fetchFirestoreContacts();
+  }
+
+  Future<void> fetchFirestoreContacts() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || uid.isEmpty) return;
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('contacts')
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        final loaded = snapshot.docs.map((doc) {
+          final data = doc.data();
+          return {
+            'name': (data['name'] as String?) ?? 'Contact',
+            'role': (data['role'] as String?) ?? 'Role',
+            'company': (data['company'] as String?) ?? 'Company',
+            'dateAdded': 'Just now',
+            'tag': (data['tag'] as String?) ?? 'OCR',
+          };
+        }).toList();
+        state = loaded;
+      }
+    } catch (e) {
+      // Non-fatal
+    }
+  }
 
   void addContact(Map<String, String> contact) {
     state = [contact, ...state];

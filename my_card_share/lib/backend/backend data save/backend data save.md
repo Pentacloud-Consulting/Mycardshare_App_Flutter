@@ -53,17 +53,36 @@ lib/backend/
 
 ## 3. Data Flow & Authentication Logic
 
-### A. Individual User Flow
-1. **Sign Up (`user_sign_up_store.dart`):**
-   - User fills details on `signup.dart`.
-   - Data stored in `UserSignUpStore` and registered in `IndividualMultiStore`.
-   - Syncs to Firestore `users` collection with `role: 'individual'`.
-2. **Login (`login_identity.dart`):**
-   - Validates email & password against stored credentials.
-   - If password is wrong → Triggers popup: *"The password entered is wrong. If forgotten, please click on 'Forgot Password' to reset."*
-   - If email is wrong → Triggers popup: *"Email address not found."*
-3. **Forgot/Reset Password (`individual_reset_password.dart`):**
-   - Verifies registered email, updates password securely across local stores and Firestore.
+### A. Individual User Flow — **REAL Firebase Auth (as of 2026-09-24)**
+
+> **Implementation:** `lib/backend/individual/sign/individual_auth_service.dart`  
+> **API Helper:** `lib/backend/individual/api_service.dart`
+
+1. **Sign Up (`individual_auth_service.dart` → `IndividualAuthService.signUp`):**
+   - Creates user in **Firebase Authentication** (`createUserWithEmailAndPassword`).
+   - Writes `users/{uid}` document in **Firestore** with `role: 'individual'`, `status: 'active'`, `cardSlug`.
+   - Calls `PATCH /api/cards` on the **Next.js API Gateway** to initialise the **MongoDB** card document (non-blocking if backend is offline during dev).
+   - Returns `IndividualAuthResult` with the Firebase `User` object.
+
+2. **Login (`IndividualAuthService.login`):**
+   - Authenticates with **Firebase Auth** (`signInWithEmailAndPassword`).
+   - Fetches `GET /api/user/me` (validates role, returns Firestore metadata).
+   - Fetches `GET /api/cards` (returns MongoDB card data + QR slug).
+   - Hydrates `IndividualProfileStore` from API response (or Firestore fallback if backend offline).
+   - Error codes mapped to friendly UI dialogs via `LoginPopupNotification`.
+
+3. **Google Sign-In (`IndividualAuthService.signInWithGoogle`):**
+   - Triggers native Google Account picker via `google_sign_in`.
+   - Authenticates with Firebase using OAuth credential.
+   - For new users: creates Firestore doc + initialises MongoDB card.
+   - Follows same `_postLoginSync` path as email login.
+
+4. **Profile Save (Dual-Write) (`IndividualProfileStore.saveProfile`):**
+   - Saves to **Firestore** `users/{uid}` (primary, immediate).
+   - Non-blocking background call to `PATCH /api/cards` → keeps **MongoDB** card in sync → Web Dashboard auto-reflects changes.
+
+5. **Forgot/Reset Password:**
+   - Firebase Auth `sendPasswordResetEmail` (via `individual_reset_password.dart`).
 
 ---
 

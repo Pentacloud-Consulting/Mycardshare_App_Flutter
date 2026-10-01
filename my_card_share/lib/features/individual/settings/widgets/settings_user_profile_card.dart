@@ -1,17 +1,56 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 class SettingsUserProfileCard extends StatelessWidget {
   final String name;
   final String email;
-  final String avatarUrl;
+  final String? avatarUrl;
 
   const SettingsUserProfileCard({
     super.key,
-    this.name = "Alex Stanton",
-    this.email = "alex@example.com",
-    this.avatarUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250",
+    this.name = "User",
+    this.email = "",
+    this.avatarUrl,
   });
+
+  Widget _buildAvatarWidget(String? photo, String userName) {
+    if (photo != null && photo.trim().isNotEmpty) {
+      final p = photo.trim();
+      if (p.startsWith('http://') || p.startsWith('https://')) {
+        return Image.network(
+          p,
+          fit: BoxFit.cover,
+          errorBuilder: (ctx, err, st) => _buildAvatarFallback(userName),
+        );
+      } else {
+        try {
+          final file = File(p);
+          if (file.existsSync()) {
+            return Image.file(file, fit: BoxFit.cover);
+          }
+        } catch (_) {}
+      }
+    }
+    return _buildAvatarFallback(userName);
+  }
+
+  Widget _buildAvatarFallback(String userName) {
+    final initial = userName.trim().isNotEmpty ? userName.trim()[0].toUpperCase() : 'U';
+    return Container(
+      color: const Color(0xFF0052FF),
+      child: Center(
+        child: Text(
+          initial,
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,18 +79,11 @@ class SettingsUserProfileCard extends StatelessWidget {
                 colors: [Color(0xFF60A5FA), Color(0xFF2563EB)],
               ),
             ),
-            child: CircleAvatar(
-              radius: 30,
-              backgroundColor: const Color(0xFFE2E8F0),
-              backgroundImage: NetworkImage(avatarUrl),
-              onBackgroundImageError: (_, _) {},
-              child: Text(
-                name.isNotEmpty ? name[0] : "A",
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E293B),
-                ),
+            child: SizedBox(
+              width: 56,
+              height: 56,
+              child: ClipOval(
+                child: _buildAvatarWidget(avatarUrl, name),
               ),
             ),
           ),
@@ -63,7 +95,7 @@ class SettingsUserProfileCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  name,
+                  name.isNotEmpty ? name : "User",
                   style: const TextStyle(
                     fontSize: 17.5,
                     fontWeight: FontWeight.w800,
@@ -71,14 +103,16 @@ class SettingsUserProfileCard extends StatelessWidget {
                     letterSpacing: -0.2,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  email,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF64748B),
+                if (email.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    email,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF64748B),
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../../backend/individual/analytics/overview.dart';
+import '../../../../backend/individual/previews/individual_metrics_store.dart';
+import '../../../../backend/individual/previews/user_leads.dart';
 
 class AnalyticsMetricsGrid extends StatelessWidget {
   final String dateRange;
@@ -10,69 +13,67 @@ class AnalyticsMetricsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Dynamic values based on selected date range
-    final is7Days = dateRange == 'Last 7 Days';
-    final isToday = dateRange == 'Today';
+    return ListenableBuilder(
+      listenable: Listenable.merge([IndividualMetricsStore.instance, UserLeadsService.instance]),
+      builder: (context, _) {
+        final overviewData = AnalyticsOverviewService.instance.getOverviewData(dateRange);
 
-    final totalViews = isToday ? "124" : (is7Days ? "480" : "1,420");
-    final qrScans = isToday ? "28" : (is7Days ? "98" : "310");
-    final leadsCaptured = isToday ? "5" : (is7Days ? "14" : "46");
-    final convRate = isToday ? "4.0%" : (is7Days ? "4.5%" : "4.9%");
-
-    return Column(
-      children: [
-        Row(
+        return Column(
           children: [
-            Expanded(
-              child: _buildMetricCard(
-                icon: Icons.remove_red_eye_rounded,
-                iconBg: const Color(0xFFE0F2FE),
-                iconColor: const Color(0xFF0284C7),
-                value: totalViews,
-                label: "Total Views",
-                badgeText: "+24%",
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildMetricCard(
+                    icon: Icons.remove_red_eye_rounded,
+                    iconBg: const Color(0xFFE0F2FE),
+                    iconColor: const Color(0xFF0284C7),
+                    value: overviewData.totalViewsFormatted,
+                    label: "Total Views",
+                    badgeText: overviewData.viewsTrend,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildMetricCard(
+                    icon: Icons.qr_code_scanner_rounded,
+                    iconBg: const Color(0xFFF3E8FF),
+                    iconColor: const Color(0xFF9333EA),
+                    value: overviewData.qrScansFormatted,
+                    label: "QR Scans",
+                    badgeText: overviewData.scansTrend,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildMetricCard(
-                icon: Icons.qr_code_scanner_rounded,
-                iconBg: const Color(0xFFF3E8FF),
-                iconColor: const Color(0xFF9333EA),
-                value: qrScans,
-                label: "QR Scans",
-                badgeText: "+18%",
-              ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildMetricCard(
+                    icon: Icons.people_alt_rounded,
+                    iconBg: const Color(0xFFDCFCE7),
+                    iconColor: const Color(0xFF16A34A),
+                    value: overviewData.leadsCapturedFormatted,
+                    label: "Leads Captured",
+                    badgeText: overviewData.leadsTrend,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildMetricCard(
+                    icon: Icons.bar_chart_rounded,
+                    iconBg: const Color(0xFFFEF3C7),
+                    iconColor: const Color(0xFFD97706),
+                    value: overviewData.conversionRateFormatted,
+                    label: "Conv. Rate",
+                    badgeText: overviewData.convRateTrend,
+                  ),
+                ),
+              ],
             ),
           ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildMetricCard(
-                icon: Icons.people_alt_rounded,
-                iconBg: const Color(0xFFDCFCE7),
-                iconColor: const Color(0xFF16A34A),
-                value: leadsCaptured,
-                label: "Leads Captured",
-                badgeText: "+31%",
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildMetricCard(
-                icon: Icons.bar_chart_rounded,
-                iconBg: const Color(0xFFFEF3C7),
-                iconColor: const Color(0xFFD97706),
-                value: convRate,
-                label: "Conv. Rate",
-                badgeText: "+0.8%",
-              ),
-            ),
-          ],
-        ),
-      ],
+        );
+      },
     );
   }
 

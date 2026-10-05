@@ -43,38 +43,34 @@ class CardHeaderBanner extends StatelessWidget {
     }
   }
 
-  Widget _buildBannerImage() {
-    final photo = bannerUrl ?? bannerAsset;
-    if (photo != null && photo.isNotEmpty) {
-      if (photo.startsWith('http')) {
-        return Image.network(photo, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => const SizedBox.shrink());
-      }
-      try {
-        final file = File(photo);
-        if (file.existsSync()) {
-          return Image.file(file, fit: BoxFit.cover);
-        }
-      } catch (_) {}
-      return Image.asset(photo, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => const SizedBox.shrink());
+  Widget _buildImageWidget(String? photo, {required Widget fallback}) {
+    if (photo == null || photo.trim().isEmpty) return fallback;
+    final p = photo.trim();
+
+    if (p.startsWith('http://') || p.startsWith('https://')) {
+      return Image.network(p, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => fallback);
     }
-    return const SizedBox.shrink();
+
+    if (p.startsWith('assets/') || p.startsWith('asset/')) {
+      return Image.asset(p, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => fallback);
+    }
+
+    try {
+      final file = File(p);
+      if (file.existsSync()) {
+        return Image.file(file, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => fallback);
+      }
+    } catch (_) {}
+
+    return fallback;
+  }
+
+  Widget _buildBannerImage() {
+    return _buildImageWidget(bannerUrl ?? bannerAsset, fallback: const SizedBox.shrink());
   }
 
   Widget _buildAvatarImage() {
-    final photo = avatarUrl ?? avatarAsset;
-    if (photo != null && photo.isNotEmpty) {
-      if (photo.startsWith('http')) {
-        return Image.network(photo, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => _buildAvatarFallback());
-      }
-      try {
-        final file = File(photo);
-        if (file.existsSync()) {
-          return Image.file(file, fit: BoxFit.cover);
-        }
-      } catch (_) {}
-      return Image.asset(photo, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => _buildAvatarFallback());
-    }
-    return _buildAvatarFallback();
+    return _buildImageWidget(avatarUrl ?? avatarAsset, fallback: _buildAvatarFallback());
   }
 
   Widget _buildAvatarFallback() {

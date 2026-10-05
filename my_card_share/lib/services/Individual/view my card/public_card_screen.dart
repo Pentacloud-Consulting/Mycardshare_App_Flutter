@@ -66,6 +66,8 @@ class _IndividualCardScreenState extends State<IndividualCardScreen> {
         final company = activeProfile?.companyName.isNotEmpty == true ? activeProfile!.companyName : "MyCardShare Member";
         final status = activeProfile?.networkingStatus.isNotEmpty == true ? activeProfile!.networkingStatus : "ACTIVELY NETWORKING";
         final templateIndex = IndividualProfileStore.getTemplateIndex(activeProfile?.templateStyle);
+        final userEmail = activeProfile?.email ?? storedUser?.email ?? "";
+        final userPhone = activeProfile?.phoneNumber ?? "";
 
         if (_isLoading) {
           return const Scaffold(
@@ -128,7 +130,10 @@ class _IndividualCardScreenState extends State<IndividualCardScreen> {
                       const SizedBox(height: 18),
 
                       // Quick Action Pill Buttons (Email & Call)
-                      const CardQuickActions(),
+                      CardQuickActions(
+                        email: userEmail,
+                        phone: userPhone,
+                      ),
 
                       const SizedBox(height: 14),
 

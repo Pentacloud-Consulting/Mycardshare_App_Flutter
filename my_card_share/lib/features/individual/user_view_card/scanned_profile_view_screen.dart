@@ -5,6 +5,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../backend/individual/profile/individual_profile_store.dart';
 import '../../../../backend/individual/scan_profile_view/scan_profile_view.dart';
 import '../../../../backend/individual/lead/active_lead.dart';
+import '../../../../backend/individual/connects/save_contact.dart';
+import '../../../../backend/individual/connects/share.dart';
+import '../home/View My card/card_footer_actions.dart';
 
 /// ────────────────────────────────────────────────────────────────────────────
 /// ScannedProfileViewScreen
@@ -107,6 +110,10 @@ class _ScannedProfileViewScreenState extends State<ScannedProfileViewScreen>
         return Icons.code_rounded;
       case 'facebook':
         return Icons.facebook_rounded;
+      case 'pinterest':
+        return Icons.push_pin_rounded;
+      case 'telegram':
+        return Icons.send_rounded;
       case 'website':
         return Icons.language_rounded;
       default:
@@ -131,6 +138,10 @@ class _ScannedProfileViewScreenState extends State<ScannedProfileViewScreen>
         return const Color(0xFF181717);
       case 'facebook':
         return const Color(0xFF1877F2);
+      case 'pinterest':
+        return const Color(0xFFBD081C);
+      case 'telegram':
+        return const Color(0xFF26A5E4);
       default:
         return const Color(0xFF0052FF);
     }
@@ -225,26 +236,33 @@ class _ScannedProfileViewScreenState extends State<ScannedProfileViewScreen>
                         const SizedBox(height: 20),
                       ],
 
-                      // Save Contact CTA
-                      _SaveContactButton(
-                        themeColor: themeColor,
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                  "✓ ${profile.fullName}'s contact saved!"),
-                              backgroundColor: themeColor,
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
+                      // Dynamic Scanned View Actions (Save Contact + Share Card + QR + Exchange Contact)
+                      CardFooterActions(
+                        name: profile.fullName,
+                        isOwnerView: false,
+                        showBranding: false,
+                        onSaveContactTap: () async {
+                          final contactData = ContactExportData.fromPublicProfile(profile);
+                          final success = await SaveContactService.instance.saveContactToPhone(contactData);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  success
+                                      ? "✓ Exported ${profile.fullName} to mobile contacts!"
+                                      : "Contact details: ${profile.fullName} (${profile.phone})",
+                                ),
+                                backgroundColor: themeColor,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
                         },
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // Exchange Contact CTA
-                      _ExchangeButton(
-                        onTap: () => _exchangeContact(profile),
+                        onShareTap: () => ShareCardService.instance.shareCard(
+                          context: context,
+                          publicProfile: profile,
+                        ),
+                        onExchangeContactTap: () => _exchangeContact(profile),
                       ),
 
                       const SizedBox(height: 32),
@@ -785,9 +803,11 @@ class _SocialGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
+    return Center(
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 10,
+        runSpacing: 10,
       children: links.map((link) {
         final color = colorFor(link.platform);
         return GestureDetector(
@@ -817,68 +837,7 @@ class _SocialGrid extends StatelessWidget {
           ),
         );
       }).toList(),
-    );
-  }
-}
-
-class _SaveContactButton extends StatelessWidget {
-  final Color themeColor;
-  final VoidCallback onTap;
-  const _SaveContactButton({required this.themeColor, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 54,
-      child: ElevatedButton.icon(
-        onPressed: onTap,
-        icon: const Icon(Icons.person_add_alt_1_rounded,
-            color: Colors.white, size: 20),
-        label: const Text(
-          'Save Contact',
-          style: TextStyle(
-              fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: themeColor,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(27)),
-          elevation: 0,
-          shadowColor: Colors.transparent,
-        ),
-      ),
-    );
-  }
-}
-
-class _ExchangeButton extends StatelessWidget {
-  final VoidCallback onTap;
-  const _ExchangeButton({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 54,
-      child: OutlinedButton.icon(
-        onPressed: onTap,
-        icon: const Icon(Icons.swap_horiz_rounded,
-            size: 20, color: Color(0xFF0052FF)),
-        label: const Text(
-          'Exchange Contact',
-          style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF0052FF)),
-        ),
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: Color(0xFF0052FF), width: 1.5),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(27)),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-        ),
-      ),
-    );
+    ),
+  );
   }
 }

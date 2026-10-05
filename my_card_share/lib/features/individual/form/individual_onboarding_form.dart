@@ -101,6 +101,8 @@ class _IndividualOnboardingFormScreenState
     'GitHub',
     'Twitter / X',
     'YouTube',
+    'Pinterest',
+    'Telegram',
   ];
 
   @override

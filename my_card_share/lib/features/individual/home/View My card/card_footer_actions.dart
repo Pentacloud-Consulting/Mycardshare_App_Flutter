@@ -1,20 +1,32 @@
 import 'package:flutter/material.dart';
 import '../../../../backend/individual/qr scan/individual_generate_qr.dart';
+import '../../../../backend/individual/profile/individual_profile_store.dart';
+import '../../../../backend/individual/multiple store/individual_multi_store.dart';
+import '../../../../backend/individual/connects/save_contact.dart';
+import '../../../../backend/individual/wallet/add_to_wallet.dart';
+import '../../../../backend/individual/lead/exchange_contact.dart';
+import '../../../../backend/individual/connects/share.dart';
 
 class CardFooterActions extends StatelessWidget {
   final String name;
+  final bool isOwnerView;
+  final bool? showQrButton;
   final VoidCallback? onSaveContactTap;
   final VoidCallback? onAddToWalletTap;
   final VoidCallback? onExchangeContactTap;
+  final VoidCallback? onShareTap;
   final VoidCallback? onQrTap;
   final bool showBranding;
 
   const CardFooterActions({
     super.key,
     this.name = "Sarah Khan",
+    this.isOwnerView = true,
+    this.showQrButton,
     this.onSaveContactTap,
     this.onAddToWalletTap,
     this.onExchangeContactTap,
+    this.onShareTap,
     this.onQrTap,
     this.showBranding = true,
   });
@@ -25,6 +37,18 @@ class CardFooterActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String leftLabel = isOwnerView ? "Add to Wallet" : "Share Card";
+    final IconData leftIcon = isOwnerView ? Icons.account_balance_wallet_rounded : Icons.ios_share_rounded;
+    final VoidCallback leftAction = isOwnerView
+        ? (onAddToWalletTap ?? () => AddToWalletService.instance.showSelectWalletModal(context))
+        : (onShareTap ?? () => ShareCardService.instance.shareCard(context: context));
+
+    final String rightLabel = isOwnerView ? "QR Code" : "Exchange Contact";
+    final IconData rightIcon = isOwnerView ? Icons.grid_view_rounded : Icons.people_alt_rounded;
+    final VoidCallback rightAction = isOwnerView
+        ? (onQrTap ?? () => _showQrModal(context))
+        : (onExchangeContactTap ?? () => ExchangeContactService.instance.showExchangeContactModal(context));
+
     return Column(
       children: [
         // Save Contact Primary Gradient Button
@@ -49,13 +73,30 @@ class CardFooterActions extends StatelessWidget {
             ),
             child: ElevatedButton(
               onPressed: onSaveContactTap ??
-                  () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Contact saved to your phone!"),
-                        backgroundColor: Color(0xFF16A34A),
-                      ),
+                  () async {
+                    final activeProfile = IndividualProfileStore.instance.activeProfile;
+                    final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
+                    final contactData = ContactExportData.fromProfile(
+                      activeProfile,
+                      defaultName: name,
+                      defaultEmail: storedUser?.email,
                     );
+
+                    final success = await SaveContactService.instance.saveContactToPhone(contactData);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            success
+                                ? "Saving ${contactData.fullName} to mobile contacts..."
+                                : "Contact details: ${contactData.fullName} (${contactData.phoneNumber})",
+                          ),
+                          backgroundColor: const Color(0xFF0052FF),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      );
+                    }
                   },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.transparent,
@@ -86,136 +127,113 @@ class CardFooterActions extends StatelessWidget {
 
         const SizedBox(height: 14),
 
-        // Secondary Outlined Action Buttons with Center QR Grid Button
-        Stack(
-          alignment: Alignment.center,
+        // Secondary Action Buttons (Styled matching Save Contact blue gradient)
+        Row(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(25),
-                      border: Border.all(color: const Color(0xFF0066FF), width: 1.5),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x100066FF),
-                          blurRadius: 10,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(25),
-                      onTap: onAddToWalletTap ??
-                          () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Adding to Wallet...")),
-                            );
-                          },
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 12, right: 24),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.account_balance_wallet_rounded, color: Color(0xFF0066FF), size: 18),
-                            SizedBox(width: 6),
-                            Flexible(
-                              child: Text(
-                                "Add to Wallet",
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF0066FF),
-                                  letterSpacing: 0.1,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Container(
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(25),
-                      border: Border.all(color: const Color(0xFF0066FF), width: 1.5),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x100066FF),
-                          blurRadius: 10,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(25),
-                      onTap: onExchangeContactTap ??
-                          () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Opening Exchange Contact modal...")),
-                            );
-                          },
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 24, right: 12),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.people_alt_rounded, color: Color(0xFF0066FF), size: 18),
-                            SizedBox(width: 6),
-                            Flexible(
-                              child: Text(
-                                "Exchange Contact",
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF0066FF),
-                                  letterSpacing: 0.1,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            // Center Circular QR Grid Button (Image 2 exact replica)
-            GestureDetector(
-              onTap: onQrTap ?? () => _showQrModal(context),
+            // Left Pill: Add to Wallet (Owner) or Share Card (Visitor)
+            Expanded(
               child: Container(
-                width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF38BDF8), width: 2.0),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF0052FF), Color(0xFF0088FF)],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(24),
                   boxShadow: const [
                     BoxShadow(
-                      color: Color(0x250066FF),
-                      blurRadius: 12,
+                      color: Color(0x300052FF),
+                      blurRadius: 10,
                       offset: Offset(0, 4),
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.grid_view_rounded,
-                  color: Color(0xFF0066FF),
-                  size: 22,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: leftAction,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(leftIcon, color: Colors.white, size: 18),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                leftLabel,
+                                style: const TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 12),
+
+            // Right Pill: QR Code (Owner) or Exchange Contact (Visitor)
+            Expanded(
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF0052FF), Color(0xFF0088FF)],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x300052FF),
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: rightAction,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(rightIcon, color: Colors.white, size: 18),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                rightLabel,
+                                style: const TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),

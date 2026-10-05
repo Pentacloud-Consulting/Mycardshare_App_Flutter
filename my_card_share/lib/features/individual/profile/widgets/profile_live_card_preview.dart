@@ -42,20 +42,31 @@ class ProfileLiveCardPreview extends StatelessWidget {
     }
   }
 
+  Widget _buildImageWidget(String? photo, {required Widget fallback}) {
+    if (photo == null || photo.trim().isEmpty) return fallback;
+    final p = photo.trim();
+
+    if (p.startsWith('http://') || p.startsWith('https://')) {
+      return Image.network(p, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => fallback);
+    }
+
+    if (p.startsWith('assets/') || p.startsWith('asset/')) {
+      return Image.asset(p, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => fallback);
+    }
+
+    try {
+      final file = File(p);
+      if (file.existsSync()) {
+        return Image.file(file, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => fallback);
+      }
+    } catch (_) {}
+
+    return fallback;
+  }
+
   Widget _buildAvatarWidget() {
     final activePhoto = profilePhoto ?? IndividualProfileStore.instance.activeProfile?.profilePhoto;
-    if (activePhoto != null && activePhoto.isNotEmpty) {
-      if (activePhoto.startsWith('http')) {
-        return Image.network(activePhoto, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => _buildAvatarFallback());
-      }
-      try {
-        final file = File(activePhoto);
-        if (file.existsSync()) {
-          return Image.file(file, fit: BoxFit.cover);
-        }
-      } catch (_) {}
-    }
-    return _buildAvatarFallback();
+    return _buildImageWidget(activePhoto, fallback: _buildAvatarFallback());
   }
 
   Widget _buildAvatarFallback() {
@@ -77,18 +88,7 @@ class ProfileLiveCardPreview extends StatelessWidget {
 
   Widget _buildBannerImageWidget() {
     final activeBanner = bannerPhoto ?? IndividualProfileStore.instance.activeProfile?.bannerPhoto;
-    if (activeBanner != null && activeBanner.isNotEmpty) {
-      if (activeBanner.startsWith('http')) {
-        return Image.network(activeBanner, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => const SizedBox.shrink());
-      }
-      try {
-        final file = File(activeBanner);
-        if (file.existsSync()) {
-          return Image.file(file, fit: BoxFit.cover);
-        }
-      } catch (_) {}
-    }
-    return const SizedBox.shrink();
+    return _buildImageWidget(activeBanner, fallback: const SizedBox.shrink());
   }
 
   @override

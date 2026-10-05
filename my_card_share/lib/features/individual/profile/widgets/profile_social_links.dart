@@ -85,71 +85,87 @@ class ProfileSocialLinks extends StatelessWidget {
               ),
             ),
           )
-        else
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                ...activeLinks.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final item = entry.value;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 12.0),
-                    child: _buildSocialTile(
-                      context: context,
-                      item: item,
-                      onTap: () {
-                        if (onItemTap != null) {
-                          onItemTap!(item);
-                        } else {
-                          _handleTileTap(context, item);
-                        }
-                      },
-                      onDelete: isEditable && onDeleteItem != null
-                          ? () => onDeleteItem!(index)
-                          : null,
+        else Builder(
+          builder: (context) {
+            final List<Widget> allTiles = [
+              ...activeLinks.asMap().entries.map((entry) {
+                final index = entry.key;
+                final item = entry.value;
+                return _buildSocialTile(
+                  context: context,
+                  item: item,
+                  onTap: () {
+                    if (onItemTap != null) {
+                      onItemTap!(item);
+                    } else {
+                      _handleTileTap(context, item);
+                    }
+                  },
+                  onDelete: isEditable && onDeleteItem != null
+                      ? () => onDeleteItem!(index)
+                      : null,
+                );
+              }),
+              if (onAddMoreTap != null)
+                GestureDetector(
+                  onTap: onAddMoreTap,
+                  child: Container(
+                    width: 68,
+                    height: 68,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x05000000),
+                          blurRadius: 6,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
                     ),
-                  );
-                }),
-
-                if (onAddMoreTap != null)
-                  GestureDetector(
-                    onTap: onAddMoreTap,
-                    child: Container(
-                      width: 68,
-                      height: 68,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x05000000),
-                            blurRadius: 6,
-                            offset: Offset(0, 2),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.add_rounded, color: Color(0xFF94A3B8), size: 22),
+                        SizedBox(height: 2),
+                        Text(
+                          "Add More",
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF94A3B8),
                           ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.add_rounded, color: Color(0xFF94A3B8), size: 22),
-                          SizedBox(height: 2),
-                          Text(
-                            "Add More",
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF94A3B8),
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-              ],
-            ),
-          ),
+                ),
+            ];
+
+            final List<List<Widget>> tileRows = [];
+            for (var i = 0; i < allTiles.length; i += 4) {
+              tileRows.add(allTiles.sublist(i, (i + 4 > allTiles.length) ? allTiles.length : i + 4));
+            }
+
+            return Column(
+              children: tileRows.map((rowWidgets) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: rowWidgets.map((tile) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                        child: tile,
+                      );
+                    }).toList(),
+                  ),
+                );
+              }).toList(),
+            );
+          },
+        ),
       ],
     );
   }
@@ -277,6 +293,16 @@ class ProfileSocialLinks extends StatelessWidget {
       return _PlatformStyle(
         icon: const FaIcon(FontAwesomeIcons.youtube, color: Colors.white, size: 15),
         backgroundColor: const Color(0xFFFF0000),
+      );
+    } else if (p.contains('pinterest')) {
+      return _PlatformStyle(
+        icon: const FaIcon(FontAwesomeIcons.pinterest, color: Colors.white, size: 15),
+        backgroundColor: const Color(0xFFBD081C),
+      );
+    } else if (p.contains('telegram')) {
+      return _PlatformStyle(
+        icon: const FaIcon(FontAwesomeIcons.telegram, color: Colors.white, size: 15),
+        backgroundColor: const Color(0xFF26A5E4),
       );
     } else if (p.contains('facebook')) {
       return _PlatformStyle(

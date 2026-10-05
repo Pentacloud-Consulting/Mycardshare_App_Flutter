@@ -342,6 +342,8 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
                                   'GitHub',
                                   'Twitter / X',
                                   'YouTube',
+                                  'Pinterest',
+                                  'Telegram',
                                 ].map((p) {
                                   return DropdownMenuItem<String>(
                                     value: p,

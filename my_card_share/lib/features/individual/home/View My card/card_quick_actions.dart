@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../backend/individual/profile/individual_profile_store.dart';
+import '../../../../backend/individual/multiple store/individual_multi_store.dart';
+import '../../../../backend/individual/connects/phone.dart';
+import '../../../../backend/individual/connects/email.dart';
 
 class CardQuickActions extends StatelessWidget {
+  final String? email;
+  final String? phone;
   final VoidCallback? onEmailTap;
   final VoidCallback? onCallTap;
 
   const CardQuickActions({
     super.key,
+    this.email,
+    this.phone,
     this.onEmailTap,
     this.onCallTap,
   });
@@ -14,8 +22,16 @@ class CardQuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final activeProfile = IndividualProfileStore.instance.activeProfile;
-    final email = activeProfile?.email ?? "";
-    final phone = activeProfile?.phoneNumber ?? "";
+    final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
+    final fbUser = FirebaseAuth.instance.currentUser;
+
+    final targetEmail = (email?.trim().isNotEmpty == true ? email!.trim() : null)
+        ?? (activeProfile?.email.trim().isNotEmpty == true ? activeProfile!.email.trim() : null)
+        ?? (storedUser?.email.trim().isNotEmpty == true ? storedUser!.email.trim() : null)
+        ?? (fbUser?.email?.trim().isNotEmpty == true ? fbUser!.email!.trim() : "");
+
+    final targetPhone = (phone?.trim().isNotEmpty == true ? phone!.trim() : null)
+        ?? (activeProfile?.phoneNumber.trim().isNotEmpty == true ? activeProfile!.phoneNumber.trim() : "");
 
     return Row(
       children: [
@@ -24,14 +40,30 @@ class CardQuickActions extends StatelessWidget {
             icon: Icons.mail_outline_rounded,
             label: "Email",
             onTap: onEmailTap ??
-                () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(email.isNotEmpty ? "Email: $email" : "No email provided"),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
+                () async {
+                  if (targetEmail.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text("No email address available for this user."),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    );
+                    return;
+                  }
+                  final launched = await EmailConnectService.instance.sendEmail(
+                    emailAddress: targetEmail,
+                    subject: "Connection Request from MyCardShare",
                   );
+                  if (!launched && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Email address: $targetEmail"),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    );
+                  }
                 },
           ),
         ),
@@ -41,14 +73,27 @@ class CardQuickActions extends StatelessWidget {
             icon: Icons.phone_outlined,
             label: "Call",
             onTap: onCallTap ??
-                () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(phone.isNotEmpty ? "Calling: $phone" : "No phone provided"),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                  );
+                () async {
+                  if (targetPhone.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text("No phone number available for this user."),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    );
+                    return;
+                  }
+                  final launched = await PhoneConnectService.instance.makePhoneCall(targetPhone);
+                  if (!launched && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Phone number: $targetPhone"),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    );
+                  }
                 },
           ),
         ),

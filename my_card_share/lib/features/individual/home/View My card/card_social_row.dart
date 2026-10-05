@@ -29,28 +29,40 @@ class CardSocialRow extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: activeLinks.map((item) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: _buildSocialIconButton(
-              child: _buildPlatformIconWidget(item.platform),
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text("${item.platform}: ${item.url}"),
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                );
-              },
-            ),
-          );
-        }).toList(),
-      ),
+    final List<Widget> iconButtons = activeLinks.map((item) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6.0),
+        child: _buildSocialIconButton(
+          child: _buildPlatformIconWidget(item.platform),
+          onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("${item.platform}: ${item.url}"),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            );
+          },
+        ),
+      );
+    }).toList();
+
+    final List<List<Widget>> iconRows = [];
+    for (var i = 0; i < iconButtons.length; i += 4) {
+      iconRows.add(iconButtons.sublist(i, (i + 4 > iconButtons.length) ? iconButtons.length : i + 4));
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: iconRows.map((rowItems) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: rowItems,
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -89,6 +101,10 @@ class CardSocialRow extends StatelessWidget {
       return const FaIcon(FontAwesomeIcons.xTwitter, color: Color(0xFF000000), size: 20);
     } else if (p.contains('youtube')) {
       return const FaIcon(FontAwesomeIcons.youtube, color: Color(0xFFFF0000), size: 20);
+    } else if (p.contains('pinterest')) {
+      return const FaIcon(FontAwesomeIcons.pinterest, color: Color(0xFFBD081C), size: 20);
+    } else if (p.contains('telegram')) {
+      return const FaIcon(FontAwesomeIcons.telegram, color: Color(0xFF26A5E4), size: 20);
     } else if (p.contains('portfolio')) {
       return const Icon(Icons.folder_shared_rounded, color: Color(0xFF8B5CF6), size: 22);
     } else {

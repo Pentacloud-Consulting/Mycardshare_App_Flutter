@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../backend/individual/wallet/add_to_wallet.dart';
 
 void showQRBottomSheet(BuildContext context) {
   showModalBottomSheet(
@@ -119,7 +120,14 @@ class QRBottomSheet extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: () async {
+                // Close QR sheet first, then open wallet selection modal
+                Navigator.of(context).pop();
+                await Future.delayed(const Duration(milliseconds: 250));
+                if (context.mounted) {
+                  await AddToWalletService.instance.showSelectWalletModal(context);
+                }
+              },
               icon: const Icon(Icons.wallet, color: Color(0xFF2C3333)),
               label: const Text("Add Card to wallet", style: TextStyle(color: Color(0xFF2C3333), fontSize: 16, fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(

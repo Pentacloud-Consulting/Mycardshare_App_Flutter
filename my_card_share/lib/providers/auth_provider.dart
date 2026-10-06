@@ -101,3 +101,5 @@ final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
 });
 
 final currentUserProvider = StateProvider<UserModel?>((ref) => null);
+
+final splashCompletedProvider = StateProvider<bool>((ref) => false);

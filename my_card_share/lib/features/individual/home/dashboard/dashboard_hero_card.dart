@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_style_widgets.dart';
@@ -38,9 +39,17 @@ class DashboardHeroCard extends StatelessWidget {
         );
       } else {
         try {
-          final file = File(p);
-          if (file.existsSync()) {
-            return Image.file(file, fit: BoxFit.cover);
+          if (kIsWeb) {
+            return Image.network(
+              p,
+              fit: BoxFit.cover,
+              errorBuilder: (ctx, err, st) => _buildAvatarFallback(userName),
+            );
+          } else {
+            final file = File(p);
+            if (file.existsSync()) {
+              return Image.file(file, fit: BoxFit.cover);
+            }
           }
         } catch (_) {}
       }
@@ -72,9 +81,13 @@ class DashboardHeroCard extends StatelessWidget {
         return Image.network(p, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => const SizedBox.shrink());
       } else {
         try {
-          final file = File(p);
-          if (file.existsSync()) {
-            return Image.file(file, fit: BoxFit.cover);
+          if (kIsWeb) {
+            return Image.network(p, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => const SizedBox.shrink());
+          } else {
+            final file = File(p);
+            if (file.existsSync()) {
+              return Image.file(file, fit: BoxFit.cover);
+            }
           }
         } catch (_) {}
       }

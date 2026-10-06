@@ -7,6 +7,10 @@ class VaultContactCard extends StatelessWidget {
   final String company;
   final String dateAdded;
   final String tag; // 'OCR', 'Voice', 'Manual'
+  final String? phone;
+  final String? email;
+  final String? website;
+  final String? address;
   final String? initials;
   final String? logoUrl;
   final VoidCallback? onTap;
@@ -18,6 +22,10 @@ class VaultContactCard extends StatelessWidget {
     required this.company,
     required this.dateAdded,
     required this.tag,
+    this.phone,
+    this.email,
+    this.website,
+    this.address,
     this.initials,
     this.logoUrl,
     this.onTap,
@@ -50,6 +58,10 @@ class VaultContactCard extends StatelessWidget {
                   name: name,
                   role: role,
                   company: company,
+                  phone: phone,
+                  email: email,
+                  website: website,
+                  address: address,
                   dateAdded: dateAdded,
                   tag: tag,
                   initials: initials,

@@ -235,23 +235,28 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
                   // App Logo & Brand Title
                   Container(
-                    width: 56,
-                    height: 56,
+                    width: 72,
+                    height: 72,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0066FF),
-                      borderRadius: BorderRadius.circular(16),
+                      shape: BoxShape.circle,
+                      color: Colors.white,
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF0066FF).withValues(alpha: 0.3),
+                          color: const Color(0xFF0066FF).withValues(alpha: 0.25),
                           blurRadius: 16,
                           offset: const Offset(0, 6),
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.account_balance_wallet_rounded,
-                      color: Colors.white,
-                      size: 28,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(36),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Image.asset(
+                          'assets/images/logo/My card Share Logo.png',
+                          fit: BoxFit.contain,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),

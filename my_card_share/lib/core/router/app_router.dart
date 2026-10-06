@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 
 
 // Auth Imports
+import '../../features/animations/splash_animation.dart';
 import '../../features/auth/login/login.dart';
 import '../../features/auth/signup/signup.dart';
 import '../../features/auth/join_workspace/join_workspace.dart';
@@ -77,16 +78,29 @@ class RouterNotifier extends ChangeNotifier {
       authProvider,
       (_, _) => notifyListeners(),
     );
+    _ref.listen<bool>(
+      splashCompletedProvider,
+      (_, _) => notifyListeners(),
+    );
   }
 
   String? redirect(BuildContext context, GoRouterState state) {
+    final path = state.matchedLocation;
+    final hasCompletedSplash = _ref.read(splashCompletedProvider);
+
+    // Always force splash screen on initial app launch until animation completes
+    if (!hasCompletedSplash) {
+      if (path == '/splash') return null;
+      return '/splash';
+    }
+
     final authState = _ref.read(authProvider);
     final loggedIn = authState.isLoggedIn;
     final role = authState.role; // individual, enterprise, employee, master-admin
-    final path = state.matchedLocation;
 
     final publicPaths = [
       '/',
+      '/splash',
       '/about',
       '/features',
       '/pricing',
@@ -112,7 +126,7 @@ class RouterNotifier extends ChangeNotifier {
     final isPublicCard = path.startsWith('/card/');
 
     // If logged in, redirect away from auth paths (except enterprise onboarding, individual form & registration pending)
-    if (loggedIn && (authPaths.contains(path) || path == '/')) {
+    if (loggedIn && authPaths.contains(path)) {
       if (path == '/enterprise-onboarding' || path == '/registration-pending' || path == '/individual/form') {
         return null; // allow viewing onboarding wizard & pending screens
       }
@@ -163,13 +177,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
   final notifier = ref.watch(routerNotifierProvider);
 
   return GoRouter(
-    initialLocation: '/onboarding',
+    initialLocation: '/splash',
     observers: [appRouteObserver],
     refreshListenable: notifier,
     redirect: notifier.redirect,
     routes: [
-      // Public & Marketing
-      GoRoute(path: '/', builder: (c, s) => const OnboardingScreen()),
+      // Splash & Public
+      GoRoute(path: '/', builder: (c, s) => const SplashAnimationScreen()),
+      GoRoute(path: '/splash', builder: (c, s) => const SplashAnimationScreen()),
       GoRoute(path: '/about', builder: (c, s) => const AboutScreen()),
       GoRoute(path: '/privacy', builder: (c, s) => const SupportPrivacyPolicyScreen()),
       GoRoute(path: '/terms', builder: (c, s) => const SupportTermsOfServiceScreen()),

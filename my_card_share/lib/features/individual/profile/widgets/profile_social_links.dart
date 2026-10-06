@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../../backend/individual/profile/individual_profile_store.dart';
+import '../../../../backend/individual/social_redirect/social_redirect_service.dart';
 
 class ProfileSocialLinks extends StatelessWidget {
   final List<SocialLinkItem>? links;
@@ -171,12 +172,10 @@ class ProfileSocialLinks extends StatelessWidget {
   }
 
   void _handleTileTap(BuildContext context, SocialLinkItem item) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("${item.platform}: ${item.url}"),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
+    SocialRedirectService.launchSocialPlatform(
+      platform: item.platform,
+      rawInput: item.url,
+      context: context,
     );
   }
 

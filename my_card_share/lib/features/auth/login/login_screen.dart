@@ -264,23 +264,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         height: 72,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          gradient: const LinearGradient(
-                            colors: AppColors.primaryGradient,
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
+                          color: Colors.white,
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.primary.withValues(alpha: 0.3),
+                              color: AppColors.primary.withValues(alpha: 0.25),
                               blurRadius: 20,
                               offset: const Offset(0, 8),
                             ),
                           ],
                         ),
-                        child: const Icon(
-                          Icons.account_balance_wallet_rounded,
-                          color: Colors.white,
-                          size: 36,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(36),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Image.asset(
+                              'assets/images/logo/My card Share Logo.png',
+                              fit: BoxFit.contain,
+                            ),
+                          ),
                         ),
                       ),
                     ),

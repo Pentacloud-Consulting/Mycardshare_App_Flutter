@@ -1,11 +1,14 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:camera/camera.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../auth/back/smart_back_handler.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_style_widgets.dart';
 import '../../../../services/Individual/scanner/individual.dart';
 import '../../dynamic_view/qr_redirect_handler.dart';
+import '../../../../backend/individual/scan/card_scan_service.dart';
 
 class CameraScanModal extends StatefulWidget {
   const CameraScanModal({super.key});
@@ -14,14 +17,16 @@ class CameraScanModal extends StatefulWidget {
   State<CameraScanModal> createState() => _CameraScanModalState();
 }
 
-class _CameraScanModalState extends State<CameraScanModal> with SingleTickerProviderStateMixin {
+class _CameraScanModalState extends State<CameraScanModal>
+    with SingleTickerProviderStateMixin {
   bool _isScanning = false;
-  String _scanStatus = "Initializing camera...";
+  bool _isPickingFromGallery = false;
+  String _scanStatus = 'Initializing camera...';
   late AnimationController _animController;
   late Animation<double> _scanAnimation;
 
   CameraController? _cameraController;
-  XFile? _capturedImage;
+  File? _previewFile; // shown in viewfinder after capture / gallery pick
 
   @override
   void initState() {
@@ -40,7 +45,7 @@ class _CameraScanModalState extends State<CameraScanModal> with SingleTickerProv
     try {
       final cameras = await availableCameras();
       if (cameras.isEmpty) {
-        setState(() => _scanStatus = "No cameras found");
+        if (mounted) setState(() => _scanStatus = 'No cameras found on device');
         return;
       }
       _cameraController = CameraController(
@@ -50,12 +55,10 @@ class _CameraScanModalState extends State<CameraScanModal> with SingleTickerProv
       );
       await _cameraController!.initialize();
       if (mounted) {
-        setState(() {
-          _scanStatus = "Position business card within the frame";
-        });
+        setState(() => _scanStatus = 'Position business card within the frame');
       }
     } catch (e) {
-      setState(() => _scanStatus = "Camera error: $e");
+      if (mounted) setState(() => _scanStatus = 'Camera error: $e');
     }
   }
 
@@ -66,54 +69,119 @@ class _CameraScanModalState extends State<CameraScanModal> with SingleTickerProv
     super.dispose();
   }
 
-  void _triggerScan([String? customName]) async {
-    if (_isScanning) return;
-    
-    // Take picture if using camera
-    if (customName == null && _cameraController != null && _cameraController!.value.isInitialized) {
-      try {
-        _capturedImage = await _cameraController!.takePicture();
-      } catch (e) {
-        debugPrint("Error capturing image: $e");
-      }
-    }
+  // ── OCR processing ─────────────────────────────────────────────────────────
 
+  Future<void> _runOcrAndNavigate(String imagePath) async {
+    if (!mounted) return;
     setState(() {
       _isScanning = true;
-      _scanStatus = "AI analyzing layout & extracting text...";
+      _scanStatus = 'AI analyzing layout & extracting text...';
     });
-    
     _animController.repeat(reverse: true);
 
-    await Future.delayed(const Duration(milliseconds: 2500));
-    if (!mounted) return;
+    try {
+      final ScannedContactData contact =
+          await CardScanService.instance.processCardScan(imagePath: imagePath);
 
-    _animController.stop();
+      _animController.stop();
+      if (!mounted) return;
 
-    if (mounted) {
       Navigator.pushReplacement(
         context,
         SmoothPageRoute(
           page: ReviewDetailsScreen(
             tag: 'OCR',
-            initialName: customName ?? "Robert Chen",
-            initialRole: "Managing Director",
-            initialCompany: "Apex Global Ventures",
-            initialPhone: "+1 415 555 9876",
-            initialEmail: "robert.chen@apexglobal.com",
-            initialWebsite: "www.apexglobal.com",
-            initialAddress: "500 California St, San Francisco, CA",
+            initialName: contact.name,
+            initialRole: contact.role,
+            initialCompany: contact.company,
+            initialPhone: contact.phone,
+            initialEmail: contact.email,
+            initialWebsite: contact.website,
+            initialAddress: contact.address,
+            initialImagePath: contact.imagePath ?? imagePath,
           ),
         ),
       );
+    } catch (e) {
+      debugPrint('[CameraScanModal] OCR error: $e');
+      _animController.stop();
+      if (mounted) {
+        setState(() {
+          _isScanning = false;
+          _scanStatus = 'Could not read card — try again or upload from gallery';
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('OCR failed: $e'),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
     }
   }
 
-  /// Called when the QR decoder decodes a string from the camera frame.
-  ///
-  /// If [scannedValue] is a MyCardShare card URL (`mycardshare.com/card/<slug>`)
-  /// → opens the rich in-app [ScannedProfileViewScreen].
-  /// Otherwise falls through to the OCR / physical card review flow.
+  // ── Camera capture ─────────────────────────────────────────────────────────
+
+  Future<void> _captureAndScan() async {
+    if (_isScanning) return;
+    if (_cameraController == null || !_cameraController!.value.isInitialized) {
+      setState(() => _scanStatus = 'Camera not ready — use Upload from Gallery');
+      return;
+    }
+
+    try {
+      final XFile file = await _cameraController!.takePicture();
+      setState(() {
+        _previewFile = File(file.path);
+        _scanStatus = 'Card captured — running AI OCR...';
+      });
+      await _runOcrAndNavigate(file.path);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _scanStatus = 'Capture error: $e');
+      }
+    }
+  }
+
+  // ── Gallery pick ───────────────────────────────────────────────────────────
+
+  Future<void> _pickFromGallery() async {
+    if (_isScanning || _isPickingFromGallery) return;
+    setState(() => _isPickingFromGallery = true);
+
+    try {
+      final picker = ImagePicker();
+      final XFile? picked =
+          await picker.pickImage(source: ImageSource.gallery, imageQuality: 95);
+
+      if (picked == null) {
+        if (mounted) setState(() => _isPickingFromGallery = false);
+        return;
+      }
+
+      if (mounted) {
+        setState(() {
+          _previewFile = File(picked.path);
+          _isPickingFromGallery = false;
+          _scanStatus = 'Image selected — running AI OCR...';
+        });
+      }
+
+      await _runOcrAndNavigate(picked.path);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isPickingFromGallery = false;
+          _scanStatus = 'Gallery error: $e';
+        });
+      }
+    }
+  }
+
+  // ── QR code handler ────────────────────────────────────────────────────────
+
   Future<void> handleScannedQrCode(String scannedValue) async {
     if (!mounted) return;
     setState(() {
@@ -121,11 +189,7 @@ class _CameraScanModalState extends State<CameraScanModal> with SingleTickerProv
       _scanStatus = 'Reading card…';
     });
     _animController.forward();
-
-    // Let QrRedirectHandler decide: in-app profile OR browser launch
     await QrRedirectHandler.handle(context, scannedValue);
-
-    // Reset state so camera is ready for the next scan
     if (mounted) {
       setState(() {
         _isScanning = false;
@@ -135,9 +199,7 @@ class _CameraScanModalState extends State<CameraScanModal> with SingleTickerProv
     }
   }
 
-  void _pickFromGallery() {
-    _triggerScan("Gallery Contact");
-  }
+  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -147,11 +209,12 @@ class _CameraScanModalState extends State<CameraScanModal> with SingleTickerProv
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close_rounded, color: AppColors.textPrimary, size: 24),
+          icon: const Icon(Icons.close_rounded,
+              color: AppColors.textPrimary, size: 24),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          "Scan Business Card",
+          'Scan Business Card',
           style: AppTextStyles.textTheme.titleLarge?.copyWith(
             color: AppColors.textPrimary,
             fontSize: 20,
@@ -165,20 +228,22 @@ class _CameraScanModalState extends State<CameraScanModal> with SingleTickerProv
           children: [
             const SizedBox(height: 20),
 
-            // Viewfinder Container (Image 2 style frame)
+            // ── Viewfinder ──────────────────────────────────────────────────
             Expanded(
               child: Center(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
                   child: AspectRatio(
-                    aspectRatio: 1.58, // Standard card ratio
+                    aspectRatio: 1.58,
                     child: Container(
                       clipBehavior: Clip.hardEdge,
                       decoration: BoxDecoration(
                         color: const Color(0xFF1E293B),
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(
-                          color: _isScanning ? AppColors.primary : const Color(0xFF475569),
+                          color: _isScanning
+                              ? AppColors.primary
+                              : const Color(0xFF475569),
                           width: 2.5,
                         ),
                         boxShadow: [
@@ -191,91 +256,109 @@ class _CameraScanModalState extends State<CameraScanModal> with SingleTickerProv
                       ),
                       child: Stack(
                         children: [
-                          // Camera feed or captured image
+                          // Live camera feed OR captured image preview
                           Positioned.fill(
-                            child: _capturedImage != null
-                                ? Image.file(
-                                    File(_capturedImage!.path),
-                                    fit: BoxFit.cover,
-                                  )
-                                : (_cameraController != null && _cameraController!.value.isInitialized)
+                            child: _previewFile != null
+                                ? (kIsWeb
+                                    ? Image.network(
+                                        _previewFile!.path,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) => const _NoCameraPlaceholder(),
+                                      )
+                                    : Image.file(
+                                        _previewFile!,
+                                        fit: BoxFit.cover,
+                                      ))
+                                : (_cameraController != null &&
+                                        _cameraController!.value.isInitialized)
                                     ? CameraPreview(_cameraController!)
-                                    : const SizedBox(),
+                                    : const _NoCameraPlaceholder(),
                           ),
-                          
-                          // Dark overlay to make scanning frame visible over camera feed
+
+                          // Dim overlay
                           Positioned.fill(
                             child: Container(
-                              color: Colors.black.withValues(alpha: 0.2),
+                              color: Colors.black.withValues(alpha: 0.15),
                             ),
                           ),
-                          // Top-left Corner Bracket
+
+                          // Corner brackets
                           Positioned(
-                            top: 16,
-                            left: 16,
-                            child: Icon(Icons.crop_free_rounded, color: Colors.white.withValues(alpha: 0.8), size: 32),
+                            top: 14,
+                            left: 14,
+                            child: Icon(Icons.crop_free_rounded,
+                                color: Colors.white.withValues(alpha: 0.85),
+                                size: 32),
                           ),
-                          // Bottom-right Corner Bracket
                           Positioned(
-                            bottom: 16,
-                            right: 16,
-                            child: Icon(Icons.crop_free_rounded, color: Colors.white.withValues(alpha: 0.8), size: 32),
+                            bottom: 14,
+                            right: 14,
+                            child: Icon(Icons.crop_free_rounded,
+                                color: Colors.white.withValues(alpha: 0.85),
+                                size: 32),
                           ),
 
-                          // Center Card Icon & Text
-                          Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.credit_card_rounded,
-                                  color: Colors.white.withValues(alpha: 0.7),
-                                  size: 48,
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  "Align card within frame",
-                                  style: AppTextStyles.textTheme.bodyMedium?.copyWith(
-                                    color: Colors.white.withValues(alpha: 0.8),
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
+                          // Center hint (only when no image captured yet)
+                          if (_previewFile == null && !_isScanning)
+                            Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.credit_card_rounded,
+                                    color: Colors.white.withValues(alpha: 0.7),
+                                    size: 48,
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          // Animated Scan Line when capturing
-                          if (_isScanning)
-                            AnimatedBuilder(
-                              animation: _scanAnimation,
-                              builder: (context, child) {
-                                return Positioned(
-                                  top: _scanAnimation.value * 180,
-                                  left: 0,
-                                  right: 0,
-                                  child: Container(
-                                    height: 3,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          AppColors.primary.withValues(alpha: 0.0),
-                                          AppColors.primary,
-                                          AppColors.primary.withValues(alpha: 0.0),
-                                        ],
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: AppColors.primary,
-                                          blurRadius: 10,
-                                          spreadRadius: 2,
-                                        ),
-                                      ],
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Align card within frame',
+                                    style: AppTextStyles.textTheme.bodyMedium
+                                        ?.copyWith(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.85),
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
-                                );
-                              },
+                                ],
+                              ),
                             ),
+
+                          // Scanning animation overlay
+                          if (_isScanning) ...[
+                            Positioned.fill(
+                              child: Container(
+                                color: AppColors.primary.withValues(alpha: 0.08),
+                              ),
+                            ),
+                            AnimatedBuilder(
+                              animation: _scanAnimation,
+                              builder: (ctx, _) => Positioned(
+                                top: _scanAnimation.value * 170,
+                                left: 0,
+                                right: 0,
+                                child: Container(
+                                  height: 3,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        AppColors.primary.withValues(alpha: 0.0),
+                                        AppColors.primary,
+                                        AppColors.primary.withValues(alpha: 0.0),
+                                      ],
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppColors.primary,
+                                        blurRadius: 10,
+                                        spreadRadius: 2,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -284,42 +367,54 @@ class _CameraScanModalState extends State<CameraScanModal> with SingleTickerProv
               ),
             ),
 
-            // Button below Image 2: "Upload from Gallery"
+            // ── Upload from Gallery button ───────────────────────────────────
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-              child: ClayButton(
-                label: "Upload from Gallery",
-                icon: Icons.photo_library_rounded,
-                onTap: _pickFromGallery,
-              ),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+              child: _isPickingFromGallery
+                  ? const Center(
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2.5),
+                      ),
+                    )
+                  : ClayButton(
+                      label: 'Upload from Gallery',
+                      icon: Icons.photo_library_rounded,
+                      onTap: _pickFromGallery,
+                    ),
             ),
 
-            // Status Banner
+            // ── Status text ──────────────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10.0),
               child: Text(
                 _scanStatus,
                 textAlign: TextAlign.center,
                 style: AppTextStyles.textTheme.bodyMedium?.copyWith(
                   color: AppColors.textMuted,
-                  fontSize: 13.5,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
 
-            // Camera Capture Button (Image 3)
+            // ── Camera capture button ────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.only(bottom: 28.0, top: 8.0),
+              padding: const EdgeInsets.only(bottom: 28.0, top: 4.0),
               child: GestureDetector(
-                onTap: () => _triggerScan(),
-                child: Container(
+                onTap: _isScanning ? null : _captureAndScan,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
                   width: 76,
                   height: 76,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 4),
-                    color: AppColors.primary,
+                    color:
+                        _isScanning ? AppColors.primary.withValues(alpha: 0.5) : AppColors.primary,
                     boxShadow: [
                       BoxShadow(
                         color: AppColors.primary.withValues(alpha: 0.4),
@@ -328,8 +423,18 @@ class _CameraScanModalState extends State<CameraScanModal> with SingleTickerProv
                       ),
                     ],
                   ),
-                  child: const Center(
-                    child: Icon(Icons.camera_alt_rounded, color: Colors.white, size: 32),
+                  child: Center(
+                    child: _isScanning
+                        ? const SizedBox(
+                            width: 28,
+                            height: 28,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.camera_alt_rounded,
+                            color: Colors.white, size: 32),
                   ),
                 ),
               ),
@@ -341,3 +446,31 @@ class _CameraScanModalState extends State<CameraScanModal> with SingleTickerProv
   }
 }
 
+/// Shown inside viewfinder when camera is unavailable (permission denied, no camera).
+class _NoCameraPlaceholder extends StatelessWidget {
+  const _NoCameraPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: const Color(0xFF1E293B),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.no_photography_rounded,
+              color: Colors.white.withValues(alpha: 0.4), size: 48),
+          const SizedBox(height: 12),
+          Text(
+            'Camera unavailable\nUse "Upload from Gallery" instead',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.6),
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

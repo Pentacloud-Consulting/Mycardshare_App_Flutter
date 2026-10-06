@@ -25,6 +25,10 @@ class VaultNotifier extends StateNotifier<List<Map<String, String>>> {
             'name': (data['name'] as String?) ?? 'Contact',
             'role': (data['role'] as String?) ?? 'Role',
             'company': (data['company'] as String?) ?? 'Company',
+            'phone': (data['phone'] as String?) ?? '',
+            'email': (data['email'] as String?) ?? '',
+            'website': (data['website'] as String?) ?? '',
+            'address': (data['address'] as String?) ?? '',
             'dateAdded': 'Just now',
             'tag': (data['tag'] as String?) ?? 'OCR',
           };

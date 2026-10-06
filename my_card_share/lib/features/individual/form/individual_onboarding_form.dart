@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -881,7 +881,7 @@ class _IndividualOnboardingFormScreenState
                                   height: 96,
                                 )
                               : (_profileImageUrl != null && _profileImageUrl!.isNotEmpty)
-                                  ? (_profileImageUrl!.startsWith('http')
+                                  ? (_profileImageUrl!.startsWith('http') || kIsWeb
                                       ? Image.network(
                                           _profileImageUrl!,
                                           fit: BoxFit.cover,

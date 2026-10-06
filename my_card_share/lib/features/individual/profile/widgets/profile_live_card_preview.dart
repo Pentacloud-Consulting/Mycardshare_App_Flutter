@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../../backend/individual/profile/individual_profile_store.dart';
 
@@ -55,6 +56,9 @@ class ProfileLiveCardPreview extends StatelessWidget {
     }
 
     try {
+      if (kIsWeb) {
+        return Image.network(p, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => fallback);
+      }
       final file = File(p);
       if (file.existsSync()) {
         return Image.file(file, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => fallback);

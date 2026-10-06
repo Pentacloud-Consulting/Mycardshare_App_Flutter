@@ -1,13 +1,13 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../../backend/individual/profile/individual_profile_store.dart';
 import '../../../../backend/individual/scan_profile_view/scan_profile_view.dart';
 import '../../../../backend/individual/lead/active_lead.dart';
 import '../../../../backend/individual/connects/save_contact.dart';
 import '../../../../backend/individual/connects/share.dart';
 import '../home/View My card/card_footer_actions.dart';
+import '../../../../backend/individual/social_redirect/social_redirect_service.dart';
 
 /// ────────────────────────────────────────────────────────────────────────────
 /// ScannedProfileViewScreen
@@ -57,22 +57,15 @@ class _ScannedProfileViewScreenState extends State<ScannedProfileViewScreen>
   // ── Actions ────────────────────────────────────────────────────────────────
 
   Future<void> _launchEmail(String email) async {
-    final uri = Uri(scheme: 'mailto', path: email);
-    if (await canLaunchUrl(uri)) launchUrl(uri);
+    await SocialRedirectService.launchEmail(email, context: context);
   }
 
   Future<void> _launchPhone(String phone) async {
-    final uri = Uri(scheme: 'tel', path: phone);
-    if (await canLaunchUrl(uri)) launchUrl(uri);
+    await SocialRedirectService.launchPhone(phone, context: context);
   }
 
   Future<void> _launchUrl(String url) async {
-    if (url.isEmpty) return;
-    final uri = Uri.tryParse(
-        url.startsWith('http') ? url : 'https://$url');
-    if (uri != null && await canLaunchUrl(uri)) {
-      launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
+    await SocialRedirectService.launchGenericUrl(url, context: context);
   }
 
   void _copyLink(String slug) {
@@ -811,7 +804,13 @@ class _SocialGrid extends StatelessWidget {
       children: links.map((link) {
         final color = colorFor(link.platform);
         return GestureDetector(
-          onTap: () => onTap(link.url),
+          onTap: () {
+            SocialRedirectService.launchSocialPlatform(
+              platform: link.platform,
+              rawInput: link.url,
+              context: context,
+            );
+          },
           child: Container(
             padding:
                 const EdgeInsets.symmetric(horizontal: 14, vertical: 10),

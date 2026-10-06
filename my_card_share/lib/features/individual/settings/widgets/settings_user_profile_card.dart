@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -25,9 +26,17 @@ class SettingsUserProfileCard extends StatelessWidget {
         );
       } else {
         try {
-          final file = File(p);
-          if (file.existsSync()) {
-            return Image.file(file, fit: BoxFit.cover);
+          if (kIsWeb) {
+            return Image.network(
+              p,
+              fit: BoxFit.cover,
+              errorBuilder: (ctx, err, st) => _buildAvatarFallback(userName),
+            );
+          } else {
+            final file = File(p);
+            if (file.existsSync()) {
+              return Image.file(file, fit: BoxFit.cover);
+            }
           }
         } catch (_) {}
       }

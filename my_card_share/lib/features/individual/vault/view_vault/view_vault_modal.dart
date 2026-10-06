@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_theme.dart';
+import '../../../../../backend/individual/vault/share_card.dart';
 
 class ViewVaultModal extends StatelessWidget {
   final String name;
   final String role;
   final String company;
+  final String? phone;
+  final String? email;
+  final String? website;
+  final String? address;
   final String dateAdded;
   final String tag;
   final String? initials;
@@ -14,10 +19,37 @@ class ViewVaultModal extends StatelessWidget {
     required this.name,
     required this.role,
     required this.company,
+    this.phone,
+    this.email,
+    this.website,
+    this.address,
     required this.dateAdded,
     required this.tag,
     this.initials,
   });
+
+  String get _effectivePhone {
+    if (phone != null && phone!.trim().isNotEmpty) return phone!.trim();
+    return '+1 (555) 0198-234';
+  }
+
+  String get _effectiveEmail {
+    if (email != null && email!.trim().isNotEmpty) return email!.trim();
+    final firstName = name.trim().split(' ').first.toLowerCase();
+    final comp = company.replaceAll(RegExp(r'\s+'), '').toLowerCase();
+    return '$firstName@${comp.isNotEmpty ? comp : "cloudscale"}.com';
+  }
+
+  String get _effectiveWebsite {
+    if (website != null && website!.trim().isNotEmpty) return website!.trim();
+    final comp = company.replaceAll(RegExp(r'\s+'), '').toLowerCase();
+    return 'www.${comp.isNotEmpty ? comp : "cloudscale"}.com';
+  }
+
+  String get _effectiveAddress {
+    if (address != null && address!.trim().isNotEmpty) return address!.trim();
+    return 'San Francisco, CA';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,26 +61,27 @@ class ViewVaultModal extends StatelessWidget {
           topRight: Radius.circular(24),
         ),
       ),
-      padding: const EdgeInsets.only(bottom: 24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Drag Handle
-          Center(
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 12),
-              height: 4,
-              width: 40,
-              decoration: BoxDecoration(
-                color: const Color(0xFFCBD5E1),
-                borderRadius: BorderRadius.circular(2),
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Drag Handle
+            Center(
+              child: Container(
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                height: 4,
+                width: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFCBD5E1),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
-          ),
-          
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Column(
+            
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
               children: [
                 // Header Profile Info
                 Row(
@@ -89,20 +122,50 @@ class ViewVaultModal extends StatelessWidget {
                 
                 const SizedBox(height: 24),
                 
-                // Action Buttons
+                // Action Buttons: Call, Message, Email, Share
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _buildActionButton(Icons.phone_rounded, "Call", const Color(0xFF10B981)),
-                    _buildActionButton(Icons.message_rounded, "Message", const Color(0xFF3B82F6)),
-                    _buildActionButton(Icons.email_rounded, "Email", const Color(0xFFF59E0B)),
-                    _buildActionButton(Icons.share_rounded, "Share", const Color(0xFF6366F1)),
+                    _buildActionButton(
+                      Icons.phone_rounded,
+                      "Call",
+                      const Color(0xFF10B981),
+                      onTap: () => VaultShareService.instance.makeCall(context, _effectivePhone),
+                    ),
+                    _buildActionButton(
+                      Icons.message_rounded,
+                      "Message",
+                      const Color(0xFF3B82F6),
+                      onTap: () => VaultShareService.instance.sendMessage(context, _effectivePhone),
+                    ),
+                    _buildActionButton(
+                      Icons.email_rounded,
+                      "Email",
+                      const Color(0xFFF59E0B),
+                      onTap: () => VaultShareService.instance.sendEmail(context, _effectiveEmail, contactName: name),
+                    ),
+                    _buildActionButton(
+                      Icons.share_rounded,
+                      "Share",
+                      const Color(0xFF6366F1),
+                      onTap: () => VaultShareService.instance.shareContactCard(
+                        context,
+                        name: name,
+                        role: role,
+                        company: company,
+                        phone: _effectivePhone,
+                        email: _effectiveEmail,
+                        website: _effectiveWebsite,
+                        address: _effectiveAddress,
+                        tag: tag,
+                      ),
+                    ),
                   ],
                 ),
 
                 const SizedBox(height: 24),
 
-                // Details List
+                // Details List Card
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -119,13 +182,33 @@ class ViewVaultModal extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      _buildDetailRow(Icons.phone_outlined, "+1 (555) 0198-234"),
+                      _buildDetailRow(
+                        context,
+                        Icons.phone_outlined,
+                        _effectivePhone,
+                        'Phone number',
+                      ),
                       const Divider(color: Color(0xFFF1F5F9), height: 24),
-                      _buildDetailRow(Icons.email_outlined, "${name.split(' ').first.toLowerCase()}@${company.replaceAll(' ', '').toLowerCase()}.com"),
+                      _buildDetailRow(
+                        context,
+                        Icons.email_outlined,
+                        _effectiveEmail,
+                        'Email address',
+                      ),
                       const Divider(color: Color(0xFFF1F5F9), height: 24),
-                      _buildDetailRow(Icons.language_rounded, "www.${company.replaceAll(' ', '').toLowerCase()}.com"),
+                      _buildDetailRow(
+                        context,
+                        Icons.language_rounded,
+                        _effectiveWebsite,
+                        'Website',
+                      ),
                       const Divider(color: Color(0xFFF1F5F9), height: 24),
-                      _buildDetailRow(Icons.location_on_outlined, "San Francisco, CA"),
+                      _buildDetailRow(
+                        context,
+                        Icons.location_on_outlined,
+                        _effectiveAddress,
+                        'Address',
+                      ),
                     ],
                   ),
                 ),
@@ -168,51 +251,60 @@ class ViewVaultModal extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildDetailRow(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: const Color(0xFF64748B)),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF334155),
-              fontWeight: FontWeight.w500,
+  Widget _buildDetailRow(BuildContext context, IconData icon, String text, String label) {
+    return GestureDetector(
+      onTap: () => VaultShareService.instance.copyToClipboard(context, text, label),
+      behavior: HitTestBehavior.opaque,
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: const Color(0xFF64748B)),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF334155),
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
-        ),
-        const Icon(Icons.copy_rounded, size: 16, color: Color(0xFFCBD5E1)),
-      ],
+          const Icon(Icons.copy_rounded, size: 16, color: Color(0xFFCBD5E1)),
+        ],
+      ),
     );
   }
 
-  Widget _buildActionButton(IconData icon, String label, Color color) {
-    return Column(
-      children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            shape: BoxShape.circle,
+  Widget _buildActionButton(IconData icon, String label, Color color, {required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 22),
           ),
-          child: Icon(icon, color: color, size: 22),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF64748B),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF64748B),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

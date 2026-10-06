@@ -200,30 +200,31 @@ class _EmployeeLoginScreenState extends ConsumerState<EmployeeLoginScreen> {
                 children: [
                   const SizedBox(height: 36),
 
-                  // Top: Small circular app logo (blue gradient card icon) centered
+                  // Top: Small circular app logo centered
                   Center(
                     child: Container(
-                      width: 64,
-                      height: 64,
+                      width: 72,
+                      height: 72,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF0052FF), Color(0xFF38BDF8)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
+                        color: Colors.white,
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF0052FF).withValues(alpha: 0.3),
+                            color: const Color(0xFF0052FF).withValues(alpha: 0.25),
                             blurRadius: 16,
                             offset: const Offset(0, 6),
                           ),
                         ],
                       ),
-                      child: const Icon(
-                        Icons.account_balance_wallet_rounded,
-                        color: Colors.white,
-                        size: 30,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(36),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Image.asset(
+                            'assets/images/logo/My card Share Logo.png',
+                            fit: BoxFit.contain,
+                          ),
+                        ),
                       ),
                     ),
                   ),

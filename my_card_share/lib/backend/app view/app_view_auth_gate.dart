@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../individual/profile/individual_profile_store.dart';
 import '../individual/multiple store/individual_multi_store.dart';
+import '../enterprise/profile/enterprise_profile_store.dart';
 import '../../models/user_model.dart';
 
 /// App View Auth Gate Service
@@ -37,26 +38,45 @@ class AppViewAuthGate {
     try {
       // 1. Fetch user role from Firestore if available
       String role = 'individual';
+      String companyName = user.displayName ?? 'My Company';
+
       final doc = await _firestore.collection('users').doc(user.uid).get();
       if (doc.exists && doc.data() != null) {
         final data = doc.data()!;
         role = data['role'] ?? 'individual';
+        companyName = data['companyName'] ?? data['fullName'] ?? companyName;
       }
 
-      // 2. Hydrate IndividualProfileStore from Firestore
-      await IndividualProfileStore.instance.loadProfile(
-        user.uid,
-        user.email ?? '',
-        user.displayName ?? '',
-      );
+      if (role == 'enterprise') {
+        // 2a. Hydrate EnterpriseProfileStore for enterprise users
+        await EnterpriseProfileStore.instance.loadProfile(
+          user.uid,
+          user.email ?? '',
+          companyName,
+        );
 
-      // 3. Sync to IndividualMultiStore for local lookup
-      IndividualMultiStore.instance.saveUser(
-        fullName: user.displayName ?? user.email?.split('@').first ?? 'User',
-        email: user.email ?? '',
-        password: '',
-        role: role,
-      );
+        return UserModel(
+          id: user.uid,
+          name: EnterpriseProfileStore.instance.currentProfile?.companyName ?? companyName,
+          email: user.email ?? '',
+          role: role,
+        );
+      } else {
+        // 2b. Hydrate IndividualProfileStore for individual users
+        await IndividualProfileStore.instance.loadProfile(
+          user.uid,
+          user.email ?? '',
+          user.displayName ?? '',
+        );
+
+        // 3. Sync to IndividualMultiStore for local lookup
+        IndividualMultiStore.instance.saveUser(
+          fullName: user.displayName ?? user.email?.split('@').first ?? 'User',
+          email: user.email ?? '',
+          password: '',
+          role: role,
+        );
+      }
 
       return UserModel(
         id: user.uid,
@@ -75,21 +95,32 @@ class AppViewAuthGate {
     }
   }
 
+
   /// Called after successful login/signup to ensure profile store & local state are synced
   Future<void> onUserAuthenticated(User user, {String role = 'individual'}) async {
     try {
-      await IndividualProfileStore.instance.loadProfile(
-        user.uid,
-        user.email ?? '',
-        user.displayName ?? '',
-      );
+      if (role == 'enterprise') {
+        // Enterprise: load into EnterpriseProfileStore
+        await EnterpriseProfileStore.instance.loadProfile(
+          user.uid,
+          user.email ?? '',
+          user.displayName ?? 'My Company',
+        );
+      } else {
+        // Individual / Employee: load into IndividualProfileStore
+        await IndividualProfileStore.instance.loadProfile(
+          user.uid,
+          user.email ?? '',
+          user.displayName ?? '',
+        );
 
-      IndividualMultiStore.instance.saveUser(
-        fullName: user.displayName ?? user.email?.split('@').first ?? 'User',
-        email: user.email ?? '',
-        password: '',
-        role: role,
-      );
+        IndividualMultiStore.instance.saveUser(
+          fullName: user.displayName ?? user.email?.split('@').first ?? 'User',
+          email: user.email ?? '',
+          password: '',
+          role: role,
+        );
+      }
     } catch (e) {
       debugPrint('[AppViewAuthGate] OnUserAuthenticated sync error: $e');
     }

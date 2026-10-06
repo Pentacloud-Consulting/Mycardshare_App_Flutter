@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'widgets/dashboard_welcome_card.dart';
-import 'widgets/dashboard_stats_grid.dart';
+import '../../../backend/enterprise/home backend/overall.dart';
+import '../../../backend/enterprise/home backend/top_performance.dart';
 import 'widgets/dashboard_quick_actions.dart';
-import 'widgets/dashboard_top_performers.dart';
 
 class EnterpriseDashboardScreen extends StatelessWidget {
   const EnterpriseDashboardScreen({super.key});
@@ -38,21 +37,13 @@ class EnterpriseDashboardScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Welcome Summary Card Section
-              DashboardWelcomeCard(
-                adminName: "Admin",
-                activeCardsCount: 34,
-              ),
+              // 1. Welcome Summary Card Section (Image 2)
+              EnterpriseWelcomeCardBackend(),
 
               SizedBox(height: 24),
 
-              // 2. 2x2 Grid of Stat Cards Section
-              DashboardStatsGrid(
-                activeEmployees: "34",
-                totalCardViews: "8,420",
-                totalLeads: "312",
-                convRate: "5.2%",
-              ),
+              // 2. 2x2 Grid of Stat Cards Section (Image 2)
+              EnterpriseStatsGridBackend(),
 
               SizedBox(height: 24),
 
@@ -61,8 +52,8 @@ class EnterpriseDashboardScreen extends StatelessWidget {
 
               SizedBox(height: 24),
 
-              // 4. Top Performers Section
-              DashboardTopPerformers(),
+              // 4. Top Performers Section (Image 3)
+              EnterpriseTopPerformersBackend(),
 
               SizedBox(height: 24),
             ],

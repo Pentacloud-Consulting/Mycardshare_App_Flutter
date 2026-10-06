@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../../backend/enterprise/lock_banner/custom_color_picker.dart';
 
 class EnterpriseOnboardingScreen extends StatefulWidget {
   const EnterpriseOnboardingScreen({super.key});
@@ -10,28 +15,78 @@ class EnterpriseOnboardingScreen extends StatefulWidget {
 }
 
 class _EnterpriseOnboardingScreenState extends State<EnterpriseOnboardingScreen> {
-  final TextEditingController _companyNameController =
-      TextEditingController(text: "Acme Realty Group");
+  final TextEditingController _companyNameController = TextEditingController();
   final TextEditingController _emailInputController = TextEditingController();
-  final TextEditingController _websiteController =
-      TextEditingController(text: "https://www.acmerealty.com");
-  final TextEditingController _addressController =
-      TextEditingController(text: "123 Financial Center, New York, USA");
+  final TextEditingController _websiteController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
 
   int _currentStep = 1;
   int _selectedColorIndex = 0;
+  Color? _customColor;
   bool _lockBrandColor = true;
-  bool _hasLogo = false;
-  bool _hasBanner = false;
   bool _isLoading = false;
-  final String _selectedEmployeeLimit = "Up to 50 employees";
 
-  final String _inviteCode = "mycardshare.com/join-workspace?code=ACME-2026-XYZ";
+  Uint8List? _logoBytes;
+  Uint8List? _bannerBytes;
+  final ImagePicker _picker = ImagePicker();
 
-  final List<String> _invitedEmails = [
-    "sarah.jenkins@acmerealty.com",
-    "david.miller@acmerealty.com",
+  Future<void> _pickLogo() async {
+    try {
+      final picked = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 90,
+        maxWidth: 1024,
+        maxHeight: 1024,
+      );
+      if (picked != null) {
+        final bytes = await picked.readAsBytes();
+        setState(() {
+          _logoBytes = bytes;
+        });
+      }
+    } catch (e) {
+      debugPrint('[Onboarding] Error picking logo: $e');
+    }
+  }
+
+  Future<void> _pickBanner() async {
+    try {
+      final picked = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 1400,
+        maxHeight: 600,
+      );
+      if (picked != null) {
+        final bytes = await picked.readAsBytes();
+        setState(() {
+          _bannerBytes = bytes;
+        });
+      }
+    } catch (e) {
+      debugPrint('[Onboarding] Error picking banner: $e');
+    }
+  }
+
+  String _selectedEmployeeLimit = "Up to 50 employees";
+
+  static const List<String> _employeeLimitOptions = [
+    "1 - 10 employees",
+    "Up to 50 employees",
+    "51 - 200 employees",
+    "201 - 500 employees",
+    "500+ employees",
   ];
+
+  String get _inviteLink {
+    final name = _companyNameController.text.trim();
+    final slug = name.isNotEmpty
+        ? name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '')
+        : 'workspace';
+    return "mycardshare.com/join-workspace?code=${slug.toUpperCase()}-2026";
+  }
+
+  final List<String> _invitedEmails = [];
 
   final List<Color> _brandColors = const [
     Color(0xFF0052FF), // Primary Blue
@@ -41,6 +96,9 @@ class _EnterpriseOnboardingScreenState extends State<EnterpriseOnboardingScreen>
     Color(0xFFF59E0B), // Amber
     Color(0xFFE11D48), // Rose
   ];
+
+  Color get _activeBrandColor =>
+      _customColor ?? _brandColors[_selectedColorIndex];
 
   @override
   void dispose() {
@@ -60,7 +118,78 @@ class _EnterpriseOnboardingScreenState extends State<EnterpriseOnboardingScreen>
       setState(() {
         _isLoading = true;
       });
-      await Future.delayed(const Duration(milliseconds: 600));
+
+      try {
+        final user = FirebaseAuth.instance.currentUser;
+        final companyName = _companyNameController.text.trim();
+        final website = _websiteController.text.trim();
+        final address = _addressController.text.trim();
+
+        if (user != null) {
+          final uid = user.uid;
+          String? logoUrl;
+          String? bannerUrl;
+
+          if (_logoBytes != null) {
+            try {
+              final logoRef = FirebaseStorage.instance
+                  .ref()
+                  .child('enterprise_logos')
+                  .child(uid)
+                  .child('logo.jpg');
+              final task = await logoRef.putData(
+                _logoBytes!,
+                SettableMetadata(contentType: 'image/jpeg'),
+              );
+              logoUrl = await task.ref.getDownloadURL();
+            } catch (e) {
+              debugPrint('[Onboarding] Logo upload error: $e');
+            }
+          }
+
+          if (_bannerBytes != null) {
+            try {
+              final bannerRef = FirebaseStorage.instance
+                  .ref()
+                  .child('enterprise_banners')
+                  .child(uid)
+                  .child('banner.jpg');
+              final task = await bannerRef.putData(
+                _bannerBytes!,
+                SettableMetadata(contentType: 'image/jpeg'),
+              );
+              bannerUrl = await task.ref.getDownloadURL();
+            } catch (e) {
+              debugPrint('[Onboarding] Banner upload error: $e');
+            }
+          }
+
+          final colorVal = _activeBrandColor.toARGB32();
+          await FirebaseFirestore.instance.collection('enterprises').doc(uid).set({
+            'companyName': companyName.isNotEmpty ? companyName : 'Enterprise Workspace',
+            'website': website,
+            'address': address,
+            'employeeLimit': _selectedEmployeeLimit,
+            'brandColor': colorVal,
+            'lockBrandColor': _lockBrandColor,
+            'invitedEmails': _invitedEmails,
+            'logoUrl': logoUrl,
+            'lockedBannerUrl': bannerUrl,
+            'bannerLocked': bannerUrl != null ? _lockBrandColor : false,
+            'onboardingCompleted': true,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+
+          await FirebaseFirestore.instance.collection('users').doc(uid).set({
+            if (companyName.isNotEmpty) 'companyName': companyName,
+            'logoUrl': logoUrl,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        }
+      } catch (e) {
+        debugPrint('[EnterpriseOnboarding] Error saving onboarding data: $e');
+      }
+
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -108,7 +237,7 @@ class _EnterpriseOnboardingScreenState extends State<EnterpriseOnboardingScreen>
   }
 
   void _copyInviteLink() {
-    Clipboard.setData(ClipboardData(text: "https://$_inviteCode"));
+    Clipboard.setData(ClipboardData(text: "https://$_inviteLink"));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Row(
@@ -127,13 +256,14 @@ class _EnterpriseOnboardingScreenState extends State<EnterpriseOnboardingScreen>
   }
 
   void _shareInviteLink() {
+    Clipboard.setData(ClipboardData(text: "https://$_inviteLink"));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Row(
           children: [
             Icon(Icons.share_rounded, color: Colors.white, size: 20),
             SizedBox(width: 8),
-            Text("Share link sheet opened"),
+            Text("Workspace invite link copied to share!"),
           ],
         ),
         backgroundColor: const Color(0xFF0052FF),
@@ -354,16 +484,12 @@ class _EnterpriseOnboardingScreenState extends State<EnterpriseOnboardingScreen>
 
         const SizedBox(height: 28),
 
-        // Center Company Logo Upload Placeholder
+        // Center Company Logo Upload Box
         Center(
           child: Column(
             children: [
               GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _hasLogo = !_hasLogo;
-                  });
-                },
+                onTap: _pickLogo,
                 child: Container(
                   width: 104,
                   height: 104,
@@ -371,7 +497,9 @@ class _EnterpriseOnboardingScreenState extends State<EnterpriseOnboardingScreen>
                     color: const Color(0xFFEFF4FF),
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
-                      color: const Color(0xFFBFDBFE),
+                      color: _logoBytes != null
+                          ? const Color(0xFF0052FF)
+                          : const Color(0xFFBFDBFE),
                       width: 1.8,
                     ),
                     boxShadow: [
@@ -382,35 +510,33 @@ class _EnterpriseOnboardingScreenState extends State<EnterpriseOnboardingScreen>
                       ),
                     ],
                   ),
-                  child: _hasLogo
-                      ? const Center(
-                          child: Icon(
-                            Icons.business_rounded,
-                            size: 48,
-                            color: Color(0xFF0052FF),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(22),
+                    child: _logoBytes != null
+                        ? Image.memory(
+                            _logoBytes!,
+                            width: 104,
+                            height: 104,
+                            fit: BoxFit.cover,
+                          )
+                        : const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.cloud_upload_rounded,
+                                size: 38,
+                                color: Color(0xFF0052FF),
+                              ),
+                            ],
                           ),
-                        )
-                      : const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.cloud_upload_rounded,
-                              size: 38,
-                              color: Color(0xFF0052FF),
-                            ),
-                          ],
-                        ),
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
               GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _hasLogo = !_hasLogo;
-                  });
-                },
+                onTap: _pickLogo,
                 child: Text(
-                  _hasLogo ? "Change Company Logo" : "Upload Company Logo",
+                  _logoBytes != null ? "Change Company Logo" : "Upload Company Logo",
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -433,69 +559,106 @@ class _EnterpriseOnboardingScreenState extends State<EnterpriseOnboardingScreen>
 
         const SizedBox(height: 24),
 
-        // Cover Banner Upload Placeholder
+        // Cover Banner Upload Box
         GestureDetector(
-          onTap: () {
-            setState(() {
-              _hasBanner = !_hasBanner;
-            });
-          },
+          onTap: _pickBanner,
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            height: _bannerBytes != null ? 100 : null,
             decoration: BoxDecoration(
               color: const Color(0xFFF1F5F9).withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: const Color(0xFFCBD5E1),
-                width: 1.2,
+                color: _bannerBytes != null
+                    ? const Color(0xFF0052FF)
+                    : const Color(0xFFCBD5E1),
+                width: 1.8,
               ),
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEFF4FF),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.image_outlined,
-                    color: Color(0xFF0052FF),
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _hasBanner ? "Cover Banner Selected" : "Upload Cover Banner",
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF0052FF),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: _bannerBytes != null
+                  ? Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.memory(_bannerBytes!, fit: BoxFit.cover),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.6),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.check_circle_rounded, color: Colors.white, size: 14),
+                                SizedBox(width: 4),
+                                Text(
+                                  "Banner Selected",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
+                      ],
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEFF4FF),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.image_outlined,
+                              color: Color(0xFF0052FF),
+                              size: 22,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Upload Cover Banner",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF0052FF),
+                                  ),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  "Recommended 1200x400",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF94A3B8),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            Icons.file_upload_outlined,
+                            color: Color(0xFF64748B),
+                            size: 20,
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        "Recommended 1200x400",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF94A3B8),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(
-                  Icons.file_upload_outlined,
-                  color: Color(0xFF64748B),
-                  size: 20,
-                ),
-              ],
+                    ),
             ),
           ),
         ),
@@ -612,33 +775,38 @@ class _EnterpriseOnboardingScreenState extends State<EnterpriseOnboardingScreen>
 
             // Custom Color Circle with Plus Icon
             GestureDetector(
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text("Custom color picker opened"),
-                    duration: const Duration(seconds: 1),
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
+              onTap: () async {
+                final picked = await showCustomColorPicker(
+                  context,
+                  initialColor: _activeBrandColor,
                 );
+                if (picked != null && mounted) {
+                  setState(() {
+                    _customColor = picked;
+                  });
+                }
               },
               child: Container(
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
+                  color: _customColor != null
+                      ? _customColor!.withValues(alpha: 0.2)
+                      : const Color(0xFFF1F5F9),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: const Color(0xFFCBD5E1),
-                    width: 1.2,
+                    color: _customColor != null
+                        ? _customColor!
+                        : const Color(0xFFCBD5E1),
+                    width: _customColor != null ? 2.0 : 1.2,
                   ),
                 ),
-                child: const Icon(
-                  Icons.add_rounded,
-                  color: Color(0xFF64748B),
-                  size: 22,
+                child: Center(
+                  child: Icon(
+                    Icons.add_rounded,
+                    color: _customColor ?? const Color(0xFF64748B),
+                    size: 22,
+                  ),
                 ),
               ),
             ),
@@ -770,11 +938,11 @@ class _EnterpriseOnboardingScreenState extends State<EnterpriseOnboardingScreen>
                 ),
                 child: Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        "mycardshare.com/join-workspace?code=ACME-2026-XYZ",
+                        _inviteLink,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF475569),
@@ -892,7 +1060,7 @@ class _EnterpriseOnboardingScreenState extends State<EnterpriseOnboardingScreen>
                   ),
                   onChanged: (_) => setState(() {}),
                   decoration: const InputDecoration(
-                    hintText: "Employee Email (e.g. alex@acmerealty.com)",
+                    hintText: "Employee Email (e.g. alex@company.com)",
                     prefixIcon: Icon(
                       Icons.mail_outline_rounded,
                       color: Color(0xFF64748B),
@@ -1195,47 +1363,92 @@ class _EnterpriseOnboardingScreenState extends State<EnterpriseOnboardingScreen>
           ),
         ),
         const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
+        PopupMenuButton<String>(
+          position: PopupMenuPosition.under,
+          offset: const Offset(0, 8),
+          constraints: const BoxConstraints(minWidth: 280),
+          shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: const Color(0xFFE2E8F0),
-              width: 1.2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF0F172A).withValues(alpha: 0.03),
-                blurRadius: 14,
-                offset: const Offset(0, 4),
-              ),
-            ],
           ),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.people_outline_rounded,
-                color: Color(0xFF64748B),
-                size: 22,
+          color: Colors.white,
+          elevation: 10,
+          onSelected: (String newValue) {
+            setState(() {
+              _selectedEmployeeLimit = newValue;
+            });
+          },
+          itemBuilder: (BuildContext context) {
+            return _employeeLimitOptions.map((String value) {
+              final isSelected = value == _selectedEmployeeLimit;
+              return PopupMenuItem<String>(
+                value: value,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.people_outline_rounded,
+                      color: isSelected
+                          ? const Color(0xFF0052FF)
+                          : const Color(0xFF64748B),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      value,
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                        color: isSelected
+                            ? const Color(0xFF0052FF)
+                            : const Color(0xFF0F172A),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList();
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFFE2E8F0),
+                width: 1.2,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  _selectedEmployeeLimit,
-                  style: const TextStyle(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF0F172A),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.people_outline_rounded,
+                  color: Color(0xFF64748B),
+                  size: 22,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _selectedEmployeeLimit,
+                    style: const TextStyle(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF0F172A),
+                    ),
                   ),
                 ),
-              ),
-              const Icon(
-                Icons.keyboard_arrow_down_rounded,
-                color: Color(0xFF64748B),
-                size: 22,
-              ),
-            ],
+                const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: Color(0xFF64748B),
+                  size: 22,
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 6),
@@ -1282,11 +1495,14 @@ class _EnterpriseOnboardingScreenState extends State<EnterpriseOnboardingScreen>
                 height: 44,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF0052FF), Color(0xFF38BDF8)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: Colors.white,
+                  gradient: _logoBytes == null
+                      ? const LinearGradient(
+                          colors: [Color(0xFF0052FF), Color(0xFF38BDF8)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : null,
                   boxShadow: [
                     BoxShadow(
                       color: const Color(0xFF0052FF).withValues(alpha: 0.25),
@@ -1295,13 +1511,22 @@ class _EnterpriseOnboardingScreenState extends State<EnterpriseOnboardingScreen>
                     ),
                   ],
                 ),
-                child: const Center(
-                  child: Icon(
-                    Icons.business_rounded,
-                    color: Colors.white,
-                    size: 22,
-                  ),
-                ),
+                child: _logoBytes != null
+                    ? ClipOval(
+                        child: Image.memory(
+                          _logoBytes!,
+                          width: 44,
+                          height: 44,
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    : const Center(
+                        child: Icon(
+                          Icons.business_rounded,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                      ),
               ),
 
               const SizedBox(width: 14),
@@ -1311,9 +1536,9 @@ class _EnterpriseOnboardingScreenState extends State<EnterpriseOnboardingScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _companyNameController.text.isNotEmpty
-                          ? _companyNameController.text
-                          : "Acme Realty Group",
+                      _companyNameController.text.trim().isNotEmpty
+                          ? _companyNameController.text.trim()
+                          : "Your Company Name",
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
@@ -1328,7 +1553,7 @@ class _EnterpriseOnboardingScreenState extends State<EnterpriseOnboardingScreen>
                           width: 10,
                           height: 10,
                           decoration: BoxDecoration(
-                            color: _brandColors[_selectedColorIndex],
+                            color: _activeBrandColor,
                             shape: BoxShape.circle,
                           ),
                         ),

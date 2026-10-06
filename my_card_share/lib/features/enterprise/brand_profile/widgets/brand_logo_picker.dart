@@ -1,12 +1,119 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../backend/enterprise/profile/enterprise_profile_store.dart';
 
-class BrandLogoPicker extends StatelessWidget {
+/// Real BrandLogoPicker — picks company logo from gallery, uploads to Firebase Storage,
+/// updates Firestore & EnterpriseProfileStore, and shows live image preview.
+class BrandLogoPicker extends StatefulWidget {
   final VoidCallback? onTap;
 
   const BrandLogoPicker({
     super.key,
     this.onTap,
   });
+
+  @override
+  State<BrandLogoPicker> createState() => _BrandLogoPickerState();
+}
+
+class _BrandLogoPickerState extends State<BrandLogoPicker> {
+  bool _isUploading = false;
+  String? _logoUrl;
+  final ImagePicker _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentLogo();
+  }
+
+  Future<void> _loadCurrentLogo() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    await EnterpriseProfileStore.instance.loadProfile(uid, '', '');
+    final profile = EnterpriseProfileStore.instance.currentProfile;
+    if (!mounted) return;
+    setState(() {
+      _logoUrl = profile?.logoUrl;
+    });
+  }
+
+  Future<void> _handlePickAndUploadLogo() async {
+    if (_isUploading) return;
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please log in to upload logo")),
+      );
+      return;
+    }
+
+    try {
+      final XFile? picked = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 90,
+        maxWidth: 1024,
+        maxHeight: 1024,
+      );
+      if (picked == null) return;
+
+      setState(() => _isUploading = true);
+
+      final bytes = await picked.readAsBytes();
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('enterprise_logos')
+          .child(uid)
+          .child('logo.jpg');
+
+      final task = await ref.putData(
+        bytes,
+        SettableMetadata(contentType: 'image/jpeg'),
+      );
+      final downloadUrl = await task.ref.getDownloadURL();
+
+      await FirebaseFirestore.instance.collection('enterprises').doc(uid).set({
+        'logoUrl': downloadUrl,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'logoUrl': downloadUrl,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      EnterpriseProfileStore.instance.updateFields(uid, {'logoUrl': downloadUrl});
+
+      if (!mounted) return;
+      setState(() {
+        _isUploading = false;
+        _logoUrl = downloadUrl;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text("Company logo uploaded and updated successfully!"),
+          backgroundColor: const Color(0xFF0F172A),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isUploading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Upload failed: $e"),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,25 +131,13 @@ class BrandLogoPicker extends StatelessWidget {
         const SizedBox(height: 14),
         Center(
           child: GestureDetector(
-            onTap: onTap ??
-                () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text("Select new company logo from gallery..."),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  );
-                },
+            onTap: widget.onTap ?? _handlePickAndUploadLogo,
             child: SizedBox(
               width: 124,
               height: 124,
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  // Outer White Rounded Square Card
                   Container(
                     width: 120,
                     height: 120,
@@ -59,23 +154,35 @@ class BrandLogoPicker extends StatelessWidget {
                         ),
                       ],
                     ),
-                    // Inner Soft Baby-Blue Tint Box
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.apartment_rounded,
-                          color: Color(0xFF0052FF),
-                          size: 44,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFEFF6FF),
                         ),
+                        child: _isUploading
+                            ? const Center(
+                                child: SizedBox(
+                                  width: 28,
+                                  height: 28,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    color: Color(0xFF0052FF),
+                                  ),
+                                ),
+                              )
+                            : (_logoUrl != null && _logoUrl!.isNotEmpty)
+                                ? Image.network(_logoUrl!, fit: BoxFit.cover)
+                                : const Center(
+                                    child: Icon(
+                                      Icons.apartment_rounded,
+                                      color: Color(0xFF0052FF),
+                                      size: 44,
+                                    ),
+                                  ),
                       ),
                     ),
                   ),
-
-                  // Bottom-Right Overlapping Blue Camera Badge
                   Positioned(
                     bottom: 2,
                     right: 2,

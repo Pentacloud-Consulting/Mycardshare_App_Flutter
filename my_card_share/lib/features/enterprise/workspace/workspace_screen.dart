@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
-import 'widgets/workspace_stats_row.dart';
+import '../../../backend/enterprise/home backend/employees_page.dart';
 import 'widgets/workspace_search_filter.dart';
 import 'widgets/workspace_filter_chips.dart';
-import 'widgets/workspace_employee_list.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class EnterpriseWorkspaceScreen extends StatefulWidget {
   const EnterpriseWorkspaceScreen({super.key});
@@ -24,32 +23,126 @@ class _EnterpriseWorkspaceScreenState extends State<EnterpriseWorkspaceScreen> {
     super.dispose();
   }
 
-  void _handleActionSelected(Map<String, dynamic> employee, String action) {
-    if (action == "edit") {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Editing details for ${employee["name"]}..."),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+  void _showAddEmployeeDialog() {
+    final nameController = TextEditingController();
+    final emailController = TextEditingController();
+    final titleController = TextEditingController();
+    String role = 'Employee';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.person_add_rounded, color: Color(0xFF0052FF)),
+              SizedBox(width: 10),
+              Text(
+                "Invite Employee",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: InputDecoration(
+                    labelText: "Full Name",
+                    hintText: "e.g. Sarah Jenkins",
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: "Work Email",
+                    hintText: "e.g. sarah@company.com",
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: titleController,
+                  decoration: InputDecoration(
+                    labelText: "Job Title",
+                    hintText: "e.g. Senior Real Estate Agent",
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: role,
+                  decoration: InputDecoration(
+                    labelText: "Access Role",
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'Employee', child: Text("Employee")),
+                    DropdownMenuItem(value: 'Admin', child: Text("Admin")),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) setDialogState(() => role = val);
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text("Cancel", style: TextStyle(color: Color(0xFF64748B))),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0052FF),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              ),
+              onPressed: () async {
+                final uid = FirebaseAuth.instance.currentUser?.uid;
+                if (uid == null || nameController.text.trim().isEmpty) return;
+
+                final invitedName = nameController.text;
+                final messenger = ScaffoldMessenger.of(context);
+                final success = await EnterpriseEmployeesService.instance.addEmployee(
+                  uid: uid,
+                  name: invitedName,
+                  email: emailController.text,
+                  roleTitle: titleController.text.isEmpty
+                      ? "Employee"
+                      : titleController.text,
+                  role: role,
+                );
+
+                if (ctx.mounted) Navigator.pop(ctx);
+                if (success) {
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text("Invited $invitedName successfully!"),
+                      backgroundColor: const Color(0xFF16A34A),
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
+                  );
+                }
+              },
+              child: const Text("Send Invite", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
         ),
-      );
-    } else if (action == "resend") {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Resent invite email to ${employee["email"]}"),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
-    } else if (action == "deactivate") {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Deactivated account for ${employee["name"]}"),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
-    }
+      ),
+    );
   }
 
   @override
@@ -59,7 +152,7 @@ class _EnterpriseWorkspaceScreenState extends State<EnterpriseWorkspaceScreen> {
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 10, right: 4),
         child: GestureDetector(
-          onTap: () => context.go('/enterprise-onboarding'),
+          onTap: _showAddEmployeeDialog,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
             decoration: BoxDecoration(
@@ -125,11 +218,14 @@ class _EnterpriseWorkspaceScreenState extends State<EnterpriseWorkspaceScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1. Stat Chips Row (Total 34, Active 31, Pending 3)
-                  const WorkspaceStatsRow(
-                    totalCount: 34,
-                    activeCount: 31,
-                    pendingCount: 3,
+                  // 1. Dynamic Stat Pills Row (Image 4: Total, Active, Pending)
+                  EnterpriseStatsPillsWidget(
+                    selectedFilter: _selectedFilter,
+                    onFilterSelected: (filter) {
+                      setState(() {
+                        _selectedFilter = filter;
+                      });
+                    },
                   ),
 
                   const SizedBox(height: 16),
@@ -169,11 +265,10 @@ class _EnterpriseWorkspaceScreenState extends State<EnterpriseWorkspaceScreen> {
 
                   const SizedBox(height: 16),
 
-                  // 4. Employee List Card (5 Stacked Rows with Dividers)
-                  WorkspaceEmployeeList(
+                  // 4. Real Employee List Card (Image 5)
+                  EnterpriseEmployeeListBackend(
                     searchQuery: _searchQuery,
                     selectedFilter: _selectedFilter,
-                    onActionSelected: _handleActionSelected,
                   ),
                 ],
               ),

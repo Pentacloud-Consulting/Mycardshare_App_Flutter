@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../backend/enterprise/home backend/company.dart';
 
 class EnterpriseTopNav extends StatelessWidget implements PreferredSizeWidget {
   const EnterpriseTopNav({super.key});
@@ -51,35 +52,14 @@ class EnterpriseTopNav extends StatelessWidget implements PreferredSizeWidget {
       ),
       child: Row(
         children: [
-          // LEFT ACTION / ICON
+          // LEFT ACTION / BRAND TITLE (Image 1: Real Company Header)
           if (isDashboard)
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF0052FF), Color(0xFF38BDF8)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF0052FF).withValues(alpha: 0.25),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.business_rounded,
-                  color: Colors.white,
-                  size: 20,
-                ),
+            Expanded(
+              child: EnterpriseCompanyHeaderWidget(
+                onTap: () => context.go('/enterprise/brand-profile'),
               ),
             )
-          else
+          else ...[
             GestureDetector(
               onTap: () {
                 if (context.canPop()) {
@@ -103,42 +83,38 @@ class EnterpriseTopNav extends StatelessWidget implements PreferredSizeWidget {
                 ),
               ),
             ),
-
-          const SizedBox(width: 12),
-
-          // CENTER TITLE / BRAND NAME
-          Expanded(
-            child: Text(
-              isDashboard
-                  ? "Acme Realty Group"
-                  : isWorkspace
-                      ? "Workspace"
-                      : isLeads
-                          ? "Leads"
-                          : isCampaigns
-                              ? "Campaigns"
-                              : isAnalytics
-                                  ? "Analytics"
-                                  : isConnectors
-                                      ? "CRM Connectors"
-                                      : isSettings
-                                          ? "Settings"
-                                          : isNotifications
-                                              ? "Notifications"
-                                              : isBrandProfile
-                                                  ? "Brand Profile"
-                                                  : isProfile
-                                                      ? "Brand Profile & Hub"
-                                                      : "Enterprise Admin",
-              style: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF0F172A),
-                letterSpacing: -0.4,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                isWorkspace
+                    ? "Workspace"
+                    : isLeads
+                        ? "Leads"
+                        : isCampaigns
+                            ? "Campaigns"
+                            : isAnalytics
+                                ? "Analytics"
+                                : isConnectors
+                                    ? "CRM Connectors"
+                                    : isSettings
+                                        ? "Settings"
+                                        : isNotifications
+                                            ? "Notifications"
+                                            : isBrandProfile
+                                                ? "Brand Profile"
+                                                : isProfile
+                                                    ? "Brand Profile & Hub"
+                                                    : "Enterprise Admin",
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                  letterSpacing: -0.4,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
-              overflow: TextOverflow.ellipsis,
             ),
-          ),
+          ],
 
           // RIGHT ACTIONS (Page Action + Notification Bell Icon across all screens)
           Row(

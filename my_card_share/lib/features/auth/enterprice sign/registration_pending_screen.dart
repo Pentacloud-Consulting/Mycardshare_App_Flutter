@@ -128,29 +128,10 @@ class _RegistrationPendingScreenState extends State<RegistrationPendingScreen>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF0066FF), Color(0xFF0052FF)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF0066FF).withValues(alpha: 0.3),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.account_balance_wallet_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
+                      Image.asset(
+                        'assets/images/logo/MYSHAREFAVO.png',
+                        height: 38,
+                        fit: BoxFit.contain,
                       ),
                       const SizedBox(width: 10),
                       const Text(
@@ -238,11 +219,10 @@ class _RegistrationPendingScreenState extends State<RegistrationPendingScreen>
 
                   const SizedBox(height: 12),
 
-                  // Gray Subtext
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 12.0),
                     child: Text(
-                      "Your enterprise account for Acme Realty Group is under review. We'll notify you as soon as it's approved — usually within 24 hours.",
+                      "Your enterprise account registration is under review. We'll notify you as soon as it's approved — usually within 24 hours.",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14,

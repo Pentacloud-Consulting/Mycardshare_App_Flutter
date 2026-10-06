@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../models/user_model.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../backend/individual/sign/individual_auth_service.dart';
+import '../../../backend/enterprise/sign/enterprise_auth_service.dart';
 import '../../../backend/enterprise/sign/user_sign_up_store.dart';
 import '../login/login_screen.dart'; // import GoogleLogoWidget
 import '../../../backend/sign/google_sign.dart';
@@ -71,23 +72,34 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             : 'individual';
 
     if (_selectedTab == 1) {
-      // ── Enterprise: unchanged local store path ──
-      final record = EnterpriseUserSignUpStore.saveUserSignUp(
+      // ── Enterprise: REAL Firebase Auth + Firestore sign-up ──
+      final result = await EnterpriseAuthService.instance.signUp(
         companyName: name.isNotEmpty ? name : 'Enterprise Account',
         email: email,
         password: password,
-        role: roleStr,
       );
-      final user = UserModel(
-        id: record.id,
-        name: record.companyName,
-        email: record.email,
-        role: roleStr,
-      );
-      ref.read(authProvider.notifier).login(user);
-      if (mounted) {
-        setState(() => _isLoading = false);
-        context.go('/enterprise-onboarding');
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (result.isSuccess && result.firebaseUser != null) {
+        final fbUser = result.firebaseUser!;
+        final user = UserModel(
+          id: fbUser.uid,
+          name: result.profileData?.companyName ?? name,
+          email: fbUser.email ?? email,
+          role: roleStr,
+        );
+        ref.read(authProvider.notifier).login(user);
+        if (mounted) context.go('/enterprise-onboarding');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.message),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     } else {
       // ── Individual: REAL Firebase Auth sign-up ──
@@ -131,16 +143,25 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             : 'individual';
 
     if (_selectedTab != 0) {
-      // Enterprise / Employee: use old GoogleSignUpService
-      final response = await GoogleSignUpService.signUpWithGoogle(role: roleStr);
+      // ── Enterprise: REAL Firebase Google Sign-In ──
+      final result = await EnterpriseAuthService.instance.signInWithGoogle(
+        defaultCompanyName: '',
+      );
       if (!mounted) return;
-      if (response.isSuccess && response.userModel != null) {
-        ref.read(authProvider.notifier).login(response.userModel!);
-        context.go(roleStr == 'enterprise' ? '/enterprise-onboarding' : '/individual/form');
+      if (result.isSuccess && result.firebaseUser != null) {
+        final fbUser = result.firebaseUser!;
+        final user = UserModel(
+          id: fbUser.uid,
+          name: result.profileData?.companyName ?? fbUser.displayName ?? fbUser.email ?? 'Enterprise',
+          email: fbUser.email ?? '',
+          role: roleStr,
+        );
+        ref.read(authProvider.notifier).login(user);
+        context.go('/enterprise-onboarding');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response.message),
+            content: Text(result.message),
             backgroundColor: Colors.redAccent,
             behavior: SnackBarBehavior.floating,
           ),
@@ -233,40 +254,23 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 children: [
                   const SizedBox(height: 24),
 
-                  // App Logo & Brand Title
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF0066FF).withValues(alpha: 0.25),
-                          blurRadius: 16,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(36),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Image.asset(
-                          'assets/images/logo/My card Share Logo.png',
-                          fit: BoxFit.contain,
-                        ),
-                      ),
+                  // App Logo without background circle, enlarged and centered above MyCardShare
+                  Center(
+                    child: Image.asset(
+                      'assets/images/logo/MYSHAREFAVO.png',
+                      height: 72,
+                      fit: BoxFit.contain,
                     ),
                   ),
                   const SizedBox(height: 8),
                   const Text(
                     "MyCardShare",
+                    textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
                       color: Color(0xFF0F172A),
-                      letterSpacing: -0.2,
+                      letterSpacing: -0.3,
                     ),
                   ),
 

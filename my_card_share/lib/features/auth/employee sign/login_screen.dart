@@ -200,32 +200,23 @@ class _EmployeeLoginScreenState extends ConsumerState<EmployeeLoginScreen> {
                 children: [
                   const SizedBox(height: 36),
 
-                  // Top: Small circular app logo centered
+                  // App Logo without background circle, enlarged and centered above MyCardShare
                   Center(
-                    child: Container(
-                      width: 72,
+                    child: Image.asset(
+                      'assets/images/logo/MYSHAREFAVO.png',
                       height: 72,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF0052FF).withValues(alpha: 0.25),
-                            blurRadius: 16,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(36),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Image.asset(
-                            'assets/images/logo/My card Share Logo.png',
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                      ),
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    "MyCardShare",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                      letterSpacing: -0.3,
                     ),
                   ),
 

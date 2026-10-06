@@ -7,10 +7,9 @@ import '../../../core/theme/app_style_widgets.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../models/user_model.dart';
 import '../../../backend/individual/sign/individual_auth_service.dart';
+import '../../../backend/enterprise/sign/enterprise_auth_service.dart';
 import '../../../notifications/individual/login_popup.dart';
-import '../../../backend/enterprise/sign/login_identity.dart';
 import '../../../notifications/enterprise/login_popup.dart';
-import '../../../backend/sign/google_login.dart';
 import '../back/smart_back_handler.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -63,37 +62,43 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     if (_selectedTab == 1) {
-      // Enterprise authentication
-      final authResponse = EnterpriseLoginIdentity.authenticateUser(
+      // ── Enterprise: REAL Firebase Auth email/password login ──
+      final result = await EnterpriseAuthService.instance.login(
         email: email,
         password: password,
-        role: roleStr,
       );
 
-      setState(() {
-        _isLoading = false;
-      });
+      if (!mounted) return;
+      setState(() => _isLoading = false);
 
-      if (authResponse.isEmailNotFound) {
-        EnterpriseLoginPopupNotification.showEmailNotFoundDialog(
-          context,
-          onSignUpTap: () => context.go('/signup'),
+      if (result.isSuccess && result.firebaseUser != null) {
+        final fbUser = result.firebaseUser!;
+        final user = UserModel(
+          id: fbUser.uid,
+          name: result.profileData?.companyName ?? fbUser.displayName ?? email,
+          email: fbUser.email ?? email,
+          role: roleStr,
         );
-        return;
-      }
-
-      if (authResponse.isWrongPassword) {
-        EnterpriseLoginPopupNotification.showWrongPasswordDialog(
-          context,
-          onForgotPasswordTap: () => context.push('/reset-password'),
-        );
-        return;
-      }
-
-      if (authResponse.isSuccess && authResponse.userModel != null) {
-        ref.read(authProvider.notifier).login(authResponse.userModel!);
-        if (mounted) {
-          context.go('/enterprise-onboarding');
+        ref.read(authProvider.notifier).login(user);
+        if (mounted) context.go('/enterprise-onboarding');
+      } else {
+        final msg = result.message;
+        if (msg.contains('No account') || msg.contains('not valid') || msg.contains('not found')) {
+          EnterpriseLoginPopupNotification.showEmailNotFoundDialog(
+            context,
+            onSignUpTap: () => context.go('/signup'),
+          );
+        } else if (msg.contains('Incorrect') || msg.contains('credentials') || msg.contains('password')) {
+          EnterpriseLoginPopupNotification.showWrongPasswordDialog(
+            context,
+            onForgotPasswordTap: () => context.push('/reset-password'),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(msg),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ));
         }
       }
       return;
@@ -154,18 +159,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             : 'individual';
 
     if (_selectedTab != 0) {
-      // Enterprise / Employee: old Google login service
-      final response = await GoogleLoginService.loginWithGoogle(
-        role: roleStr,
-        autoProvision: true,
+      // ── Enterprise: REAL Firebase Google Sign-In ──
+      final result = await EnterpriseAuthService.instance.signInWithGoogle(
+        defaultCompanyName: '',
       );
       if (!mounted) return;
-      if (response.isSuccess && response.userModel != null) {
-        ref.read(authProvider.notifier).login(response.userModel!);
-        context.go(roleStr == 'enterprise' ? '/enterprise-onboarding' : '/portal');
+      if (result.isSuccess && result.firebaseUser != null) {
+        final fbUser = result.firebaseUser!;
+        final user = UserModel(
+          id: fbUser.uid,
+          name: result.profileData?.companyName ?? fbUser.displayName ?? fbUser.email ?? 'Enterprise',
+          email: fbUser.email ?? '',
+          role: roleStr,
+        );
+        ref.read(authProvider.notifier).login(user);
+        context.go('/enterprise-onboarding');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(response.message),
+          content: Text(result.message),
           backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
         ));
@@ -250,44 +261,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 children: [
                   const SizedBox(height: 60),
 
-                  // Center App Logo Badge with Morphism Soft Shadows
-                  Container(
-                    width: 90,
-                    height: 90,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.primary.withValues(alpha: 0.08),
-                    ),
-                    child: Center(
-                      child: Container(
-                        width: 72,
-                        height: 72,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primary.withValues(alpha: 0.25),
-                              blurRadius: 20,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(36),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Image.asset(
-                              'assets/images/logo/My card Share Logo.png',
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                        ),
-                      ),
+                  // Transparent App Logo without background circle, enlarged and centered above MyCardShare
+                  Center(
+                    child: Image.asset(
+                      'assets/images/logo/MYSHAREFAVO.png',
+                      height: 72,
+                      fit: BoxFit.contain,
                     ),
                   ),
-
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 8),
+                  const Text(
+                    "MyCardShare",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
 
                   // Title & Subtitle using AppTextStyles
                   Text(

@@ -98,3 +98,5 @@ class IndividualsStatChipsSection extends StatelessWidget {
         );
   }
 }
+
+

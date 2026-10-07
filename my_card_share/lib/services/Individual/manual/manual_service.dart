@@ -38,3 +38,5 @@ class ManualService {
     ref.read(vaultNotifierProvider.notifier).addContact(contact);
   }
 }
+
+

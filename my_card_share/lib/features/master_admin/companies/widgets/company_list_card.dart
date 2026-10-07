@@ -258,3 +258,5 @@ class CompanyListCard extends StatelessWidget {
     );
   }
 }
+
+

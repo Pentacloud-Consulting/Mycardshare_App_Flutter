@@ -5,7 +5,7 @@ class AnalyticsTrafficSources extends StatelessWidget {
 
   final List<Map<String, dynamic>> _sources = const [
     {
-      'name': 'QR Scan',
+      'name': 'qr_scan',
       'percentage': 72,
       'color': Color(0xFF0066FF),
     },
@@ -128,3 +128,5 @@ class AnalyticsTrafficSources extends StatelessWidget {
     );
   }
 }
+
+

@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import '../multiple store/enterprise_multi_store.dart';
+import '../multiple_store/enterprise_multi_store.dart';
 
 /// EnterpriseUserSignUpStore manages the Enterprise user sign-up workflow
 /// and delegates persistent storage to EnterpriseMultiStore.
@@ -40,3 +40,5 @@ class EnterpriseUserSignUpStore {
     return EnterpriseMultiStore.instance.getUser(email) != null;
   }
 }
+
+

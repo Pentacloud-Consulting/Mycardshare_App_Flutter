@@ -62,10 +62,11 @@ class EnterpriseTopPerformanceService {
   String? get currentUid => _auth.currentUser?.uid;
 
   /// Stream of top performers sorted by total views and leads.
+  /// Stream of top performers sorted by total views and leads.
   Stream<List<TopPerformerData>> streamTopPerformers([String? uid, int limit = 5]) {
     final targetUid = uid ?? currentUid;
     if (targetUid == null || targetUid.isEmpty) {
-      return Stream.value(_defaultFallbackList());
+      return Stream.value(const []);
     }
 
     return _firestore
@@ -75,13 +76,20 @@ class EnterpriseTopPerformanceService {
         .snapshots()
         .map((snapshot) {
       if (snapshot.docs.isEmpty) {
-        return _defaultFallbackList();
+        return const [];
       }
 
-      final employees = snapshot.docs.map((doc) => doc.data()).toList();
+      final docs = snapshot.docs;
+      final List<Map<String, dynamic>> employeesWithId = [];
+
+      for (final doc in docs) {
+        final data = Map<String, dynamic>.from(doc.data());
+        data['_id'] = doc.id;
+        employeesWithId.add(data);
+      }
 
       // Sort by views descending, then leads descending
-      employees.sort((a, b) {
+      employeesWithId.sort((a, b) {
         final vA = (a['views'] as num?)?.toInt() ?? 0;
         final vB = (b['views'] as num?)?.toInt() ?? 0;
         if (vB != vA) return vB.compareTo(vA);
@@ -92,49 +100,17 @@ class EnterpriseTopPerformanceService {
       });
 
       final List<TopPerformerData> performers = [];
-      for (int i = 0; i < employees.length && i < limit; i++) {
-        final doc = snapshot.docs[i];
+      for (int i = 0; i < employeesWithId.length && i < limit; i++) {
+        final item = employeesWithId[i];
         performers.add(TopPerformerData.fromFirestore(
-          doc.id,
-          doc.data(),
+          item['_id'] as String,
+          item,
           i + 1,
         ));
       }
 
-      return performers.isNotEmpty ? performers : _defaultFallbackList();
+      return performers;
     });
-  }
-
-  List<TopPerformerData> _defaultFallbackList() {
-    return const [
-      TopPerformerData(
-        id: 'tp_1',
-        name: 'Sarah Jenkins',
-        initials: 'SJ',
-        jobTitle: 'Senior Real Estate Agent',
-        views: 142,
-        leads: 12,
-        rank: 1,
-      ),
-      TopPerformerData(
-        id: 'tp_2',
-        name: 'David Miller',
-        initials: 'DM',
-        jobTitle: 'Property Manager',
-        views: 118,
-        leads: 9,
-        rank: 2,
-      ),
-      TopPerformerData(
-        id: 'tp_3',
-        name: 'Emily Turner',
-        initials: 'ET',
-        jobTitle: 'Commercial Specialist',
-        views: 96,
-        leads: 7,
-        rank: 3,
-      ),
-    ];
   }
 }
 
@@ -154,8 +130,39 @@ class EnterpriseTopPerformersBackend extends StatelessWidget {
     return StreamBuilder<List<TopPerformerData>>(
       stream: EnterpriseTopPerformanceService.instance.streamTopPerformers(uid),
       builder: (context, snapshot) {
-        final performers = snapshot.data ??
-            EnterpriseTopPerformanceService.instance._defaultFallbackList();
+        final performers = snapshot.data ?? const [];
+
+        if (performers.isEmpty) {
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: const Column(
+              children: [
+                Icon(Icons.emoji_events_outlined, size: 36, color: Color(0xFF94A3B8)),
+                SizedBox(height: 8),
+                Text(
+                  "No Top Performers Yet",
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  "Invite team members to track performance metrics.",
+                  style: TextStyle(fontSize: 12.5, color: Color(0xFF64748B)),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          );
+        }
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -337,3 +344,5 @@ class EnterpriseTopPerformersBackend extends StatelessWidget {
     );
   }
 }
+
+

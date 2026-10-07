@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../backend/individual/qr scan/slug_validator.dart';
+import '../../../../backend/individual/qr_scan/slug_validator.dart';
 
 /// Card Slug editor widget with real-time availability check.
 ///
@@ -227,3 +227,5 @@ class _ProfileSlugSectionState extends State<ProfileSlugSection> {
     );
   }
 }
+
+

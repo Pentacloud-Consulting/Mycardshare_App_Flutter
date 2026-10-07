@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import '../multiple store/individual_multi_store.dart';
+import '../multiple_store/individual_multi_store.dart';
 
 /// UserSignUpStore manages the individual user sign-up workflow
 /// and delegates persistent storage to IndividualMultiStore.
@@ -40,3 +40,5 @@ class UserSignUpStore {
     return IndividualMultiStore.instance.getUser(email) != null;
   }
 }
+
+

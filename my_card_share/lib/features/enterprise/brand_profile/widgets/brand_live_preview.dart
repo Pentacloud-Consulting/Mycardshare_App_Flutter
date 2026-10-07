@@ -5,11 +5,13 @@ import '../../../../backend/enterprise/profile/enterprise_profile_store.dart';
 class BrandLivePreview extends StatelessWidget {
   final Color selectedColor;
   final String selectedTemplateId;
+  final String? companyName;
 
   const BrandLivePreview({
     super.key,
     required this.selectedColor,
     required this.selectedTemplateId,
+    this.companyName,
   });
 
   @override
@@ -32,7 +34,7 @@ class BrandLivePreview extends StatelessWidget {
       cardTextColor = Colors.white;
     }
 
-    // Read real company name from EnterpriseProfileStore
+    // Read real company name from EnterpriseProfileStore or passed controller parameter
     final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
     final profile = EnterpriseProfileStore.instance.currentProfile;
 
@@ -42,7 +44,18 @@ class BrandLivePreview extends StatelessWidget {
           : const Stream.empty(),
       builder: (context, snapshot) {
         final liveProfile = snapshot.data ?? profile;
-        final companyName = liveProfile?.companyName ?? 'Your Company';
+
+        final String finalCompanyName;
+        final cName = companyName?.trim();
+        if (cName != null && cName.isNotEmpty) {
+          finalCompanyName = cName;
+        } else if (liveProfile != null &&
+            liveProfile.companyName.trim().isNotEmpty &&
+            liveProfile.companyName.trim() != 'Zuhaib') {
+          finalCompanyName = liveProfile.companyName.trim();
+        } else {
+          finalCompanyName = 'My Company';
+        }
 
         return Container(
           width: double.infinity,
@@ -120,17 +133,24 @@ class BrandLivePreview extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    // Avatar placeholder
+                    // Avatar with real company logo image or icon & badge
                     Stack(
                       children: [
                         CircleAvatar(
                           radius: 24,
                           backgroundColor: cardTextColor.withValues(alpha: 0.2),
-                          child: Icon(
-                            Icons.person_rounded,
-                            color: cardTextColor,
-                            size: 26,
-                          ),
+                          backgroundImage: (liveProfile?.logoUrl != null &&
+                                  liveProfile!.logoUrl!.isNotEmpty)
+                              ? NetworkImage(liveProfile.logoUrl!)
+                              : null,
+                          child: (liveProfile?.logoUrl == null ||
+                                  liveProfile!.logoUrl!.isEmpty)
+                              ? Icon(
+                                  Icons.person_rounded,
+                                  color: cardTextColor,
+                                  size: 26,
+                                )
+                              : null,
                         ),
                         Positioned(
                           bottom: 0,
@@ -184,7 +204,7 @@ class BrandLivePreview extends StatelessWidget {
                               const SizedBox(width: 4),
                               Flexible(
                                 child: Text(
-                                  companyName,
+                                  finalCompanyName,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontSize: 11,
@@ -214,4 +234,6 @@ class BrandLivePreview extends StatelessWidget {
     );
   }
 }
+
+
 

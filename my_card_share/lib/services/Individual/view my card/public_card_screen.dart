@@ -4,8 +4,8 @@ import '../../../features/Nav/portal_bottom_nav.dart';
 import '../../../features/Nav/portal_top_nav.dart';
 import '../../../features/individual/home/View My card/home.dart';
 import '../../../backend/individual/profile/individual_profile_store.dart';
-import '../../../backend/individual/multiple store/individual_multi_store.dart';
-import '../../../backend/individual/qr scan/individual_qr_service.dart';
+import '../../../backend/individual/multiple_store/individual_multi_store.dart';
+import '../../../backend/individual/qr_scan/individual_qr_service.dart';
 import '../../../backend/individual/previews/publish_unpublish.dart';
 
 class IndividualCardScreen extends StatefulWidget {
@@ -168,3 +168,5 @@ class _IndividualCardScreenState extends State<IndividualCardScreen> {
     );
   }
 }
+
+

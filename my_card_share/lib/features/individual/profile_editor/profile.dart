@@ -12,3 +12,5 @@ class IndividualProfileEditorScreen extends StatelessWidget {
     return const ProfileViewScreen();
   }
 }
+
+

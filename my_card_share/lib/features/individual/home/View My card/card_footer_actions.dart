@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../backend/individual/qr scan/individual_generate_qr.dart';
+import '../../../../backend/individual/qr_scan/individual_generate_qr.dart';
 import '../../../../backend/individual/profile/individual_profile_store.dart';
-import '../../../../backend/individual/multiple store/individual_multi_store.dart';
+import '../../../../backend/individual/multiple_store/individual_multi_store.dart';
 import '../../../../backend/individual/connects/save_contact.dart';
 import '../../../../backend/individual/wallet/add_to_wallet.dart';
 import '../../../../backend/individual/lead/exchange_contact.dart';
@@ -271,3 +271,5 @@ class CardFooterActions extends StatelessWidget {
     );
   }
 }
+
+

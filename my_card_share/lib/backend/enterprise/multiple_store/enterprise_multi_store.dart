@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import '../../individual/multiple store/individual_multi_store.dart';
+import '../../individual/multiple_store/individual_multi_store.dart';
 
 /// Represents an Enterprise user account record.
 class EnterpriseUserRecord {
@@ -123,3 +123,5 @@ class EnterpriseMultiStore {
     return _enterpriseUserStore.values.toList();
   }
 }
+
+

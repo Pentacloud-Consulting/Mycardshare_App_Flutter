@@ -13,7 +13,7 @@ import 'dashboard_recent_leads.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../backend/individual/profile/individual_profile_store.dart';
-import '../../../../backend/individual/multiple store/individual_multi_store.dart';
+import '../../../../backend/individual/multiple_store/individual_multi_store.dart';
 import '../../../../backend/individual/previews/individual_metrics_store.dart';
 import '../../../../backend/individual/previews/publish_unpublish.dart';
 
@@ -190,3 +190,5 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
     );
   }
 }
+
+

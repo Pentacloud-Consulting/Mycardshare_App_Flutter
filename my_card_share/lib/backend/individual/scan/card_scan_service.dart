@@ -335,3 +335,5 @@ class CardScanService {
     _textRecognizer.close();
   }
 }
+
+

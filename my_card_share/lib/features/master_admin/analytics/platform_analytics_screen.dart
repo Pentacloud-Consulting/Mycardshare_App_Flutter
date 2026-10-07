@@ -84,3 +84,5 @@ class _MasterAdminAnalyticsScreenState extends State<MasterAdminAnalyticsScreen>
     );
   }
 }
+
+

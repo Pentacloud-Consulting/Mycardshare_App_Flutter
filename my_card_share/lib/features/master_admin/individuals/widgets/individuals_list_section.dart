@@ -329,3 +329,5 @@ class IndividualsListSection extends StatelessWidget {
     }
   }
 }
+
+

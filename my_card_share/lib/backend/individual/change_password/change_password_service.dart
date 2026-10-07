@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../multiple store/individual_multi_store.dart';
+import '../multiple_store/individual_multi_store.dart';
 import '../notification/password_change_notify.dart';
 
 class ChangePasswordResult {
@@ -97,3 +97,5 @@ class ChangePasswordService {
     }
   }
 }
+
+

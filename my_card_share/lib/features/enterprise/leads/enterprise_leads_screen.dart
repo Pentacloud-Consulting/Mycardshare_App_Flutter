@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'widgets/leads_stats_row.dart';
 import 'widgets/leads_search_filter.dart';
 import 'widgets/leads_filter_chips.dart';
 import 'widgets/leads_list_cards.dart';
 import 'widgets/retry_sync_button.dart';
+import '../../../backend/enterprise/home_backend/leads_service.dart';
 
 class EnterpriseLeadsScreen extends StatefulWidget {
   const EnterpriseLeadsScreen({super.key});
@@ -120,6 +122,8 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFD),
       floatingActionButton: Padding(
@@ -157,11 +161,23 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1. Stat Chips Row (Total 312, This Week 28, Sync Failed 2)
-                  const LeadsStatsRow(
-                    totalCount: 312,
-                    thisWeekCount: 28,
-                    syncFailedCount: 2,
+                  // 1. Real Lead Stats Row (Total, This Week, Sync Failed)
+                  StreamBuilder<EnterpriseLeadStats>(
+                    stream: EnterpriseLeadsService.instance.streamLeadStats(uid),
+                    builder: (context, snapshot) {
+                      final stats = snapshot.data ??
+                          const EnterpriseLeadStats(
+                            totalCount: 0,
+                            thisWeekCount: 0,
+                            syncFailedCount: 0,
+                          );
+
+                      return LeadsStatsRow(
+                        totalCount: stats.totalCount,
+                        thisWeekCount: stats.thisWeekCount,
+                        syncFailedCount: stats.syncFailedCount,
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 16),
@@ -189,7 +205,7 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
 
                   const SizedBox(height: 14),
 
-                  // 3. Horizontal Scrollable Filter Chips (All, By Employee, New, CRM Synced, Failed)
+                  // 3. Horizontal Scrollable Filter Chips (All, CRM Synced, Failed)
                   LeadsFilterChips(
                     selectedFilter: _selectedFilter,
                     onSelected: (filter) {
@@ -201,7 +217,7 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
 
                   const SizedBox(height: 16),
 
-                  // 4. Enterprise Lead Cards List (with Captured By Attribution)
+                  // 4. Real Enterprise Lead Cards List
                   LeadsListCards(
                     searchQuery: _searchQuery,
                     selectedFilter: _selectedFilter,
@@ -217,3 +233,5 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
     );
   }
 }
+
+

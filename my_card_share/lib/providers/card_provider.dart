@@ -5,3 +5,5 @@ import '../services/card_service.dart';
 final cardServiceProvider = Provider<CardService>((ref) => CardService());
 
 final activeCardProvider = StateProvider<CardModel?>((ref) => null);
+
+

@@ -27,3 +27,5 @@ class AppTextStyles {
         color: AppColors.textMuted,
       );
 }
+
+

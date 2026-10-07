@@ -103,3 +103,5 @@ class ScannerScreen extends StatelessWidget {
     );
   }
 }
+
+

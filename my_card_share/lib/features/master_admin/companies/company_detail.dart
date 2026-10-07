@@ -95,3 +95,5 @@ class MasterAdminCompanyDetailScreen extends StatelessWidget {
     );
   }
 }
+
+

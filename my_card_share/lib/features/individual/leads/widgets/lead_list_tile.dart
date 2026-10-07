@@ -4,7 +4,7 @@ class LeadListTile extends StatelessWidget {
   final String initials;
   final String name;
   final String company;
-  final String source; // 'via QR scan', 'via Voice', 'via Manual'
+  final String source; // 'via qr_scan', 'via Voice', 'via Manual'
   final String date; // 'Sept 15'
   final String status; // 'New', 'Contacted', 'Qualified', 'Lost'
   final VoidCallback? onCallTap;
@@ -278,3 +278,5 @@ class LeadListTile extends StatelessWidget {
     );
   }
 }
+
+

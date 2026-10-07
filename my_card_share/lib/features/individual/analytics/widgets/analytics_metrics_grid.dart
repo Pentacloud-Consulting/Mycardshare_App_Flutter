@@ -39,7 +39,7 @@ class AnalyticsMetricsGrid extends StatelessWidget {
                     iconBg: const Color(0xFFF3E8FF),
                     iconColor: const Color(0xFF9333EA),
                     value: overviewData.qrScansFormatted,
-                    label: "QR Scans",
+                    label: "qr_scans",
                     badgeText: overviewData.scansTrend,
                   ),
                 ),
@@ -168,3 +168,5 @@ class AnalyticsMetricsGrid extends StatelessWidget {
     );
   }
 }
+
+

@@ -249,3 +249,5 @@ class _AnalyticsDailyChartState extends State<AnalyticsDailyChart> {
     );
   }
 }
+
+

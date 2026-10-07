@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../backend/individual/profile/individual_profile_store.dart';
-import '../../../backend/individual/multiple store/individual_multi_store.dart';
+import '../../../backend/individual/multiple_store/individual_multi_store.dart';
 import 'widgets/settings_account_section.dart';
 import 'widgets/settings_logout_section.dart';
 import 'widgets/settings_preferences_section.dart';
@@ -93,3 +93,5 @@ class _IndividualSettingsScreenState extends State<IndividualSettingsScreen> {
     );
   }
 }
+
+

@@ -6,9 +6,7 @@ import '../../../models/user_model.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../backend/individual/sign/individual_auth_service.dart';
 import '../../../backend/enterprise/sign/enterprise_auth_service.dart';
-import '../../../backend/enterprise/sign/user_sign_up_store.dart';
 import '../login/login_screen.dart'; // import GoogleLogoWidget
-import '../../../backend/sign/google_sign.dart';
 import '../back/smart_back_handler.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
@@ -91,7 +89,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           role: roleStr,
         );
         ref.read(authProvider.notifier).login(user);
-        if (mounted) context.go('/enterprise-onboarding');
+        if (mounted) {
+          if (result.onboardingCompleted) {
+            context.go('/enterprise/dashboard');
+          } else {
+            context.go('/enterprise-onboarding');
+          }
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -157,7 +161,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           role: roleStr,
         );
         ref.read(authProvider.notifier).login(user);
-        context.go('/enterprise-onboarding');
+        // Returning Google users who finished onboarding go to dashboard directly
+        if (result.onboardingCompleted) {
+          context.go('/enterprise/dashboard');
+        } else {
+          context.go('/enterprise-onboarding');
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -738,3 +747,5 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     );
   }
 }
+
+

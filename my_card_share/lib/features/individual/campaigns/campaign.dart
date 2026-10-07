@@ -11,3 +11,5 @@ class IndividualCampaignScreen extends StatelessWidget {
     );
   }
 }
+
+

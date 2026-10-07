@@ -170,3 +170,5 @@ class QRBottomSheet extends StatelessWidget {
     );
   }
 }
+
+

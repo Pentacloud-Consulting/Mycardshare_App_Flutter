@@ -488,3 +488,5 @@ class _SplashLoadingDotState extends State<_SplashLoadingDot>
 
 /// Typedef alias for backwards compatibility
 typedef SplashAnimation = SplashAnimationScreen;
+
+

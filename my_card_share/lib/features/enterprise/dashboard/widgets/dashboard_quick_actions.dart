@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../backend/enterprise/invite_employee/invite.dart';
 
 class DashboardQuickActions extends StatelessWidget {
   const DashboardQuickActions({super.key});
@@ -28,7 +29,7 @@ class DashboardQuickActions extends StatelessWidget {
                 bgColor: const Color(0xFFEFF4FF),
                 borderColor: const Color(0xFFDBEAFE),
                 iconColor: const Color(0xFF0052FF),
-                onTap: () => context.go('/enterprise-onboarding'),
+                onTap: () => showEnterpriseInviteModal(context),
               ),
               const SizedBox(width: 10),
               _buildActionChip(
@@ -90,3 +91,5 @@ class DashboardQuickActions extends StatelessWidget {
     );
   }
 }
+
+

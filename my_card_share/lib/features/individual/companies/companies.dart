@@ -9,3 +9,5 @@ class IndividualCompaniesScreen extends StatelessWidget {
     return const EmployeeCompaniesScreen();
   }
 }
+
+

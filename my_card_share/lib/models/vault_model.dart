@@ -24,3 +24,5 @@ class VaultModel {
         'savedCards': savedCards.map((c) => c.toJson()).toList(),
       };
 }
+
+

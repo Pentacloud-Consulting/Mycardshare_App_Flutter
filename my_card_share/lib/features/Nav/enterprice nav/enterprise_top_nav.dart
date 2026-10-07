@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../backend/enterprise/home backend/company.dart';
+import '../../../backend/enterprise/home_backend/company.dart';
 
 class EnterpriseTopNav extends StatelessWidget implements PreferredSizeWidget {
   const EnterpriseTopNav({super.key});
@@ -27,8 +27,9 @@ class EnterpriseTopNav extends StatelessWidget implements PreferredSizeWidget {
     final isConnectors = currentPath.startsWith('/enterprise/connectors');
     final isSettings = currentPath.startsWith('/enterprise/settings');
     final isNotifications = currentPath.startsWith('/enterprise/notifications');
+    final isProfileView = currentPath.startsWith('/enterprise/profile-view');
     final isBrandProfile = currentPath.startsWith('/enterprise/brand-profile');
-    final isProfile = currentPath.startsWith('/enterprise/profile');
+    final isProfile = currentPath.startsWith('/enterprise/profile') && !isProfileView;
 
     return Container(
       height: preferredSize.height + MediaQuery.of(context).padding.top,
@@ -100,11 +101,13 @@ class EnterpriseTopNav extends StatelessWidget implements PreferredSizeWidget {
                                         ? "Settings"
                                         : isNotifications
                                             ? "Notifications"
-                                            : isBrandProfile
-                                                ? "Brand Profile"
-                                                : isProfile
-                                                    ? "Brand Profile & Hub"
-                                                    : "Enterprise Admin",
+                                            : isProfileView
+                                                ? "Enterprise Profile View"
+                                                : isBrandProfile
+                                                    ? "Brand Profile"
+                                                    : isProfile
+                                                        ? "Brand Profile & Hub"
+                                                        : "Enterprise Admin",
                 style: const TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
@@ -159,34 +162,6 @@ class EnterpriseTopNav extends StatelessWidget implements PreferredSizeWidget {
                         fontWeight: FontWeight.w800,
                         color: Color(0xFF0052FF),
                       ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ] else if (isLeads) ...[
-                GestureDetector(
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text("Exporting leads CSV report..."),
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
-                    ),
-                    child: const Icon(
-                      Icons.ios_share_rounded,
-                      color: Color(0xFF0052FF),
-                      size: 18,
                     ),
                   ),
                 ),
@@ -266,3 +241,5 @@ class EnterpriseTopNav extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 }
+
+

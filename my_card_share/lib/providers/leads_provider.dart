@@ -5,3 +5,5 @@ import '../services/leads_service.dart';
 final leadsServiceProvider = Provider<LeadsService>((ref) => LeadsService());
 
 final leadsListProvider = StateProvider<List<LeadModel>>((ref) => []);
+
+

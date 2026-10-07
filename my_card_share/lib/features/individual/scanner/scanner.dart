@@ -9,3 +9,5 @@ class IndividualScannerScreen extends StatelessWidget {
     return const ScannerScreen();
   }
 }
+
+

@@ -96,3 +96,5 @@ class AppTheme {
 
   static ThemeData get lightTheme => light;
 }
+
+

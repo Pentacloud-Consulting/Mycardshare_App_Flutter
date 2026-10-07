@@ -9,3 +9,5 @@ class IndividualWorkforceScreen extends StatelessWidget {
     return const EmployeeWorkforceScreen();
   }
 }
+
+

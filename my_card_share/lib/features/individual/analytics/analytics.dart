@@ -9,3 +9,5 @@ class IndividualAnalyticsScreen extends StatelessWidget {
     return const AnalyticsScreen();
   }
 }
+
+

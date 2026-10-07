@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../individual/profile/individual_profile_store.dart';
-import '../individual/multiple store/individual_multi_store.dart';
+import '../individual/multiple_store/individual_multi_store.dart';
 import '../enterprise/profile/enterprise_profile_store.dart';
 import '../../models/user_model.dart';
 
@@ -136,3 +136,5 @@ class AppViewAuthGate {
     }
   }
 }
+
+

@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../../../models/user_model.dart';
-import '../multiple store/individual_multi_store.dart';
+import '../multiple_store/individual_multi_store.dart';
 import 'user_sign_up_store.dart';
 import '../../sign/google_login.dart';
 
@@ -136,3 +136,5 @@ class LoginIdentity {
     );
   }
 }
+
+

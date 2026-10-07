@@ -147,3 +147,5 @@ class CompanyDetailSubscriptionCard extends StatelessWidget {
     );
   }
 }
+
+

@@ -127,16 +127,16 @@ class RouterNotifier extends ChangeNotifier {
 
     // If logged in, redirect away from auth paths (except enterprise onboarding, individual form & registration pending)
     if (loggedIn && authPaths.contains(path)) {
-      if (path == '/enterprise-onboarding' || path == '/registration-pending' || path == '/individual/form') {
-        return null; // allow viewing onboarding wizard & pending screens
+      if (path == '/registration-pending') {
+        return null; // allow viewing pending screen
       }
-      if (path == '/signup') {
-        if (role == 'enterprise') {
-          return '/enterprise-onboarding';
-        }
-        if (role == 'individual') {
-          return '/individual/form';
-        }
+      // Only allow enterprise onboarding for enterprise users who haven't finished it yet.
+      // (The screen itself handles the completed case; the router just guards role mismatches.)
+      if (path == '/enterprise-onboarding' && (role == 'enterprise' || role == 'employee')) {
+        return null;
+      }
+      if (path == '/individual/form' && role == 'individual') {
+        return null; // allow individual onboarding form
       }
       if (role == 'master-admin') {
         return '/master-admin/dashboard';
@@ -348,6 +348,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             builder: (c, s) => const EnterpriseBrandProfileScreen(),
           ),
           GoRoute(
+            path: '/enterprise/profile-view',
+            builder: (c, s) => const EnterpriseProfileViewScreen(),
+          ),
+          GoRoute(
             path: '/enterprise/notifications',
             builder: (c, s) => const EnterpriseNotificationsScreen(),
           ),
@@ -417,3 +421,5 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+

@@ -506,3 +506,5 @@ class _RegistrationPendingScreenState extends State<RegistrationPendingScreen>
     );
   }
 }
+
+

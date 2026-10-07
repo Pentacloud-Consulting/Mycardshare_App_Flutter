@@ -158,3 +158,5 @@ class IndividualGenerateQR extends StatelessWidget {
     );
   }
 }
+
+

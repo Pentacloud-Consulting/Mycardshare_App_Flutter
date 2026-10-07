@@ -9,3 +9,5 @@ class CameraScanScreen extends StatelessWidget {
     return const CameraScanModal();
   }
 }
+
+

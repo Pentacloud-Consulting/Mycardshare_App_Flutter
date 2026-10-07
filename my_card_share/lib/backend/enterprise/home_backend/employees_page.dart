@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../profile/enterprise_profile_store.dart';
 import '../lock_banner/lock_banner.dart';
-import '../multiple store/enterprise_multi_store.dart';
+import '../multiple_store/enterprise_multi_store.dart';
 
 /// Data model representing an Enterprise Employee.
 class EnterpriseEmployeeModel {
@@ -125,7 +125,7 @@ class EnterpriseEmployeesService {
   ]) {
     final targetUid = uid ?? currentUid;
     if (targetUid == null || targetUid.isEmpty) {
-      return Stream.value(_sampleEmployees());
+      return Stream.value(const []);
     }
 
     return _firestore
@@ -133,16 +133,40 @@ class EnterpriseEmployeesService {
         .doc(targetUid)
         .collection('employees')
         .snapshots()
-        .map((snapshot) {
-      if (snapshot.docs.isEmpty) {
-        // Seed initial employees for this enterprise in background if doc exists
-        _seedEmployeesIfEmpty(targetUid);
-        return _sampleEmployees();
-      }
-
-      var list = snapshot.docs
+        .asyncMap((snapshot) async {
+      List<EnterpriseEmployeeModel> list = snapshot.docs
           .map((doc) => EnterpriseEmployeeModel.fromFirestore(doc.id, doc.data()))
           .toList();
+
+      // If subcollection is empty, check enterprises/{uid} for invitedEmails array
+      if (list.isEmpty) {
+        try {
+          final entDoc = await _firestore.collection('enterprises').doc(targetUid).get();
+          if (entDoc.exists && entDoc.data() != null) {
+            final data = entDoc.data()!;
+            final invitedEmails = (data['invitedEmails'] as List<dynamic>?) ?? [];
+            for (int i = 0; i < invitedEmails.length; i++) {
+              final em = invitedEmails[i].toString().trim();
+              if (em.isNotEmpty) {
+                final prefix = em.split('@').first;
+                final name = prefix.isNotEmpty
+                    ? prefix[0].toUpperCase() + prefix.substring(1)
+                    : 'Invited Member';
+                list.add(EnterpriseEmployeeModel(
+                  id: 'invited_$i',
+                  name: name,
+                  email: em,
+                  roleTitle: 'Team Member',
+                  role: 'Employee',
+                  status: 'Pending Invite',
+                ));
+              }
+            }
+          }
+        } catch (e) {
+          debugPrint('[EnterpriseEmployeesService] Error loading invitedEmails: $e');
+        }
+      }
 
       // Apply Search Filter
       if (searchQuery.trim().isNotEmpty) {
@@ -161,12 +185,14 @@ class EnterpriseEmployeesService {
         list = list
             .where((emp) => emp.role.toLowerCase() == 'employee')
             .toList();
-      } else if (selectedFilter == 'Pending') {
+      } else if (selectedFilter == 'Pending' || selectedFilter == 'Pending Invite') {
         list = list
             .where((emp) =>
                 emp.status.toLowerCase() == 'pending' ||
                 emp.status.toLowerCase() == 'pending invite')
             .toList();
+      } else if (selectedFilter == 'Active') {
+        list = list.where((emp) => emp.status.toLowerCase() == 'active').toList();
       }
 
       return list;
@@ -178,59 +204,15 @@ class EnterpriseEmployeesService {
     final targetUid = uid ?? currentUid;
     if (targetUid == null || targetUid.isEmpty) {
       return Stream.value(const EmployeeStats(
-        totalCount: 34,
-        activeCount: 31,
-        pendingCount: 3,
+        totalCount: 0,
+        activeCount: 0,
+        pendingCount: 0,
       ));
     }
 
-    return _firestore
-        .collection('enterprises')
-        .doc(targetUid)
-        .collection('employees')
-        .snapshots()
-        .map((snapshot) {
-      if (snapshot.docs.isEmpty) {
-        return const EmployeeStats(
-          totalCount: 34,
-          activeCount: 31,
-          pendingCount: 3,
-        );
-      }
-
-      final employees = snapshot.docs
-          .map((doc) => EnterpriseEmployeeModel.fromFirestore(doc.id, doc.data()))
-          .toList();
-
+    return streamEmployees(targetUid, 'All', '').map((employees) {
       return EmployeeStats.fromList(employees);
     });
-  }
-
-  /// Seed initial employees for an enterprise if empty.
-  Future<void> _seedEmployeesIfEmpty(String uid) async {
-    try {
-      final colRef =
-          _firestore.collection('enterprises').doc(uid).collection('employees');
-      final snap = await colRef.limit(1).get();
-      if (snap.docs.isNotEmpty) return;
-
-      final samples = _sampleEmployees();
-      for (final emp in samples) {
-        await colRef.doc(emp.id).set(emp.toFirestore(), SetOptions(merge: true));
-
-        // Save in EnterpriseMultiStore
-        EnterpriseMultiStore.instance.saveUser(
-          companyName: EnterpriseProfileStore.instance.currentProfile?.companyName ??
-              'My Enterprise',
-          email: emp.email,
-          password: 'Password123!',
-          role: emp.role,
-        );
-      }
-      debugPrint('[EnterpriseEmployeesService] Seeded default employees for $uid');
-    } catch (e) {
-      debugPrint('[EnterpriseEmployeesService] Seeding error: $e');
-    }
   }
 
   /// Add a new employee to the enterprise.
@@ -346,61 +328,6 @@ class EnterpriseEmployeesService {
       return false;
     }
   }
-
-  List<EnterpriseEmployeeModel> _sampleEmployees() {
-    return [
-      EnterpriseEmployeeModel(
-        id: 'emp_1',
-        name: 'Alex Stanton',
-        email: 'alex.stanton@acme.com',
-        roleTitle: 'Chief Operations Officer',
-        role: 'Admin',
-        status: 'Active',
-        views: 210,
-        leads: 18,
-      ),
-      EnterpriseEmployeeModel(
-        id: 'emp_2',
-        name: 'Sarah Jenkins',
-        email: 'sarah.jenkins@acme.com',
-        roleTitle: 'Senior Real Estate Agent',
-        role: 'Admin',
-        status: 'Active',
-        views: 142,
-        leads: 12,
-      ),
-      EnterpriseEmployeeModel(
-        id: 'emp_3',
-        name: 'David Miller',
-        email: 'david.miller@acme.com',
-        roleTitle: 'Property Manager',
-        role: 'Employee',
-        status: 'Active',
-        views: 118,
-        leads: 9,
-      ),
-      EnterpriseEmployeeModel(
-        id: 'emp_4',
-        name: 'Emily Turner',
-        email: 'emily.turner@acme.com',
-        roleTitle: 'Commercial Specialist',
-        role: 'Employee',
-        status: 'Active',
-        views: 96,
-        leads: 7,
-      ),
-      EnterpriseEmployeeModel(
-        id: 'emp_5',
-        name: 'Michael Ross',
-        email: 'michael.ross@acme.com',
-        roleTitle: 'Broker Associate',
-        role: 'Employee',
-        status: 'Pending Invite',
-        views: 0,
-        leads: 0,
-      ),
-    ];
-  }
 }
 
 /// Real UI Widget corresponding to Image 4 (Dynamic Filter Pills: Total, Active, Pending).
@@ -423,9 +350,9 @@ class EnterpriseStatsPillsWidget extends StatelessWidget {
       builder: (context, snapshot) {
         final stats = snapshot.data ??
             const EmployeeStats(
-              totalCount: 34,
-              activeCount: 31,
-              pendingCount: 3,
+              totalCount: 0,
+              activeCount: 0,
+              pendingCount: 0,
             );
 
         return SingleChildScrollView(
@@ -918,3 +845,5 @@ class EnterpriseEmployeeListBackend extends StatelessWidget {
     );
   }
 }
+
+

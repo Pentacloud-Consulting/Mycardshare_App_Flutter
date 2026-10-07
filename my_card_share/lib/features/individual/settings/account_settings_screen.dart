@@ -9,3 +9,5 @@ class AccountSettingsScreen extends StatelessWidget {
     return const IndividualSettingsScreen();
   }
 }
+
+

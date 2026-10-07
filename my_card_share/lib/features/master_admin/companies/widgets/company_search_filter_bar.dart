@@ -203,3 +203,5 @@ class _CompanySearchFilterBarState extends State<CompanySearchFilterBar> {
     );
   }
 }
+
+

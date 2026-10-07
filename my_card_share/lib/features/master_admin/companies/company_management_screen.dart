@@ -91,3 +91,5 @@ class _MasterAdminCompanyScreenState extends State<MasterAdminCompanyScreen> {
     );
   }
 }
+
+

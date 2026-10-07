@@ -677,7 +677,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     children: [
                       Expanded(child: _buildMetricMiniCard(Icons.visibility_outlined, "Views", "12,847", "↑ 28%")),
                       const SizedBox(width: 6),
-                      Expanded(child: _buildMetricMiniCard(Icons.qr_code_2, "QR Scans", "3,214", "↑ 42%")),
+                      Expanded(child: _buildMetricMiniCard(Icons.qr_code_2, "qr_scans", "3,214", "↑ 42%")),
                       const SizedBox(width: 6),
                       Expanded(child: _buildMetricMiniCard(Icons.people_outline, "Leads", "641", "↑ 36%")),
                       const SizedBox(width: 6),
@@ -1582,3 +1582,5 @@ class _OnboardingSampleFooterActions extends StatelessWidget {
     );
   }
 }
+
+

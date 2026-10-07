@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../providers/auth_provider.dart';
 import 'profile_menu_list.dart';
 import '../../backend/individual/profile/individual_profile_store.dart';
-import '../../backend/individual/multiple store/individual_multi_store.dart';
+import '../../backend/individual/multiple_store/individual_multi_store.dart';
 
 class PortalTopNav extends ConsumerWidget implements PreferredSizeWidget {
   final String userName;
@@ -360,3 +360,5 @@ class PortalTopNav extends ConsumerWidget implements PreferredSizeWidget {
     );
   }
 }
+
+

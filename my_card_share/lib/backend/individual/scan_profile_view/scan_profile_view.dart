@@ -162,3 +162,5 @@ class ScanProfileViewService extends ChangeNotifier {
     );
   }
 }
+
+

@@ -7,9 +7,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:my_card_share/core/theme/app_theme.dart';
 import 'package:my_card_share/backend/individual/api_service.dart';
 import 'package:my_card_share/backend/individual/profile/individual_profile_store.dart';
-import 'package:my_card_share/backend/individual/multiple store/individual_multi_store.dart';
-import 'package:my_card_share/backend/individual/qr scan/slug_backend_service.dart';
-import 'package:my_card_share/backend/individual/qr scan/slug_validator.dart';
+import 'package:my_card_share/backend/individual/multiple_store/individual_multi_store.dart';
+import 'package:my_card_share/backend/individual/qr_scan/slug_backend_service.dart';
+import 'package:my_card_share/backend/individual/qr_scan/slug_validator.dart';
 import 'package:my_card_share/features/auth/back/smart_back_handler.dart';
 import 'package:my_card_share/features/auth/font style/font_style.dart';
 
@@ -489,7 +489,7 @@ class _IndividualOnboardingFormScreenState
       networkingStatus: _networkingStatus,
     );
 
-    // ── 4. Ensure card is Published in MongoDB so web QR scan works ───────────
+    // ── 4. Ensure card is Published in MongoDB so web qr_scan works ───────────
     // (Non-blocking — runs in background after navigation)
     SlugBackendService.instance.ensureSlugSynced(userSlug, {
       'fullName': _fullName,
@@ -1560,3 +1560,5 @@ class _IndividualOnboardingFormScreenState
     );
   }
 }
+
+

@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../../../models/user_model.dart';
-import '../../individual/multiple store/individual_multi_store.dart';
-import '../multiple store/enterprise_multi_store.dart';
+import '../../individual/multiple_store/individual_multi_store.dart';
+import '../multiple_store/enterprise_multi_store.dart';
 import 'user_sign_up_store.dart';
 import '../../sign/google_login.dart';
 
@@ -138,3 +138,5 @@ class EnterpriseLoginIdentity {
     );
   }
 }
+
+

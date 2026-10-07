@@ -9,3 +9,5 @@ class IndividualNotificationScreen extends StatelessWidget {
     return const NotificationScreen();
   }
 }
+
+

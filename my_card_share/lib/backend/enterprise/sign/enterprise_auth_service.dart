@@ -23,6 +23,8 @@ class EnterpriseAuthResult {
   final User? firebaseUser;
   final UserModel? userModel;
   final EnterpriseProfileData? profileData;
+  /// True when the enterprise user has already completed the onboarding wizard.
+  final bool onboardingCompleted;
 
   const EnterpriseAuthResult({
     required this.isSuccess,
@@ -30,6 +32,7 @@ class EnterpriseAuthResult {
     this.firebaseUser,
     this.userModel,
     this.profileData,
+    this.onboardingCompleted = false,
   });
 
   factory EnterpriseAuthResult.error(String message) =>
@@ -231,16 +234,33 @@ class EnterpriseAuthService {
   // ─── Post-Login Sync ──────────────────────────────────────────────────────
 
   /// Loads enterprise profile from Firestore after any successful auth.
+  /// Also checks whether the onboarding wizard was already completed.
   Future<EnterpriseAuthResult> _postLoginSync(User user) async {
     // Determine company name from Firestore or display name
     String companyName = user.displayName ?? 'My Company';
+    bool onboardingCompleted = false;
+
     try {
-      final doc =
-          await _firestore.collection('users').doc(user.uid).get();
-      if (doc.exists && doc.data() != null) {
-        companyName = doc.data()!['companyName'] ??
-            doc.data()!['fullName'] ??
-            companyName;
+      final userDoc = await _firestore.collection('users').doc(user.uid).get();
+      if (userDoc.exists && userDoc.data() != null) {
+        final uData = userDoc.data()!;
+        companyName = uData['companyName'] ?? uData['fullName'] ?? companyName;
+        if (uData['onboardingCompleted'] == true) {
+          onboardingCompleted = true;
+        }
+      }
+    } catch (_) {}
+
+    // Check enterprises collection for onboardingCompleted flag or completed profile
+    try {
+      final enterpriseDoc =
+          await _firestore.collection('enterprises').doc(user.uid).get();
+      if (enterpriseDoc.exists && enterpriseDoc.data() != null) {
+        final eData = enterpriseDoc.data()!;
+        if (eData['onboardingCompleted'] == true ||
+            (eData['companyName'] != null && (eData['companyName'] as String).isNotEmpty && eData['address'] != null)) {
+          onboardingCompleted = true;
+        }
       }
     } catch (_) {}
 
@@ -259,12 +279,16 @@ class EnterpriseAuthService {
       role: 'enterprise',
     );
 
+    debugPrint(
+        '[EnterpriseAuthService] onboardingCompleted=$onboardingCompleted for ${user.uid}');
+
     return EnterpriseAuthResult(
       isSuccess: true,
       message: 'Enterprise login successful!',
       firebaseUser: user,
       userModel: userModel,
       profileData: profile,
+      onboardingCompleted: onboardingCompleted,
     );
   }
 
@@ -326,4 +350,6 @@ class EnterpriseAuthService {
     }
   }
 }
+
+
 

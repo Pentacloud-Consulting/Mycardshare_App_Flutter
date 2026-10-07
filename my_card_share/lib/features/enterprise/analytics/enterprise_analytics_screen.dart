@@ -61,13 +61,8 @@ class _EnterpriseAnalyticsScreenState extends State<EnterpriseAnalyticsScreen> {
 
                   const SizedBox(height: 16),
 
-                  // 2. 2x2 Grid of Stat Cards (Total Views, QR Scans, Leads Captured, Avg Conv. Rate)
-                  const AnalyticsStatsGrid(
-                    totalViews: "8,420",
-                    qrScans: "2,140",
-                    leadsCaptured: "312",
-                    avgConvRate: "5.2%",
-                  ),
+                  // 2. Real 2x2 Grid of Stat Cards (Total Views, Team Members, Leads Captured, Avg Conv. Rate)
+                  const AnalyticsStatsGrid(),
 
                   const SizedBox(height: 16),
 
@@ -76,7 +71,7 @@ class _EnterpriseAnalyticsScreenState extends State<EnterpriseAnalyticsScreen> {
 
                   const SizedBox(height: 16),
 
-                  // 4. Employee Leaderboard Card with Relative Performance Bars
+                  // 4. Real Employee Leaderboard Card
                   const AnalyticsEmployeeLeaderboard(),
 
                   const SizedBox(height: 16),
@@ -92,3 +87,5 @@ class _EnterpriseAnalyticsScreenState extends State<EnterpriseAnalyticsScreen> {
     );
   }
 }
+
+

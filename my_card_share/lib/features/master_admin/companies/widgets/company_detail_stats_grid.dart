@@ -130,3 +130,5 @@ class CompanyDetailStatsGrid extends StatelessWidget {
     );
   }
 }
+
+

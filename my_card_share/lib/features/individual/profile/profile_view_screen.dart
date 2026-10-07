@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../backend/individual/profile/individual_profile_store.dart';
-import '../../../backend/individual/multiple store/individual_multi_store.dart';
+import '../../../backend/individual/multiple_store/individual_multi_store.dart';
 import '../../../backend/individual/previews/publish_unpublish.dart';
 import 'profile_editor_screen.dart';
 import 'widgets/profile_live_card_preview.dart';
@@ -509,3 +509,5 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
     );
   }
 }
+
+

@@ -38,3 +38,5 @@ class VoiceService {
     ref.read(vaultNotifierProvider.notifier).addContact(contact);
   }
 }
+
+

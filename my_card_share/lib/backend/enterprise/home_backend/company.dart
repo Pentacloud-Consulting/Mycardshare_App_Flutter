@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../profile/enterprise_profile_store.dart';
-import '../multiple store/enterprise_multi_store.dart';
+import '../multiple_store/enterprise_multi_store.dart';
 
 /// Data model representing company profile details for header components.
 class EnterpriseCompanyData {
@@ -204,3 +204,5 @@ class EnterpriseCompanyHeaderWidget extends StatelessWidget {
     );
   }
 }
+
+

@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_style_widgets.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../models/user_model.dart';
 import '../../../backend/individual/sign/individual_auth_service.dart';
 import '../../../backend/enterprise/sign/enterprise_auth_service.dart';
+import '../../../backend/enterprise/sign/category_mismatch_dialog.dart';
 import '../../../notifications/individual/login_popup.dart';
 import '../../../notifications/enterprise/login_popup.dart';
 import '../back/smart_back_handler.dart';
@@ -31,6 +34,46 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<String?> _getRoleByEmail(String email) async {
+    final cleanEmail = email.trim().toLowerCase();
+    try {
+      final userSnap = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: cleanEmail)
+          .limit(1)
+          .get();
+      if (userSnap.docs.isNotEmpty) {
+        final role = (userSnap.docs.first.data()['role'] as String?)?.toLowerCase().trim();
+        if (role != null && role.isNotEmpty) return role;
+      }
+
+      final entSnap = await FirebaseFirestore.instance
+          .collection('enterprises')
+          .where('email', isEqualTo: cleanEmail)
+          .limit(1)
+          .get();
+      if (entSnap.docs.isNotEmpty) return 'enterprise';
+    } catch (e) {
+      debugPrint('[LoginScreen] Error fetching role by email: $e');
+    }
+    return null;
+  }
+
+  Future<String?> _fetchRegisteredUserRole(String uid) async {
+    try {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      if (userDoc.exists && userDoc.data() != null) {
+        final role = (userDoc.data()!['role'] as String?)?.toLowerCase().trim();
+        if (role != null && role.isNotEmpty) return role;
+      }
+      final entDoc = await FirebaseFirestore.instance.collection('enterprises').doc(uid).get();
+      if (entDoc.exists) return 'enterprise';
+    } catch (e) {
+      debugPrint('[LoginScreen] Error checking user role: $e');
+    }
+    return null;
   }
 
   void _onLogin() async {
@@ -61,6 +104,61 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _isLoading = true;
     });
 
+    // ── PRE-CHECK: Verify registered account role by email BEFORE signing into Firebase ──
+    final preCheckRole = await _getRoleByEmail(email);
+
+    if (_selectedTab == 1 && preCheckRole == 'individual') {
+      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        EnterpriseCategoryMismatchDialog.show(
+          context,
+          registeredCategory: 'Individual',
+          currentTabCategory: 'Enterprise',
+          onSwitchTab: () => setState(() => _selectedTab = 0),
+        );
+      }
+      return;
+    }
+
+    if (_selectedTab == 0 && preCheckRole == 'enterprise') {
+      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        EnterpriseCategoryMismatchDialog.show(
+          context,
+          registeredCategory: 'Enterprise',
+          currentTabCategory: 'Individual',
+          onSwitchTab: () => setState(() => _selectedTab = 1),
+        );
+      }
+      return;
+    }
+
+    if (_selectedTab == 2) {
+      if (preCheckRole == 'individual') {
+        if (mounted) setState(() => _isLoading = false);
+        if (mounted) {
+          EnterpriseCategoryMismatchDialog.show(
+            context,
+            registeredCategory: 'Individual',
+            currentTabCategory: 'Employee',
+            onSwitchTab: () => setState(() => _selectedTab = 0),
+          );
+        }
+        return;
+      } else if (preCheckRole == 'enterprise') {
+        if (mounted) setState(() => _isLoading = false);
+        if (mounted) {
+          EnterpriseCategoryMismatchDialog.show(
+            context,
+            registeredCategory: 'Enterprise',
+            currentTabCategory: 'Employee',
+            onSwitchTab: () => setState(() => _selectedTab = 1),
+          );
+        }
+        return;
+      }
+    }
+
     if (_selectedTab == 1) {
       // ── Enterprise: REAL Firebase Auth email/password login ──
       final result = await EnterpriseAuthService.instance.login(
@@ -73,6 +171,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       if (result.isSuccess && result.firebaseUser != null) {
         final fbUser = result.firebaseUser!;
+
+        // Role verification check
+        final registeredRole = await _fetchRegisteredUserRole(fbUser.uid);
+        if (registeredRole == 'individual' || (registeredRole != null && registeredRole != 'enterprise' && registeredRole != 'employee')) {
+          await FirebaseAuth.instance.signOut();
+          ref.read(authProvider.notifier).logout();
+          if (mounted) {
+            EnterpriseCategoryMismatchDialog.show(
+              context,
+              registeredCategory: 'Individual',
+              currentTabCategory: 'Enterprise',
+              onSwitchTab: () => setState(() => _selectedTab = 0),
+            );
+          }
+          return;
+        }
+
         final user = UserModel(
           id: fbUser.uid,
           name: result.profileData?.companyName ?? fbUser.displayName ?? email,
@@ -80,7 +195,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           role: roleStr,
         );
         ref.read(authProvider.notifier).login(user);
-        if (mounted) context.go('/enterprise-onboarding');
+        if (mounted) {
+          if (result.onboardingCompleted) {
+            context.go('/enterprise/dashboard');
+          } else {
+            context.go('/enterprise-onboarding');
+          }
+        }
       } else {
         final msg = result.message;
         if (msg.contains('No account') || msg.contains('not valid') || msg.contains('not found')) {
@@ -140,6 +261,49 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     if (result.firebaseUser != null) {
       final fbUser = result.firebaseUser!;
+
+      // Role verification check
+      final registeredRole = await _fetchRegisteredUserRole(fbUser.uid);
+      if (_selectedTab == 0 && registeredRole == 'enterprise') {
+        await FirebaseAuth.instance.signOut();
+        ref.read(authProvider.notifier).logout();
+        if (mounted) {
+          EnterpriseCategoryMismatchDialog.show(
+            context,
+            registeredCategory: 'Enterprise',
+            currentTabCategory: 'Individual',
+            onSwitchTab: () => setState(() => _selectedTab = 1),
+          );
+        }
+        return;
+      } else if (_selectedTab == 2) {
+        if (registeredRole == 'individual') {
+          await FirebaseAuth.instance.signOut();
+          ref.read(authProvider.notifier).logout();
+          if (mounted) {
+            EnterpriseCategoryMismatchDialog.show(
+              context,
+              registeredCategory: 'Individual',
+              currentTabCategory: 'Employee',
+              onSwitchTab: () => setState(() => _selectedTab = 0),
+            );
+          }
+          return;
+        } else if (registeredRole == 'enterprise') {
+          await FirebaseAuth.instance.signOut();
+          ref.read(authProvider.notifier).logout();
+          if (mounted) {
+            EnterpriseCategoryMismatchDialog.show(
+              context,
+              registeredCategory: 'Enterprise',
+              currentTabCategory: 'Employee',
+              onSwitchTab: () => setState(() => _selectedTab = 1),
+            );
+          }
+          return;
+        }
+      }
+
       final user = UserModel(
         id: fbUser.uid,
         name: fbUser.displayName ?? email,
@@ -166,6 +330,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (!mounted) return;
       if (result.isSuccess && result.firebaseUser != null) {
         final fbUser = result.firebaseUser!;
+
+        // Role verification check for Google Sign-In
+        final registeredRole = await _fetchRegisteredUserRole(fbUser.uid);
+        if (registeredRole == 'individual' || (registeredRole != null && registeredRole != 'enterprise' && registeredRole != 'employee')) {
+          await FirebaseAuth.instance.signOut();
+          ref.read(authProvider.notifier).logout();
+          if (mounted) {
+            EnterpriseCategoryMismatchDialog.show(
+              context,
+              registeredCategory: 'Individual',
+              currentTabCategory: 'Enterprise',
+              onSwitchTab: () => setState(() => _selectedTab = 0),
+            );
+          }
+          return;
+        }
+
         final user = UserModel(
           id: fbUser.uid,
           name: result.profileData?.companyName ?? fbUser.displayName ?? fbUser.email ?? 'Enterprise',
@@ -173,7 +354,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           role: roleStr,
         );
         ref.read(authProvider.notifier).login(user);
-        context.go('/enterprise-onboarding');
+        if (mounted) {
+          if (result.onboardingCompleted) {
+            context.go('/enterprise/dashboard');
+          } else {
+            context.go('/enterprise-onboarding');
+          }
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(result.message),
@@ -190,6 +377,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     if (result.isSuccess && result.firebaseUser != null) {
       final fbUser = result.firebaseUser!;
+
+      // Role verification check for Google Sign-In
+      final registeredRole = await _fetchRegisteredUserRole(fbUser.uid);
+      if (registeredRole == 'enterprise') {
+        await FirebaseAuth.instance.signOut();
+        ref.read(authProvider.notifier).logout();
+        if (mounted) {
+          EnterpriseCategoryMismatchDialog.show(
+            context,
+            registeredCategory: 'Enterprise',
+            currentTabCategory: 'Individual',
+            onSwitchTab: () => setState(() => _selectedTab = 1),
+          );
+        }
+        return;
+      }
+
       final resolvedName = (fbUser.displayName != null && fbUser.displayName!.trim().isNotEmpty)
           ? fbUser.displayName!.trim()
           : (fbUser.email != null && fbUser.email!.isNotEmpty)
@@ -202,7 +406,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         role: roleStr,
       );
       ref.read(authProvider.notifier).login(user);
-      context.go('/portal');
+      if (mounted) context.go('/portal');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(result.message),
@@ -753,3 +957,5 @@ class GoogleLogoPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+
+

@@ -141,3 +141,5 @@ class CompanyDetailHeader extends StatelessWidget {
     );
   }
 }
+
+

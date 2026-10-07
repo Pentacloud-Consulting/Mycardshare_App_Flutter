@@ -237,7 +237,7 @@ class EnterpriseStatsGridBackend extends StatelessWidget {
                     iconColor: const Color(0xFF0052FF),
                     value: "${stats.activeEmployees}",
                     label: "Active Employees",
-                    badgeText: "+${stats.totalEmployees > 0 ? stats.totalEmployees : 3} this month",
+                    badgeText: stats.totalEmployees > 0 ? "+${stats.totalEmployees} this month" : "0 this month",
                     badgeBgColor: const Color(0xFFDCFCE7),
                     badgeTextColor: const Color(0xFF166534),
                   ),
@@ -250,7 +250,7 @@ class EnterpriseStatsGridBackend extends StatelessWidget {
                     iconColor: const Color(0xFF9333EA),
                     value: formattedViews,
                     label: "Total Card Views",
-                    badgeText: "+18%",
+                    badgeText: stats.totalCardViews > 0 ? "+18%" : "0%",
                     badgeBgColor: const Color(0xFFDCFCE7),
                     badgeTextColor: const Color(0xFF166534),
                   ),
@@ -267,7 +267,7 @@ class EnterpriseStatsGridBackend extends StatelessWidget {
                     iconColor: const Color(0xFF10B981),
                     value: "${stats.totalLeads}",
                     label: "Total Leads",
-                    badgeText: "+24%",
+                    badgeText: stats.totalLeads > 0 ? "+24%" : "0",
                     badgeBgColor: const Color(0xFFDCFCE7),
                     badgeTextColor: const Color(0xFF166534),
                   ),
@@ -280,7 +280,7 @@ class EnterpriseStatsGridBackend extends StatelessWidget {
                     iconColor: const Color(0xFFCA8A04),
                     value: stats.convRate,
                     label: "Conv. Rate",
-                    badgeText: "+0.6%",
+                    badgeText: stats.convRate,
                     badgeBgColor: const Color(0xFFDCFCE7),
                     badgeTextColor: const Color(0xFF166534),
                   ),
@@ -386,3 +386,5 @@ class _StatCard extends StatelessWidget {
     );
   }
 }
+
+

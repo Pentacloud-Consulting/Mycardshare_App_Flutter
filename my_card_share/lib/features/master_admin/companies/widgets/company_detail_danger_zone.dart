@@ -160,3 +160,5 @@ class CompanyDetailDangerZone extends StatelessWidget {
     );
   }
 }
+
+

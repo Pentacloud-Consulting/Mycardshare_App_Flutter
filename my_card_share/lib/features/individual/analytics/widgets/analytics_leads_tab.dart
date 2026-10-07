@@ -4,7 +4,7 @@ class AnalyticsLeadsTab extends StatelessWidget {
   const AnalyticsLeadsTab({super.key});
 
   final List<Map<String, String>> _leadsBreakdown = const [
-    {'source': 'QR Scan', 'count': '28', 'conversion': '68%', 'status': 'High Quality'},
+    {'source': 'qr_scan', 'count': '28', 'conversion': '68%', 'status': 'High Quality'},
     {'source': 'Voice Input', 'count': '12', 'conversion': '42%', 'status': 'Medium'},
     {'source': 'Manual Entry', 'count': '6', 'conversion': '25%', 'status': 'Standard'},
   ];
@@ -67,3 +67,5 @@ class AnalyticsLeadsTab extends StatelessWidget {
     );
   }
 }
+
+

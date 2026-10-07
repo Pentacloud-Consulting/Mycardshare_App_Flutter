@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../backend/individual/qr scan/individual_generate_qr.dart';
+import '../../../../backend/individual/qr_scan/individual_generate_qr.dart';
 
 class FloatingQrButton extends StatefulWidget {
   final String name;
@@ -70,3 +70,5 @@ class _FloatingQrButtonState extends State<FloatingQrButton> {
     );
   }
 }
+
+

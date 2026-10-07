@@ -1,20 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../backend/enterprise/lock_banner/custom_color_picker.dart';
+import '../../../models/user_model.dart';
+import '../../../providers/auth_provider.dart';
+import '../../../backend/enterprise/profile/enterprise_profile_store.dart';
+import '../../../backend/app view/app_view_auth_gate.dart';
+import '../../../backend/enterprise/invite_employee/invite_link.dart';
 
-class EnterpriseOnboardingScreen extends StatefulWidget {
+class EnterpriseOnboardingScreen extends ConsumerStatefulWidget {
   const EnterpriseOnboardingScreen({super.key});
 
   @override
-  State<EnterpriseOnboardingScreen> createState() => _EnterpriseOnboardingScreenState();
+  ConsumerState<EnterpriseOnboardingScreen> createState() => _EnterpriseOnboardingScreenState();
 }
 
-class _EnterpriseOnboardingScreenState extends State<EnterpriseOnboardingScreen> {
+class _EnterpriseOnboardingScreenState extends ConsumerState<EnterpriseOnboardingScreen> {
   final TextEditingController _companyNameController = TextEditingController();
   final TextEditingController _emailInputController = TextEditingController();
   final TextEditingController _websiteController = TextEditingController();
@@ -78,14 +84,6 @@ class _EnterpriseOnboardingScreenState extends State<EnterpriseOnboardingScreen>
     "500+ employees",
   ];
 
-  String get _inviteLink {
-    final name = _companyNameController.text.trim();
-    final slug = name.isNotEmpty
-        ? name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '')
-        : 'workspace';
-    return "mycardshare.com/join-workspace?code=${slug.toUpperCase()}-2026";
-  }
-
   final List<String> _invitedEmails = [];
 
   final List<Color> _brandColors = const [
@@ -99,6 +97,52 @@ class _EnterpriseOnboardingScreenState extends State<EnterpriseOnboardingScreen>
 
   Color get _activeBrandColor =>
       _customColor ?? _brandColors[_selectedColorIndex];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExistingProfile();
+  }
+
+  Future<void> _loadExistingProfile() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      final doc = await FirebaseFirestore.instance.collection('enterprises').doc(uid).get();
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+      final data = doc.data() ?? {};
+      final uData = userDoc.data() ?? {};
+
+      final isCompleted = data['onboardingCompleted'] == true ||
+          uData['onboardingCompleted'] == true ||
+          (data['companyName'] != null && data['address'] != null && (data['address'] as String).isNotEmpty);
+
+      if (isCompleted && mounted) {
+        context.go('/enterprise/dashboard');
+        return;
+      }
+
+      if (mounted) {
+        setState(() {
+          if (data['companyName'] != null && (data['companyName'] as String).isNotEmpty) {
+            _companyNameController.text = data['companyName'];
+          }
+          if (data['website'] != null) {
+            _websiteController.text = data['website'];
+          }
+          if (data['address'] != null) {
+            _addressController.text = data['address'];
+          }
+          if (data['employeeLimit'] != null) {
+            _selectedEmployeeLimit = data['employeeLimit'];
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('[Onboarding] Error loading profile: $e');
+    }
+  }
 
   @override
   void dispose() {
@@ -181,13 +225,40 @@ class _EnterpriseOnboardingScreenState extends State<EnterpriseOnboardingScreen>
           }, SetOptions(merge: true));
 
           await FirebaseFirestore.instance.collection('users').doc(uid).set({
+            'role': 'enterprise',
             if (companyName.isNotEmpty) 'companyName': companyName,
+            if (companyName.isNotEmpty) 'fullName': companyName,
             'logoUrl': logoUrl,
             'updatedAt': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
+
+          // Hydrate EnterpriseProfileStore & Auth Gate
+          await EnterpriseProfileStore.instance.loadProfile(
+            uid,
+            user.email ?? '',
+            companyName.isNotEmpty ? companyName : 'Enterprise Workspace',
+          );
+          await AppViewAuthGate.instance.onUserAuthenticated(user, role: 'enterprise');
+
+          // Sync authProvider state so router allows navigation to /enterprise/dashboard
+          final userModel = UserModel(
+            id: uid,
+            name: companyName.isNotEmpty ? companyName : (user.displayName ?? 'Enterprise Workspace'),
+            email: user.email ?? '',
+            role: 'enterprise',
+          );
+          ref.read(authProvider.notifier).login(userModel);
         }
       } catch (e) {
         debugPrint('[EnterpriseOnboarding] Error saving onboarding data: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error completing setup: $e'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
       }
 
       if (mounted) {
@@ -234,44 +305,6 @@ class _EnterpriseOnboardingScreenState extends State<EnterpriseOnboardingScreen>
     setState(() {
       _invitedEmails.removeAt(index);
     });
-  }
-
-  void _copyInviteLink() {
-    Clipboard.setData(ClipboardData(text: "https://$_inviteLink"));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Row(
-          children: [
-            Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-            SizedBox(width: 8),
-            Text("Invite link copied to clipboard!"),
-          ],
-        ),
-        backgroundColor: const Color(0xFF0F172A),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
-  void _shareInviteLink() {
-    Clipboard.setData(ClipboardData(text: "https://$_inviteLink"));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Row(
-          children: [
-            Icon(Icons.share_rounded, color: Colors.white, size: 20),
-            SizedBox(width: 8),
-            Text("Workspace invite link copied to share!"),
-          ],
-        ),
-        backgroundColor: const Color(0xFF0052FF),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        duration: const Duration(seconds: 2),
-      ),
-    );
   }
 
   @override
@@ -899,104 +932,8 @@ class _EnterpriseOnboardingScreenState extends State<EnterpriseOnboardingScreen>
 
         const SizedBox(height: 24),
 
-        // Rounded White Card: Reusable Invite Link Section
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(18.0),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF0F172A).withValues(alpha: 0.04),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "Workspace Invite Link",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Light Gray Pill-Shaped Text Field showing Link + Copy & Share buttons
-              Container(
-                padding: const EdgeInsets.only(left: 12, right: 4, top: 4, bottom: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _inviteLink,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF475569),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-
-                    // Copy Button
-                    GestureDetector(
-                      onTap: _copyInviteLink,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0052FF),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.copy_rounded, color: Colors.white, size: 13),
-                            SizedBox(width: 4),
-                            Text(
-                              "Copy",
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(width: 4),
-
-                    // Share Icon Button
-                    IconButton(
-                      onPressed: _shareInviteLink,
-                      icon: const Icon(
-                        Icons.share_rounded,
-                        color: Color(0xFF0052FF),
-                        size: 20,
-                      ),
-                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                      padding: EdgeInsets.zero,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+        // Rounded White Card: Reusable Unique Invite Link Section
+        const EnterpriseInviteLinkWidget(),
 
         const SizedBox(height: 24),
 
@@ -1580,3 +1517,5 @@ class _EnterpriseOnboardingScreenState extends State<EnterpriseOnboardingScreen>
     );
   }
 }
+
+

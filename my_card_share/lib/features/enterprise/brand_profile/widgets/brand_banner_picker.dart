@@ -6,7 +6,12 @@ import '../../../../backend/enterprise/profile/enterprise_profile_store.dart';
 /// Real BrandBannerPicker — uploads enterprise banner to Firebase Storage,
 /// displays the live uploaded image, and locks it for all employees.
 class BrandBannerPicker extends StatefulWidget {
-  const BrandBannerPicker({super.key});
+  final bool showLockToggle;
+
+  const BrandBannerPicker({
+    super.key,
+    this.showLockToggle = false,
+  });
 
   @override
   State<BrandBannerPicker> createState() => _BrandBannerPickerState();
@@ -323,57 +328,60 @@ class _BrandBannerPickerState extends State<BrandBannerPicker> {
           },
         ),
 
-        const SizedBox(height: 16),
-
-        // ── Lock Toggle Row ──────────────────────────────────────────────
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Expanded(
+        if (widget.showLockToggle) ...[
+          const SizedBox(height: 16),
+          // ── Lock Toggle Row ──────────────────────────────────────────────
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Lock banner for all employees',
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                    ),
+                    Switch.adaptive(
+                      value: _isLocked,
+                      activeTrackColor: const Color(0xFF0052FF),
+                      onChanged: _handleLockToggle,
+                    ),
+                  ],
+                ),
+                if (_isLocked)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
                     child: Text(
-                      'Lock banner for all employees',
+                      'Employees cannot override the organization\'s banner on their digital business cards.',
                       style: TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF0F172A),
+                        fontSize: 12,
+                        color: const Color(0xFF64748B),
+                        height: 1.4,
                       ),
                     ),
                   ),
-                  Switch.adaptive(
-                    value: _isLocked,
-                    activeTrackColor: const Color(0xFF0052FF),
-                    onChanged: _handleLockToggle,
-                  ),
-                ],
-              ),
-              if (_isLocked)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    'Employees cannot override the organization\'s banner on their digital business cards.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: const Color(0xFF64748B),
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
 }
+
+
 
 

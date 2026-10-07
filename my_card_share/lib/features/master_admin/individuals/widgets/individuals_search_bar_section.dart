@@ -94,3 +94,5 @@ class IndividualsSearchBarSection extends StatelessWidget {
     );
   }
 }
+
+

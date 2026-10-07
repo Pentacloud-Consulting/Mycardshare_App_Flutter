@@ -17,3 +17,5 @@ class IndividualVaultScreen extends StatelessWidget {
     return const VaultScreen();
   }
 }
+
+

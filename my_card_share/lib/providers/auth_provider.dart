@@ -48,19 +48,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   void _listenToAuthChanges() {
     AppViewAuthGate.instance.authStateChanges.listen((firebaseUser) {
-      if (firebaseUser != null) {
-        if (!state.isLoggedIn || state.user?.id != firebaseUser.uid) {
-          AppViewAuthGate.instance.restoreSessionOnAppLaunch().then((userModel) {
-            if (userModel != null) {
-              state = AuthState(
-                isLoggedIn: true,
-                role: userModel.role,
-                user: userModel,
-              );
-            }
-          });
-        }
-      } else {
+      if (firebaseUser == null) {
         if (state.isLoggedIn) {
           state = const AuthState(isLoggedIn: false);
         }
@@ -103,3 +91,5 @@ final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
 final currentUserProvider = StateProvider<UserModel?>((ref) => null);
 
 final splashCompletedProvider = StateProvider<bool>((ref) => false);
+
+

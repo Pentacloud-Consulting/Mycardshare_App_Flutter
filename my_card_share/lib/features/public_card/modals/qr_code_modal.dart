@@ -25,3 +25,5 @@ class QRCodeModal extends StatelessWidget {
     );
   }
 }
+
+

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../backend/individual/api_service.dart';
 import '../../../backend/individual/profile/individual_profile_store.dart';
-import '../../../backend/individual/multiple store/individual_multi_store.dart';
+import '../../../backend/individual/multiple_store/individual_multi_store.dart';
 import '../../../backend/individual/previews/publish_unpublish.dart';
-import '../../../backend/individual/qr scan/slug_validator.dart';
-import '../../../backend/individual/qr scan/slug_backend_service.dart';
+import '../../../backend/individual/qr_scan/slug_validator.dart';
+import '../../../backend/individual/qr_scan/slug_backend_service.dart';
 import 'widgets/profile_basic_info.dart';
 import 'widgets/profile_contact_details.dart';
 import 'widgets/profile_live_card_preview.dart';
@@ -764,4 +764,6 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
     );
   }
 }
+
+
 

@@ -39,7 +39,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
               // Tab Views
               if (_selectedTab == 'overview') ...[
-                // 2x2 Metrics Grid (Total Views, QR Scans, Leads Captured, Conv. Rate)
+                // 2x2 Metrics Grid (Total Views, qr_scans, Leads Captured, Conv. Rate)
                 AnalyticsMetricsGrid(dateRange: _dateRange),
                 const SizedBox(height: 18),
 
@@ -68,3 +68,5 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 }
+
+

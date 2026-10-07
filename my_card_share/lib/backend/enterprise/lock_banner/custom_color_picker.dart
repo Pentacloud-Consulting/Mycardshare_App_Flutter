@@ -497,3 +497,5 @@ class _CustomColorThumbShape extends SliderComponentShape {
     canvas.drawCircle(center, 7, paintInner);
   }
 }
+
+

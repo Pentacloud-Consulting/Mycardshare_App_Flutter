@@ -425,3 +425,5 @@ class _ScanCardShowScreenState extends State<ScanCardShowScreen> {
     );
   }
 }
+
+

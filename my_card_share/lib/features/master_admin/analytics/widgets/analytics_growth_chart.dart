@@ -252,3 +252,5 @@ class _GrowthChartPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _GrowthChartPainter oldDelegate) => oldDelegate.activeTab != activeTab;
 }
+
+

@@ -117,6 +117,9 @@ class EnterpriseProfileData {
     );
   }
 
+  factory EnterpriseProfileData.fromMap(Map<String, dynamic> data, String uid) =>
+      EnterpriseProfileData.fromFirestore(uid, data);
+
   /// Generates a URL-safe card slug from company name.
   static String generateCardSlug(String companyName) {
     final slug = companyName
@@ -342,3 +345,5 @@ class EnterpriseProfileStore {
     debugPrint('[EnterpriseProfileStore] Profile cleared (sign-out).');
   }
 }
+
+

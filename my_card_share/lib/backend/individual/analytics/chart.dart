@@ -70,3 +70,5 @@ class AnalyticsChartService {
     return months[(month - 1) % 12];
   }
 }
+
+

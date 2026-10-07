@@ -5,7 +5,7 @@ import '../user_view_card/scanned_profile_view_screen.dart';
 /// ────────────────────────────────────────────────────────────────────────────
 /// QrRedirectHandler
 /// ────────────────────────────────────────────────────────────────────────────
-/// Called immediately after the device QR scanner reads a code.
+/// Called immediately after the device qr_scanner reads a code.
 ///
 /// Decision logic:
 ///   • If the scanned URL is a MyCardShare card link
@@ -17,7 +17,7 @@ import '../user_view_card/scanned_profile_view_screen.dart';
 ///     only relevant when the app IS installed.
 ///   • Any other URL (LinkedIn, website, etc.) is opened in the device browser.
 ///
-/// Usage — call from your QR scanner result callback:
+/// Usage — call from your qr_scanner result callback:
 /// ```dart
 /// QrRedirectHandler.handle(context, scannedUrl);
 /// ```
@@ -110,3 +110,5 @@ class QrRedirectHandler {
     }
   }
 }
+
+

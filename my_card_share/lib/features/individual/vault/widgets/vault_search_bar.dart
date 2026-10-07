@@ -52,3 +52,5 @@ class VaultSearchBar extends StatelessWidget {
     );
   }
 }
+
+

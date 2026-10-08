@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'widgets/settings_company_summary.dart';
+import '../../../backend/enterprise/settings/company_employee.dart';
+import '../../../backend/enterprise/settings/employee_popup.dart';
+import 'subscription/subscription_screen.dart';
 import 'widgets/settings_workspace_card.dart';
+import 'widgets/settings_custom_domain.dart';
 import 'widgets/settings_billing_card.dart';
+import 'widgets/settings_billing_history.dart';
 import 'widgets/settings_security_card.dart';
 import 'widgets/settings_support_card.dart';
 import 'widgets/settings_deactivate_button.dart';
+
+import 'widgets/settings_payment_method.dart';
+import 'widgets/settings_api_access.dart';
+import 'widgets/settings_admin_roles.dart';
+import 'widgets/settings_help_support.dart';
 
 class EnterpriseSettingsScreen extends StatefulWidget {
   const EnterpriseSettingsScreen({super.key});
@@ -89,10 +98,8 @@ class _EnterpriseSettingsScreenState extends State<EnterpriseSettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1. Small Company Summary Row Card
-                  SettingsCompanySummary(
-                    companyName: "Acme Realty Group",
-                    employeesText: "34 employees · Enterprise Pro",
+                  // 1. Real-Time Streamed Company Summary Header Card (Image 1)
+                  SettingsCompanySummaryHeader(
                     onEditTap: () => context.push('/enterprise/brand-profile'),
                   ),
 
@@ -101,33 +108,35 @@ class _EnterpriseSettingsScreenState extends State<EnterpriseSettingsScreen> {
                   // 2. Workspace Grouped List Card
                   SettingsWorkspaceCard(
                     onCompanyProfileTap: () => context.push('/enterprise/brand-profile'),
-                    onCustomDomainTap: () => _showNotice("Custom Domain Setup"),
-                    onEmployeeLimitTap: () => _showNotice("Employee Limit & Upgrades"),
+                    onCustomDomainTap: () => showCustomDomainPage(context),
+                    onEmployeeLimitTap: () => showEmployeeLimitPopup(context),
                   ),
 
                   const SizedBox(height: 20),
 
                   // 3. Billing Grouped List Card
                   SettingsBillingCard(
-                    onSubscriptionPlanTap: () => _showNotice("Subscription Plan Details"),
-                    onBillingHistoryTap: () => _showNotice("Invoices & Billing History"),
-                    onPaymentMethodTap: () => _showNotice("Manage Payment Method"),
+                    onSubscriptionPlanTap: () => Navigator.of(context, rootNavigator: true).push(
+                      MaterialPageRoute(builder: (ctx) => const SubscriptionScreen()),
+                    ),
+                    onBillingHistoryTap: () => showBillingHistoryPage(context),
+                    onPaymentMethodTap: () => showPaymentMethodPage(context),
                   ),
 
                   const SizedBox(height: 20),
 
                   // 4. Security Grouped List Card
                   SettingsSecurityCard(
-                    onApiAccessTap: () => _showNotice("API Keys & Webhooks Access"),
-                    onAdminRolesTap: () => _showNotice("Admin Roles & Permissions"),
+                    onApiAccessTap: () => showApiAccessComingSoonPopup(context),
+                    onAdminRolesTap: () => showAdminRolesPage(context),
                   ),
 
                   const SizedBox(height: 20),
 
                   // 5. Support Grouped List Card
                   SettingsSupportCard(
-                    onHelpSupportTap: () => _showNotice("Opening Help & Support Center..."),
-                    onAccountManagerTap: () => _showNotice("Connecting with Account Manager..."),
+                    onHelpSupportTap: () => showHelpSupportPage(context),
+                    onAccountManagerTap: () => showAccountManagerContactModal(context),
                   ),
 
                   const SizedBox(height: 28),

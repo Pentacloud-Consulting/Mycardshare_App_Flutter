@@ -1,30 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../backend/enterprise/invite_employee/popup_invite.dart';
 import '../../../providers/auth_provider.dart';
 
 class EnterpriseProfileMenuHub extends ConsumerWidget {
   const EnterpriseProfileMenuHub({super.key});
 
   void _copyInviteLink(BuildContext context) {
-    Clipboard.setData(
-      const ClipboardData(text: "https://mycardshare.com/join-workspace?code=ACME-2026-XYZ"),
-    );
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Row(
-          children: [
-            Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
-            SizedBox(width: 8),
-            Text("Workspace invite link copied to clipboard!"),
-          ],
-        ),
-        backgroundColor: const Color(0xFF0F172A),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
+    showEnterpriseInvitePopup(context);
   }
 
   @override

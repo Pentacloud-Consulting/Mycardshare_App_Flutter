@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'settings_help_support.dart';
 
 class SettingsSupportCard extends StatelessWidget {
   final VoidCallback? onHelpSupportTap;
@@ -40,19 +41,19 @@ class SettingsSupportCard extends StatelessWidget {
           ),
           child: Column(
             children: [
-              // Row 1: Help & Support
+              // Row 1: Help & Support (Opens full Help & Support screen)
               _buildSettingRow(
                 icon: Icons.help_outline_rounded,
                 iconColor: const Color(0xFF0052FF),
                 iconBg: const Color(0xFFEFF4FF),
                 title: "Help & Support",
-                onTap: onHelpSupportTap,
+                onTap: onHelpSupportTap ?? () => showHelpSupportPage(context),
               ),
               const Divider(height: 1, color: Color(0xFFF1F5F9)),
 
-              // Row 2: Dedicated Account Manager with "Contact" blue text
+              // Row 2: Dedicated Account Manager (Opens Account Manager contact modal)
               InkWell(
-                onTap: onAccountManagerTap,
+                onTap: onAccountManagerTap ?? () => showAccountManagerContactModal(context),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                   child: Row(

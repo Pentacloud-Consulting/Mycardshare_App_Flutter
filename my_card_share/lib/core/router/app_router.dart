@@ -141,10 +141,10 @@ class RouterNotifier extends ChangeNotifier {
       if (role == 'master-admin') {
         return '/master-admin/dashboard';
       }
-      if (role == 'enterprise' || role == 'employee') {
+      if (role == 'enterprise') {
         return '/enterprise/dashboard';
       }
-      return '/portal'; // individual
+      return '/portal'; // employee or individual
     }
 
     if (publicPaths.contains(path) || authPaths.contains(path) || isPublicCard) {

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../backend/app view/app_view_auth_gate.dart';
+import '../backend/enterprise/home_backend/employees_page.dart';
 
 class AuthState {
   final bool isLoggedIn;
@@ -71,10 +72,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   void logout() {
+    EnterpriseEmployeesService.instance.markEmployeeInactive();
     AppViewAuthGate.instance.signOut();
     authService.logout();
     state = const AuthState();
   }
+
 
   void setRole(String role) {
     state = state.copyWith(role: role);

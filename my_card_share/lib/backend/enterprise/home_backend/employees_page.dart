@@ -328,6 +328,131 @@ class EnterpriseEmployeesService {
       return false;
     }
   }
+
+  // Local state to track logged-in employee session
+  String? _activeEnterpriseUid;
+  String? _activeEmployeeEmail;
+
+  void saveActiveEmployeeSession(String enterpriseUid, String email) {
+    _activeEnterpriseUid = enterpriseUid;
+    _activeEmployeeEmail = email.trim().toLowerCase();
+  }
+
+  String? get activeEnterpriseUid => _activeEnterpriseUid;
+  String? get activeEmployeeEmail => _activeEmployeeEmail;
+
+  /// Marks an employee as Active when they log in / join workspace.
+  /// If the employee does not exist in enterprises/{uid}/employees, adds them automatically.
+  Future<bool> markEmployeeActive({
+    required String enterpriseUid,
+    required String email,
+    String? name,
+  }) async {
+    try {
+      final cleanEmail = email.trim().toLowerCase();
+      saveActiveEmployeeSession(enterpriseUid, cleanEmail);
+
+      final snap = await _firestore
+          .collection('enterprises')
+          .doc(enterpriseUid)
+          .collection('employees')
+          .where('email', isEqualTo: cleanEmail)
+          .get();
+
+      if (snap.docs.isNotEmpty) {
+        // Employee exists -> set status to Active
+        final docId = snap.docs.first.id;
+        final updateMap = <String, dynamic>{
+          'status': 'Active',
+          'updatedAt': FieldValue.serverTimestamp(),
+        };
+        if (name != null && name.trim().isNotEmpty) {
+          updateMap['name'] = name.trim();
+        }
+        await _firestore
+            .collection('enterprises')
+            .doc(enterpriseUid)
+            .collection('employees')
+            .doc(docId)
+            .update(updateMap);
+      } else {
+        // Employee does not exist -> add new employee record automatically
+        final empId = 'emp_${DateTime.now().millisecondsSinceEpoch}';
+        final newName = (name != null && name.trim().isNotEmpty)
+            ? name.trim()
+            : cleanEmail.split('@').first;
+
+        final newEmp = EnterpriseEmployeeModel(
+          id: empId,
+          name: newName,
+          email: cleanEmail,
+          roleTitle: 'Team Member',
+          role: 'Employee',
+          status: 'Active',
+        );
+
+        await _firestore
+            .collection('enterprises')
+            .doc(enterpriseUid)
+            .collection('employees')
+            .doc(empId)
+            .set(newEmp.toFirestore());
+
+        // Update invitedEmails list on enterprise
+        await _firestore.collection('enterprises').doc(enterpriseUid).set({
+          'invitedEmails': FieldValue.arrayUnion([cleanEmail]),
+        }, SetOptions(merge: true));
+      }
+
+      return true;
+    } catch (e) {
+      debugPrint('[EnterpriseEmployeesService] markEmployeeActive error: $e');
+      return false;
+    }
+  }
+
+  /// Marks an employee as Inactive when they log out.
+  Future<bool> markEmployeeInactive({
+    String? enterpriseUid,
+    String? email,
+  }) async {
+    try {
+      final targetUid = enterpriseUid ?? _activeEnterpriseUid ?? currentUid;
+      final targetEmail = (email ?? _activeEmployeeEmail ?? _auth.currentUser?.email ?? '').trim().toLowerCase();
+
+      if (targetUid == null || targetUid.isEmpty || targetEmail.isEmpty) {
+        return false;
+      }
+
+      final snap = await _firestore
+          .collection('enterprises')
+          .doc(targetUid)
+          .collection('employees')
+          .where('email', isEqualTo: targetEmail)
+          .get();
+
+      if (snap.docs.isNotEmpty) {
+        final docId = snap.docs.first.id;
+        await _firestore
+            .collection('enterprises')
+            .doc(targetUid)
+            .collection('employees')
+            .doc(docId)
+            .update({
+          'status': 'Inactive',
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      _activeEnterpriseUid = null;
+      _activeEmployeeEmail = null;
+      return true;
+    } catch (e) {
+      debugPrint('[EnterpriseEmployeesService] markEmployeeInactive error: $e');
+      return false;
+    }
+  }
+
 }
 
 /// Real UI Widget corresponding to Image 4 (Dynamic Filter Pills: Total, Active, Pending).
@@ -668,26 +793,39 @@ class EnterpriseEmployeeListBackend extends StatelessWidget {
                 // Status Indicator Dot + Text
                 Row(
                   children: [
-                    Container(
-                      width: 7,
-                      height: 7,
-                      decoration: BoxDecoration(
-                        color: isPending
+                    Builder(
+                      builder: (context) {
+                        final isInactive = emp.status.toLowerCase() == 'inactive' ||
+                            emp.status.toLowerCase() == 'deactivated';
+                        final statusColor = isPending
                             ? const Color(0xFFD97706)
-                            : const Color(0xFF16A34A),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 5),
-                    Text(
-                      emp.status,
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                        color: isPending
-                            ? const Color(0xFFD97706)
-                            : const Color(0xFF16A34A),
-                      ),
+                            : isInactive
+                                ? const Color(0xFF64748B)
+                                : const Color(0xFF16A34A);
+
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 7,
+                              height: 7,
+                              decoration: BoxDecoration(
+                                color: statusColor,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              emp.status,
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: statusColor,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                     if (emp.isBannerLocked) ...[
                       const SizedBox(width: 8),

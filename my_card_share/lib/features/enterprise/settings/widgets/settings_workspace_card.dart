@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
+import '../../../../backend/enterprise/settings/company_employee.dart';
+import '../../../../backend/enterprise/settings/employee_popup.dart';
+import 'settings_custom_domain.dart';
+import 'settings_crm_conector.dart';
 
 class SettingsWorkspaceCard extends StatelessWidget {
   final VoidCallback? onCompanyProfileTap;
   final VoidCallback? onCustomDomainTap;
   final VoidCallback? onEmployeeLimitTap;
+  final VoidCallback? onCrmConnectorsTap;
 
   const SettingsWorkspaceCard({
     super.key,
     this.onCompanyProfileTap,
     this.onCustomDomainTap,
     this.onEmployeeLimitTap,
+    this.onCrmConnectorsTap,
   });
 
   @override
@@ -50,22 +56,16 @@ class SettingsWorkspaceCard extends StatelessWidget {
                 onTap: onCompanyProfileTap,
               ),
               const Divider(height: 1, color: Color(0xFFF1F5F9)),
-              _buildSettingRow(
-                icon: Icons.language_rounded,
-                iconColor: const Color(0xFF7C3AED),
-                iconBg: const Color(0xFFF3E8FF),
-                title: "Custom Domain",
-                trailingText: "Not set",
-                onTap: onCustomDomainTap,
+              SettingsCustomDomainRow(
+                onTap: onCustomDomainTap ?? () => showCustomDomainPage(context),
               ),
               const Divider(height: 1, color: Color(0xFFF1F5F9)),
-              _buildSettingRow(
-                icon: Icons.people_alt_rounded,
-                iconColor: const Color(0xFF0D9488),
-                iconBg: const Color(0xFFCCFBF1),
-                title: "Employee Limit",
-                trailingText: "34 / 50 used",
-                onTap: onEmployeeLimitTap,
+              SettingsEmployeeLimitRow(
+                onTap: onEmployeeLimitTap ?? () => showEmployeeLimitPopup(context),
+              ),
+              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              SettingsCrmConnectorRow(
+                onTap: onCrmConnectorsTap ?? () => showCrmConnectorsPage(context),
               ),
             ],
           ),

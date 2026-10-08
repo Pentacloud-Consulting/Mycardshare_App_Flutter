@@ -11,6 +11,10 @@ import '../../../models/user_model.dart';
 import '../../../backend/individual/sign/individual_auth_service.dart';
 import '../../../backend/enterprise/sign/enterprise_auth_service.dart';
 import '../../../backend/enterprise/sign/category_mismatch_dialog.dart';
+import '../../../backend/employee_join/employee_login.dart';
+import '../../../backend/employee_join/email fetch/employee_email_fetch.dart';
+import '../../../backend/employee_join/home/employee_home_backend.dart';
+import '../../../backend/employee_join/home/employee_stats_backend.dart';
 import '../../../notifications/individual/login_popup.dart';
 import '../../../notifications/enterprise/login_popup.dart';
 import '../back/smart_back_handler.dart';
@@ -134,18 +138,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
 
     if (_selectedTab == 2) {
-      if (preCheckRole == 'individual') {
-        if (mounted) setState(() => _isLoading = false);
-        if (mounted) {
-          EnterpriseCategoryMismatchDialog.show(
-            context,
-            registeredCategory: 'Individual',
-            currentTabCategory: 'Employee',
-            onSwitchTab: () => setState(() => _selectedTab = 0),
-          );
-        }
-        return;
-      } else if (preCheckRole == 'enterprise') {
+      if (preCheckRole == 'enterprise') {
         if (mounted) setState(() => _isLoading = false);
         if (mounted) {
           EnterpriseCategoryMismatchDialog.show(
@@ -157,6 +150,68 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         }
         return;
       }
+    }
+
+    if (_selectedTab == 2) {
+      // ── Check if employee work email is enrolled ──
+      final emailCheck = await EmployeeEmailFetchService.instance.verifyEmployeeEmail(email);
+      if (!emailCheck.isEnrolled) {
+        if (mounted) setState(() => _isLoading = false);
+        if (mounted) {
+          EmployeeEmailFetchService.showEmailNotEnrolledDialog(
+            context,
+            email: email,
+          );
+        }
+        return;
+      }
+
+      // ── Employee: Dedicated Real Employee Login Backend Service ──
+      final result = await EmployeeLoginBackendService.instance.loginEmployee(
+        email: email,
+        password: password,
+      );
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (result.success) {
+        final user = result.userModel ?? UserModel(
+          id: result.enterpriseUid ?? 'emp_1',
+          name: email.split('@').first,
+          email: email,
+          role: 'employee',
+        );
+        ref.read(authProvider.notifier).login(user);
+
+        // Hydrate employee home & stats data live
+        EmployeeHomeBackendService.instance.loadEmployeeHomeData();
+        EmployeeStatsBackendService.instance.loadEmployeeStats();
+
+        if (mounted) context.go('/portal');
+      } else {
+        final msg = result.message;
+        if (msg.contains('No account') || msg.contains('not valid')) {
+          LoginPopupNotification.showEmailNotFoundDialog(
+            context,
+            onSignUpTap: () => context.go('/signup'),
+          );
+        } else if (msg.contains('Incorrect') || msg.contains('password') || msg.contains('credentials')) {
+          LoginPopupNotification.showWrongPasswordDialog(
+            context,
+            onForgotPasswordTap: () => context.push('/reset-password'),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(msg),
+              backgroundColor: Colors.redAccent,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+      return;
     }
 
     if (_selectedTab == 1) {
@@ -225,7 +280,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
 
-    // ── Individual / Employee: REAL Firebase Auth login ──
+    // ── Individual: REAL Firebase Auth login ──
     final result = await IndividualAuthService.instance.login(
       email: email,
       password: password,
@@ -276,32 +331,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           );
         }
         return;
-      } else if (_selectedTab == 2) {
-        if (registeredRole == 'individual') {
-          await FirebaseAuth.instance.signOut();
-          ref.read(authProvider.notifier).logout();
-          if (mounted) {
-            EnterpriseCategoryMismatchDialog.show(
-              context,
-              registeredCategory: 'Individual',
-              currentTabCategory: 'Employee',
-              onSwitchTab: () => setState(() => _selectedTab = 0),
-            );
-          }
-          return;
-        } else if (registeredRole == 'enterprise') {
-          await FirebaseAuth.instance.signOut();
-          ref.read(authProvider.notifier).logout();
-          if (mounted) {
-            EnterpriseCategoryMismatchDialog.show(
-              context,
-              registeredCategory: 'Enterprise',
-              currentTabCategory: 'Employee',
-              onSwitchTab: () => setState(() => _selectedTab = 1),
-            );
-          }
-          return;
-        }
       }
 
       final user = UserModel(

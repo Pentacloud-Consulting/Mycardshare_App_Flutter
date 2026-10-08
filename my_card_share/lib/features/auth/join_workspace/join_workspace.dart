@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../models/user_model.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../backend/employee_join/join_login.dart';
 
 class JoinWorkspaceScreen extends ConsumerStatefulWidget {
   const JoinWorkspaceScreen({super.key});
@@ -15,28 +15,88 @@ class JoinWorkspaceScreen extends ConsumerStatefulWidget {
 class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
   final TextEditingController _inviteCodeController = TextEditingController();
   final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
   bool _isLoading = false;
 
+  String _previewCompanyName = "";
+  int _previewMemberCount = 0;
+  String? _previewLogoUrl;
+  String? _targetEnterpriseUid;
+
+  @override
+  void initState() {
+    super.initState();
+    _inviteCodeController.addListener(_onCodeChanged);
+    _onCodeChanged();
+  }
+
   @override
   void dispose() {
+    _inviteCodeController.removeListener(_onCodeChanged);
     _inviteCodeController.dispose();
     _fullNameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  void _onJoinWorkspace() {
+  void _onCodeChanged() {
     final code = _inviteCodeController.text.trim();
     if (code.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please enter your invitation code"),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
+      if (mounted) {
+        setState(() {
+          _previewCompanyName = "";
+          _previewMemberCount = 0;
+          _previewLogoUrl = null;
+          _targetEnterpriseUid = null;
+        });
+      }
+    } else {
+      _lookupEnterpriseByCode(code);
+    }
+  }
+
+  /// Live lookup using JoinLoginBackendService
+  Future<void> _lookupEnterpriseByCode(String code) async {
+    try {
+      final info = await JoinLoginBackendService.instance.lookupEnterpriseByInviteCode(code);
+      if (info != null && mounted) {
+        setState(() {
+          _previewCompanyName = info['companyName'] ?? 'Enterprise Workspace';
+          _previewMemberCount = (info['memberCount'] as num?)?.toInt() ?? 4;
+          _previewLogoUrl = info['logoUrl'] as String?;
+          _targetEnterpriseUid = info['enterpriseUid'] as String?;
+        });
+        debugPrint('[JoinWorkspaceScreen] Resolved enterprise: $_previewCompanyName, UID: $_targetEnterpriseUid, members: $_previewMemberCount, logo: $_previewLogoUrl');
+      }
+    } catch (e) {
+      debugPrint('[JoinWorkspaceScreen] Lookup code error: $e');
+    }
+  }
+
+  Future<void> _onJoinWorkspace() async {
+    final code = _inviteCodeController.text.trim();
+    final fullName = _fullNameController.text.trim();
+    final email = _emailController.text.trim().toLowerCase();
+    final password = _passwordController.text.trim();
+
+    if (code.isEmpty) {
+      _showSnackBar("Please enter your invitation code", Colors.redAccent);
+      return;
+    }
+    if (fullName.isEmpty) {
+      _showSnackBar("Please enter your full name", Colors.redAccent);
+      return;
+    }
+    if (email.isEmpty || !email.contains('@')) {
+      _showSnackBar("Please enter a valid work email address", Colors.redAccent);
+      return;
+    }
+    if (password.isEmpty) {
+      _showSnackBar("Please enter your password", Colors.redAccent);
       return;
     }
 
@@ -44,22 +104,60 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
       _isLoading = true;
     });
 
-    final name = _fullNameController.text.trim();
-    final user = UserModel(
-      id: 'employee_1',
-      name: name.isNotEmpty ? name : 'Employee User',
-      email: 'employee@acmerealty.com',
-      role: 'employee',
-    );
+    try {
+      final result = await JoinLoginBackendService.instance.joinWorkspaceWithCode(
+        inviteCode: code,
+        fullName: fullName,
+        email: email,
+        password: password,
+      );
 
-    ref.read(authProvider.notifier).login(user);
+      if (!result.success) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+          _showSnackBar(result.message, Colors.redAccent);
+        }
+        return;
+      }
 
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-      context.go('/portal');
+      // Log in user via authProvider
+      if (result.userModel != null) {
+        ref.read(authProvider.notifier).login(result.userModel!);
+      }
+
+      if (mounted) {
+        _showSnackBar(
+          result.message,
+          const Color(0xFF16A34A),
+        );
+        setState(() {
+          _isLoading = false;
+        });
+        context.go('/portal');
+      }
+    } catch (e) {
+      debugPrint('[JoinWorkspaceScreen] Join error: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        _showSnackBar("Error joining workspace: $e", Colors.redAccent);
+      }
     }
+  }
+
+
+  void _showSnackBar(String text, Color bgColor) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(text),
+        backgroundColor: bgColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
   }
 
   @override
@@ -106,20 +204,20 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Column(
                 children: [
-                  const SizedBox(height: 60),
+                  const SizedBox(height: 50),
 
-                  // Centered Blue Building Logo Badge
+                  // Centered Real Logo Badge
                   Container(
-                    width: 72,
-                    height: 72,
+                    width: 76,
+                    height: 76,
                     decoration: BoxDecoration(
                       color: const Color(0xFF0066FF).withValues(alpha: 0.08),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
                       child: Container(
-                        width: 56,
-                        height: 56,
+                        width: 60,
+                        height: 60,
                         decoration: BoxDecoration(
                           color: const Color(0xFF0066FF),
                           shape: BoxShape.circle,
@@ -131,10 +229,10 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
                             ),
                           ],
                         ),
-                        child: const Icon(
-                          Icons.business_rounded,
-                          color: Colors.white,
-                          size: 30,
+                        padding: const EdgeInsets.all(12),
+                        child: Image.asset(
+                          'assets/images/logo/MYSHAREFAVO.png',
+                          fit: BoxFit.contain,
                         ),
                       ),
                     ),
@@ -166,113 +264,184 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
 
                   const SizedBox(height: 24),
 
-                  // Workspace Card Preview Banner (Acme Realty Group)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF0F7FF),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFBAE6FD), width: 1.5),
-                    ),
-                    child: Row(
-                      children: [
-                        // Building Icon Badge
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x0A000000),
-                                blurRadius: 6,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.location_city_rounded,
-                            color: Color(0xFF0066FF),
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-
-                        // Title + Member Count
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: const [
-                                  Flexible(
-                                    child: Text(
-                                      "Acme Realty Group",
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF0F172A),
+                  // Workspace Card Preview Banner (Live Enterprise / Empty State)
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    child: _previewCompanyName.isEmpty
+                        ? Container(
+                            key: const ValueKey("empty_banner"),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE2E8F0).withValues(alpha: 0.6),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.business_rounded,
+                                    color: Color(0xFF94A3B8),
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Enter invitation code below",
+                                        style: TextStyle(
+                                          fontSize: 13.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF64748B),
+                                        ),
                                       ),
-                                    ),
+                                      SizedBox(height: 2),
+                                      Text(
+                                        "Organization details will load automatically",
+                                        style: TextStyle(
+                                          fontSize: 11.5,
+                                          color: Color(0xFF94A3B8),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  SizedBox(width: 3),
-                                  Icon(
-                                    Icons.verified_rounded,
-                                    color: Color(0xFF0066FF),
-                                    size: 15,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 1),
-                              const Text(
-                                "12 members",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF64748B),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 6),
+                              ],
+                            ),
+                          )
+                        : Container(
+                            key: const ValueKey("loaded_banner"),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0F7FF),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: const Color(0xFFBAE6FD), width: 1.5),
+                            ),
+                            child: Row(
+                              children: [
+                                // Real Logo Badge (or Clean Empty Fallback if no logo uploaded)
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Color(0x0A000000),
+                                        blurRadius: 6,
+                                        offset: Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: (_previewLogoUrl != null && _previewLogoUrl!.trim().isNotEmpty)
+                                      ? ClipOval(
+                                          child: _previewLogoUrl!.startsWith('http')
+                                              ? Image.network(
+                                                  _previewLogoUrl!,
+                                                  width: 48,
+                                                  height: 48,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (ctx, err, stack) =>
+                                                      _buildEmptyLogoFallback(_previewCompanyName),
+                                                )
+                                              : Image.asset(
+                                                  _previewLogoUrl!,
+                                                  width: 48,
+                                                  height: 48,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (ctx, err, stack) =>
+                                                      _buildEmptyLogoFallback(_previewCompanyName),
+                                                ),
+                                        )
+                                      : _buildEmptyLogoFallback(_previewCompanyName),
+                                ),
+                                const SizedBox(width: 12),
 
-                        // Verified Workspace Badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFDCFCE7),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              Icon(
-                                Icons.check_circle_rounded,
-                                color: Color(0xFF16A34A),
-                                size: 11,
-                              ),
-                              SizedBox(width: 3),
-                              Text(
-                                "Verified Workspace",
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF15803D),
+                                // Title + Member Count
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Flexible(
+                                            child: Text(
+                                              _previewCompanyName,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                                color: Color(0xFF0F172A),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 3),
+                                          const Icon(
+                                            Icons.verified_rounded,
+                                            color: Color(0xFF0066FF),
+                                            size: 15,
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 1),
+                                      Text(
+                                        "$_previewMemberCount members",
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF64748B),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 6),
+
+                                // Verified Workspace Badge
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFDCFCE7),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      Icon(
+                                        Icons.check_circle_rounded,
+                                        color: Color(0xFF16A34A),
+                                        size: 11,
+                                      ),
+                                      SizedBox(width: 3),
+                                      Text(
+                                        "Verified Workspace",
+                                        style: TextStyle(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF15803D),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
                   ),
 
                   const SizedBox(height: 18),
 
-                  // Invitation Code Field
+                  // Input 1: Invitation Code Field
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -294,7 +463,7 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
                         fontWeight: FontWeight.w600,
                       ),
                       decoration: const InputDecoration(
-                        hintText: "e.g. ACME-2026-XYZ",
+                        hintText: "e.g. ZUHAIB-7687-Z9B4I9ZO",
                         labelText: "Invitation Code",
                         labelStyle: TextStyle(color: Color(0xFF64748B), fontSize: 13),
                         prefixIcon: Icon(
@@ -310,7 +479,7 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
 
                   const SizedBox(height: 14),
 
-                  // Full Name Field
+                  // Input 2: Full Name Field
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -351,7 +520,49 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
 
                   const SizedBox(height: 14),
 
-                  // Password Field
+                  // Input 3: Work Email Field (Added as requested)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x0A000000),
+                          blurRadius: 10,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: TextField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Color(0xFF0F172A),
+                        fontWeight: FontWeight.w500,
+                      ),
+                      decoration: const InputDecoration(
+                        hintText: "Work Email (e.g. employee@company.com)",
+                        hintStyle: TextStyle(
+                          color: Color(0xFF94A3B8),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.email_outlined,
+                          color: Color(0xFF94A3B8),
+                          size: 22,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Input 4: Password Field
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -487,6 +698,37 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
       ),
     );
   }
+
+  Widget _buildEmptyLogoFallback(String companyName) {
+    final cleanName = companyName.trim();
+    final initial = cleanName.isNotEmpty ? cleanName[0].toUpperCase() : '';
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6FF),
+        shape: BoxShape.circle,
+        border: Border.all(color: const Color(0xFFDBEAFE), width: 1),
+      ),
+      child: Center(
+        child: initial.isNotEmpty
+            ? Text(
+                initial,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2563EB),
+                ),
+              )
+            : const Icon(
+                Icons.business_rounded,
+                color: Color(0xFF2563EB),
+                size: 24,
+              ),
+      ),
+    );
+  }
 }
+
 
 

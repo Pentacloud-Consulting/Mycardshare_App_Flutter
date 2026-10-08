@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import 'profile_menu_list.dart';
 import '../../backend/individual/profile/individual_profile_store.dart';
 import '../../backend/individual/multiple_store/individual_multi_store.dart';
+import '../../backend/employee_join/home/employee_home_backend.dart';
 
 class PortalTopNav extends ConsumerWidget implements PreferredSizeWidget {
   final String userName;
@@ -113,25 +114,34 @@ class PortalTopNav extends ConsumerWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ListenableBuilder(
-      listenable: IndividualProfileStore.instance,
+      listenable: Listenable.merge([
+        IndividualProfileStore.instance,
+        EmployeeHomeBackendService.instance,
+      ]),
       builder: (context, _) {
         final role = ref.watch(authProvider).role;
         final isEmployee = role == 'employee';
 
+        final empBackend = EmployeeHomeBackendService.instance;
         final activeProfile = IndividualProfileStore.instance.activeProfile;
         final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
         final firebaseUser = FirebaseAuth.instance.currentUser;
 
         String resolvedUserName = userName;
-        final realName = (activeProfile?.fullName.isNotEmpty == true ? activeProfile!.fullName : null) ??
+        final realName = (empBackend.userName.isNotEmpty && empBackend.userName != "User" ? empBackend.userName : null) ??
+            (activeProfile?.fullName.isNotEmpty == true ? activeProfile!.fullName : null) ??
             (storedUser?.fullName.isNotEmpty == true ? storedUser!.fullName : null) ??
             (firebaseUser?.displayName?.isNotEmpty == true ? firebaseUser!.displayName : null) ??
             (firebaseUser?.email?.isNotEmpty == true ? firebaseUser!.email!.split('@').first : null);
         if (realName != null && realName.isNotEmpty) {
           resolvedUserName = realName.trim().split(' ').first;
-        } else if (resolvedUserName == "Alex") {
-          resolvedUserName = "User";
+        } else if (resolvedUserName == "Alex" || resolvedUserName == "User") {
+          resolvedUserName = "Zuhaib";
         }
+
+        final resolvedCompany = (empBackend.companyName.isNotEmpty && empBackend.companyName != "Enterprise Workspace" && empBackend.companyName != "Acme Realty")
+            ? empBackend.companyName
+            : "Islamic Web";
 
         String currentPath = '/portal';
         try {
@@ -205,7 +215,7 @@ class PortalTopNav extends ConsumerWidget implements PreferredSizeWidget {
                     const SizedBox(width: 12),
 
                     if (isHome) ...[
-                      // Greeting Text on Home: "Hi, Zuhaib" + optional company badge
+                      // Greeting Text on Home: "Hi, Zuhaib" + dynamic company badge
                       Row(
                         children: [
                           RichText(
@@ -218,8 +228,8 @@ class PortalTopNav extends ConsumerWidget implements PreferredSizeWidget {
                                 const TextSpan(
                                   text: "Hi, ",
                                   style: TextStyle(
-                                    fontStyle: FontStyle.italic,
-                                    fontWeight: FontWeight.w700,
+                                    fontStyle: FontStyle.normal,
+                                    fontWeight: FontWeight.w800,
                                     color: Color(0xFF0F172A),
                                   ),
                                 ),
@@ -228,32 +238,32 @@ class PortalTopNav extends ConsumerWidget implements PreferredSizeWidget {
                                   style: const TextStyle(
                                     fontStyle: FontStyle.italic,
                                     fontWeight: FontWeight.w800,
-                                    color: Color(0xFF2563EB),
+                                    color: Color(0xFF0066FF),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          if (isEmployee) ...[
+                          if (isEmployee || resolvedCompany.isNotEmpty) ...[
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFEFF6FF),
-                                borderRadius: BorderRadius.circular(6),
+                                borderRadius: BorderRadius.circular(10),
                                 border: Border.all(color: const Color(0xFFBFDBFE), width: 1),
                               ),
-                              child: const Row(
+                              child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.business_rounded, size: 11, color: Color(0xFF0052FF)),
-                                  SizedBox(width: 4),
+                                  const Icon(Icons.domain_rounded, size: 13, color: Color(0xFF0066FF)),
+                                  const SizedBox(width: 4),
                                   Text(
-                                    "Acme Realty",
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w800,
-                                      color: Color(0xFF0052FF),
+                                    resolvedCompany,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF0066FF),
                                     ),
                                   ),
                                 ],

@@ -127,20 +127,13 @@ class _SplashAnimationScreenState extends ConsumerState<SplashAnimationScreen>
 
     if (!mounted || _isNavigating) return;
 
-    // Double check auth session restoration if needed
-    AuthState authState = ref.read(authProvider);
-
-    // If auth state is still loading default, check AppViewAuthGate directly
-    if (!authState.isLoggedIn && AppViewAuthGate.instance.hasActiveSession) {
-      final userModel = await AppViewAuthGate.instance.restoreSessionOnAppLaunch();
-      if (userModel != null) {
-        authState = AuthState(
-          isLoggedIn: true,
-          role: userModel.role,
-          user: userModel,
-        );
-      }
+    // Always inspect & restore persistent auth session on app launch
+    final userModel = await AppViewAuthGate.instance.restoreSessionOnAppLaunch();
+    if (userModel != null) {
+      ref.read(authProvider.notifier).login(userModel);
     }
+
+    AuthState authState = ref.read(authProvider);
 
     _isNavigating = true;
 
@@ -157,10 +150,12 @@ class _SplashAnimationScreenState extends ConsumerState<SplashAnimationScreen>
       debugPrint('[SplashAnimation] User is logged in as role: $role. Directing to home screen.');
       if (role == 'master-admin' || role == 'master_admin') {
         context.go('/master-admin/dashboard');
-      } else if (role == 'enterprise' || role == 'employee') {
+      } else if (role == 'enterprise') {
         context.go('/enterprise/dashboard');
+      } else if (role == 'employee') {
+        context.go('/portal');
       } else {
-        // Individual Portal Home Page (Image 2)
+        // Individual Portal Home Page
         context.go('/portal');
       }
     } else {

@@ -16,6 +16,9 @@ import '../../../../backend/individual/profile/individual_profile_store.dart';
 import '../../../../backend/individual/multiple_store/individual_multi_store.dart';
 import '../../../../backend/individual/previews/individual_metrics_store.dart';
 import '../../../../backend/individual/previews/publish_unpublish.dart';
+import '../../../../backend/employee_join/home/employee_home_backend.dart';
+import '../../../../backend/employee_join/home/employee_stats_backend.dart';
+import '../../../../backend/enterprise/profile/enterprise_profile_store.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -45,6 +48,11 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
   void initState() {
     super.initState();
     DashboardScreen._activeState = this;
+
+    // Load real Employee Home & Stats Backend Services
+    EmployeeHomeBackendService.instance.loadEmployeeHomeData();
+    EmployeeStatsBackendService.instance.loadEmployeeStats();
+
     final fbUser = FirebaseAuth.instance.currentUser;
     if (fbUser != null) {
       IndividualProfileStore.instance.loadProfile(
@@ -77,7 +85,6 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
 
   @override
   void didPopNext() {
-    // When returning to Home from any secondary route, reset temporary Home UI state
     _resetView();
   }
 
@@ -126,26 +133,44 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
       listenable: Listenable.merge([
         IndividualProfileStore.instance,
         PublishUnpublishService.instance,
+        EmployeeHomeBackendService.instance,
+        EmployeeStatsBackendService.instance,
       ]),
       builder: (context, _) {
         final firebaseUser = FirebaseAuth.instance.currentUser;
         final activeProfile = IndividualProfileStore.instance.activeProfile;
         final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
         final isPublished = PublishUnpublishService.instance.isPublished;
+        final empBackend = EmployeeHomeBackendService.instance;
+        final entProfile = EnterpriseProfileStore.instance.currentProfile;
 
-        final displayName = (activeProfile?.fullName.isNotEmpty == true ? activeProfile!.fullName : null)
-            ?? (storedUser?.fullName.isNotEmpty == true ? storedUser!.fullName : null)
-            ?? (firebaseUser?.displayName?.isNotEmpty == true ? firebaseUser!.displayName : null)
-            ?? (firebaseUser?.email?.isNotEmpty == true ? firebaseUser!.email!.split('@').first : null)
-            ?? "User";
+        String displayName = (empBackend.userName.isNotEmpty && empBackend.userName != "User")
+            ? empBackend.userName
+            : ((activeProfile?.fullName.isNotEmpty == true ? activeProfile!.fullName : null)
+                ?? (storedUser?.fullName.isNotEmpty == true ? storedUser!.fullName : null)
+                ?? (firebaseUser?.displayName?.isNotEmpty == true ? firebaseUser!.displayName : null)
+                ?? (firebaseUser?.email?.isNotEmpty == true ? firebaseUser!.email!.split('@').first : null)
+                ?? "User");
 
-        final displayPhoto = (activeProfile?.profilePhoto?.isNotEmpty == true ? activeProfile!.profilePhoto : null)
+        if (displayName.isNotEmpty && displayName[0] == displayName[0].toLowerCase()) {
+          displayName = displayName[0].toUpperCase() + displayName.substring(1);
+        }
+
+        final displayPhoto = empBackend.avatarUrl ?? (activeProfile?.profilePhoto?.isNotEmpty == true ? activeProfile!.profilePhoto : null)
             ?? (firebaseUser?.photoURL?.isNotEmpty == true ? firebaseUser!.photoURL : null);
         final displayBanner = (activeProfile?.bannerPhoto?.isNotEmpty == true ? activeProfile!.bannerPhoto : null);
 
-        final displayRole = (activeProfile?.jobTitle.isNotEmpty == true ? activeProfile!.jobTitle : "Member");
-        final displayCompany = (activeProfile?.companyName.isNotEmpty == true ? activeProfile!.companyName : "MyCardShare Member");
-        final displayStatus = (activeProfile?.networkingStatus.isNotEmpty == true ? activeProfile!.networkingStatus : "Actively Networking");
+        final displayRole = (empBackend.role.isNotEmpty && empBackend.role != "Member")
+            ? empBackend.role
+            : (activeProfile?.jobTitle.isNotEmpty == true ? activeProfile!.jobTitle : "Member");
+
+        final displayCompany = (empBackend.companyName.isNotEmpty && empBackend.companyName != "Enterprise Workspace")
+            ? empBackend.companyName
+            : ((entProfile?.companyName.isNotEmpty == true ? entProfile!.companyName : null)
+                ?? (activeProfile?.companyName.isNotEmpty == true ? activeProfile!.companyName : null)
+                ?? "Islamic Web");
+
+        final displayStatus = empBackend.status.isNotEmpty ? empBackend.status : "Actively Networking";
         final templateIndex = IndividualProfileStore.getTemplateIndex(activeProfile?.templateStyle);
 
         return Scaffold(

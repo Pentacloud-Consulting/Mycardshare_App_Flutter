@@ -141,6 +141,27 @@ class EnterpriseInviteLinkService {
     return link;
   }
 
+  /// Copies the unique workspace invite code to clipboard with UI feedback.
+  void copyInviteCode(BuildContext context, String inviteCode) {
+    Clipboard.setData(ClipboardData(text: inviteCode));
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+            SizedBox(width: 8),
+            Text("Workspace invite code copied!"),
+          ],
+        ),
+        backgroundColor: const Color(0xFF0F172A),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   /// Copies the unique workspace link to clipboard with UI feedback and MultiStore sync.
   void copyInviteLink(BuildContext context, String linkUrl, {String? inviteeEmail}) {
     final fullUrl = linkUrl.startsWith('http') ? linkUrl : 'https://$linkUrl';
@@ -216,7 +237,7 @@ class EnterpriseInviteLinkService {
   }
 }
 
-/// Real UI Widget matching Image 1 (Workspace Invite Link Card).
+/// Real UI Widget matching Image 1 (Workspace Invite Code & Link Card).
 /// Fully connected to Firestore, EnterpriseProfileStore, EnterpriseMultiStore, and EnterpriseAuthService.
 class EnterpriseInviteLinkWidget extends StatelessWidget {
   final String? enterpriseUid;
@@ -245,6 +266,25 @@ class EnterpriseInviteLinkWidget extends StatelessWidget {
       ),
       builder: (context, snapshot) {
         final inviteLink = snapshot.data ?? "mycardshare.com/join-workspace";
+        
+        // Extract Invite Code from link or build real dynamic code
+        String inviteCode = "";
+        if (inviteLink.contains('code=')) {
+          final parts = inviteLink.split('code=');
+          if (parts.length > 1) {
+            inviteCode = parts[1].split('&').first;
+          }
+        }
+
+        if (inviteCode.isEmpty) {
+          final profile = EnterpriseProfileStore.instance.currentProfile;
+          final targetUid = uid ?? profile?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? "7687";
+          final shortUid = targetUid.length >= 8 ? targetUid.substring(0, 8).toUpperCase() : targetUid.toUpperCase();
+          final companyPrefix = (profile?.companyName ?? "ZUHAIB")
+              .replaceAll(RegExp(r'[^a-zA-Z0-9]'), '')
+              .toUpperCase();
+          inviteCode = "${companyPrefix.isNotEmpty ? companyPrefix : 'ENTERPRISE'}-$shortUid";
+        }
 
         return Container(
           margin: margin,
@@ -265,14 +305,13 @@ class EnterpriseInviteLinkWidget extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // --- 1. Workspace Invite Code Card (Image 1 top part) ---
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    inviteeEmail != null && inviteeEmail!.isNotEmpty
-                        ? "Individual Employee Invite Link"
-                        : "Workspace Invite Link",
-                    style: const TextStyle(
+                  const Text(
+                    "Workspace Invite Code",
+                    style: TextStyle(
                       fontSize: 14.5,
                       fontWeight: FontWeight.w800,
                       color: Color(0xFF0F172A),
@@ -291,9 +330,91 @@ class EnterpriseInviteLinkWidget extends StatelessWidget {
                     ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
 
-              // Light Gray Pill Container containing Link text & Copy Button (Image 1 style)
+              // Light Gray Pill Container for Code & Copy Code Button
+              Container(
+                padding: const EdgeInsets.only(left: 12, right: 4, top: 4, bottom: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.confirmation_number_outlined,
+                      size: 18,
+                      color: Color(0xFF0052FF),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        inviteCode,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF0F172A),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+
+                    // Copy Code Button
+                    GestureDetector(
+                      onTap: () {
+                        EnterpriseInviteLinkService.instance.copyInviteCode(
+                          context,
+                          inviteCode,
+                        );
+                        if (onCopied != null) onCopied!();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0052FF),
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF0052FF).withValues(alpha: 0.25),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Text(
+                          "Copy Code",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // --- 2. Workspace Invite Link Card (Image 1 bottom part) ---
+              Text(
+                inviteeEmail != null && inviteeEmail!.isNotEmpty
+                    ? "Individual Employee Invite Link"
+                    : "Workspace Invite Link",
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF475569),
+                  letterSpacing: -0.2,
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Light Gray Pill Container for Link & Copy Link Button
               Container(
                 padding: const EdgeInsets.only(left: 12, right: 4, top: 4, bottom: 4),
                 decoration: BoxDecoration(
@@ -316,7 +437,7 @@ class EnterpriseInviteLinkWidget extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
 
-                    // Copy Link Button (Image 1 style)
+                    // Copy Link Button
                     GestureDetector(
                       onTap: () {
                         EnterpriseInviteLinkService.instance.copyInviteLink(
@@ -359,6 +480,7 @@ class EnterpriseInviteLinkWidget extends StatelessWidget {
     );
   }
 }
+
 
 
 

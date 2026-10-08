@@ -4,9 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../back/smart_back_handler.dart';
 import '../font style/font_style.dart';
-import '../../../models/user_model.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../backend/individual/sign/login_identity.dart';
+import '../../../backend/employee_join/employee_login.dart';
+import '../../../backend/employee_join/email fetch/employee_email_fetch.dart';
 import '../../../notifications/individual/login_popup.dart';
 
 class EmployeeLoginScreen extends ConsumerStatefulWidget {
@@ -33,6 +34,7 @@ class _EmployeeLoginScreenState extends ConsumerState<EmployeeLoginScreen> {
   void initState() {
     super.initState();
     _emailController.addListener(_onEmailChanged);
+    _onEmailChanged();
   }
 
   @override
@@ -43,35 +45,49 @@ class _EmployeeLoginScreenState extends ConsumerState<EmployeeLoginScreen> {
     super.dispose();
   }
 
-  void _onEmailChanged() {
+  Future<void> _onEmailChanged() async {
     final email = _emailController.text.trim().toLowerCase();
-    setState(() {
-      if (email.contains("vertex")) {
-        _recognizedCompanyName = "Vertex Media Group";
-        _recognizedCompanyMembers = "25 members · Enterprise Pro";
-        _isCompanyRecognized = true;
-      } else if (email.contains("crestview")) {
-        _recognizedCompanyName = "Crestview Capital";
-        _recognizedCompanyMembers = "18 members · Enterprise";
-        _isCompanyRecognized = true;
-      } else if (email.contains("@") && email.split("@").last.isNotEmpty) {
-        final domain = email.split("@").last;
-        final name = domain.split(".").first;
-        _recognizedCompanyName =
-            "${name[0].toUpperCase()}${name.substring(1)} Workspace";
-        _recognizedCompanyMembers = "Verified Organization Domain";
-        _isCompanyRecognized = true;
-      } else if (email.isNotEmpty) {
-        _recognizedCompanyName = "Acme Realty Group";
-        _recognizedCompanyMembers = "34 members · Enterprise";
-        _isCompanyRecognized = true;
-      } else {
-        _isCompanyRecognized = false;
+    if (email.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _isCompanyRecognized = false;
+        });
       }
-    });
+      return;
+    }
+
+    try {
+      final entInfo = await EmployeeLoginBackendService.instance.findEnterpriseByEmployeeEmail(email);
+      if (entInfo != null && mounted) {
+        setState(() {
+          _recognizedCompanyName = entInfo['companyName'] ?? "Acme Realty Group";
+          _recognizedCompanyMembers = "Verified Enterprise Member";
+          _isCompanyRecognized = true;
+        });
+      } else if (mounted) {
+        if (email.contains("@") && email.split("@").last.isNotEmpty) {
+          final domain = email.split("@").last;
+          final name = domain.split(".").first;
+          setState(() {
+            _recognizedCompanyName =
+                "${name[0].toUpperCase()}${name.substring(1)} Workspace";
+            _recognizedCompanyMembers = "Verified Organization Domain";
+            _isCompanyRecognized = true;
+          });
+        } else {
+          setState(() {
+            _recognizedCompanyName = "Acme Realty Group";
+            _recognizedCompanyMembers = "34 members · Enterprise";
+            _isCompanyRecognized = true;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('[EmployeeLoginScreen] Email lookup error: $e');
+    }
   }
 
-  void _onLogin() {
+  Future<void> _onLogin() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final roleStr = _selectedTab == 1
@@ -128,34 +144,75 @@ class _EmployeeLoginScreenState extends ConsumerState<EmployeeLoginScreen> {
       return;
     }
 
-    // Default enterprise / employee login flow
+    // --- Employee Login Flow (Image 2) ---
     setState(() {
       _isLoading = true;
     });
 
-    final user = UserModel(
-      id: 'emp_user_1',
-      name: 'Alex Johnson',
-      email: email.isNotEmpty ? email : 'alex@acmerealty.com',
-      role: roleStr,
-    );
+    // Check if employee work email is enrolled
+    final emailCheck = await EmployeeEmailFetchService.instance.verifyEmployeeEmail(email);
+    if (!emailCheck.isEnrolled) {
+      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        EmployeeEmailFetchService.showEmailNotEnrolledDialog(
+          context,
+          email: email,
+        );
+      }
+      return;
+    }
 
-    ref.read(authProvider.notifier).login(user);
+    try {
+      final result = await EmployeeLoginBackendService.instance.loginEmployee(
+        email: email,
+        password: password,
+      );
 
-    Future.delayed(const Duration(milliseconds: 300), () {
+      if (!result.success) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.message),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+        return;
+      }
+
+      if (result.userModel != null) {
+        ref.read(authProvider.notifier).login(result.userModel!);
+      }
+
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
-
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.message),
+            backgroundColor: const Color(0xFF16A34A),
+          ),
+        );
         if (roleStr == 'enterprise') {
           context.go('/enterprise-onboarding');
         } else {
           context.go('/portal');
         }
       }
-    });
+    } catch (e) {
+      debugPrint('[EmployeeLoginScreen] login error: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {

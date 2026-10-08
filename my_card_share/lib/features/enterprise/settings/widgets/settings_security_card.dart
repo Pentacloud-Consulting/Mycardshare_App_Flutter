@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'settings_sso_integration.dart';
+import 'settings_api_access.dart';
+import 'settings_admin_roles.dart';
 
 class SettingsSecurityCard extends StatefulWidget {
   final VoidCallback? onApiAccessTap;
@@ -15,7 +18,7 @@ class SettingsSecurityCard extends StatefulWidget {
 }
 
 class _SettingsSecurityCardState extends State<SettingsSecurityCard> {
-  bool _ssoEnabled = false;
+  final bool _ssoEnabled = false;
 
   @override
   Widget build(BuildContext context) {
@@ -47,78 +50,92 @@ class _SettingsSecurityCardState extends State<SettingsSecurityCard> {
           ),
           child: Column(
             children: [
-              // Row 1: SSO Integration with Toggle Switch (OFF/gray by default)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFECFDF5),
-                        borderRadius: BorderRadius.circular(9),
-                      ),
-                      child: const Icon(
-                        Icons.shield_outlined,
-                        color: Color(0xFF059669),
-                        size: 17,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text(
-                        "SSO Integration",
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF0F172A),
+              // Row 1: SSO Integration (Opens coming soon modal on tap or toggle)
+              InkWell(
+                onTap: () => showSsoComingSoonPopup(context),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFECFDF5),
+                          borderRadius: BorderRadius.circular(9),
+                        ),
+                        child: const Icon(
+                          Icons.shield_outlined,
+                          color: Color(0xFF059669),
+                          size: 17,
                         ),
                       ),
-                    ),
-                    Switch(
-                      value: _ssoEnabled,
-                      activeThumbColor: const Color(0xFF0052FF),
-                      activeTrackColor: const Color(0xFFDBEAFE),
-                      onChanged: (val) {
-                        setState(() {
-                          _ssoEnabled = val;
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(val
-                                ? "SSO Authentication Enabled"
-                                : "SSO Authentication Disabled"),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          "SSO Integration",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
                           ),
-                        );
-                      },
-                    ),
-                  ],
+                        ),
+                      ),
+                      Switch(
+                        value: _ssoEnabled,
+                        activeThumbColor: const Color(0xFF0052FF),
+                        activeTrackColor: const Color(0xFFDBEAFE),
+                        onChanged: (val) {
+                          showSsoComingSoonPopup(context);
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const Divider(height: 1, color: Color(0xFFF1F5F9)),
 
-              // Row 2: API Access
-              _buildSettingRow(
-                icon: Icons.key_rounded,
-                iconColor: const Color(0xFF7C3AED),
-                iconBg: const Color(0xFFF3E8FF),
-                title: "API Access",
-                onTap: widget.onApiAccessTap,
+              // Row 2: API Access (Opens coming soon modal)
+              InkWell(
+                onTap: widget.onApiAccessTap ?? () => showApiAccessComingSoonPopup(context),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF3E8FF),
+                          borderRadius: BorderRadius.all(Radius.circular(9)),
+                        ),
+                        child: const Icon(Icons.key_rounded, color: Color(0xFF7C3AED), size: 17),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          "API Access",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: Color(0xFF94A3B8),
+                        size: 18,
+                      ),
+                    ],
+                  ),
+                ),
               ),
               const Divider(height: 1, color: Color(0xFFF1F5F9)),
 
-              // Row 3: Admin Roles
-              _buildSettingRow(
-                icon: Icons.admin_panel_settings_rounded,
-                iconColor: const Color(0xFF0052FF),
-                iconBg: const Color(0xFFEFF4FF),
-                title: "Admin Roles",
-                onTap: widget.onAdminRolesTap,
+              // Row 3: Admin Roles (Streamed real admin count & management page)
+              SettingsAdminRolesRow(
+                onTap: widget.onAdminRolesTap ?? () => showAdminRolesPage(context),
               ),
             ],
           ),
@@ -126,50 +143,4 @@ class _SettingsSecurityCardState extends State<SettingsSecurityCard> {
       ],
     );
   }
-
-  Widget _buildSettingRow({
-    required IconData icon,
-    required Color iconColor,
-    required Color iconBg,
-    required String title,
-    VoidCallback? onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-        child: Row(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: iconBg,
-                borderRadius: BorderRadius.circular(9),
-              ),
-              child: Icon(icon, color: iconColor, size: 17),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
-                ),
-              ),
-            ),
-            const Icon(
-              Icons.chevron_right_rounded,
-              color: Color(0xFF94A3B8),
-              size: 18,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
-
-

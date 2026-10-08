@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../subscription/subscription_screen.dart';
+import 'settings_billing_history.dart';
+import 'settings_payment_method.dart';
 
 class SettingsBillingCard extends StatelessWidget {
   final VoidCallback? onSubscriptionPlanTap;
@@ -42,9 +45,12 @@ class SettingsBillingCard extends StatelessWidget {
           ),
           child: Column(
             children: [
-              // Row 1: Subscription Plan with "Enterprise Pro" small blue badge tag
+              // Row 1: Subscription Plan with "Enterprise Pro" small blue badge tag (Image 1 style)
               InkWell(
-                onTap: onSubscriptionPlanTap,
+                onTap: onSubscriptionPlanTap ??
+                    () => Navigator.of(context, rootNavigator: true).push(
+                          MaterialPageRoute(builder: (ctx) => const SubscriptionScreen()),
+                        ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                   child: Row(
@@ -101,85 +107,20 @@ class SettingsBillingCard extends StatelessWidget {
               ),
               const Divider(height: 1, color: Color(0xFFF1F5F9)),
 
-              // Row 2: Billing History
-              _buildSettingRow(
-                icon: Icons.receipt_long_rounded,
-                iconColor: const Color(0xFF7C3AED),
-                iconBg: const Color(0xFFF3E8FF),
-                title: "Billing History",
-                onTap: onBillingHistoryTap,
+              // Row 2: Billing History (Image 2 style)
+              SettingsBillingHistoryRow(
+                onTap: onBillingHistoryTap ?? () => showBillingHistoryPage(context),
               ),
               const Divider(height: 1, color: Color(0xFFF1F5F9)),
 
-              // Row 3: Payment Method
-              _buildSettingRow(
-                icon: Icons.credit_card_rounded,
-                iconColor: const Color(0xFF0D9488),
-                iconBg: const Color(0xFFCCFBF1),
-                title: "Payment Method",
-                trailingText: "•••• 4242",
-                onTap: onPaymentMethodTap,
+              // Row 3: Payment Method (Streamed real payment method)
+              SettingsPaymentMethodRow(
+                onTap: onPaymentMethodTap ?? () => showPaymentMethodPage(context),
               ),
             ],
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildSettingRow({
-    required IconData icon,
-    required Color iconColor,
-    required Color iconBg,
-    required String title,
-    String? trailingText,
-    VoidCallback? onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-        child: Row(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: iconBg,
-                borderRadius: BorderRadius.circular(9),
-              ),
-              child: Icon(icon, color: iconColor, size: 17),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
-                ),
-              ),
-            ),
-            if (trailingText != null) ...[
-              Text(
-                trailingText,
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF94A3B8),
-                ),
-              ),
-              const SizedBox(width: 6),
-            ],
-            const Icon(
-              Icons.chevron_right_rounded,
-              color: Color(0xFF94A3B8),
-              size: 18,
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

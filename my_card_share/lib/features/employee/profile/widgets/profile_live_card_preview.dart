@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../../backend/individual/profile/individual_profile_store.dart';
+import '../../../../backend/employee_join/banner fetch/banner fetch.dart';
 
 class ProfileLiveCardPreview extends StatelessWidget {
   final String name;
@@ -91,8 +92,9 @@ class ProfileLiveCardPreview extends StatelessWidget {
   }
 
   Widget _buildBannerImageWidget() {
-    final activeBanner = bannerPhoto ?? IndividualProfileStore.instance.activeProfile?.bannerPhoto;
-    return _buildImageWidget(activeBanner, fallback: const SizedBox.shrink());
+    final rawBanner = bannerPhoto ?? IndividualProfileStore.instance.activeProfile?.bannerPhoto;
+    final effectiveBanner = EmployeeBannerFetchService.instance.getEffectiveBanner(rawBanner);
+    return _buildImageWidget(effectiveBanner, fallback: const SizedBox.shrink());
   }
 
   @override

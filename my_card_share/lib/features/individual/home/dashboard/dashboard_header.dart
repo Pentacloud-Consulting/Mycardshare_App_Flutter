@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../../backend/employee_join/home/employee_home_backend.dart';
-import '../../../../backend/enterprise/profile/enterprise_profile_store.dart';
+import '../../../../backend/individual/profile/individual_profile_store.dart';
+import '../../../../backend/individual/multiple_store/individual_multi_store.dart';
 
-/// Top Header component matching Image 1: Drawer Icon + Hi, User + Company Pill Badge + Bell Notification
+/// Top Header component for Individual Users
 class DashboardHeader extends StatelessWidget {
   final String? userName;
   final String? companyName;
@@ -20,26 +20,24 @@ class DashboardHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: EmployeeHomeBackendService.instance,
+      listenable: IndividualProfileStore.instance,
       builder: (context, _) {
-        final homeBackend = EmployeeHomeBackendService.instance;
-        final entProfile = EnterpriseProfileStore.instance.currentProfile;
+        final activeProfile = IndividualProfileStore.instance.activeProfile;
+        final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
 
         final resolvedName = (userName != null && userName!.trim().isNotEmpty && userName != "User")
             ? userName!.trim()
-            : (homeBackend.userName.isNotEmpty && homeBackend.userName != "User"
-                ? homeBackend.userName
-                : "Zuhaib");
+            : (activeProfile?.fullName.isNotEmpty == true
+                ? activeProfile!.fullName.split(' ').first
+                : (storedUser?.fullName.isNotEmpty == true ? storedUser!.fullName.split(' ').first : "User"));
 
-        final resolvedCompany = (companyName != null && companyName!.trim().isNotEmpty && companyName != "MyCardShare Member" && companyName != "Enterprise Workspace")
+        final resolvedCompany = (companyName != null && companyName!.trim().isNotEmpty && companyName != "MyCardShare Member")
             ? companyName!.trim()
-            : (homeBackend.companyName.isNotEmpty && homeBackend.companyName != "Enterprise Workspace"
-                ? homeBackend.companyName
-                : (entProfile?.companyName.isNotEmpty == true ? entProfile!.companyName : "Islamic Web"));
+            : (activeProfile?.companyName.isNotEmpty == true ? activeProfile!.companyName : "Pro Member");
 
         return Row(
           children: [
-            // Left: Circular Drawer / Menu Icon Button (Image 1 top-left)
+            // Left: Circular Drawer / Menu Icon Button
             GestureDetector(
               onTap: onMenuTap ??
                   () {
@@ -61,7 +59,7 @@ class DashboardHeader extends StatelessWidget {
             ),
             const SizedBox(width: 12),
 
-            // Center: Hi, User + Company Pill Badge (Image 1 center)
+            // Center: Hi, User + Company / Pro Badge
             Expanded(
               child: Row(
                 children: [
@@ -87,7 +85,7 @@ class DashboardHeader extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
 
-                  // Enterprise Company Pill Badge (Image 1: [🏢 Acme Realty] / [🏢 Islamic Web])
+                  // Pill Badge
                   Flexible(
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -100,7 +98,7 @@ class DashboardHeader extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const Icon(
-                            Icons.domain_rounded,
+                            Icons.workspace_premium_rounded,
                             color: Color(0xFF0066FF),
                             size: 13,
                           ),
@@ -125,7 +123,7 @@ class DashboardHeader extends StatelessWidget {
             ),
             const SizedBox(width: 8),
 
-            // Right: Notification Bell Button (Image 1 top-right)
+            // Right: Notification Bell Button
             GestureDetector(
               onTap: onNotificationTap ??
                   () {
@@ -170,3 +168,4 @@ class DashboardHeader extends StatelessWidget {
     );
   }
 }
+

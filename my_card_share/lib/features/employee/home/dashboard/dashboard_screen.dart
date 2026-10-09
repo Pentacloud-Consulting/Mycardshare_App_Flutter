@@ -18,6 +18,7 @@ import '../../../../backend/individual/previews/individual_metrics_store.dart';
 import '../../../../backend/individual/previews/publish_unpublish.dart';
 import '../../../../backend/employee_join/home/employee_home_backend.dart';
 import '../../../../backend/employee_join/home/employee_stats_backend.dart';
+import '../../../../backend/employee_join/banner fetch/banner fetch.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -51,6 +52,7 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
     // Load real Employee Home & Stats Backend Services
     EmployeeHomeBackendService.instance.loadEmployeeHomeData();
     EmployeeStatsBackendService.instance.loadEmployeeStats();
+    EmployeeBannerFetchService.instance.fetchEnterpriseBrand();
 
     final fbUser = FirebaseAuth.instance.currentUser;
     if (fbUser != null) {
@@ -134,6 +136,7 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
         PublishUnpublishService.instance,
         EmployeeHomeBackendService.instance,
         EmployeeStatsBackendService.instance,
+        EmployeeBannerFetchService.instance,
       ]),
       builder: (context, _) {
         final firebaseUser = FirebaseAuth.instance.currentUser;
@@ -141,6 +144,7 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
         final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
         final isPublished = PublishUnpublishService.instance.isPublished;
         final empBackend = EmployeeHomeBackendService.instance;
+        final brandFetch = EmployeeBannerFetchService.instance;
 
         final displayName = (empBackend.userName.isNotEmpty && empBackend.userName != "User")
             ? empBackend.userName
@@ -152,7 +156,8 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
 
         final displayPhoto = empBackend.avatarUrl ?? (activeProfile?.profilePhoto?.isNotEmpty == true ? activeProfile!.profilePhoto : null)
             ?? (firebaseUser?.photoURL?.isNotEmpty == true ? firebaseUser!.photoURL : null);
-        final displayBanner = (activeProfile?.bannerPhoto?.isNotEmpty == true ? activeProfile!.bannerPhoto : null);
+        final rawUserBanner = activeProfile?.bannerPhoto?.isNotEmpty == true ? activeProfile!.bannerPhoto : null;
+        final displayBanner = brandFetch.getEffectiveBanner(rawUserBanner);
 
         final displayRole = (empBackend.role.isNotEmpty && empBackend.role != "Member")
             ? empBackend.role

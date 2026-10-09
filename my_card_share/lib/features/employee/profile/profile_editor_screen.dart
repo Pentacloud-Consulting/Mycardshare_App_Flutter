@@ -12,6 +12,7 @@ import 'widgets/profile_live_card_preview.dart';
 import 'widgets/profile_slug_section.dart';
 import 'widgets/profile_social_links.dart';
 import 'widgets/profile_template_selector.dart';
+import '../../../backend/employee_join/banner fetch/banner fetch.dart';
 
 class ProfileEditorScreen extends StatefulWidget {
   const ProfileEditorScreen({super.key});
@@ -77,6 +78,14 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
     _nameController.addListener(() => setState(() {}));
     _roleController.addListener(() => setState(() {}));
     _companyController.addListener(() => setState(() {}));
+
+    EmployeeBannerFetchService.instance.fetchEnterpriseBrand().then((data) {
+      if (mounted && data != null && data.isBannerLocked && data.lockedBannerUrl != null && data.lockedBannerUrl!.isNotEmpty) {
+        setState(() {
+          _bannerImagePath = data.lockedBannerUrl;
+        });
+      }
+    });
   }
 
   @override
@@ -192,6 +201,30 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
   }
 
   void _pickBannerImage() {
+    if (EmployeeBannerFetchService.instance.isBannerLocked) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.lock_rounded, color: Colors.white, size: 18),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Organization banner is locked by your enterprise. Employees cannot modify the official brand cover banner.',
+                  style: TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: const Color(0xFF0F172A),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+      return;
+    }
+
     _showImagePickerModal(
       title: "Update Banner Image",
       hasExistingImage: _bannerImagePath != null && _bannerImagePath!.isNotEmpty,
@@ -628,39 +661,52 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
               const SizedBox(height: 16),
 
               // Upload Banner Image Action Button
-              GestureDetector(
-                onTap: _pickBannerImage,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x06000000),
-                        blurRadius: 6,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.add_photo_alternate_rounded, color: Color(0xFF0052FF), size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        "Upload Custom Banner Image",
-                        style: TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0052FF),
+              ListenableBuilder(
+                listenable: EmployeeBannerFetchService.instance,
+                builder: (context, _) {
+                  final isLocked = EmployeeBannerFetchService.instance.isBannerLocked;
+                  return GestureDetector(
+                    onTap: _pickBannerImage,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: isLocked ? const Color(0xFFF8FAFC) : Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isLocked ? const Color(0xFFCBD5E1) : const Color(0xFFE2E8F0),
+                          width: 1.2,
                         ),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x06000000),
+                            blurRadius: 6,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            isLocked ? Icons.lock_rounded : Icons.add_photo_alternate_rounded,
+                            color: isLocked ? const Color(0xFF64748B) : const Color(0xFF0052FF),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            isLocked ? "Banner Locked by Organization" : "Upload Custom Banner Image",
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.bold,
+                              color: isLocked ? const Color(0xFF64748B) : const Color(0xFF0052FF),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
 
               const SizedBox(height: 20),

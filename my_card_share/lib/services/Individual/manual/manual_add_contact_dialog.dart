@@ -59,10 +59,13 @@ class _ManualAddContactDialogState extends ConsumerState<ManualAddContactDialog>
 
       if (!mounted) return;
 
+      final currentPath = GoRouterState.of(context).uri.path;
       if (Navigator.canPop(context)) {
         Navigator.pop(context);
       }
-      context.push('/portal/vault');
+      if (currentPath != '/portal/vault') {
+        context.push('/portal/vault');
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

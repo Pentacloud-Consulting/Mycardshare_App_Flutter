@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -48,14 +49,41 @@ class ProfileLiveCardPreview extends StatelessWidget {
     if (photo == null || photo.trim().isEmpty) return fallback;
     final p = photo.trim();
 
+    // 1. Data URI / Base64
+    if (p.startsWith('data:image')) {
+      try {
+        final commaIdx = p.indexOf(',');
+        final base64Str = commaIdx != -1 ? p.substring(commaIdx + 1) : p;
+        final bytes = base64Decode(base64Str);
+        return Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          errorBuilder: (ctx, err, st) => fallback,
+        );
+      } catch (_) {
+        return fallback;
+      }
+    }
+
+    // 2. Remote Network Image (Firebase Storage / Cloud)
     if (p.startsWith('http://') || p.startsWith('https://')) {
-      return Image.network(p, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => fallback);
+      return Image.network(
+        p,
+        fit: BoxFit.cover,
+        errorBuilder: (ctx, err, st) => fallback,
+      );
     }
 
+    // 3. Asset Image
     if (p.startsWith('assets/') || p.startsWith('asset/')) {
-      return Image.asset(p, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => fallback);
+      return Image.asset(
+        p,
+        fit: BoxFit.cover,
+        errorBuilder: (ctx, err, st) => fallback,
+      );
     }
 
+    // 4. Local File (ImagePicker result)
     try {
       if (kIsWeb) {
         return Image.network(p, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => fallback);
@@ -117,92 +145,104 @@ class ProfileLiveCardPreview extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Banner Image & Quote Header
-          Stack(
-            alignment: Alignment.bottomCenter,
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                height: 110,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: gradientColors,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
+          // Banner & Avatar Container with Full Hit-Test Coverage
+          SizedBox(
+            height: 148,
+            width: double.infinity,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // Top Banner Box (height 110)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 110,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: gradientColors,
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(20),
+                        topRight: Radius.circular(20),
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(20),
+                        topRight: Radius.circular(20),
+                      ),
+                      child: _buildBannerImageWidget(),
+                    ),
                   ),
                 ),
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                  ),
-                  child: _buildBannerImageWidget(),
-                ),
-              ),
 
-              // Overlapping Avatar with Camera Edit Badge
-              Positioned(
-                bottom: -32,
-                child: GestureDetector(
-                  onTap: onAvatarEditTap ??
-                      () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Upload photo clicked")),
-                        );
-                      },
-                  behavior: HitTestBehavior.opaque,
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Container(
-                        width: 76,
-                        height: 76,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 3),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x15000000),
-                              blurRadius: 8,
-                              offset: Offset(0, 3),
+                // Overlapping Avatar with Camera Edit Badge - Positioned inside SizedBox
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: GestureDetector(
+                      onTap: onAvatarEditTap ??
+                          () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("Upload photo clicked")),
+                            );
+                          },
+                      behavior: HitTestBehavior.opaque,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            width: 76,
+                            height: 76,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 3),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x15000000),
+                                  blurRadius: 8,
+                                  offset: Offset(0, 3),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        child: ClipOval(
-                          child: _buildAvatarWidget(),
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          width: 26,
-                          height: 26,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0052FF),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
+                            child: ClipOval(
+                              child: _buildAvatarWidget(),
+                            ),
                           ),
-                          child: const Icon(
-                            Icons.camera_alt_rounded,
-                            color: Colors.white,
-                            size: 13,
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              width: 26,
+                              height: 26,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0052FF),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                              ),
+                              child: const Icon(
+                                Icons.camera_alt_rounded,
+                                color: Colors.white,
+                                size: 13,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
 
-          const SizedBox(height: 38),
+          const SizedBox(height: 12),
 
           // User Info & Status Tag
           Padding(
@@ -241,7 +281,7 @@ class ProfileLiveCardPreview extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: isPublished ? const Color(0xFFDCFCE7) : const Color(0xFFFEF9C3), // Green-100 or Yellow-100
+                    color: isPublished ? const Color(0xFFDCFCE7) : const Color(0xFFFEF9C3),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -251,7 +291,7 @@ class ProfileLiveCardPreview extends StatelessWidget {
                         width: 6,
                         height: 6,
                         decoration: BoxDecoration(
-                          color: isPublished ? const Color(0xFF22C55E) : const Color(0xFFEAB308), // Green-500 or Yellow-500
+                          color: isPublished ? const Color(0xFF22C55E) : const Color(0xFFEAB308),
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -261,7 +301,7 @@ class ProfileLiveCardPreview extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 9.5,
                           fontWeight: FontWeight.bold,
-                          color: isPublished ? const Color(0xFF15803D) : const Color(0xFFA16207), // Green-700 or Yellow-700
+                          color: isPublished ? const Color(0xFF15803D) : const Color(0xFFA16207),
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -276,5 +316,3 @@ class ProfileLiveCardPreview extends StatelessWidget {
     );
   }
 }
-
-

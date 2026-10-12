@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'individual_metrics_store.dart';
+import '../notification/scan_notification_service.dart';
 
 class ProfileViewRecord {
   final String id;
@@ -100,6 +101,10 @@ class UsersViewService extends ChangeNotifier {
       targetUid: targetUid,
       viewerName: viewerName,
       source: 'qr_scan',
+    );
+    await ScanNotificationService.instance.notifyCardScanned(
+      targetUid: targetUid,
+      viewerName: viewerName,
     );
   }
 

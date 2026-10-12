@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../backend/individual/profile/individual_profile_store.dart';
 import '../../../../backend/individual/multiple_store/individual_multi_store.dart';
@@ -8,6 +9,7 @@ import '../../../../backend/individual/connects/email.dart';
 class CardQuickActions extends StatelessWidget {
   final String? email;
   final String? phone;
+  final String? recipientName;
   final VoidCallback? onEmailTap;
   final VoidCallback? onCallTap;
 
@@ -15,6 +17,7 @@ class CardQuickActions extends StatelessWidget {
     super.key,
     this.email,
     this.phone,
+    this.recipientName,
     this.onEmailTap,
     this.onCallTap,
   });
@@ -33,12 +36,32 @@ class CardQuickActions extends StatelessWidget {
     final targetPhone = (phone?.trim().isNotEmpty == true ? phone!.trim() : null)
         ?? (activeProfile?.phoneNumber.trim().isNotEmpty == true ? activeProfile!.phoneNumber.trim() : "");
 
+    final targetName = (recipientName?.trim().isNotEmpty == true ? recipientName!.trim() : null)
+        ?? (activeProfile?.fullName.trim().isNotEmpty == true ? activeProfile!.fullName.trim() : null)
+        ?? (storedUser?.fullName.trim().isNotEmpty == true ? storedUser!.fullName.trim() : "");
+
     return Row(
       children: [
         Expanded(
           child: _buildActionPillButton(
             icon: Icons.mail_outline_rounded,
             label: "Email",
+            onLongPress: () async {
+              if (targetEmail.isNotEmpty) {
+                HapticFeedback.lightImpact();
+                await EmailConnectService.instance.copyEmailToClipboard(targetEmail);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Email copied to clipboard: $targetEmail"),
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      backgroundColor: const Color(0xFF0F172A),
+                    ),
+                  );
+                }
+              }
+            },
             onTap: onEmailTap ??
                 () async {
                   if (targetEmail.isEmpty) {
@@ -51,18 +74,58 @@ class CardQuickActions extends StatelessWidget {
                     );
                     return;
                   }
+
+                  final greeting = targetName.isNotEmpty ? "Hi $targetName," : "Hi,";
+                  final emailBody = "$greeting\n\nI came across your digital business card on MyCardShare and would like to connect with you.\n\nLooking forward to connecting!\n\nBest regards,";
+
                   final launched = await EmailConnectService.instance.sendEmail(
                     emailAddress: targetEmail,
                     subject: "Connection Request from MyCardShare",
+                    body: emailBody,
                   );
-                  if (!launched && context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text("Email address: $targetEmail"),
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                    );
+
+                  if (context.mounted) {
+                    if (launched) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Row(
+                            children: [
+                              const Icon(Icons.mark_email_read_rounded, color: Colors.white, size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  "Opening email app for $targetEmail",
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          backgroundColor: const Color(0xFF0F172A),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          action: SnackBarAction(
+                            label: "Copy",
+                            textColor: const Color(0xFF38BDF8),
+                            onPressed: () {
+                              EmailConnectService.instance.copyEmailToClipboard(targetEmail);
+                            },
+                          ),
+                          duration: const Duration(seconds: 4),
+                        ),
+                      );
+                    } else {
+                      await EmailConnectService.instance.copyEmailToClipboard(targetEmail);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Email copied to clipboard: $targetEmail"),
+                            backgroundColor: const Color(0xFF0F172A),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                        );
+                      }
+                    }
                   }
                 },
           ),
@@ -72,6 +135,22 @@ class CardQuickActions extends StatelessWidget {
           child: _buildActionPillButton(
             icon: Icons.phone_outlined,
             label: "Call",
+            onLongPress: () async {
+              if (targetPhone.isNotEmpty) {
+                HapticFeedback.lightImpact();
+                await Clipboard.setData(ClipboardData(text: targetPhone));
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Phone number copied: $targetPhone"),
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      backgroundColor: const Color(0xFF0F172A),
+                    ),
+                  );
+                }
+              }
+            },
             onTap: onCallTap ??
                 () async {
                   if (targetPhone.isEmpty) {
@@ -105,6 +184,7 @@ class CardQuickActions extends StatelessWidget {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
+    VoidCallback? onLongPress,
   }) {
     return Container(
       height: 46,
@@ -120,27 +200,29 @@ class CardQuickActions extends StatelessWidget {
           ),
         ],
       ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(23),
-        onTap: onTap,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: const Color(0xFF0F172A), size: 19),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(23),
+          onTap: onTap,
+          onLongPress: onLongPress,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: const Color(0xFF0F172A), size: 19),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
-
-

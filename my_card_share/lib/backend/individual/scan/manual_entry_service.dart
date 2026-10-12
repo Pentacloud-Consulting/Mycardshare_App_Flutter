@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../previews/individual_metrics_store.dart';
 import 'card_scan_service.dart';
+import '../notification/vault_notification_service.dart';
 
 /// Service to process Manual Entry contact creation, save to Firestore, and update Scan metrics.
 class ManualEntryService {
@@ -47,6 +48,14 @@ class ManualEntryService {
 
         // Increment real Scans metric on Home dashboard
         await IndividualMetricsStore.instance.incrementScans(uid);
+
+        // Send real notification to Contact Vault owner
+        await VaultNotificationService.instance.notifyContactSaved(
+          targetUid: uid,
+          contactName: contact.name,
+          method: 'Manual',
+        );
+
         debugPrint('[ManualEntryService] Manual contact saved & scan metric incremented for UID: $uid');
       } catch (e) {
         debugPrint('[ManualEntryService] Firestore save notice: $e');

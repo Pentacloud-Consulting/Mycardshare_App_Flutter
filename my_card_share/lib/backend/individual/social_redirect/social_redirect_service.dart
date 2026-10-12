@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../connects/email.dart';
 
 /// Social Redirect Service
 /// Handles real app-level deep linking and web redirects for social platforms,
@@ -227,8 +228,23 @@ class SocialRedirectService {
     final cleanEmail = email.replaceAll('mailto:', '').trim();
     if (cleanEmail.isEmpty) return false;
 
-    final uri = Uri.parse("mailto:$cleanEmail");
-    return await _launchSingleUri(uri, platformName: "Email", context: context);
+    final launched = await EmailConnectService.instance.sendEmail(
+      emailAddress: cleanEmail,
+      subject: "Connection Request from MyCardShare",
+    );
+
+    if (!launched) {
+      await EmailConnectService.instance.copyEmailToClipboard(cleanEmail);
+      if (context != null && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Email copied to clipboard: $cleanEmail"),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+    return launched;
   }
 
   // --------------------------------------------------------------------------

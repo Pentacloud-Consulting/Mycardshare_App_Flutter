@@ -222,8 +222,11 @@ class EmployeeLoginBackendService {
         status: 'Active',
       );
 
+      final employeeUid = _auth.currentUser?.uid ??
+          cleanEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+
       final userModel = UserModel(
-        id: targetUid,
+        id: employeeUid,
         name: fullName,
         email: cleanEmail,
         role: 'employee',
@@ -244,6 +247,8 @@ class EmployeeLoginBackendService {
       final companyName = fallbackProfile?.companyName ?? 'Islamic Web';
       final targetUid = fallbackProfile?.uid ?? 'ent_islamic_web';
       final name = cleanEmail.split('@').first;
+      final employeeUid = _auth.currentUser?.uid ??
+          cleanEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
 
       return EmployeeLoginResult(
         success: true,
@@ -251,7 +256,7 @@ class EmployeeLoginBackendService {
         enterpriseUid: targetUid,
         companyName: companyName,
         userModel: UserModel(
-          id: targetUid,
+          id: employeeUid,
           name: name,
           email: cleanEmail,
           role: 'employee',

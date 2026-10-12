@@ -17,6 +17,7 @@ import '../../../backend/employee_join/home/employee_home_backend.dart';
 import '../../../backend/employee_join/home/employee_stats_backend.dart';
 import '../../../notifications/individual/login_popup.dart';
 import '../../../notifications/enterprise/login_popup.dart';
+import '../../../backend/app view/app_view_auth_gate.dart';
 import '../back/smart_back_handler.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -59,6 +60,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           .limit(1)
           .get();
       if (entSnap.docs.isNotEmpty) return 'enterprise';
+
+      // Check if enrolled as employee
+      final empCheck = await EmployeeEmailFetchService.instance.verifyEmployeeEmail(cleanEmail);
+      if (empCheck.isEnrolled) return 'employee';
     } catch (e) {
       debugPrint('[LoginScreen] Error fetching role by email: $e');
     }
@@ -137,6 +142,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
 
+    if (_selectedTab == 0 && preCheckRole == 'employee') {
+      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        EnterpriseCategoryMismatchDialog.show(
+          context,
+          registeredCategory: 'Employee',
+          currentTabCategory: 'Individual',
+          onSwitchTab: () => setState(() => _selectedTab = 2),
+        );
+      }
+      return;
+    }
+
     if (_selectedTab == 2) {
       if (preCheckRole == 'enterprise') {
         if (mounted) setState(() => _isLoading = false);
@@ -146,6 +164,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             registeredCategory: 'Enterprise',
             currentTabCategory: 'Employee',
             onSwitchTab: () => setState(() => _selectedTab = 1),
+          );
+        }
+        return;
+      }
+      if (preCheckRole == 'individual') {
+        if (mounted) setState(() => _isLoading = false);
+        if (mounted) {
+          EnterpriseCategoryMismatchDialog.show(
+            context,
+            registeredCategory: 'Individual',
+            currentTabCategory: 'Employee',
+            onSwitchTab: () => setState(() => _selectedTab = 0),
           );
         }
         return;
@@ -176,13 +206,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       setState(() => _isLoading = false);
 
       if (result.success) {
+        final fbUid = FirebaseAuth.instance.currentUser?.uid;
         final user = result.userModel ?? UserModel(
-          id: result.enterpriseUid ?? 'emp_1',
+          id: fbUid ?? email.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_'),
           name: email.split('@').first,
           email: email,
           role: 'employee',
         );
         ref.read(authProvider.notifier).login(user);
+        await AppViewAuthGate.instance.savePersistentSession(user);
 
         // Hydrate employee home & stats data live
         EmployeeHomeBackendService.instance.loadEmployeeHomeData();
@@ -250,6 +282,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           role: roleStr,
         );
         ref.read(authProvider.notifier).login(user);
+        await AppViewAuthGate.instance.savePersistentSession(user);
         if (mounted) {
           if (result.onboardingCompleted) {
             context.go('/enterprise/dashboard');
@@ -333,13 +366,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         return;
       }
 
+      if (_selectedTab == 0 && registeredRole == 'employee') {
+        await FirebaseAuth.instance.signOut();
+        ref.read(authProvider.notifier).logout();
+        if (mounted) {
+          EnterpriseCategoryMismatchDialog.show(
+            context,
+            registeredCategory: 'Employee',
+            currentTabCategory: 'Individual',
+            onSwitchTab: () => setState(() => _selectedTab = 2),
+          );
+        }
+        return;
+      }
+
       final user = UserModel(
         id: fbUser.uid,
         name: fbUser.displayName ?? email,
         email: fbUser.email ?? email,
-        role: roleStr,
+        role: 'individual',
       );
       ref.read(authProvider.notifier).login(user);
+      await AppViewAuthGate.instance.savePersistentSession(user);
       if (mounted) context.go('/portal');
     }
   }

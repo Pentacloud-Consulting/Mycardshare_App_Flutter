@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../connects/email.dart';
 
 /// Backend service for Vault contact actions: Call, SMS/Message, Email, Copy, and Real Social Platform Card Sharing.
 class VaultShareService {
@@ -75,17 +76,17 @@ class VaultShareService {
       return;
     }
 
-    final subject = Uri.encodeComponent('Connecting with ${contactName ?? 'you'}');
-    final Uri uri = Uri.parse('mailto:$email?subject=$subject');
+    final subject = 'Connecting with ${contactName ?? 'you'}';
+    final greeting = contactName != null && contactName.trim().isNotEmpty ? 'Hi $contactName,' : 'Hi,';
+    final body = '$greeting\n\nI would like to connect with you via MyCardShare.\n\nLooking forward to connecting!\n\nBest regards,';
 
-    try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri);
-      } else {
-        if (!context.mounted) return;
-        await copyToClipboard(context, email, 'Email address');
-      }
-    } catch (e) {
+    final launched = await EmailConnectService.instance.sendEmail(
+      emailAddress: email,
+      subject: subject,
+      body: body,
+    );
+
+    if (!launched) {
       if (!context.mounted) return;
       await copyToClipboard(context, email, 'Email address');
     }

@@ -17,7 +17,7 @@ class LeadData {
   final String company;
   final String notes;
   final String status; // 'New', 'Contacted', 'Qualified', 'Lost'
-  final String source; // 'via qr_scan', 'via Voice', 'via Manual'
+  final String source; // 'via QR Scan', 'via Voice', 'via Manual'
   final DateTime createdAt;
 
   LeadData({
@@ -29,7 +29,7 @@ class LeadData {
     required this.company,
     this.notes = '',
     this.status = 'New',
-    this.source = 'via qr_scan',
+    this.source = 'via QR Scan',
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -65,7 +65,7 @@ class LeadData {
       company: json['company'] ?? '',
       notes: json['notes'] ?? '',
       status: json['status'] ?? 'New',
-      source: json['source'] ?? 'via qr_scan',
+      source: json['source'] ?? 'via QR Scan',
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'] as String) ?? DateTime.now()
           : DateTime.now(),
@@ -182,7 +182,7 @@ class _LeadExchangeFormSheetState extends State<_LeadExchangeFormSheet> {
           ? _companyController.text.trim()
           : 'Independent',
       notes: _notesController.text.trim(),
-      source: 'via qr_scan',
+      source: 'via QR Scan',
       status: 'New',
     );
 

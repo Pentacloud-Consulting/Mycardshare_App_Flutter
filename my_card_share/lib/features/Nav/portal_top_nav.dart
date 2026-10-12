@@ -128,20 +128,26 @@ class PortalTopNav extends ConsumerWidget implements PreferredSizeWidget {
         final firebaseUser = FirebaseAuth.instance.currentUser;
 
         String resolvedUserName = userName;
-        final realName = (empBackend.userName.isNotEmpty && empBackend.userName != "User" ? empBackend.userName : null) ??
-            (activeProfile?.fullName.isNotEmpty == true ? activeProfile!.fullName : null) ??
-            (storedUser?.fullName.isNotEmpty == true ? storedUser!.fullName : null) ??
-            (firebaseUser?.displayName?.isNotEmpty == true ? firebaseUser!.displayName : null) ??
-            (firebaseUser?.email?.isNotEmpty == true ? firebaseUser!.email!.split('@').first : null);
+        final realName = isEmployee
+            ? ((empBackend.userName.isNotEmpty && empBackend.userName != "User" ? empBackend.userName : null) ??
+                (firebaseUser?.displayName?.isNotEmpty == true ? firebaseUser!.displayName : null) ??
+                (firebaseUser?.email?.isNotEmpty == true ? firebaseUser!.email!.split('@').first : null))
+            : ((activeProfile?.fullName.isNotEmpty == true ? activeProfile!.fullName : null) ??
+                (storedUser?.fullName.isNotEmpty == true ? storedUser!.fullName : null) ??
+                (firebaseUser?.displayName?.isNotEmpty == true ? firebaseUser!.displayName : null) ??
+                (firebaseUser?.email?.isNotEmpty == true ? firebaseUser!.email!.split('@').first : null));
+
         if (realName != null && realName.isNotEmpty) {
           resolvedUserName = realName.trim().split(' ').first;
         } else if (resolvedUserName == "Alex" || resolvedUserName == "User") {
           resolvedUserName = "Zuhaib";
         }
 
-        final resolvedCompany = (empBackend.companyName.isNotEmpty && empBackend.companyName != "Enterprise Workspace" && empBackend.companyName != "Acme Realty")
-            ? empBackend.companyName
-            : "Islamic Web";
+        final resolvedCompany = isEmployee
+            ? ((empBackend.companyName.isNotEmpty && empBackend.companyName != "Enterprise Workspace" && empBackend.companyName != "Acme Realty")
+                ? empBackend.companyName
+                : "Islamic Web")
+            : (activeProfile?.companyName ?? '');
 
         String currentPath = '/portal';
         try {
@@ -244,7 +250,7 @@ class PortalTopNav extends ConsumerWidget implements PreferredSizeWidget {
                               ],
                             ),
                           ),
-                          if (isEmployee || resolvedCompany.isNotEmpty) ...[
+                          if (isEmployee && resolvedCompany.isNotEmpty) ...[
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

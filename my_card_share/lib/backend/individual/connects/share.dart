@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../profile/individual_profile_store.dart';
 import '../scan_profile_view/scan_profile_view.dart';
+import 'email.dart';
 
 /// Backend service to handle real dynamic sharing of digital card profiles across platforms (WhatsApp, Email, SMS, Copy Link).
 class ShareCardService {
@@ -101,9 +102,11 @@ class _ShareCardModalSheet extends StatelessWidget {
   }
 
   Future<void> _shareToEmail(BuildContext context) async {
-    final subject = Uri.encodeComponent('$name - Digital Business Card');
-    final body = Uri.encodeComponent(_shareText);
-    final mailtoUrl = Uri.parse('mailto:?subject=$subject&body=$body');
+    final query = EmailConnectService.encodeQueryParameters({
+      'subject': '$name - Digital Business Card',
+      'body': _shareText,
+    });
+    final mailtoUrl = Uri(scheme: 'mailto', query: query);
 
     try {
       if (await canLaunchUrl(mailtoUrl)) {

@@ -133,6 +133,7 @@ class _IndividualCardScreenState extends State<IndividualCardScreen> {
                       CardQuickActions(
                         email: userEmail,
                         phone: userPhone,
+                        recipientName: name,
                       ),
 
                       const SizedBox(height: 14),

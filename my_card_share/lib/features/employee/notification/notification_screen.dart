@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../backend/individual/notification/password_change_notify.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../../backend/employee_join/notification/app_notification_service.dart';
 import 'widgets/notification_filter_pills.dart';
 import 'widgets/notification_list_tile.dart';
 import 'widgets/notification_section_header.dart';
@@ -15,8 +16,15 @@ class NotificationScreen extends StatefulWidget {
 class _NotificationScreenState extends State<NotificationScreen> {
   String _selectedFilter = 'all';
 
+  @override
+  void initState() {
+    super.initState();
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    AppNotificationService.instance.fetchNotifications(uid);
+  }
+
   void _markAllRead() {
-    PasswordChangeNotify.instance.markAllAsRead();
+    AppNotificationService.instance.markAllAsRead();
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text("All notifications marked as read!"),
@@ -27,7 +35,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   void _deleteNotification(String id) {
-    PasswordChangeNotify.instance.deleteNotification(id);
+    AppNotificationService.instance.deleteNotification(id);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text("Notification deleted"),
@@ -40,17 +48,18 @@ class _NotificationScreenState extends State<NotificationScreen> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: PasswordChangeNotify.instance,
+      listenable: AppNotificationService.instance,
       builder: (context, _) {
-        final notifications = PasswordChangeNotify.instance.notifications;
+        final notifications = AppNotificationService.instance.notifications;
 
         final filteredList = notifications.where((n) {
           if (_selectedFilter == 'all') return true;
-          return n.category == _selectedFilter;
+          return n.category.toLowerCase() == _selectedFilter.toLowerCase();
         }).toList();
 
         final todayItems = filteredList.where((n) => n.section == 'TODAY').toList();
         final yesterdayItems = filteredList.where((n) => n.section == 'YESTERDAY').toList();
+        final earlierItems = filteredList.where((n) => n.section == 'EARLIER').toList();
 
         return Scaffold(
           backgroundColor: const Color(0xFFF8FAFD),
@@ -60,7 +69,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Top Action Row (Mark All Read)
+                  // Top Action Row (Recent Notifications | Mark all read)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -72,22 +81,23 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           color: Color(0xFF64748B),
                         ),
                       ),
-                      TextButton(
-                        onPressed: _markAllRead,
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: const Text(
-                          "Mark all read",
-                          style: TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF2563EB),
+                      if (notifications.isNotEmpty)
+                        TextButton(
+                          onPressed: _markAllRead,
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text(
+                            "Mark all read",
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF2563EB),
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                   const SizedBox(height: 10),
@@ -99,20 +109,48 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   ),
                   const SizedBox(height: 16),
 
+                  // Empty State (Zero notifications)
                   if (filteredList.isEmpty) ...[
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 60),
                     Center(
                       child: Column(
-                        children: const [
-                          Icon(Icons.notifications_none_rounded, size: 48, color: Color(0xFFCBD5E1)),
-                          SizedBox(height: 12),
-                          Text(
-                            "No notifications found",
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(18),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0052FF).withValues(alpha: 0.08),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.notifications_none_rounded,
+                              size: 44,
+                              color: Color(0xFF0052FF),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            "No notifications yet",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            "You'll see real updates here when your card is scanned,\nleads are captured, or settings change.",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF94A3B8),
+                              height: 1.4,
+                            ),
                           ),
                         ],
                       ),
                     ),
+                    const SizedBox(height: 40),
                   ],
 
                   // TODAY Section
@@ -128,7 +166,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           iconColor: n.iconColor,
                           isUnread: n.isUnread,
                           onTap: () {
-                            PasswordChangeNotify.instance.markAsRead(n.id);
+                            AppNotificationService.instance.markAsRead(n.id);
                             if (n.route != null && n.route!.isNotEmpty) {
                               context.push(n.route!);
                             }
@@ -150,7 +188,29 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           iconColor: n.iconColor,
                           isUnread: n.isUnread,
                           onTap: () {
-                            PasswordChangeNotify.instance.markAsRead(n.id);
+                            AppNotificationService.instance.markAsRead(n.id);
+                            if (n.route != null && n.route!.isNotEmpty) {
+                              context.push(n.route!);
+                            }
+                          },
+                          onDelete: () => _deleteNotification(n.id),
+                        )),
+                  ],
+
+                  // EARLIER Section
+                  if (earlierItems.isNotEmpty) ...[
+                    const NotificationSectionHeader(title: "EARLIER"),
+                    ...earlierItems.map((n) => NotificationListTile(
+                          id: n.id,
+                          title: n.title,
+                          subtitle: n.subtitle,
+                          time: n.time,
+                          icon: n.icon,
+                          iconBg: n.iconBg,
+                          iconColor: n.iconColor,
+                          isUnread: n.isUnread,
+                          onTap: () {
+                            AppNotificationService.instance.markAsRead(n.id);
                             if (n.route != null && n.route!.isNotEmpty) {
                               context.push(n.route!);
                             }
@@ -168,5 +228,3 @@ class _NotificationScreenState extends State<NotificationScreen> {
     );
   }
 }
-
-

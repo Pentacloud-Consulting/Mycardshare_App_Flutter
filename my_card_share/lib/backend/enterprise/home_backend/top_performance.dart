@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
+import '../enployee_leads/enployee_leads.dart';
 
 /// Data model representing a top performing employee.
 class TopPerformerData {
@@ -61,13 +62,17 @@ class EnterpriseTopPerformanceService {
 
   String? get currentUid => _auth.currentUser?.uid;
 
-  /// Stream of top performers sorted by total views and leads.
-  /// Stream of top performers sorted by total views and leads.
+  /// Stream of top performers sorted by total leads and views accurately.
   Stream<List<TopPerformerData>> streamTopPerformers([String? uid, int limit = 5]) {
     final targetUid = uid ?? currentUid;
     if (targetUid == null || targetUid.isEmpty) {
       return Stream.value(const []);
     }
+
+    // Trigger live metrics sync from all sources in background
+    EnterpriseEmployeeLeadsService.instance.syncEmployeeLeadsAndViews(targetUid).catchError((e) {
+      debugPrint('[EnterpriseTopPerformanceService] syncEmployeeLeadsAndViews note: $e');
+    });
 
     return _firestore
         .collection('enterprises')
@@ -88,15 +93,15 @@ class EnterpriseTopPerformanceService {
         employeesWithId.add(data);
       }
 
-      // Sort by views descending, then leads descending
+      // Sort by leads descending, then views descending
       employeesWithId.sort((a, b) {
-        final vA = (a['views'] as num?)?.toInt() ?? 0;
-        final vB = (b['views'] as num?)?.toInt() ?? 0;
-        if (vB != vA) return vB.compareTo(vA);
-
         final lA = (a['leads'] as num?)?.toInt() ?? 0;
         final lB = (b['leads'] as num?)?.toInt() ?? 0;
-        return lB.compareTo(lA);
+        if (lB != lA) return lB.compareTo(lA);
+
+        final vA = (a['views'] as num?)?.toInt() ?? 0;
+        final vB = (b['views'] as num?)?.toInt() ?? 0;
+        return vB.compareTo(vA);
       });
 
       final List<TopPerformerData> performers = [];

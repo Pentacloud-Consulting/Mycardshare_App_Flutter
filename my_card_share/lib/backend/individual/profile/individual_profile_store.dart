@@ -241,13 +241,29 @@ class IndividualProfileStore extends ChangeNotifier {
           final card = apiRes['data']['card'] ?? apiRes['data'];
           if (card != null && card is Map<String, dynamic>) {
             final rawLinks = (card['socialLinks'] as List<dynamic>?) ?? [];
+            dynamic rawPhoto = card['avatarUrl'] ?? card['profilePhoto'] ?? card['photoUrl'];
+            dynamic rawBanner = card['bannerUrl'] ?? card['bannerPhoto'] ?? card['coverImage'];
+            String? photo = (rawPhoto != null && rawPhoto.toString().trim().isNotEmpty) ? rawPhoto.toString().trim() : null;
+            String? banner = (rawBanner != null && rawBanner.toString().trim().isNotEmpty) ? rawBanner.toString().trim() : null;
+
+            if (photo == null || banner == null) {
+              try {
+                final fsDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+                if (fsDoc.exists && fsDoc.data() != null) {
+                  final fsData = fsDoc.data()!;
+                  photo ??= fsData['profilePhoto'] ?? fsData['avatarUrl'] ?? fsData['photoUrl'];
+                  banner ??= fsData['bannerPhoto'] ?? fsData['bannerUrl'] ?? fsData['coverImage'];
+                }
+              } catch (_) {}
+            }
+
             _activeProfile = IndividualProfileData(
               uid: uid,
               fullName: card['fullName'] ?? card['name'] ?? fullName,
               email: card['email'] ?? email,
               cardSlug: card['cardSlug'] ?? generateCardSlug(fullName),
-              profilePhoto: card['avatarUrl'] ?? card['profilePhoto'] ?? card['photoUrl'],
-              bannerPhoto: card['bannerUrl'] ?? card['bannerPhoto'] ?? card['coverImage'],
+              profilePhoto: photo,
+              bannerPhoto: banner,
               jobTitle: card['jobTitle'] ?? card['role'] ?? '',
               phoneNumber: card['phone'] ?? card['phoneNumber'] ?? '',
               websiteUrl: card['website'] ?? card['websiteUrl'] ?? '',

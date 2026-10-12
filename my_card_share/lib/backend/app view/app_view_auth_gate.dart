@@ -80,14 +80,7 @@ class AppViewAuthGate {
     debugPrint('[AppViewAuthGate] Active session detected for $email ($uid, role: $role). Restoring session...');
 
     try {
-      // Check EnterpriseMultiStore
-      final storeUser = EnterpriseMultiStore.instance.getUser(email);
-      if (storeUser != null) {
-        if (storeUser.role.isNotEmpty) role = storeUser.role.toLowerCase();
-        if (storeUser.companyName.isNotEmpty) companyName = storeUser.companyName;
-      }
-
-      // Query Firestore users collection by UID & Email DocId
+      // 1. Query Firestore users collection by UID & Email DocId (Authoritative source)
       if (user != null || email.isNotEmpty) {
         try {
           DocumentSnapshot? doc;
@@ -111,6 +104,15 @@ class AppViewAuthGate {
           }
         } catch (e) {
           debugPrint('[AppViewAuthGate] Firestore role lookup note: $e');
+        }
+      }
+
+      // 2. Only if role is still unresolved, check EnterpriseMultiStore
+      if (role != 'individual') {
+        final storeUser = EnterpriseMultiStore.instance.getUser(email);
+        if (storeUser != null) {
+          if (storeUser.role.isNotEmpty && role.isEmpty) role = storeUser.role.toLowerCase();
+          if (storeUser.companyName.isNotEmpty) companyName = storeUser.companyName;
         }
       }
 

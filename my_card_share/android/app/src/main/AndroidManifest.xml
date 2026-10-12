@@ -1,5 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <application
         android:label="my_card_share"
         android:name="${applicationName}"
@@ -75,6 +77,17 @@
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="https" />
+        </intent>
+        <!-- Samsung Wallet / Samsung Pay Intent Queries (Android 11+) -->
+        <package android:name="com.samsung.android.wallet" />
+        <package android:name="com.samsung.android.spay" />
+        <!-- Google Wallet / Google Pay Intent Queries (Android 11+) -->
+        <package android:name="com.google.android.apps.walletsimulations" />
+        <package android:name="com.google.android.apps.nbu.paisa.user" />
+        <!-- Samsung Wallet custom URI scheme -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="samsungwallet" />
         </intent>
     </queries>
 </manifest>

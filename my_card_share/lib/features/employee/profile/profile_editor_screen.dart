@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../backend/individual/api_service.dart';
 import '../../../backend/individual/profile/individual_profile_store.dart';
+import '../../../backend/individual/profile/image_upload_service.dart';
 import '../../../backend/individual/multiple_store/individual_multi_store.dart';
 import '../../../backend/individual/previews/publish_unpublish.dart';
 import '../../../backend/individual/qr_scan/slug_validator.dart';
@@ -482,20 +482,34 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
       }
     }
 
-    // ── 2. Upload images ───────────────────────────────────────────────────────
+    // ── 2. Upload images via resilient ImageUploadService ──────────────────────
     String? uploadedAvatarUrl = _profileImagePath;
-    if (_profileImagePath != null && _profileImagePath!.isNotEmpty && !_profileImagePath!.startsWith('http')) {
+    if (_profileImagePath != null &&
+        _profileImagePath!.isNotEmpty &&
+        !_profileImagePath!.startsWith('http') &&
+        !_profileImagePath!.startsWith('data:image')) {
       try {
-        uploadedAvatarUrl = await IndividualApiService.uploadFile(_profileImagePath!, 'avatar');
+        uploadedAvatarUrl = await ImageUploadService.instance.uploadImage(
+          filePath: _profileImagePath!,
+          folder: 'avatars',
+          uid: _uid,
+        );
       } catch (e) {
         debugPrint('[ProfileEditor] Avatar upload notice: $e');
       }
     }
 
     String? uploadedBannerUrl = _bannerImagePath;
-    if (_bannerImagePath != null && _bannerImagePath!.isNotEmpty && !_bannerImagePath!.startsWith('http')) {
+    if (_bannerImagePath != null &&
+        _bannerImagePath!.isNotEmpty &&
+        !_bannerImagePath!.startsWith('http') &&
+        !_bannerImagePath!.startsWith('data:image')) {
       try {
-        uploadedBannerUrl = await IndividualApiService.uploadFile(_bannerImagePath!, 'banner');
+        uploadedBannerUrl = await ImageUploadService.instance.uploadImage(
+          filePath: _bannerImagePath!,
+          folder: 'banners',
+          uid: _uid,
+        );
       } catch (e) {
         debugPrint('[ProfileEditor] Banner upload notice: $e');
       }
@@ -661,50 +675,92 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
               const SizedBox(height: 16),
 
               // Upload Banner Image Action Button
+              // Image Upload Action Buttons (Photo & Banner)
               ListenableBuilder(
                 listenable: EmployeeBannerFetchService.instance,
                 builder: (context, _) {
                   final isLocked = EmployeeBannerFetchService.instance.isBannerLocked;
-                  return GestureDetector(
-                    onTap: _pickBannerImage,
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: isLocked ? const Color(0xFFF8FAFC) : Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: isLocked ? const Color(0xFFCBD5E1) : const Color(0xFFE2E8F0),
-                          width: 1.2,
-                        ),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x06000000),
-                            blurRadius: 6,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            isLocked ? Icons.lock_rounded : Icons.add_photo_alternate_rounded,
-                            color: isLocked ? const Color(0xFF64748B) : const Color(0xFF0052FF),
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            isLocked ? "Banner Locked by Organization" : "Upload Custom Banner Image",
-                            style: TextStyle(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.bold,
-                              color: isLocked ? const Color(0xFF64748B) : const Color(0xFF0052FF),
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: _pickProfileImage,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: const Color(0xFFBFDBFE), width: 1.2),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x06000000),
+                                  blurRadius: 6,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(Icons.camera_alt_outlined, color: Color(0xFF0052FF), size: 18),
+                                SizedBox(width: 6),
+                                Text(
+                                  "Change Photo",
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF0052FF),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: _pickBannerImage,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                            decoration: BoxDecoration(
+                              color: isLocked ? const Color(0xFFF8FAFC) : Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: isLocked ? const Color(0xFFCBD5E1) : const Color(0xFFE2E8F0),
+                                width: 1.2,
+                              ),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x06000000),
+                                  blurRadius: 6,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  isLocked ? Icons.lock_rounded : Icons.add_photo_alternate_rounded,
+                                  color: isLocked ? const Color(0xFF64748B) : const Color(0xFF334155),
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  isLocked ? "Banner Locked" : "Upload Banner",
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: isLocked ? const Color(0xFF64748B) : const Color(0xFF334155),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   );
                 },
               ),

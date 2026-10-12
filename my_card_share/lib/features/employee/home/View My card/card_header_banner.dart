@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -47,6 +48,21 @@ class CardHeaderBanner extends StatelessWidget {
   Widget _buildImageWidget(String? photo, {required Widget fallback}) {
     if (photo == null || photo.trim().isEmpty) return fallback;
     final p = photo.trim();
+
+    if (p.startsWith('data:image')) {
+      try {
+        final commaIdx = p.indexOf(',');
+        final base64Str = commaIdx != -1 ? p.substring(commaIdx + 1) : p;
+        final bytes = base64Decode(base64Str);
+        return Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          errorBuilder: (ctx, err, st) => fallback,
+        );
+      } catch (_) {
+        return fallback;
+      }
+    }
 
     if (p.startsWith('http://') || p.startsWith('https://')) {
       return Image.network(p, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => fallback);

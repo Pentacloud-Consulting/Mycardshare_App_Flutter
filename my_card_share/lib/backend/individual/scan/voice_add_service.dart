@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../previews/individual_metrics_store.dart';
 import 'card_scan_service.dart';
+import '../notification/vault_notification_service.dart';
 
 /// Service to process Voice Add contact recording, parse spoken details, save to Firestore, and update Scan metrics.
 class VoiceAddService {
@@ -40,6 +41,14 @@ class VoiceAddService {
 
         // Increment real Scans metric on Home dashboard
         await IndividualMetricsStore.instance.incrementScans(uid);
+
+        // Send real notification to Contact Vault owner
+        await VaultNotificationService.instance.notifyContactSaved(
+          targetUid: uid,
+          contactName: contact.name,
+          method: 'Voice',
+        );
+
         debugPrint('[VoiceAddService] Voice contact saved & scan metric incremented for UID: $uid');
       } catch (e) {
         debugPrint('[VoiceAddService] Firestore save notice: $e');

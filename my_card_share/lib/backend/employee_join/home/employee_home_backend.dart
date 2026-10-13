@@ -96,25 +96,38 @@ class EmployeeHomeBackendService extends ChangeNotifier {
       // 2. Query Firestore users collection for matching email / uid
       if (currentUid.isNotEmpty || currentEmail.isNotEmpty) {
         try {
-          DocumentSnapshot? userDoc;
+          final Map<String, dynamic> mergedUserData = {};
+
+          if (currentUid.isNotEmpty) {
+            final snap = await _firestore.collection('users').doc(currentUid).get();
+            if (snap.exists && snap.data() != null) {
+              mergedUserData.addAll(snap.data() as Map<String, dynamic>);
+            }
+          }
+
           if (currentEmail.isNotEmpty) {
             final docId = currentEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
             final snap = await _firestore.collection('users').doc(docId).get();
-            if (snap.exists) userDoc = snap;
+            if (snap.exists && snap.data() != null) {
+              final emailData = snap.data() as Map<String, dynamic>;
+              emailData.forEach((k, v) {
+                if (v != null && (v is! String || v.trim().isNotEmpty)) {
+                  if (!mergedUserData.containsKey(k) ||
+                      mergedUserData[k] == null ||
+                      (mergedUserData[k] is String && (mergedUserData[k] as String).trim().isEmpty)) {
+                    mergedUserData[k] = v;
+                  }
+                }
+              });
+            }
           }
 
-          if (userDoc == null && currentUid.isNotEmpty) {
-            final snap = await _firestore.collection('users').doc(currentUid).get();
-            if (snap.exists) userDoc = snap;
-          }
-
-          if (userDoc != null && userDoc.data() != null) {
-            final data = userDoc.data() as Map<String, dynamic>;
-            final fsName = (data['fullName'] as String?)?.trim() ?? (data['name'] as String?)?.trim();
-            final fsCompany = (data['companyName'] as String?)?.trim();
-            final fsRole = (data['roleTitle'] as String?)?.trim() ?? (data['jobTitle'] as String?)?.trim();
-            final fsAvatar = data['avatarUrl'] as String? ?? data['profilePhoto'] as String?;
-            final fsEntUid = data['enterpriseUid'] as String?;
+          if (mergedUserData.isNotEmpty) {
+            final fsName = (mergedUserData['fullName'] as String?)?.trim() ?? (mergedUserData['name'] as String?)?.trim();
+            final fsCompany = (mergedUserData['companyName'] as String?)?.trim();
+            final fsRole = (mergedUserData['roleTitle'] as String?)?.trim() ?? (mergedUserData['jobTitle'] as String?)?.trim();
+            final fsAvatar = (mergedUserData['profilePhoto'] as String?)?.trim() ?? (mergedUserData['avatarUrl'] as String?)?.trim();
+            final fsEntUid = (mergedUserData['enterpriseUid'] as String?)?.trim();
 
             if (fsName != null && fsName.isNotEmpty) foundName = fsName;
             if (fsCompany != null && fsCompany.isNotEmpty) foundCompany = fsCompany;

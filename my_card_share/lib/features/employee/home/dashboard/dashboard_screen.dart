@@ -87,6 +87,16 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
   @override
   void didPopNext() {
     _resetView();
+    EmployeeHomeBackendService.instance.loadEmployeeHomeData();
+    EmployeeBannerFetchService.instance.fetchEnterpriseBrand();
+    final fbUser = FirebaseAuth.instance.currentUser;
+    if (fbUser != null) {
+      IndividualProfileStore.instance.loadProfile(
+        fbUser.uid,
+        fbUser.email ?? '',
+        fbUser.displayName ?? '',
+      );
+    }
   }
 
   void _resetView() {
@@ -154,10 +164,11 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
                 ?? (firebaseUser?.email?.isNotEmpty == true ? firebaseUser!.email!.split('@').first : null)
                 ?? "User");
 
-        final displayPhoto = empBackend.avatarUrl ?? (activeProfile?.profilePhoto?.isNotEmpty == true ? activeProfile!.profilePhoto : null)
+        final displayPhoto = (activeProfile?.profilePhoto?.isNotEmpty == true ? activeProfile!.profilePhoto : null)
+            ?? (empBackend.avatarUrl?.isNotEmpty == true ? empBackend.avatarUrl : null)
             ?? (firebaseUser?.photoURL?.isNotEmpty == true ? firebaseUser!.photoURL : null);
-        final rawUserBanner = activeProfile?.bannerPhoto?.isNotEmpty == true ? activeProfile!.bannerPhoto : null;
-        final displayBanner = brandFetch.getEffectiveBanner(rawUserBanner);
+        final rawUserBanner = (activeProfile?.bannerPhoto?.isNotEmpty == true ? activeProfile!.bannerPhoto : null);
+        final displayBanner = brandFetch.getEffectiveBanner(rawUserBanner) ?? rawUserBanner;
 
         final displayRole = (empBackend.role.isNotEmpty && empBackend.role != "Member")
             ? empBackend.role

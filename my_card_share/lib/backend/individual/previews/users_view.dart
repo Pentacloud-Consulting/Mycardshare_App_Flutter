@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'individual_metrics_store.dart';
 import '../notification/scan_notification_service.dart';
+import '../../enterprise/view_employee/view_employee_enterprice.dart';
 
 class ProfileViewRecord {
   final String id;
@@ -87,6 +88,13 @@ class UsersViewService extends ChangeNotifier {
       await IndividualMetricsStore.instance.incrementViews(targetUid);
       _realViewCount++;
       notifyListeners();
+
+      // Mirror view event to enterprise employee views service
+      ViewEmployeeEnterpriseService.instance.recordEmployeeView(
+        employeeId: targetUid,
+        viewerName: viewerName,
+        source: source,
+      ).catchError((_) => false);
     } catch (e) {
       debugPrint('[UsersViewService] Error recording profile view: $e');
     }

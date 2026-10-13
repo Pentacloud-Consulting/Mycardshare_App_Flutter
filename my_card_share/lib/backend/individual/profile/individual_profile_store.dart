@@ -116,6 +116,7 @@ class IndividualProfileStore extends ChangeNotifier {
   IndividualProfileData? _activeProfile;
 
   IndividualProfileData? get activeProfile => _activeProfile;
+  IndividualProfileData? get currentProfile => _activeProfile;
 
   bool get hasCompletedOnboarding => _activeProfile != null && _activeProfile!.jobTitle.isNotEmpty;
 
@@ -185,28 +186,41 @@ class IndividualProfileStore extends ChangeNotifier {
 
     // Sync to Firestore in background
     try {
+      final dataToSave = {
+        'fullName': fullName,
+        'email': email,
+        'cardSlug': slug,
+        'profilePhoto': profilePhoto ?? _activeProfile?.profilePhoto,
+        'bannerPhoto': bannerPhoto ?? _activeProfile?.bannerPhoto,
+        'jobTitle': jobTitle,
+        'phoneNumber': phoneNumber,
+        'websiteUrl': websiteUrl,
+        'templateStyle': templateStyle,
+        'socialLinks': cleanSocialLinks.map((l) => l.toJson()).toList(),
+        'companyName': companyName,
+        'shortBio': shortBio,
+        'networkingStatus': networkingStatus,
+        'onboardingCompleted': true,
+        'updatedAt': DateTime.now().toIso8601String(),
+      };
+
       if (uid.isNotEmpty) {
         await FirebaseFirestore.instance.collection('users').doc(uid).set(
-          {
-            'fullName': fullName,
-            'email': email,
-            'cardSlug': slug,
-            'profilePhoto': profilePhoto ?? _activeProfile?.profilePhoto,
-            'bannerPhoto': bannerPhoto ?? _activeProfile?.bannerPhoto,
-            'jobTitle': jobTitle,
-            'phoneNumber': phoneNumber,
-            'websiteUrl': websiteUrl,
-            'templateStyle': templateStyle,
-            'socialLinks': cleanSocialLinks.map((l) => l.toJson()).toList(),
-            'companyName': companyName,
-            'shortBio': shortBio,
-            'networkingStatus': networkingStatus,
-            'onboardingCompleted': true,
-            'updatedAt': DateTime.now().toIso8601String(),
-          },
+          dataToSave,
           SetOptions(merge: true),
         );
         debugPrint('[IndividualProfileStore] Synced profile to Firestore for UID: $uid');
+      }
+
+      if (email.trim().isNotEmpty) {
+        final emailDocId = email.trim().toLowerCase().replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+        if (emailDocId != uid) {
+          await FirebaseFirestore.instance.collection('users').doc(emailDocId).set(
+            dataToSave,
+            SetOptions(merge: true),
+          );
+          debugPrint('[IndividualProfileStore] Synced profile to Firestore for email doc: $emailDocId');
+        }
       }
     } catch (e) {
       debugPrint('[IndividualProfileStore] Firestore sync notice: $e');

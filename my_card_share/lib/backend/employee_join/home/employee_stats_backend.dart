@@ -14,11 +14,11 @@ class EmployeeHomeStats {
 
   const EmployeeHomeStats({
     this.views = 0,
-    this.viewsTrend = "+0% this week",
+    this.viewsTrend = "+0%",
     this.leads = 0,
-    this.leadsTrend = "+0% this week",
+    this.leadsTrend = "+0%",
     this.scans = 0,
-    this.scansTrend = "+0% this week",
+    this.scansTrend = "+0%",
   });
 }
 

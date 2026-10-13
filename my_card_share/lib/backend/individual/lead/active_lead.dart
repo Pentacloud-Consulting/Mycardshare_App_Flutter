@@ -18,6 +18,8 @@ class LeadData {
   final String notes;
   final String status; // 'New', 'Contacted', 'Qualified', 'Lost'
   final String source; // 'via QR Scan', 'via Voice', 'via Manual'
+  final String website;
+  final String location;
   final DateTime createdAt;
 
   LeadData({
@@ -30,6 +32,8 @@ class LeadData {
     this.notes = '',
     this.status = 'New',
     this.source = 'via QR Scan',
+    this.website = '',
+    this.location = '',
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -52,6 +56,8 @@ class LeadData {
         'notes': notes,
         'status': status,
         'source': source,
+        'website': website,
+        'location': location,
         'createdAt': createdAt.toIso8601String(),
       };
 
@@ -66,6 +72,8 @@ class LeadData {
       notes: json['notes'] ?? '',
       status: json['status'] ?? 'New',
       source: json['source'] ?? 'via QR Scan',
+      website: json['website'] ?? '',
+      location: json['location'] ?? '',
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'] as String) ?? DateTime.now()
           : DateTime.now(),

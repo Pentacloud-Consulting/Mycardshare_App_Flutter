@@ -80,8 +80,14 @@ class DashboardMetricsRow extends StatelessWidget {
     required String value,
     required String trend,
   }) {
+    final cleanTrend = trend
+        .replaceAll(RegExp(r'this week', caseSensitive: false), '')
+        .replaceAll(RegExp(r'vs last week', caseSensitive: false), '')
+        .trim();
+    final displayTrend = cleanTrend.isNotEmpty ? cleanTrend : "+0%";
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
@@ -100,21 +106,25 @@ class DashboardMetricsRow extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 36,
-                height: 36,
+                width: 34,
+                height: 34,
                 decoration: BoxDecoration(
                   color: iconBg,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: iconColor, size: 18),
+                child: Icon(icon, color: iconColor, size: 17),
               ),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF64748B),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF64748B),
+                  ),
                 ),
               ),
             ],
@@ -130,33 +140,36 @@ class DashboardMetricsRow extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Row(
-            children: [
-              const Icon(
-                Icons.north_east_rounded,
-                color: Color(0xFF16A34A),
-                size: 13,
-              ),
-              const SizedBox(width: 2),
-              Text(
-                "$trend ",
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.north_east_rounded,
                   color: Color(0xFF16A34A),
+                  size: 13,
                 ),
-              ),
-              const Flexible(
-                child: Text(
+                const SizedBox(width: 2),
+                Text(
+                  displayTrend,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF16A34A),
+                  ),
+                ),
+                const SizedBox(width: 3),
+                const Text(
                   "this week",
-                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 10.5,
+                    fontSize: 10,
                     color: Color(0xFF94A3B8),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

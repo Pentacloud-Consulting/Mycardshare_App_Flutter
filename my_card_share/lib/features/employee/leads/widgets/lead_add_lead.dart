@@ -44,6 +44,8 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
   final _roleController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _locationController = TextEditingController();
+  final _websiteController = TextEditingController();
   final _notesController = TextEditingController();
 
   // Assignment State
@@ -79,6 +81,8 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
     _roleController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _locationController.dispose();
+    _websiteController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -114,25 +118,20 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
     if (!_formKey.currentState!.validate()) return;
 
     if (_isMultiUserMode && _selectedMultiUids.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please select at least one user to assign the lead to"),
-          backgroundColor: Color(0xFFEF4444),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
+      if (_availableUsers.isNotEmpty) {
+        _selectedMultiUids.add(_availableUsers.first['uid'] as String);
+      } else {
+        final fallbackUid = widget.defaultTargetUid ?? FirebaseAuth.instance.currentUser?.uid ?? 'current_user_me';
+        _selectedMultiUids.add(fallbackUid);
+      }
     }
 
     if (!_isMultiUserMode && _selectedSingleUid.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please select a target user"),
-          backgroundColor: Color(0xFFEF4444),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
+      if (_availableUsers.isNotEmpty) {
+        _selectedSingleUid = _availableUsers.first['uid'] as String;
+      } else {
+        _selectedSingleUid = widget.defaultTargetUid ?? FirebaseAuth.instance.currentUser?.uid ?? 'current_user_me';
+      }
     }
 
     setState(() => _isSubmitting = true);
@@ -148,6 +147,8 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
           notes: _notesController.text.trim(),
           status: _selectedStatus,
           source: _selectedSource,
+          website: _websiteController.text.trim(),
+          location: _locationController.text.trim(),
         );
 
         if (!mounted) return;
@@ -172,6 +173,8 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
           notes: _notesController.text.trim(),
           status: _selectedStatus,
           source: _selectedSource,
+          website: _websiteController.text.trim(),
+          location: _locationController.text.trim(),
         );
 
         if (!mounted) return;
@@ -390,6 +393,25 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
                       icon: Icons.phone_outlined,
                       keyboardType: TextInputType.phone,
                     ),
+                    const SizedBox(height: 14),
+
+                    // Location / City Field
+                    _buildField(
+                      controller: _locationController,
+                      label: "Location",
+                      hint: "e.g. San Francisco, CA",
+                      icon: Icons.location_on_outlined,
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Website URL Field
+                    _buildField(
+                      controller: _websiteController,
+                      label: "Website",
+                      hint: "e.g. www.acmetech.com",
+                      icon: Icons.language_rounded,
+                      keyboardType: TextInputType.url,
+                    ),
                     const SizedBox(height: 16),
 
                     // Status Chips
@@ -577,6 +599,37 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
   }
 
   Widget _buildSingleUserDropdown() {
+    if (_availableUsers.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: const Row(
+          children: [
+            CircleAvatar(
+              radius: 12,
+              backgroundColor: Color(0xFFEFF6FF),
+              child: Icon(Icons.person, size: 14, color: Color(0xFF0052FF)),
+            ),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                "My Account (Assign to Self)",
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
       decoration: BoxDecoration(
@@ -592,6 +645,10 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
           isExpanded: true,
           icon: const Icon(Icons.arrow_drop_down_rounded, color: Color(0xFF64748B)),
           items: _availableUsers.map((u) {
+            final name = (u['name'] ?? 'User').toString();
+            final initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
+            final role = (u['role'] ?? 'Member').toString();
+
             return DropdownMenuItem<String>(
               value: u['uid'] as String,
               child: Row(
@@ -600,7 +657,7 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
                     radius: 12,
                     backgroundColor: const Color(0xFF0052FF).withValues(alpha: 0.12),
                     child: Text(
-                      (u['name'] as String).substring(0, 1.clamp(0, (u['name'] as String).length)),
+                      initial,
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
@@ -611,7 +668,7 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      "${u['name']} (${u['role'].isNotEmpty ? u['role'] : 'Member'})",
+                      "$name (${role.isNotEmpty ? role : 'Member'})",
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -657,7 +714,7 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
               GestureDetector(
                 onTap: () {
                   setState(() {
-                    if (_selectedMultiUids.length == _availableUsers.length) {
+                    if (_selectedMultiUids.length == _availableUsers.length && _availableUsers.isNotEmpty) {
                       _selectedMultiUids.clear();
                     } else {
                       _selectedMultiUids.addAll(_availableUsers.map((u) => u['uid'] as String));
@@ -665,7 +722,7 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
                   });
                 },
                 child: Text(
-                  _selectedMultiUids.length == _availableUsers.length
+                  (_selectedMultiUids.length == _availableUsers.length && _availableUsers.isNotEmpty)
                       ? "Clear All"
                       : "Select All",
                   style: const TextStyle(
@@ -678,62 +735,75 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
             ],
           ),
           const SizedBox(height: 10),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 130),
-            child: ListView.separated(
-              shrinkWrap: true,
-              itemCount: _availableUsers.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 6),
-              itemBuilder: (context, idx) {
-                final user = _availableUsers[idx];
-                final uid = user['uid'] as String;
-                final isChecked = _selectedMultiUids.contains(uid);
+          if (_availableUsers.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Center(
+                child: Text(
+                  "Assigning directly to your active profile",
+                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                ),
+              ),
+            )
+          else
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 140),
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: _availableUsers.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 6),
+                itemBuilder: (context, idx) {
+                  final user = _availableUsers[idx];
+                  final uid = user['uid'] as String;
+                  final isChecked = _selectedMultiUids.contains(uid);
+                  final name = (user['name'] ?? 'User').toString();
+                  final role = (user['role'] ?? 'Member').toString();
 
-                return InkWell(
-                  onTap: () {
-                    setState(() {
-                      if (isChecked) {
-                        _selectedMultiUids.remove(uid);
-                      } else {
-                        _selectedMultiUids.add(uid);
-                      }
-                    });
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
-                    child: Row(
-                      children: [
-                        Icon(
-                          isChecked
-                              ? Icons.check_box_rounded
-                              : Icons.check_box_outline_blank_rounded,
-                          size: 18,
-                          color: isChecked ? const Color(0xFF0052FF) : const Color(0xFF94A3B8),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            user['name'] as String,
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: isChecked ? FontWeight.bold : FontWeight.normal,
-                              color: const Color(0xFF0F172A),
-                            ),
-                            overflow: TextOverflow.ellipsis,
+                  return InkWell(
+                    onTap: () {
+                      setState(() {
+                        if (isChecked) {
+                          _selectedMultiUids.remove(uid);
+                        } else {
+                          _selectedMultiUids.add(uid);
+                        }
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+                      child: Row(
+                        children: [
+                          Icon(
+                            isChecked
+                                ? Icons.check_box_rounded
+                                : Icons.check_box_outline_blank_rounded,
+                            size: 18,
+                            color: isChecked ? const Color(0xFF0052FF) : const Color(0xFF94A3B8),
                           ),
-                        ),
-                        Text(
-                          user['role'] as String,
-                          style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
-                        ),
-                      ],
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              name,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: isChecked ? FontWeight.bold : FontWeight.normal,
+                                color: const Color(0xFF0F172A),
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Text(
+                            role,
+                            style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
-          ),
         ],
       ),
     );

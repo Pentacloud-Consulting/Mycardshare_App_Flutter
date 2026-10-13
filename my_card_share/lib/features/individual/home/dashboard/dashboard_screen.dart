@@ -79,6 +79,14 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
   @override
   void didPopNext() {
     _resetView();
+    final fbUser = FirebaseAuth.instance.currentUser;
+    if (fbUser != null) {
+      IndividualProfileStore.instance.loadProfile(
+        fbUser.uid,
+        fbUser.email ?? '',
+        fbUser.displayName ?? '',
+      );
+    }
   }
 
   void _resetView() {

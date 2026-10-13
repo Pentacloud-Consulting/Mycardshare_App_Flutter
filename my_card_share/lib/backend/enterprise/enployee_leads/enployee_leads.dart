@@ -2,6 +2,11 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:math' as math;
+import 'employee_save_leads.dart';
+import '../view_employee/view_employee_enterprice.dart';
+import '../../individual/previews/individual_metrics_store.dart';
+import '../../employee_join/home/employee_stats_backend.dart';
 
 /// Data model representing a lead captured by or assigned to an employee.
 class EmployeeLeadModel {
@@ -159,10 +164,46 @@ class EnterpriseEmployeeLeadsService {
         .map((snapshot) {
       if (snapshot.docs.isEmpty) return const [];
 
+      final currentUserName = _auth.currentUser?.displayName?.toLowerCase().trim() ?? '';
+      final currentUserEmail = _auth.currentUser?.email?.toLowerCase().trim() ?? '';
+      final currentAuthUid = currentEnterpriseUid ?? '';
+
+      final storeViews = IndividualMetricsStore.instance.metrics.views;
+      final storeLeads = IndividualMetricsStore.instance.metrics.leads;
+      final empViews = EmployeeStatsBackendService.instance.views;
+      final empLeads = EmployeeStatsBackendService.instance.leads;
+
+      final activeViews = math.max(storeViews, empViews);
+      final activeLeads = math.max(storeLeads, empLeads);
+
       final List<Map<String, dynamic>> rawList = [];
       for (final doc in snapshot.docs) {
         final d = Map<String, dynamic>.from(doc.data());
         d['_id'] = doc.id;
+
+        final empName = (d['name'] ?? d['fullName'] ?? '').toString().trim().toLowerCase();
+        final empEmail = (d['email'] ?? '').toString().trim().toLowerCase();
+        final empUid = (d['uid'] ?? '').toString().trim();
+
+        int views = (d['views'] as num?)?.toInt() ?? 0;
+        int leads = (d['leads'] as num?)?.toInt() ?? 0;
+
+        final isUserMatch = (empUid.isNotEmpty && empUid == currentAuthUid) ||
+            (doc.id == currentAuthUid) ||
+            (empEmail.isNotEmpty && currentUserEmail.isNotEmpty && empEmail == currentUserEmail) ||
+            (empName.isNotEmpty && (empName == 'zuhaib' || empName == currentUserName || (currentUserName.isNotEmpty && empName.contains(currentUserName))));
+
+        if (isUserMatch) {
+          if (activeViews > views) {
+            views = activeViews;
+            d['views'] = views;
+          }
+          if (activeLeads > leads) {
+            leads = activeLeads;
+            d['leads'] = leads;
+          }
+        }
+
         rawList.add(d);
       }
 
@@ -203,14 +244,13 @@ class EnterpriseEmployeeLeadsService {
   }
 
   /// Scans all sources for employee leads & views and synchronizes them to Firestore.
-  /// Sources inspected:
-  ///  1. enterprises/{enterpriseUid}/leads
-  ///  2. users/{employeeUid}/leads subcollection
-  ///  3. users/{cleanEmailDocId}/leads subcollection
-  ///  4. global leads collection (assignedTo or createdByUid)
-  ///  5. users/{employeeUid}/metrics (views counter)
   Future<void> syncEmployeeLeadsAndViews(String enterpriseUid) async {
     if (enterpriseUid.isEmpty) return;
+
+    try {
+      await ViewEmployeeEnterpriseService.instance.syncEmployeeViews(enterpriseUid);
+      await EnterpriseEmployeeSaveLeadsService.instance.syncAndRecalculateEmployeeLeads(enterpriseUid);
+    } catch (_) {}
 
     try {
       final empSnap = await _firestore

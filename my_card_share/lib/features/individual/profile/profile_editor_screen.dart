@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../backend/individual/profile/individual_profile_store.dart';
@@ -46,8 +47,9 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
     super.initState();
     final active = IndividualProfileStore.instance.activeProfile;
     final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
+    final fbUser = FirebaseAuth.instance.currentUser;
 
-    _uid = active?.uid ?? storedUser?.id ?? 'user_${DateTime.now().millisecondsSinceEpoch}';
+    _uid = fbUser?.uid ?? active?.uid ?? storedUser?.id ?? 'user_${DateTime.now().millisecondsSinceEpoch}';
     PublishUnpublishService.instance.loadPublishStatus(_uid);
     _selectedTemplateIndex = IndividualProfileStore.getTemplateIndex(active?.templateStyle);
     _bannerImagePath = active?.bannerPhoto;

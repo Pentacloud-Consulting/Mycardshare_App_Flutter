@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -28,33 +29,100 @@ class DashboardHeroCard extends StatelessWidget {
     required this.onViewMyCardTap,
   });
 
-  Widget _buildAvatarWidget(String? photo, String userName) {
-    if (photo != null && photo.trim().isNotEmpty) {
-      final p = photo.trim();
-      if (p.startsWith('http://') || p.startsWith('https://')) {
+  Widget _buildImageWidget(String? photo, {required Widget fallback}) {
+    if (photo == null || photo.trim().isEmpty) return fallback;
+    final p = photo.trim();
+
+    // 1. Data URI (Base64) - e.g. "data:image/jpeg;base64,/9j/4AAQ..."
+    if (p.startsWith('data:image')) {
+      try {
+        final commaIdx = p.indexOf(',');
+        final base64Str = commaIdx != -1 ? p.substring(commaIdx + 1) : p;
+        final bytes = base64Decode(base64Str.trim());
+        return Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (ctx, err, st) => fallback,
+        );
+      } catch (_) {
+        return fallback;
+      }
+    }
+
+    // 2. Remote Network Image (Firebase Storage / Cloud)
+    if (p.startsWith('http://') || p.startsWith('https://')) {
+      return Image.network(
+        p,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (ctx, err, st) => fallback,
+      );
+    }
+
+    // 3. Asset Image
+    if (p.startsWith('assets/') || p.startsWith('asset/')) {
+      return Image.asset(
+        p,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (ctx, err, st) => fallback,
+      );
+    }
+
+    // 4. Raw Base64 string fallback
+    if (!p.contains('/') && !p.contains('\\') && p.length > 100) {
+      try {
+        final bytes = base64Decode(p.trim());
+        return Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (ctx, err, st) => fallback,
+        );
+      } catch (_) {}
+    }
+
+    // 5. Local File Path or File URI (file://)
+    try {
+      if (kIsWeb) {
         return Image.network(
           p,
           fit: BoxFit.cover,
-          errorBuilder: (ctx, err, st) => _buildAvatarFallback(userName),
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (ctx, err, st) => fallback,
         );
-      } else {
-        try {
-          if (kIsWeb) {
-            return Image.network(
-              p,
-              fit: BoxFit.cover,
-              errorBuilder: (ctx, err, st) => _buildAvatarFallback(userName),
-            );
-          } else {
-            final file = File(p);
-            if (file.existsSync()) {
-              return Image.file(file, fit: BoxFit.cover);
-            }
-          }
-        } catch (_) {}
       }
-    }
-    return _buildAvatarFallback(userName);
+      String cleanPath = p;
+      if (cleanPath.startsWith('file://')) {
+        try {
+          cleanPath = Uri.parse(cleanPath).toFilePath();
+        } catch (_) {
+          cleanPath = cleanPath.replaceFirst('file://', '');
+        }
+      }
+      final file = File(cleanPath);
+      if (file.existsSync()) {
+        return Image.file(
+          file,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (ctx, err, st) => fallback,
+        );
+      }
+    } catch (_) {}
+
+    return fallback;
+  }
+
+  Widget _buildAvatarWidget(String? photo, String userName) {
+    return _buildImageWidget(photo, fallback: _buildAvatarFallback(userName));
   }
 
   Widget _buildAvatarFallback(String userName) {
@@ -75,24 +143,7 @@ class DashboardHeroCard extends StatelessWidget {
   }
 
   Widget _buildBannerWidget(String? photo) {
-    if (photo != null && photo.trim().isNotEmpty) {
-      final p = photo.trim();
-      if (p.startsWith('http://') || p.startsWith('https://')) {
-        return Image.network(p, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => const SizedBox.shrink());
-      } else {
-        try {
-          if (kIsWeb) {
-            return Image.network(p, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => const SizedBox.shrink());
-          } else {
-            final file = File(p);
-            if (file.existsSync()) {
-              return Image.file(file, fit: BoxFit.cover);
-            }
-          }
-        } catch (_) {}
-      }
-    }
-    return const SizedBox.shrink();
+    return _buildImageWidget(photo, fallback: const SizedBox.shrink());
   }
 
   List<Color> _getGradientForTemplate(int index) {

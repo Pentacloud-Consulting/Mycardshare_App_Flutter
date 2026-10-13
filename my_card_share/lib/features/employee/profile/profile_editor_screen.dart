@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../backend/individual/profile/individual_profile_store.dart';
@@ -13,6 +14,7 @@ import 'widgets/profile_slug_section.dart';
 import 'widgets/profile_social_links.dart';
 import 'widgets/profile_template_selector.dart';
 import '../../../backend/employee_join/banner fetch/banner fetch.dart';
+import '../../../backend/employee_join/home/employee_home_backend.dart';
 
 class ProfileEditorScreen extends StatefulWidget {
   const ProfileEditorScreen({super.key});
@@ -47,8 +49,9 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
     super.initState();
     final active = IndividualProfileStore.instance.activeProfile;
     final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
+    final fbUser = FirebaseAuth.instance.currentUser;
 
-    _uid = active?.uid ?? storedUser?.id ?? 'user_${DateTime.now().millisecondsSinceEpoch}';
+    _uid = fbUser?.uid ?? active?.uid ?? storedUser?.id ?? 'user_${DateTime.now().millisecondsSinceEpoch}';
     PublishUnpublishService.instance.loadPublishStatus(_uid);
     _selectedTemplateIndex = IndividualProfileStore.getTemplateIndex(active?.templateStyle);
     _bannerImagePath = active?.bannerPhoto;
@@ -535,7 +538,16 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
       networkingStatus: 'Actively Networking',
     );
 
-    // ── 4. Sync updated slug + profile to MongoDB so web QR page stays live ──
+    // ── 4. Update Employee Home Backend Service immediately ───────────────────
+    EmployeeHomeBackendService.instance.updateHomeProfile(
+      userName: _nameController.text.trim(),
+      companyName: _companyController.text.trim(),
+      role: _roleController.text.trim(),
+      avatarUrl: uploadedAvatarUrl,
+    );
+    EmployeeHomeBackendService.instance.loadEmployeeHomeData();
+
+    // ── 5. Sync updated slug + profile to MongoDB so web QR page stays live ──
     SlugBackendService.instance.ensureSlugSynced(finalSlug, {
       'fullName': _nameController.text.trim(),
       'email': _emailController.text.trim(),

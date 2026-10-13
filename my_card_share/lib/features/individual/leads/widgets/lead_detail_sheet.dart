@@ -137,16 +137,30 @@ class LeadDetailSheet extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  _buildDetailRow(Icons.phone_outlined, lead.phone.isNotEmpty ? lead.phone : "+1 (555) 0198-234"),
+                  _buildDetailRow(
+                    Icons.phone_outlined,
+                    lead.phone.trim().isNotEmpty ? lead.phone.trim() : "Not provided",
+                  ),
                   const Divider(height: 20, color: Color(0xFFF1F5F9)),
-                  _buildDetailRow(Icons.mail_outline_rounded, lead.email.isNotEmpty ? lead.email : "contact@lead.com"),
+                  _buildDetailRow(
+                    Icons.mail_outline_rounded,
+                    lead.email.trim().isNotEmpty ? lead.email.trim() : "Not provided",
+                  ),
                   const Divider(height: 20, color: Color(0xFFF1F5F9)),
-                  _buildDetailRow(Icons.language_rounded, "www.${lead.company.replaceAll(' ', '').toLowerCase()}.com"),
+                  _buildDetailRow(
+                    Icons.language_rounded,
+                    lead.website.trim().isNotEmpty
+                        ? lead.website.trim()
+                        : "www.${lead.company.trim().replaceAll(' ', '').toLowerCase()}.com",
+                  ),
                   const Divider(height: 20, color: Color(0xFFF1F5F9)),
-                  _buildDetailRow(Icons.location_on_outlined, "San Francisco, CA"),
-                  if (lead.notes.isNotEmpty) ...[
+                  _buildDetailRow(
+                    Icons.location_on_outlined,
+                    lead.location.trim().isNotEmpty ? lead.location.trim() : "San Francisco, CA",
+                  ),
+                  if (lead.notes.trim().isNotEmpty) ...[
                     const Divider(height: 20, color: Color(0xFFF1F5F9)),
-                    _buildDetailRow(Icons.chat_bubble_outline_rounded, lead.notes),
+                    _buildDetailRow(Icons.chat_bubble_outline_rounded, lead.notes.trim()),
                   ],
                 ],
               ),

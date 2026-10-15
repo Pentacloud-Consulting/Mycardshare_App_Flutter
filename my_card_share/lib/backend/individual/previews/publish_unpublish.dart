@@ -121,11 +121,75 @@ class PublishUnpublishService extends ChangeNotifier {
         {
           'isPublished': published,
           'cardStatus': _cardStatus,
+          'status': published ? 'Active' : 'Inactive',
           'updatedAt': DateTime.now().toIso8601String(),
         },
         SetOptions(merge: true),
       );
       debugPrint('[PublishUnpublishService] Updated publish status to $published ($cardStatus) in Firestore for UID: $targetUid');
+
+      // 1b. Dual-sync to enterprise employee document so Enterprise Team/Workspace list shows Active / Inactive
+      try {
+        final currentEmail = FirebaseAuth.instance.currentUser?.email?.toLowerCase().trim() ?? '';
+        final userDoc = await FirebaseFirestore.instance.collection('users').doc(targetUid).get();
+        final entUid = userDoc.data()?['enterpriseUid'] as String?;
+        final targetStatus = published ? 'Active' : 'Inactive';
+
+        if (entUid != null && entUid.isNotEmpty) {
+          final empQuery = await FirebaseFirestore.instance
+              .collection('enterprises')
+              .doc(entUid)
+              .collection('employees')
+              .where('email', isEqualTo: currentEmail.isNotEmpty ? currentEmail : targetUid)
+              .get();
+
+          for (final doc in empQuery.docs) {
+            await doc.reference.update({
+              'status': targetStatus,
+              'isPublished': published,
+              'updatedAt': FieldValue.serverTimestamp(),
+            });
+          }
+
+          // Also check by document ID directly
+          final directDoc = FirebaseFirestore.instance
+              .collection('enterprises')
+              .doc(entUid)
+              .collection('employees')
+              .doc(targetUid);
+          final directSnap = await directDoc.get();
+          if (directSnap.exists) {
+            await directDoc.update({
+              'status': targetStatus,
+              'isPublished': published,
+              'updatedAt': FieldValue.serverTimestamp(),
+            });
+          }
+        } else {
+          // If enterpriseUid not directly on user doc, scan enterprises for matching employee
+          if (currentEmail.isNotEmpty) {
+            final entSnap = await FirebaseFirestore.instance.collection('enterprises').limit(15).get();
+            for (final eDoc in entSnap.docs) {
+              final empQuery = await FirebaseFirestore.instance
+                  .collection('enterprises')
+                  .doc(eDoc.id)
+                  .collection('employees')
+                  .where('email', isEqualTo: currentEmail)
+                  .get();
+
+              for (final doc in empQuery.docs) {
+                await doc.reference.update({
+                  'status': targetStatus,
+                  'isPublished': published,
+                  'updatedAt': FieldValue.serverTimestamp(),
+                });
+              }
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('[PublishUnpublishService] Enterprise employee status sync note: $e');
+      }
 
       // 2. Dual-write sync to MongoDB backend via API endpoint (fire-and-forget background patch)
       _syncToApiBackground(published);

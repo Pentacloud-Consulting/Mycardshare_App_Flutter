@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../backend/enterprise/profile/enterprise_profile_store.dart';
+import '../../../../core/utils/app_image_helper.dart';
 
 class BrandLivePreview extends StatelessWidget {
   final Color selectedColor;
@@ -139,10 +140,7 @@ class BrandLivePreview extends StatelessWidget {
                         CircleAvatar(
                           radius: 24,
                           backgroundColor: cardTextColor.withValues(alpha: 0.2),
-                          backgroundImage: (liveProfile?.logoUrl != null &&
-                                  liveProfile!.logoUrl!.isNotEmpty)
-                              ? NetworkImage(liveProfile.logoUrl!)
-                              : null,
+                          backgroundImage: AppImageHelper.getImageProvider(liveProfile?.logoUrl),
                           child: (liveProfile?.logoUrl == null ||
                                   liveProfile!.logoUrl!.isEmpty)
                               ? Icon(

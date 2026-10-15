@@ -4,6 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../providers/auth_provider.dart';
 import '../../../backend/employee_join/join_login.dart';
+import '../../../backend/employee_join/email_send_request.dart';
+import '../../../backend/app view/app_view_auth_gate.dart';
+import '../../../backend/employee_join/home/employee_home_backend.dart';
+import '../../../backend/employee_join/home/employee_stats_backend.dart';
 
 class JoinWorkspaceScreen extends ConsumerStatefulWidget {
   const JoinWorkspaceScreen({super.key});
@@ -17,6 +21,7 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _targetEnterpriseEmailController = TextEditingController();
 
   bool _obscurePassword = true;
   bool _isLoading = false;
@@ -40,6 +45,7 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
     _fullNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _targetEnterpriseEmailController.dispose();
     super.dispose();
   }
 
@@ -64,29 +70,253 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
     try {
       final info = await JoinLoginBackendService.instance.lookupEnterpriseByInviteCode(code);
       if (info != null && mounted) {
+        if (info['isExpired'] == true) {
+          _showSnackBar("The invite code got expired. Please request a new invite link.", Colors.orange);
+        }
         setState(() {
           _previewCompanyName = info['companyName'] ?? 'Enterprise Workspace';
           _previewMemberCount = (info['memberCount'] as num?)?.toInt() ?? 4;
           _previewLogoUrl = info['logoUrl'] as String?;
           _targetEnterpriseUid = info['enterpriseUid'] as String?;
         });
-        debugPrint('[JoinWorkspaceScreen] Resolved enterprise: $_previewCompanyName, UID: $_targetEnterpriseUid, members: $_previewMemberCount, logo: $_previewLogoUrl');
+        debugPrint('[JoinWorkspaceScreen] Resolved enterprise: $_previewCompanyName, UID: $_targetEnterpriseUid, members: $_previewMemberCount, logo: $_previewLogoUrl, expired: ${info['isExpired']}');
       }
     } catch (e) {
       debugPrint('[JoinWorkspaceScreen] Lookup code error: $e');
     }
   }
 
-  Future<void> _onJoinWorkspace() async {
-    final code = _inviteCodeController.text.trim();
+  /// Triggered when user doesn't have an invite code and clicks "Next"
+  void _onNextRequest() {
     final fullName = _fullNameController.text.trim();
     final email = _emailController.text.trim().toLowerCase();
     final password = _passwordController.text.trim();
 
-    if (code.isEmpty) {
-      _showSnackBar("Please enter your invitation code", Colors.redAccent);
+    if (fullName.isEmpty) {
+      _showSnackBar("Please enter your full name", Colors.redAccent);
       return;
     }
+    if (email.isEmpty || !email.contains('@')) {
+      _showSnackBar("Please enter a valid work email address", Colors.redAccent);
+      return;
+    }
+    if (password.isEmpty) {
+      _showSnackBar("Please enter your password", Colors.redAccent);
+      return;
+    }
+
+    _showEnterpriseEmailModal();
+  }
+
+  /// Modal to enter target enterprise email to send join request
+  void _showEnterpriseEmailModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        bool sending = false;
+        String? foundCompName;
+
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                top: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE2E8F0),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.mark_email_read_rounded,
+                          color: Color(0xFF0066FF),
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              "Send Join Request",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              "Enter the official company/admin email of your enterprise.",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Enterprise Email Input
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+                    ),
+                    child: TextField(
+                      controller: _targetEnterpriseEmailController,
+                      keyboardType: TextInputType.emailAddress,
+                      onChanged: (val) async {
+                        if (val.contains('@')) {
+                          final ent = await EmailSendRequestService.instance.lookupEnterpriseByEmailOrName(val);
+                          setModalState(() {
+                            foundCompName = ent?['companyName'];
+                          });
+                        }
+                      },
+                      decoration: const InputDecoration(
+                        hintText: "Enterprise Email (e.g. admin@islamicweb.com)",
+                        hintStyle: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                        prefixIcon: Icon(Icons.business_rounded, color: Color(0xFF0066FF), size: 20),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      ),
+                    ),
+                  ),
+
+                  if (foundCompName != null) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDCFCE7),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 14),
+                          const SizedBox(width: 6),
+                          Text(
+                            "Verified Enterprise: $foundCompName",
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF15803D),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 24),
+
+                  // Send Request Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: sending
+                          ? null
+                          : () async {
+                              final entEmail = _targetEnterpriseEmailController.text.trim();
+                              if (entEmail.isEmpty || !entEmail.contains('@')) {
+                                _showSnackBar("Please enter a valid enterprise email address", Colors.redAccent);
+                                return;
+                              }
+
+                              setModalState(() => sending = true);
+
+                              final ok = await EmailSendRequestService.instance.sendJoinRequest(
+                                targetEnterpriseEmail: entEmail,
+                                applicantName: _fullNameController.text.trim(),
+                                applicantEmail: _emailController.text.trim().toLowerCase(),
+                                applicantPassword: _passwordController.text.trim(),
+                              );
+
+                              if (ctx.mounted) {
+                                Navigator.pop(ctx);
+                              }
+                              if (!mounted) return;
+
+                              if (ok) {
+                                _showSnackBar(
+                                  "Join request sent successfully to $entEmail! You will be notified once approved.",
+                                  const Color(0xFF16A34A),
+                                );
+                              } else {
+                                _showSnackBar("Failed to send request. Please check email address.", Colors.redAccent);
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0066FF),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                      ),
+                      child: sending
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            )
+                          : const Text(
+                              "Send Join Request",
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _onJoinWorkspace() async {
+    final code = _inviteCodeController.text.trim();
+    if (code.isEmpty) {
+      _onNextRequest();
+      return;
+    }
+
+    final fullName = _fullNameController.text.trim();
+    final email = _emailController.text.trim().toLowerCase();
+    final password = _passwordController.text.trim();
+
     if (fullName.isEmpty) {
       _showSnackBar("Please enter your full name", Colors.redAccent);
       return;
@@ -122,9 +352,12 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
         return;
       }
 
-      // Log in user via authProvider
+      // Log in user via authProvider & persist session
       if (result.userModel != null) {
         ref.read(authProvider.notifier).login(result.userModel!);
+        await AppViewAuthGate.instance.savePersistentSession(result.userModel!);
+        EmployeeHomeBackendService.instance.loadEmployeeHomeData();
+        EmployeeStatsBackendService.instance.loadEmployeeStats();
       }
 
       if (mounted) {
@@ -656,17 +889,19 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
                               )
                             : Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
+                                children: [
                                   Text(
-                                    "Join Workspace",
-                                    style: TextStyle(
+                                    _inviteCodeController.text.trim().isEmpty
+                                        ? "Next"
+                                        : "Join Workspace",
+                                    style: const TextStyle(
                                       fontSize: 17,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
                                     ),
                                   ),
-                                  SizedBox(width: 8),
-                                  Icon(
+                                  const SizedBox(width: 8),
+                                  const Icon(
                                     Icons.arrow_forward_rounded,
                                     color: Colors.white,
                                     size: 20,

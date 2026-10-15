@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../employee_join/home/employee_home_backend.dart';
 import '../multiple_store/individual_multi_store.dart';
 import '../profile/individual_profile_store.dart';
@@ -69,15 +70,13 @@ class SamsungWalletService {
         ? publicProfile!.phone
         : (activeProfile?.phoneNumber.isNotEmpty == true
             ? activeProfile!.phoneNumber
-            : (storedUser?.phoneNumber ?? ''));
+            : '');
 
     final String cardSlug = publicProfile?.cardSlug.isNotEmpty == true
         ? publicProfile!.cardSlug
         : (activeProfile?.cardSlug.isNotEmpty == true
             ? activeProfile!.cardSlug
-            : (storedUser?.cardSlug?.isNotEmpty == true
-                ? storedUser!.cardSlug!
-                : (fbUser?.uid ?? 'user-card')));
+            : (fbUser?.uid ?? 'user-card'));
 
     final String avatarUrl = publicProfile?.avatarUrl.isNotEmpty == true
         ? publicProfile!.avatarUrl
@@ -85,15 +84,13 @@ class SamsungWalletService {
             ? activeProfile!.profilePhoto!
             : (empBackend.avatarUrl?.isNotEmpty == true
                 ? empBackend.avatarUrl!
-                : (storedUser?.profilePhoto?.isNotEmpty == true
-                    ? storedUser!.profilePhoto!
-                    : (fbUser?.photoURL ?? ''))));
+                : (fbUser?.photoURL ?? '')));
 
     final String bannerUrl = publicProfile?.bannerUrl.isNotEmpty == true
         ? publicProfile!.bannerUrl
         : (activeProfile?.bannerPhoto?.isNotEmpty == true
             ? activeProfile!.bannerPhoto!
-            : (storedUser?.bannerPhoto ?? ''));
+            : '');
 
     final String bio = publicProfile?.bio.isNotEmpty == true
         ? publicProfile!.bio
@@ -156,7 +153,7 @@ class SamsungWalletService {
     }
 
     try {
-      await WalletService.addToSamsungWallet(
+      final addToWalletUrl = await WalletService.addToSamsungWallet(
         profile: profile,
         publicProfile: publicProfile,
       );
@@ -171,7 +168,7 @@ class SamsungWalletService {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Samsung Wallet pass opened for $name!',
+                    'Samsung Wallet pass saved for $name!',
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -183,9 +180,17 @@ class SamsungWalletService {
           ),
         );
       }
+      debugPrint('[SamsungWalletService] Successfully launched: $addToWalletUrl');
       return true;
+    } on WalletException catch (e) {
+      debugPrint('[SamsungWalletService] WalletException: ${e.title}: ${e.message}');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        await _showWalletErrorDialog(context, error: e, cardUrl: e.cardUrl);
+      }
+      return false;
     } catch (e) {
-      debugPrint('[SamsungWalletService] Error: $e');
+      debugPrint('[SamsungWalletService] Unexpected error: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -572,6 +577,88 @@ class SamsungWalletService {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showWalletErrorDialog(
+    BuildContext context, {
+    required WalletException error,
+    required String cardUrl,
+  }) {
+    return showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        contentPadding: const EdgeInsets.all(24),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: const Color(0xFFEEF2FF),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: const Icon(Icons.wallet_rounded,
+                  color: Color(0xFF1428A0), size: 30),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              error.title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              error.message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 13,
+                color: Color(0xFF64748B),
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  Navigator.of(ctx).pop();
+                  final uri = Uri.parse(cardUrl);
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                },
+                icon: const Icon(Icons.open_in_browser_rounded, size: 18),
+                label: const Text('Open Card in Browser'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1428A0),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                ),
+                child: const Text('Dismiss',
+                    style: TextStyle(color: Color(0xFF475569), fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ],
         ),
       ),
     );

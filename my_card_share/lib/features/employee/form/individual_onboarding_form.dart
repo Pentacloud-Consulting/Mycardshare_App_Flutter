@@ -12,6 +12,7 @@ import 'package:my_card_share/backend/individual/qr_scan/slug_backend_service.da
 import 'package:my_card_share/backend/individual/qr_scan/slug_validator.dart';
 import 'package:my_card_share/features/auth/back/smart_back_handler.dart';
 import 'package:my_card_share/features/auth/font style/font_style.dart';
+import 'package:my_card_share/core/utils/image_cropper_util.dart';
 
 class IndividualOnboardingFormScreen extends StatefulWidget {
   final String? initialFullName;
@@ -268,17 +269,22 @@ class _IndividualOnboardingFormScreenState
     try {
       final XFile? pickedFile = await _picker.pickImage(
         source: source,
-        maxWidth: 800,
-        maxHeight: 800,
-        imageQuality: 85,
+        imageQuality: 90,
       );
       if (pickedFile != null) {
-        final bytes = await pickedFile.readAsBytes();
-        setState(() {
-          _profileImageBytes = bytes;
-          _profileImagePath = pickedFile.path;
-        });
-        _showSnackBar('Photo uploaded successfully!');
+        final croppedPath = await AppImageCropper.cropImage(
+          context: context,
+          sourcePath: pickedFile.path,
+          cropType: AppCropType.avatar,
+        );
+        if (croppedPath != null) {
+          final bytes = await File(croppedPath).readAsBytes();
+          setState(() {
+            _profileImageBytes = bytes;
+            _profileImagePath = croppedPath;
+          });
+          _showSnackBar('Photo uploaded successfully!');
+        }
       }
     } catch (e) {
       debugPrint('Error picking image: $e');
@@ -382,17 +388,22 @@ class _IndividualOnboardingFormScreenState
     try {
       final XFile? pickedFile = await _picker.pickImage(
         source: source,
-        maxWidth: 1200,
-        maxHeight: 600,
-        imageQuality: 85,
+        imageQuality: 90,
       );
       if (pickedFile != null) {
-        final bytes = await pickedFile.readAsBytes();
-        setState(() {
-          _bannerImageBytes = bytes;
-          _bannerImagePath = pickedFile.path;
-        });
-        _showSnackBar('Banner uploaded successfully!');
+        final croppedPath = await AppImageCropper.cropImage(
+          context: context,
+          sourcePath: pickedFile.path,
+          cropType: AppCropType.banner,
+        );
+        if (croppedPath != null) {
+          final bytes = await File(croppedPath).readAsBytes();
+          setState(() {
+            _bannerImageBytes = bytes;
+            _bannerImagePath = croppedPath;
+          });
+          _showSnackBar('Banner uploaded successfully!');
+        }
       }
     } catch (e) {
       debugPrint('Error picking banner image: $e');

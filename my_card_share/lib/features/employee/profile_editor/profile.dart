@@ -13,4 +13,13 @@ class IndividualProfileEditorScreen extends StatelessWidget {
   }
 }
 
+class EmployeeProfileEditorScreen extends StatelessWidget {
+  const EmployeeProfileEditorScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const ProfileViewScreen();
+  }
+}
+
 

@@ -50,6 +50,7 @@ import '../../features/enterprise/connectors/connectors.dart';
 import '../../features/enterprise/brand_profile/profile.dart';
 import '../../features/enterprise/notifications/notifications.dart';
 import '../../features/enterprise/settings/settings.dart';
+import '../../features/enterprise/settings/requests/enterprise_requests_screen.dart';
 
 // Master Admin Imports
 import '../../features/master_admin/dashboard/dashboard.dart';
@@ -358,6 +359,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/enterprise/settings',
             builder: (c, s) => const EnterpriseSettingsScreen(),
+          ),
+          GoRoute(
+            path: '/enterprise/settings/requests',
+            builder: (c, s) => const EnterpriseRequestsScreen(),
           ),
         ],
       ),

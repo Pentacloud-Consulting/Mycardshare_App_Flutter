@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../backend/employee_join/home/employee_home_backend.dart';
+import '../../../../backend/enterprise/profile/enterprise_profile_store.dart';
+import '../../../../backend/enterprise/multiple_store/enterprise_multi_store.dart';
 
 /// Top Header component matching Image 1: Drawer Icon + Hi, User + Company Pill Badge + Bell Notification
 class DashboardHeader extends StatelessWidget {
@@ -26,13 +28,21 @@ class DashboardHeader extends StatelessWidget {
             ? userName!.trim()
             : (homeBackend.userName.isNotEmpty && homeBackend.userName != "User"
                 ? homeBackend.userName
-                : "Zuhaib");
+                : "Employee");
+
+        final activeEntProfile = EnterpriseProfileStore.instance.currentProfile;
+        final entMultiUsers = EnterpriseMultiStore.instance.getAllUsers();
+        final matchedMultiUser = entMultiUsers.isNotEmpty ? entMultiUsers.first : null;
 
         final resolvedCompany = (companyName != null && companyName!.trim().isNotEmpty && companyName != "Enterprise Workspace" && companyName != "Acme Realty")
             ? companyName!.trim()
-            : (homeBackend.companyName.isNotEmpty && homeBackend.companyName != "Enterprise Workspace"
+            : (homeBackend.companyName.isNotEmpty && homeBackend.companyName != "Enterprise Workspace" && homeBackend.companyName != "Acme Realty"
                 ? homeBackend.companyName
-                : "Islamic Web");
+                : (activeEntProfile?.companyName.isNotEmpty == true && activeEntProfile!.companyName != "Enterprise Workspace"
+                    ? activeEntProfile.companyName
+                    : (matchedMultiUser?.companyName.isNotEmpty == true && matchedMultiUser!.companyName != "Enterprise Workspace"
+                        ? matchedMultiUser.companyName
+                        : "Enterprise Workspace")));
 
         return Row(
           children: [

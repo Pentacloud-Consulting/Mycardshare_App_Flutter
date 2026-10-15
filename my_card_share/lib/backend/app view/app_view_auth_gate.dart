@@ -127,6 +127,7 @@ class AppViewAuthGate {
         await savePersistentSession(userModel);
         return userModel;
       } else if (role == 'employee') {
+        await IndividualProfileStore.instance.loadProfile(uid, email, name);
         EmployeeHomeBackendService.instance.loadEmployeeHomeData();
         EmployeeStatsBackendService.instance.loadEmployeeStats();
         final userModel = UserModel(

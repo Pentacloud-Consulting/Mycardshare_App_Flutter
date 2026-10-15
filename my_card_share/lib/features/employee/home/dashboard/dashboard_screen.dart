@@ -19,6 +19,8 @@ import '../../../../backend/individual/previews/publish_unpublish.dart';
 import '../../../../backend/employee_join/home/employee_home_backend.dart';
 import '../../../../backend/employee_join/home/employee_stats_backend.dart';
 import '../../../../backend/employee_join/banner fetch/banner fetch.dart';
+import '../../../../backend/enterprise/profile/enterprise_profile_store.dart';
+import '../../../../backend/enterprise/multiple_store/enterprise_multi_store.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -174,10 +176,16 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
             ? empBackend.role
             : (activeProfile?.jobTitle.isNotEmpty == true ? activeProfile!.jobTitle : "Member");
 
-        final displayCompany = (empBackend.companyName.isNotEmpty && empBackend.companyName != "Enterprise Workspace")
+        final activeEntProfile = EnterpriseProfileStore.instance.currentProfile;
+        final entMultiUsers = EnterpriseMultiStore.instance.getAllUsers();
+        final matchedMultiUser = entMultiUsers.isNotEmpty ? entMultiUsers.first : null;
+
+        final displayCompany = (empBackend.companyName.isNotEmpty && empBackend.companyName != "Enterprise Workspace" && empBackend.companyName != "Acme Realty")
             ? empBackend.companyName
-            : ((activeProfile?.companyName.isNotEmpty == true ? activeProfile!.companyName : null)
-                ?? "Islamic Web");
+            : ((activeProfile?.companyName.isNotEmpty == true && activeProfile!.companyName != "Enterprise Workspace" ? activeProfile.companyName : null)
+                ?? (activeEntProfile?.companyName.isNotEmpty == true && activeEntProfile!.companyName != "Enterprise Workspace" ? activeEntProfile.companyName : null)
+                ?? (matchedMultiUser?.companyName.isNotEmpty == true && matchedMultiUser!.companyName != "Enterprise Workspace" ? matchedMultiUser.companyName : null)
+                ?? "Enterprise Workspace");
 
         final displayStatus = empBackend.status.isNotEmpty ? empBackend.status : "Actively Networking";
         final templateIndex = IndividualProfileStore.getTemplateIndex(activeProfile?.templateStyle);

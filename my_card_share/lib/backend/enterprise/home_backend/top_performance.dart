@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -8,6 +10,7 @@ import '../enployee_leads/employee_save_leads.dart';
 import '../view_employee/view_employee_enterprice.dart';
 import '../../individual/previews/individual_metrics_store.dart';
 import '../../employee_join/home/employee_stats_backend.dart';
+import '../../../features/enterprise/workspace/workspace_employee_profile_view.dart';
 
 /// Data model representing a top performing employee.
 class TopPerformerData {
@@ -47,7 +50,7 @@ class TopPerformerData {
       id: id,
       name: name,
       initials: init.toUpperCase(),
-      avatarUrl: data['avatarUrl'] as String?,
+      avatarUrl: (data['avatarUrl'] ?? data['profilePhoto'] ?? data['avatar']) as String?,
       jobTitle: data['roleTitle'] ?? data['jobTitle'] ?? 'Employee',
       views: (data['views'] as num?)?.toInt() ?? 0,
       leads: (data['leads'] as num?)?.toInt() ?? 0,
@@ -275,7 +278,20 @@ class EnterpriseTopPerformersBackend extends StatelessWidget {
                   rankTextColor = const Color(0xFFC2410C);
                 }
 
-                return Container(
+                return InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => WorkspaceEmployeeProfileView(
+                          employeeId: performer.id,
+                          employeeName: performer.name,
+                          enterpriseUid: uid,
+                        ),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -322,32 +338,43 @@ class EnterpriseTopPerformersBackend extends StatelessWidget {
                           shape: BoxShape.circle,
                         ),
                         child: ClipOval(
-                          child: performer.avatarUrl != null &&
-                                  performer.avatarUrl!.trim().isNotEmpty
-                              ? Image.network(
-                                  performer.avatarUrl!,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (ctx, err, trace) => Center(
-                                    child: Text(
-                                      performer.initials,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w700,
-                                        color: Color(0xFF0052FF),
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              : Center(
-                                  child: Text(
-                                    performer.initials,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFF0052FF),
-                                    ),
-                                  ),
-                                ),
+                          child: Builder(
+                            builder: (context) {
+                              final av = performer.avatarUrl?.trim();
+                              Widget? img;
+
+                              if (av != null && av.isNotEmpty) {
+                                if (av.startsWith('data:image')) {
+                                  try {
+                                    final commaIdx = av.indexOf(',');
+                                    final b64 = commaIdx != -1 ? av.substring(commaIdx + 1) : av;
+                                    img = Image.memory(
+                                      base64Decode(b64),
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) =>
+                                          _buildFallbackInitialWidget(performer),
+                                    );
+                                  } catch (_) {}
+                                } else if (av.startsWith('http')) {
+                                  img = Image.network(
+                                    av,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) =>
+                                        _buildFallbackInitialWidget(performer),
+                                  );
+                                } else if (File(av).existsSync()) {
+                                  img = Image.file(
+                                    File(av),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) =>
+                                        _buildFallbackInitialWidget(performer),
+                                  );
+                                }
+                              }
+
+                              return img ?? _buildFallbackInitialWidget(performer);
+                            },
+                          ),
                         ),
                       ),
 
@@ -390,12 +417,26 @@ class EnterpriseTopPerformersBackend extends StatelessWidget {
                         ),
                     ],
                   ),
-                );
+                ),
+              );
               },
             ),
           ],
         );
       },
+    );
+  }
+
+  static Widget _buildFallbackInitialWidget(TopPerformerData performer) {
+    return Center(
+      child: Text(
+        performer.initials,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF0052FF),
+        ),
+      ),
     );
   }
 }

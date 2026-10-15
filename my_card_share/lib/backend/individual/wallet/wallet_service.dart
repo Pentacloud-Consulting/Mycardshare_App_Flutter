@@ -10,17 +10,25 @@ import '../scan_profile_view/scan_profile_view.dart';
 
 /// WalletService — Real backend-connected wallet pass generation.
 ///
-/// Flow:
-/// 1. Flutter calls POST /api/wallet/google or /api/wallet/samsung with Bearer token
-/// 2. Backend (Next.js) generates signed pass and returns saveUrl / addToWalletUrl
-/// 3. Flutter launches that URL → device native wallet sheet pops up
+/// Google Wallet flow:
+///   1. POST /api/wallet/google → backend signs JWT → returns saveUrl
+///   2. App launches saveUrl → Android opens native Google Wallet sheet
 ///
-/// This follows the MyCardShare Wallet_Integration_Guide.md exactly.
+/// Samsung Wallet flow:
+///   1. POST /api/wallet/samsung → backend registers pass → returns addToWalletUrl
+///   2. App launches addToWalletUrl → Samsung Galaxy intercepts a.swallet.link
+///
+/// Both flows have graceful fallback chains if backend is unavailable.
 class WalletService {
   WalletService._internal();
   static final WalletService instance = WalletService._internal();
 
   static const String _baseUrl = 'https://mycardshare.com';
+
+  // ─────────────────────────────────────────────────────────────
+  // Wallet app package name (for Play Store redirect / deep links if needed)
+  // ─────────────────────────────────────────────────────────────
+  static const String _googleWalletPkg = 'com.google.android.apps.walletnfcrel';
 
   // ─────────────────────────────────────────────────────────────
   // HELPER: Get Firebase Bearer Token headers
@@ -156,18 +164,44 @@ class WalletService {
   }
 
   // ─────────────────────────────────────────────────────────────
+  // HELPER: Launch URL — tries multiple modes in order
+  // Returns the URL that was successfully launched, or null.
+  // ─────────────────────────────────────────────────────────────
+  static Future<bool> _tryLaunch(String url,
+      {LaunchMode mode = LaunchMode.externalApplication}) async {
+    try {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        return await launchUrl(uri, mode: mode);
+      }
+    } catch (e) {
+      debugPrint('[WalletService] Launch failed ($url): $e');
+    }
+    return false;
+  }
+
+  // ─────────────────────────────────────────────────────────────
   // 1. ADD TO GOOGLE WALLET
   // ─────────────────────────────────────────────────────────────
-  /// Calls backend POST /api/wallet/google → gets saveUrl → launches it.
-  /// Android device opens native "Add to Google Wallet" sheet.
-  static Future<void> addToGoogleWallet({
+  /// Returns the saveUrl string that was successfully obtained and launched.
+  /// Throws [WalletException] with a human-readable message if all attempts fail.
+  ///
+  /// Fallback order:
+  ///   1. Backend POST /api/wallet/google → saveUrl (JWT-signed Google Wallet pass)
+  ///   2. GET  /api/wallet/google/redirect?slug=... (simple redirect endpoint)
+  ///   3. Open Google Wallet app home screen directly
+  static Future<String> addToGoogleWallet({
     IndividualProfileData? profile,
     PublicProfileData? publicProfile,
   }) async {
     final headers = await _getHeaders();
     final cardData = _buildCardData(profile: profile, publicProfile: publicProfile);
+    final slug = cardData['cardSlug'] as String;
+    final publicCardUrl = cardData['publicCardUrl'] as String;
 
+    // ── Step 1: Backend POST → JWT-signed saveUrl ─────────────
     try {
+      debugPrint('[WalletService] Calling POST /api/wallet/google ...');
       final response = await http.post(
         Uri.parse('$_baseUrl/api/wallet/google'),
         headers: headers,
@@ -184,53 +218,102 @@ class WalletService {
           'themeColor': cardData['themeColor'],
           'avatarUrl': cardData['avatarUrl'],
           'bannerUrl': cardData['bannerUrl'],
-          'cardSlug': cardData['cardSlug'],
+          'cardSlug': slug,
           'socialLinks': cardData['socialLinks'],
-          'publicCardUrl': cardData['publicCardUrl'],
+          'publicCardUrl': publicCardUrl,
         }),
-      ).timeout(const Duration(seconds: 12));
+      ).timeout(const Duration(seconds: 15));
+
+      debugPrint('[WalletService] Response ${response.statusCode}: ${response.body.substring(0, response.body.length.clamp(0, 300))}');
 
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
-        final saveUrl = json['data']?['saveUrl'] as String? ?? json['saveUrl'] as String?;
-
+        // Try all common response shapes
+        final saveUrl = _extractString(json, ['data.saveUrl', 'saveUrl', 'data.url', 'url',
+                                               'data.addToWalletUrl', 'addToWalletUrl',
+                                               'data.walletUrl', 'walletUrl']);
         if (saveUrl != null && saveUrl.isNotEmpty) {
-          final uri = Uri.parse(saveUrl);
-          if (await canLaunchUrl(uri)) {
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-            return;
+          debugPrint('[WalletService] Got saveUrl: $saveUrl');
+          // Try native app first (externalNonBrowserApplication), then browser
+          if (await _tryLaunch(saveUrl, mode: LaunchMode.externalNonBrowserApplication)) {
+            return saveUrl;
+          }
+          if (await _tryLaunch(saveUrl, mode: LaunchMode.externalApplication)) {
+            return saveUrl;
           }
         }
       }
     } catch (e) {
-      debugPrint('[WalletService] Google Wallet API call warning: $e');
+      debugPrint('[WalletService] Google Wallet backend error: $e');
     }
 
-    // Direct Google Pay / Wallet web fallback for passes
-    final slug = cardData['cardSlug'];
-    final fallbackUri = Uri.parse('https://mycardshare.com/card/$slug?wallet=google');
-    if (await canLaunchUrl(fallbackUri)) {
-      await launchUrl(fallbackUri, mode: LaunchMode.externalApplication);
-    } else {
-      final publicUri = Uri.parse(cardData['publicCardUrl'] as String);
-      await launchUrl(publicUri, mode: LaunchMode.externalApplication);
+    // ── Step 2: GET redirect endpoint ─────────────────────────
+    try {
+      final redirectUrl = '$_baseUrl/api/wallet/google/save?slug=$slug';
+      debugPrint('[WalletService] Trying redirect endpoint: $redirectUrl');
+      final response = await http.get(
+        Uri.parse(redirectUrl),
+        headers: headers,
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200 || response.statusCode == 302) {
+        final location = response.headers['location'];
+        final saveUrl = location ?? redirectUrl;
+        if (await _tryLaunch(saveUrl, mode: LaunchMode.externalNonBrowserApplication)) {
+          return saveUrl;
+        }
+        if (await _tryLaunch(saveUrl, mode: LaunchMode.externalApplication)) {
+          return saveUrl;
+        }
+      }
+    } catch (e) {
+      debugPrint('[WalletService] Google Wallet redirect error: $e');
     }
+
+    // ── Step 3: Open Google Wallet app home directly ──────────
+    // This at least opens the wallet app so the user is in the right place
+    final walletAppUrls = [
+      'https://pay.google.com/payments/home',  // Wallet web — Chrome → Wallet app
+      'market://details?id=$_googleWalletPkg', // Play Store if not installed
+    ];
+    for (final url in walletAppUrls) {
+      if (await _tryLaunch(url, mode: LaunchMode.externalApplication)) {
+        // Return empty string to signal "app opened but no pass generated"
+        throw WalletException(
+          title: 'Backend Not Ready',
+          message: 'The wallet pass generation server is not configured yet. '
+              'Google Wallet has been opened — please set up the backend API to enable '
+              'automatic pass creation.',
+          cardUrl: publicCardUrl,
+        );
+      }
+    }
+
+    // ── Step 4: Nothing worked ────────────────────────────────
+    throw WalletException(
+      title: 'Google Wallet Unavailable',
+      message: 'Could not connect to the wallet pass server. '
+          'Please check your internet connection and try again.',
+      cardUrl: publicCardUrl,
+    );
   }
 
   // ─────────────────────────────────────────────────────────────
   // 2. ADD TO SAMSUNG WALLET
   // ─────────────────────────────────────────────────────────────
-  /// Calls backend POST /api/wallet/samsung → gets addToWalletUrl → launches it.
-  /// Samsung Galaxy devices intercept a.swallet.link and open Samsung Wallet sheet.
-  static Future<void> addToSamsungWallet({
+  static Future<String> addToSamsungWallet({
     IndividualProfileData? profile,
     PublicProfileData? publicProfile,
   }) async {
     final headers = await _getHeaders();
     final cardData = _buildCardData(profile: profile, publicProfile: publicProfile);
     final refId = 'ref-${cardData['userId']}-${DateTime.now().millisecondsSinceEpoch}';
+    final slug = cardData['cardSlug'] as String;
+    final publicCardUrl = cardData['publicCardUrl'] as String;
 
+    // ── Step 1: Backend POST ───────────────────────────────────
     try {
+      debugPrint('[WalletService] Calling POST /api/wallet/samsung ...');
       final response = await http.post(
         Uri.parse('$_baseUrl/api/wallet/samsung'),
         headers: headers,
@@ -238,7 +321,7 @@ class WalletService {
           'refId': refId,
           'formData': {
             'uid': cardData['userId'],
-            'cardSlug': cardData['cardSlug'],
+            'cardSlug': slug,
             'fullName': cardData['fullName'],
             'jobTitle': cardData['jobTitle'],
             'companyName': cardData['companyName'],
@@ -254,35 +337,106 @@ class WalletService {
             'socialLinks': cardData['socialLinks'],
             'companyLogo': null,
             'themeColor': '#1428A0',
-            'publicCardUrl': cardData['publicCardUrl'],
+            'publicCardUrl': publicCardUrl,
           },
         }),
-      ).timeout(const Duration(seconds: 12));
+      ).timeout(const Duration(seconds: 15));
+
+      debugPrint('[WalletService] Samsung Response ${response.statusCode}: ${response.body.substring(0, response.body.length.clamp(0, 300))}');
 
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
-        final addToWalletUrl = json['data']?['addToWalletUrl'] as String? ?? json['addToWalletUrl'] as String?;
+        final addToWalletUrl = _extractString(json, [
+          'data.addToWalletUrl', 'addToWalletUrl', 'data.url', 'url',
+          'data.saveUrl', 'saveUrl', 'data.walletUrl', 'walletUrl',
+        ]);
 
         if (addToWalletUrl != null && addToWalletUrl.isNotEmpty) {
-          final uri = Uri.parse(addToWalletUrl);
-          if (await canLaunchUrl(uri)) {
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-            return;
+          debugPrint('[WalletService] Got addToWalletUrl: $addToWalletUrl');
+          if (await _tryLaunch(addToWalletUrl, mode: LaunchMode.externalNonBrowserApplication)) {
+            return addToWalletUrl;
+          }
+          if (await _tryLaunch(addToWalletUrl, mode: LaunchMode.externalApplication)) {
+            return addToWalletUrl;
           }
         }
       }
     } catch (e) {
-      debugPrint('[WalletService] Samsung Wallet API call warning: $e');
+      debugPrint('[WalletService] Samsung Wallet backend error: $e');
     }
 
-    // Direct Samsung Wallet web fallback
-    final slug = cardData['cardSlug'];
-    final fallbackUri = Uri.parse('https://mycardshare.com/card/$slug?wallet=samsung');
-    if (await canLaunchUrl(fallbackUri)) {
-      await launchUrl(fallbackUri, mode: LaunchMode.externalApplication);
-    } else {
-      final publicUri = Uri.parse(cardData['publicCardUrl'] as String);
-      await launchUrl(publicUri, mode: LaunchMode.externalApplication);
+    // ── Step 2: Samsung universal link (a.swallet.link) ──────
+    // Samsung Galaxy devices intercept this domain and open Samsung Wallet
+    final samsungFallbacks = [
+      'https://a.swallet.link/add/$slug',
+      'samsungwallet://wallet/add?url=${Uri.encodeComponent(publicCardUrl)}',
+      'samsungpay://wallet/add?url=${Uri.encodeComponent(publicCardUrl)}',
+    ];
+    for (final url in samsungFallbacks) {
+      debugPrint('[WalletService] Trying Samsung URL: $url');
+      if (await _tryLaunch(url, mode: LaunchMode.externalNonBrowserApplication)) {
+        throw WalletException(
+          title: 'Backend Not Ready',
+          message: 'The Samsung Wallet pass server is not configured. '
+              'Samsung Wallet has been opened — please set up the backend API.',
+          cardUrl: publicCardUrl,
+        );
+      }
+      if (await _tryLaunch(url, mode: LaunchMode.externalApplication)) {
+        throw WalletException(
+          title: 'Backend Not Ready',
+          message: 'The Samsung Wallet pass server is not configured. '
+              'Samsung Wallet has been opened — please set up the backend API.',
+          cardUrl: publicCardUrl,
+        );
+      }
     }
+
+    throw WalletException(
+      title: 'Samsung Wallet Unavailable',
+      message: 'Could not connect to the Samsung Wallet pass server. '
+          'Please check your internet connection and try again.',
+      cardUrl: publicCardUrl,
+    );
   }
+
+  // ─────────────────────────────────────────────────────────────
+  // HELPER: Extract string from nested JSON path (dot-notation)
+  // ─────────────────────────────────────────────────────────────
+  static String? _extractString(Map<String, dynamic> json, List<String> paths) {
+    for (final path in paths) {
+      try {
+        final parts = path.split('.');
+        dynamic current = json;
+        for (final part in parts) {
+          if (current is Map<String, dynamic>) {
+            current = current[part];
+          } else {
+            current = null;
+            break;
+          }
+        }
+        if (current is String && current.isNotEmpty) return current;
+      } catch (_) {}
+    }
+    return null;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Structured wallet error with card URL for fallback actions
+// ─────────────────────────────────────────────────────────────
+class WalletException implements Exception {
+  final String title;
+  final String message;
+  final String cardUrl;
+
+  const WalletException({
+    required this.title,
+    required this.message,
+    required this.cardUrl,
+  });
+
+  @override
+  String toString() => '$title: $message';
 }

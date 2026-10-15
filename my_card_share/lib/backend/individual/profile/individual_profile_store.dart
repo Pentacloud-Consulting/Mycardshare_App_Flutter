@@ -222,6 +222,43 @@ class IndividualProfileStore extends ChangeNotifier {
           debugPrint('[IndividualProfileStore] Synced profile to Firestore for email doc: $emailDocId');
         }
       }
+
+      // Also sync to enterprise subcollection so enterprise admin views real filled details immediately
+      try {
+        final currentEmail = email.trim().toLowerCase();
+        if (currentEmail.isNotEmpty) {
+          final enterprisesSnap = await FirebaseFirestore.instance.collection('enterprises').limit(15).get();
+          for (final ent in enterprisesSnap.docs) {
+            final empSnap = await FirebaseFirestore.instance
+                .collection('enterprises')
+                .doc(ent.id)
+                .collection('employees')
+                .where('email', isEqualTo: currentEmail)
+                .get();
+            if (empSnap.docs.isNotEmpty) {
+              final empDocId = empSnap.docs.first.id;
+              await FirebaseFirestore.instance
+                  .collection('enterprises')
+                  .doc(ent.id)
+                  .collection('employees')
+                  .doc(empDocId)
+                  .set({
+                'name': fullName,
+                'fullName': fullName,
+                'jobTitle': jobTitle,
+                'roleTitle': jobTitle,
+                'phone': phoneNumber,
+                'avatarUrl': profilePhoto ?? _activeProfile?.profilePhoto,
+                'updatedAt': FieldValue.serverTimestamp(),
+              }, SetOptions(merge: true));
+              debugPrint('[IndividualProfileStore] Synced employee details to enterprise ${ent.id} employee $empDocId');
+              break;
+            }
+          }
+        }
+      } catch (subErr) {
+        debugPrint('[IndividualProfileStore] Enterprise subcollection sync notice: $subErr');
+      }
     } catch (e) {
       debugPrint('[IndividualProfileStore] Firestore sync notice: $e');
     }
@@ -298,32 +335,62 @@ class IndividualProfileStore extends ChangeNotifier {
         debugPrint('[IndividualProfileStore] API /api/cards load notice: $apiErr');
       }
 
-      // 2. Fallback to Firestore users/{uid} document
-      final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      if (doc.exists && doc.data() != null) {
-        final data = doc.data()!;
+      // 2. Primary / Fallback to Firestore users/{uid} document
+      DocumentSnapshot<Map<String, dynamic>>? fsDoc;
+      if (uid.isNotEmpty) {
+        final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        if (doc.exists && doc.data() != null) fsDoc = doc;
+      }
+      if (fsDoc == null && email.trim().isNotEmpty) {
+        final emailDocId = email.trim().toLowerCase().replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+        final doc = await FirebaseFirestore.instance.collection('users').doc(emailDocId).get();
+        if (doc.exists && doc.data() != null) fsDoc = doc;
+      }
+
+      if (fsDoc != null && fsDoc.data() != null) {
+        final data = fsDoc.data()!;
         final rawLinks = (data['socialLinks'] as List<dynamic>?) ?? [];
         final photo = data['profilePhoto'] ?? data['avatarUrl'] ?? data['photoUrl'];
+        final banner = data['bannerPhoto'] ?? data['bannerUrl'] ?? data['coverImage'];
+
+        final resolvedName = (data['fullName'] as String?)?.trim().isNotEmpty == true
+            ? (data['fullName'] as String).trim()
+            : ((data['name'] as String?)?.trim().isNotEmpty == true
+                ? (data['name'] as String).trim()
+                : (fullName.trim().isNotEmpty ? fullName.trim() : (email.contains('@') ? email.split('@').first : 'User')));
+
+        final resolvedRole = (data['jobTitle'] as String?)?.trim().isNotEmpty == true
+            ? (data['jobTitle'] as String).trim()
+            : ((data['roleTitle'] as String?)?.trim().isNotEmpty == true
+                ? (data['roleTitle'] as String).trim()
+                : '');
+
+        final resolvedComp = (data['companyName'] as String?)?.trim().isNotEmpty == true
+            ? (data['companyName'] as String).trim()
+            : ((data['company'] as String?)?.trim().isNotEmpty == true
+                ? (data['company'] as String).trim()
+                : '');
+
         _activeProfile = IndividualProfileData(
-          uid: uid,
-          fullName: data['fullName'] ?? data['name'] ?? fullName,
+          uid: uid.isNotEmpty ? uid : fsDoc.id,
+          fullName: resolvedName,
           email: data['email'] ?? email,
-          cardSlug: data['cardSlug'] ?? generateCardSlug(fullName),
+          cardSlug: data['cardSlug'] ?? generateCardSlug(resolvedName),
           profilePhoto: photo,
-          bannerPhoto: data['bannerPhoto'] ?? data['bannerUrl'] ?? data['coverImage'],
-          jobTitle: data['jobTitle'] ?? data['role'] ?? '',
+          bannerPhoto: banner,
+          jobTitle: resolvedRole,
           phoneNumber: data['phoneNumber'] ?? data['phone'] ?? '',
           websiteUrl: data['websiteUrl'] ?? data['website'] ?? '',
           templateStyle: data['templateStyle'] ?? '0',
           socialLinks: rawLinks
               .map((l) => SocialLinkItem.fromJson(Map<String, dynamic>.from(l)))
               .toList(),
-          companyName: data['companyName'] ?? data['company'] ?? '',
+          companyName: resolvedComp,
           shortBio: data['shortBio'] ?? data['bio'] ?? '',
           networkingStatus: data['networkingStatus'] ?? data['userStatus'] ?? 'Actively Networking',
         );
         notifyListeners();
-        debugPrint('[IndividualProfileStore] Loaded profile from Firestore users/$uid');
+        debugPrint('[IndividualProfileStore] Loaded profile from Firestore users/${fsDoc.id}: $resolvedName ($resolvedRole @ $resolvedComp)');
         return;
       }
     } catch (e) {

@@ -1,10 +1,13 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import '../profile/enterprise_profile_store.dart';
+import '../../../core/utils/image_cropper_util.dart';
 
 /// Represents the locked brand banner state for an enterprise.
 class LockedBannerData {
@@ -63,21 +66,33 @@ class LockBannerService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final ImagePicker _picker = ImagePicker();
 
-  Future<BannerLockResult> pickAndUploadBanner({bool lockAfterUpload = true}) async {
+  Future<BannerLockResult> pickAndUploadBanner({
+    bool lockAfterUpload = true,
+    BuildContext? context,
+  }) async {
     final uid = _auth.currentUser?.uid ?? EnterpriseProfileStore.instance.currentProfile?.uid ?? 'ent_active';
 
     try {
       final XFile? picked = await _picker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 85,
-        maxWidth: 1400,
-        maxHeight: 500,
+        imageQuality: 90,
       );
       if (picked == null) return BannerLockResult.error('No image selected.');
 
       debugPrint('[LockBannerService] Image picked: ${picked.path}');
 
-      final bytes = await picked.readAsBytes();
+      String filePath = picked.path;
+      if (context != null) {
+        final cropped = await AppImageCropper.cropImage(
+          context: context,
+          sourcePath: picked.path,
+          cropType: AppCropType.banner,
+        );
+        if (cropped == null) return BannerLockResult.error('Banner cropping cancelled.');
+        filePath = cropped;
+      }
+
+      final bytes = await File(filePath).readAsBytes();
       final base64Str = base64Encode(bytes);
       final dataUrl = 'data:image/jpeg;base64,$base64Str';
       String downloadUrl = dataUrl;

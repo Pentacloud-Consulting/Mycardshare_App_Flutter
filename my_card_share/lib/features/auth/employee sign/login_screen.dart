@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import '../back/smart_back_handler.dart';
 import '../font style/font_style.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../backend/app view/app_view_auth_gate.dart';
+import '../../../backend/individual/profile/individual_profile_store.dart';
+import '../../../backend/individual/previews/publish_unpublish.dart';
+import '../../../backend/employee_join/home/employee_home_backend.dart';
+import '../../../backend/employee_join/home/employee_stats_backend.dart';
 import '../../../backend/individual/sign/login_identity.dart';
 import '../../../backend/employee_join/employee_login.dart';
 import '../../../backend/employee_join/email fetch/employee_email_fetch.dart';
@@ -185,6 +191,14 @@ class _EmployeeLoginScreenState extends ConsumerState<EmployeeLoginScreen> {
 
       if (result.userModel != null) {
         ref.read(authProvider.notifier).login(result.userModel!);
+        await AppViewAuthGate.instance.savePersistentSession(result.userModel!);
+        final fbUid = FirebaseAuth.instance.currentUser?.uid;
+        if (fbUid != null) {
+          IndividualProfileStore.instance.loadProfile(fbUid, email, result.userModel!.name);
+          PublishUnpublishService.instance.loadPublishStatus(fbUid);
+        }
+        EmployeeHomeBackendService.instance.loadEmployeeHomeData();
+        EmployeeStatsBackendService.instance.loadEmployeeStats();
       }
 
       if (mounted) {

@@ -15,6 +15,9 @@ import 'widgets/profile_social_links.dart';
 import 'widgets/profile_template_selector.dart';
 import '../../../backend/employee_join/banner fetch/banner fetch.dart';
 import '../../../backend/employee_join/home/employee_home_backend.dart';
+import '../../../backend/employee_join/email/fetching_emails.dart';
+import '../../../backend/enterprise/profile/enterprise_profile_store.dart';
+import '../../../core/utils/image_cropper_util.dart';
 
 class ProfileEditorScreen extends StatefulWidget {
   const ProfileEditorScreen({super.key});
@@ -34,6 +37,7 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
 
   late TextEditingController _phoneController;
   late TextEditingController _emailController;
+  late TextEditingController _companyEmailController;
   late TextEditingController _websiteController;
 
   late TextEditingController _slugController;
@@ -57,16 +61,56 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
     _bannerImagePath = active?.bannerPhoto;
     _profileImagePath = active?.profilePhoto;
 
-    _nameController = TextEditingController(text: active?.fullName ?? storedUser?.fullName ?? "");
-    _roleController = TextEditingController(text: active?.jobTitle ?? "");
-    _companyController = TextEditingController(text: active?.companyName ?? "");
+    final empBackend = EmployeeHomeBackendService.instance;
+    final cachedEmails = EmployeeEmailService.instance.currentEmails;
+
+    _nameController = TextEditingController(
+      text: active?.fullName.isNotEmpty == true
+          ? active!.fullName
+          : (empBackend.userName.isNotEmpty && empBackend.userName != "User"
+              ? empBackend.userName
+              : (storedUser?.fullName ?? "")),
+    );
+    _roleController = TextEditingController(
+      text: active?.jobTitle.isNotEmpty == true
+          ? active!.jobTitle
+          : (empBackend.role.isNotEmpty && empBackend.role != "Member"
+              ? empBackend.role
+              : ""),
+    );
+    _companyController = TextEditingController(
+      text: active?.companyName.isNotEmpty == true
+          ? active!.companyName
+          : (empBackend.companyName.isNotEmpty && empBackend.companyName != "Enterprise Workspace"
+              ? empBackend.companyName
+              : (cachedEmails?.companyName.isNotEmpty == true ? cachedEmails!.companyName : "")),
+    );
     _bioController = TextEditingController(
       text: active?.shortBio ?? "",
     );
 
     _phoneController = TextEditingController(text: active?.phoneNumber ?? "");
-    _emailController = TextEditingController(text: active?.email ?? storedUser?.email ?? "");
-    _websiteController = TextEditingController(text: active?.websiteUrl ?? "");
+    _emailController = TextEditingController(
+      text: active?.email.isNotEmpty == true
+          ? active!.email
+          : (empBackend.email.isNotEmpty
+              ? empBackend.email
+              : (cachedEmails?.employeeEmail.isNotEmpty == true
+                  ? cachedEmails!.employeeEmail
+                  : (storedUser?.email ?? fbUser?.email ?? ""))),
+    );
+    _companyEmailController = TextEditingController(
+      text: cachedEmails?.companyEmail ?? "",
+    );
+    final entProfile = EnterpriseProfileStore.instance.currentProfile;
+    final enterpriseWeb = (cachedEmails?.companyWebsite.isNotEmpty == true ? cachedEmails!.companyWebsite : null)
+        ?? (entProfile?.website.isNotEmpty == true ? entProfile!.website : null);
+
+    _websiteController = TextEditingController(
+      text: (active?.websiteUrl != null && active!.websiteUrl.isNotEmpty)
+          ? active.websiteUrl
+          : (enterpriseWeb ?? ""),
+    );
 
     _slugController = TextEditingController(
       text: active?.cardSlug ?? IndividualProfileStore.generateCardSlug(_nameController.text),
@@ -89,6 +133,25 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
         });
       }
     });
+
+    EmployeeEmailService.instance.fetchEmployeeEmails().then((emails) {
+      if (mounted) {
+        if (_emailController.text.isEmpty && emails.employeeEmail.isNotEmpty) {
+          _emailController.text = emails.employeeEmail;
+        }
+        if (_companyEmailController.text.isEmpty && emails.companyEmail.isNotEmpty) {
+          _companyEmailController.text = emails.companyEmail;
+        }
+        if (_companyController.text.isEmpty && emails.companyName.isNotEmpty) {
+          _companyController.text = emails.companyName;
+        }
+        if ((_websiteController.text.isEmpty || _websiteController.text == "https://pentacloud.com") &&
+            emails.companyWebsite.isNotEmpty) {
+          _websiteController.text = emails.companyWebsite;
+        }
+        setState(() {});
+      }
+    });
   }
 
   @override
@@ -99,6 +162,7 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
     _bioController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
+    _companyEmailController.dispose();
     _websiteController.dispose();
     _slugController.dispose();
     super.dispose();
@@ -235,18 +299,23 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
         try {
           final XFile? pickedFile = await _picker.pickImage(
             source: source,
-            maxWidth: 1200,
-            maxHeight: 600,
-            imageQuality: 85,
+            imageQuality: 90,
           );
           if (pickedFile != null) {
-            setState(() {
-              _bannerImagePath = pickedFile.path;
-            });
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Banner image selected! Tap checkmark to save.')),
+            final croppedPath = await AppImageCropper.cropImage(
+              context: context,
+              sourcePath: pickedFile.path,
+              cropType: AppCropType.banner,
             );
+            if (croppedPath != null) {
+              setState(() {
+                _bannerImagePath = croppedPath;
+              });
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Banner image selected! Tap checkmark to save.')),
+              );
+            }
           }
         } catch (e) {
           debugPrint('Error picking banner image: $e');
@@ -268,18 +337,23 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
         try {
           final XFile? pickedFile = await _picker.pickImage(
             source: source,
-            maxWidth: 800,
-            maxHeight: 800,
-            imageQuality: 85,
+            imageQuality: 90,
           );
           if (pickedFile != null) {
-            setState(() {
-              _profileImagePath = pickedFile.path;
-            });
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Profile picture selected! Tap checkmark to save.')),
+            final croppedPath = await AppImageCropper.cropImage(
+              context: context,
+              sourcePath: pickedFile.path,
+              cropType: AppCropType.avatar,
             );
+            if (croppedPath != null) {
+              setState(() {
+                _profileImagePath = croppedPath;
+              });
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Profile picture selected! Tap checkmark to save.')),
+              );
+            }
           }
         } catch (e) {
           debugPrint('Error picking profile picture: $e');
@@ -805,6 +879,7 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
               ProfileContactDetails(
                 phoneController: _phoneController,
                 emailController: _emailController,
+                companyEmailController: _companyEmailController,
                 websiteController: _websiteController,
               ),
 

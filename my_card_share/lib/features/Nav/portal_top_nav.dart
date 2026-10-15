@@ -6,6 +6,8 @@ import '../../providers/auth_provider.dart';
 import 'profile_menu_list.dart';
 import '../../backend/individual/profile/individual_profile_store.dart';
 import '../../backend/individual/multiple_store/individual_multi_store.dart';
+import '../../backend/enterprise/profile/enterprise_profile_store.dart';
+import '../../backend/enterprise/multiple_store/enterprise_multi_store.dart';
 import '../../backend/employee_join/home/employee_home_backend.dart';
 
 class PortalTopNav extends ConsumerWidget implements PreferredSizeWidget {
@@ -139,14 +141,27 @@ class PortalTopNav extends ConsumerWidget implements PreferredSizeWidget {
 
         if (realName != null && realName.isNotEmpty) {
           resolvedUserName = realName.trim().split(' ').first;
-        } else if (resolvedUserName == "Alex" || resolvedUserName == "User") {
-          resolvedUserName = "Zuhaib";
+        } else if (resolvedUserName == "Alex") {
+          resolvedUserName = "User";
         }
+
+        final activeEntProfile = EnterpriseProfileStore.instance.currentProfile;
+        final entMultiUsers = EnterpriseMultiStore.instance.getAllUsers();
+        final matchedMultiUser = entMultiUsers.isNotEmpty
+            ? entMultiUsers.firstWhere(
+                (u) => u.email.toLowerCase() == (firebaseUser?.email?.toLowerCase() ?? ''),
+                orElse: () => entMultiUsers.first,
+              )
+            : null;
 
         final resolvedCompany = isEmployee
             ? ((empBackend.companyName.isNotEmpty && empBackend.companyName != "Enterprise Workspace" && empBackend.companyName != "Acme Realty")
                 ? empBackend.companyName
-                : "Islamic Web")
+                : (activeEntProfile?.companyName.isNotEmpty == true && activeEntProfile!.companyName != "Enterprise Workspace"
+                    ? activeEntProfile.companyName
+                    : (matchedMultiUser?.companyName.isNotEmpty == true && matchedMultiUser!.companyName != "Enterprise Workspace"
+                        ? matchedMultiUser.companyName
+                        : "Enterprise Workspace")))
             : (activeProfile?.companyName ?? '');
 
         String currentPath = '/portal';

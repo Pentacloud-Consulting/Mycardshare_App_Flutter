@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 class ProfileContactDetails extends StatelessWidget {
   final TextEditingController phoneController;
   final TextEditingController emailController;
+  final TextEditingController? companyEmailController;
   final TextEditingController websiteController;
 
   const ProfileContactDetails({
     super.key,
     required this.phoneController,
     required this.emailController,
+    this.companyEmailController,
     required this.websiteController,
   });
 
@@ -27,7 +29,7 @@ class ProfileContactDetails extends StatelessWidget {
         ),
         const SizedBox(height: 10),
 
-        // Phone Field
+        // Phone Field (Editable)
         _buildInputField(
           icon: Icons.phone_outlined,
           label: "Phone",
@@ -35,21 +37,32 @@ class ProfileContactDetails extends StatelessWidget {
         ),
         const SizedBox(height: 8),
 
-        // Email Field (Verified & Read-only)
+        // 1. Employee Email Field (Verified & Read-only)
         _buildInputField(
           icon: Icons.mail_outline_rounded,
-          label: "Email",
+          label: "Employee Email",
           controller: emailController,
           isReadOnly: true,
           isVerified: true,
         ),
         const SizedBox(height: 8),
 
-        // Website Field
+        // 2. Enterprise Company Email Field (Verified & Read-only)
+        _buildInputField(
+          icon: Icons.business_rounded,
+          label: "Company Email",
+          controller: companyEmailController ?? TextEditingController(),
+          isReadOnly: true,
+          isVerified: true,
+        ),
+        const SizedBox(height: 8),
+
+        // 3. Website Link (Auto-fetched from Enterprise, Non-editable Read-only)
         _buildInputField(
           icon: Icons.language_rounded,
           label: "Website",
           controller: websiteController,
+          isReadOnly: true,
         ),
       ],
     );
@@ -83,7 +96,7 @@ class ProfileContactDetails extends StatelessWidget {
             Icon(icon, color: const Color(0xFF64748B), size: 18),
             const SizedBox(width: 10),
             SizedBox(
-              width: 70,
+              width: 105,
               child: Text(
                 label,
                 style: const TextStyle(

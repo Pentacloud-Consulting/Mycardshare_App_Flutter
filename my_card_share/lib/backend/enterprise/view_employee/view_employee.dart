@@ -1,7 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../home_backend/employees_page.dart';
+import '../../../features/enterprise/workspace/workspace_employee_profile_view.dart';
 
 // -----------------------------------------------------------------------------
 // BACKEND SERVICE
@@ -236,7 +237,7 @@ class EnterpriseTeamOverviewWidget extends StatelessWidget {
                       const SizedBox(height: 14),
 
                       // Member list rows
-                      ...employees.take(3).map((e) => _memberRow(e)),
+                      ...employees.take(3).map((e) => _memberRow(context, e, uid)),
 
                       if (stats.totalCount > 3) ...[
                         const SizedBox(height: 8),
@@ -321,16 +322,28 @@ class EnterpriseTeamOverviewWidget extends StatelessWidget {
     );
   }
 
-  Widget _memberRow(EnterpriseEmployeeModel emp) {
+  Widget _memberRow(BuildContext context, EnterpriseEmployeeModel emp, String? enterpriseUid) {
     final isActive = emp.status.toLowerCase() == 'active';
     final statusColor =
         isActive ? const Color(0xFF16A34A) : const Color(0xFFD97706);
     final statusBg =
         isActive ? const Color(0xFFDCFCE7) : const Color(0xFFFEF9C3);
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Row(
+    return InkWell(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => WorkspaceEmployeeProfileView(
+              employee: emp,
+              enterpriseUid: enterpriseUid,
+            ),
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 2.0),
+        child: Row(
         children: [
           Container(
             width: 32,
@@ -398,8 +411,9 @@ class EnterpriseTeamOverviewWidget extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 // -----------------------------------------------------------------------------

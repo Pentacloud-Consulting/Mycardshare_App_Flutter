@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../backend/enterprise/lock_banner/lock_banner.dart';
 import '../../../../backend/enterprise/profile/enterprise_profile_store.dart';
+import '../../../../core/utils/app_image_helper.dart';
 
 /// Real BrandBannerPicker — uploads enterprise banner to Firebase Storage,
 /// displays the live uploaded image, and locks it for all employees.
@@ -46,6 +47,7 @@ class _BrandBannerPickerState extends State<BrandBannerPicker> {
 
     final result = await LockBannerService.instance.pickAndUploadBanner(
       lockAfterUpload: _isLocked,
+      context: context,
     );
 
     if (!mounted) return;
@@ -161,9 +163,9 @@ class _BrandBannerPickerState extends State<BrandBannerPicker> {
                               end: Alignment.bottomRight,
                             )
                           : null,
-                      image: liveBannerUrl != null
+                      image: liveBannerUrl != null && AppImageHelper.getImageProvider(liveBannerUrl) != null
                           ? DecorationImage(
-                              image: NetworkImage(liveBannerUrl),
+                              image: AppImageHelper.getImageProvider(liveBannerUrl)!,
                               fit: BoxFit.cover,
                             )
                           : null,

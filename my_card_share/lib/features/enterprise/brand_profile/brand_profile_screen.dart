@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../Nav/enterprice nav/enterprise_profile_menu.dart';
 import 'widgets/brand_detail.dart';
 import '../../../backend/enterprise/profile/enterprise_profile_store.dart';
+import '../../../core/utils/app_image_helper.dart';
 
 /// Main Enterprise Profile Hub Screen (contains Image 1 Box header card)
 class EnterpriseProfileScreen extends StatelessWidget {
@@ -57,9 +58,7 @@ class EnterpriseProfileScreen extends StatelessWidget {
                       CircleAvatar(
                         radius: 26,
                         backgroundColor: Colors.white,
-                        backgroundImage: (logoUrl != null && logoUrl.isNotEmpty)
-                            ? NetworkImage(logoUrl)
-                            : null,
+                        backgroundImage: AppImageHelper.getImageProvider(logoUrl),
                         child: (logoUrl == null || logoUrl.isEmpty)
                             ? const Icon(Icons.business_rounded,
                                 color: Color(0xFF0052FF), size: 30)

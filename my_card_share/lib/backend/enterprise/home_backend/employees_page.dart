@@ -1,9 +1,12 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../profile/enterprise_profile_store.dart';
 import '../lock_banner/lock_banner.dart';
 import '../multiple_store/enterprise_multi_store.dart';
+import '../../../features/enterprise/workspace/workspace_employee_profile_view.dart';
 
 /// Data model representing an Enterprise Employee.
 class EnterpriseEmployeeModel {
@@ -51,7 +54,7 @@ class EnterpriseEmployeeModel {
       roleTitle: data['roleTitle'] ?? data['jobTitle'] ?? 'Employee',
       role: data['role'] ?? 'Employee',
       status: data['status'] ?? 'Active',
-      avatarUrl: data['avatarUrl'] as String?,
+      avatarUrl: (data['avatarUrl'] ?? data['profilePhoto'] ?? data['avatar']) as String?,
       views: (data['views'] as num?)?.toInt() ?? 0,
       leads: (data['leads'] as num?)?.toInt() ?? 0,
       isBannerLocked: data['isBannerLocked'] ?? false,
@@ -91,12 +94,14 @@ class EmployeeStats {
     int active = 0;
     int pending = 0;
     for (final emp in employees) {
-      if (emp.status.toLowerCase() == 'pending' ||
-          emp.status.toLowerCase() == 'pending invite') {
+      final s = emp.status.toLowerCase();
+      if (s == 'pending' || s == 'pending invite') {
         pending++;
-      } else {
+      } else if (s == 'active') {
+        // Only count explicitly 'Active' as active — Inactive/Deactivated are excluded
         active++;
       }
+      // 'Inactive' and 'Deactivated' are neither active nor pending
     }
     return EmployeeStats(
       totalCount: employees.length,
@@ -123,10 +128,10 @@ class EnterpriseEmployeesService {
     String selectedFilter = 'All',
     String searchQuery = '',
   ]) {
-    final targetUid = uid ?? currentUid;
-    if (targetUid == null || targetUid.isEmpty) {
-      return Stream.value(const []);
-    }
+    final profile = EnterpriseProfileStore.instance.currentProfile;
+    final targetUid = (uid != null && uid.isNotEmpty)
+        ? uid
+        : (currentUid ?? profile?.uid ?? 'ent_1');
 
     return _firestore
         .collection('enterprises')
@@ -134,38 +139,214 @@ class EnterpriseEmployeesService {
         .collection('employees')
         .snapshots()
         .asyncMap((snapshot) async {
-      List<EnterpriseEmployeeModel> list = snapshot.docs
-          .map((doc) => EnterpriseEmployeeModel.fromFirestore(doc.id, doc.data()))
-          .toList();
+      List<EnterpriseEmployeeModel> list = [];
+      for (final doc in snapshot.docs) {
+        var emp = EnterpriseEmployeeModel.fromFirestore(doc.id, doc.data());
+        
+        // Cross-check user's live status ONLY when the enterprise doc says Active.
+        // If admin explicitly set Inactive on the employee doc, respect that decision
+        // and do NOT let the user's own card published status override it.
+        final empDocStatus = emp.status.toLowerCase();
+        final isAdminSetInactive = (doc.data()['adminSetInactive'] as bool?) == true;
 
-      // If subcollection is empty, check enterprises/{uid} for invitedEmails array
-      if (list.isEmpty) {
-        try {
-          final entDoc = await _firestore.collection('enterprises').doc(targetUid).get();
-          if (entDoc.exists && entDoc.data() != null) {
-            final data = entDoc.data()!;
-            final invitedEmails = (data['invitedEmails'] as List<dynamic>?) ?? [];
-            for (int i = 0; i < invitedEmails.length; i++) {
-              final em = invitedEmails[i].toString().trim();
-              if (em.isNotEmpty) {
-                final prefix = em.split('@').first;
-                final name = prefix.isNotEmpty
-                    ? prefix[0].toUpperCase() + prefix.substring(1)
-                    : 'Invited Member';
-                list.add(EnterpriseEmployeeModel(
-                  id: 'invited_$i',
-                  name: name,
-                  email: em,
-                  roleTitle: 'Team Member',
-                  role: 'Employee',
-                  status: 'Pending Invite',
-                ));
+        if (empDocStatus != 'pending' &&
+            empDocStatus != 'pending invite' &&
+            empDocStatus != 'inactive' &&
+            !isAdminSetInactive) {
+          try {
+            final empData = doc.data();
+            // Prefer the uid field stored on the employee doc, fall back to the doc ID
+            final uidCandidate = ((empData['uid'] as String?)?.trim().isNotEmpty == true
+                    ? empData['uid'] as String
+                    : doc.id)
+                .trim();
+
+            DocumentSnapshot<Map<String, dynamic>>? userDoc;
+
+            // Only look up by real Firebase Auth UID (not email-mangled string)
+            if (uidCandidate.isNotEmpty) {
+              final snap =
+                  await _firestore.collection('users').doc(uidCandidate).get();
+              if (snap.exists) userDoc = snap;
+            }
+
+            if (userDoc != null && userDoc.data() != null) {
+              final uData = userDoc.data()!;
+              final isPub = uData['isPublished'] as bool?;
+              final cStatus = (uData['cardStatus'] as String?)?.toLowerCase();
+              final uStatus = (uData['status'] as String?)?.toLowerCase();
+              final realAvatar = (uData['avatarUrl'] ?? uData['profilePhoto']) as String?;
+
+              // Mark inactive only if user doc explicitly says so
+              final shouldBeInactive = isPub == false ||
+                  cStatus == 'unpublished' ||
+                  uStatus == 'inactive';
+
+              // Mark active when card is explicitly published and employee doc agrees
+              final shouldBeActive = (isPub == true ||
+                      cStatus == 'published' ||
+                      uStatus == 'active') &&
+                  !shouldBeInactive;
+
+              final effectiveAvatar = (realAvatar != null && realAvatar.trim().isNotEmpty)
+                  ? realAvatar
+                  : emp.avatarUrl;
+
+              if (shouldBeInactive) {
+                emp = EnterpriseEmployeeModel(
+                  id: emp.id,
+                  name: emp.name,
+                  email: emp.email,
+                  roleTitle: emp.roleTitle,
+                  role: emp.role,
+                  status: 'Inactive',
+                  avatarUrl: effectiveAvatar,
+                  views: emp.views,
+                  leads: emp.leads,
+                  isBannerLocked: emp.isBannerLocked,
+                  lockedBannerUrl: emp.lockedBannerUrl,
+                  createdAt: emp.createdAt,
+                );
+              } else if (shouldBeActive && empDocStatus != 'active') {
+                emp = EnterpriseEmployeeModel(
+                  id: emp.id,
+                  name: emp.name,
+                  email: emp.email,
+                  roleTitle: emp.roleTitle,
+                  role: emp.role,
+                  status: 'Active',
+                  avatarUrl: effectiveAvatar,
+                  views: emp.views,
+                  leads: emp.leads,
+                  isBannerLocked: emp.isBannerLocked,
+                  lockedBannerUrl: emp.lockedBannerUrl,
+                  createdAt: emp.createdAt,
+                );
+              } else if (effectiveAvatar != emp.avatarUrl) {
+                emp = EnterpriseEmployeeModel(
+                  id: emp.id,
+                  name: emp.name,
+                  email: emp.email,
+                  roleTitle: emp.roleTitle,
+                  role: emp.role,
+                  status: emp.status,
+                  avatarUrl: effectiveAvatar,
+                  views: emp.views,
+                  leads: emp.leads,
+                  isBannerLocked: emp.isBannerLocked,
+                  lockedBannerUrl: emp.lockedBannerUrl,
+                  createdAt: emp.createdAt,
+                );
               }
             }
-          }
-        } catch (e) {
-          debugPrint('[EnterpriseEmployeesService] Error loading invitedEmails: $e');
+          } catch (_) {}
         }
+        list.add(emp);
+      }
+
+      // Check users collection where enterpriseUid matches this targetUid (or companyName matches)
+      // to guarantee any newly joined employees appear instantly on the team page!
+      try {
+        final existingEmails = list.map((e) => e.email.toLowerCase().trim()).toSet();
+        
+        final usersSnap = await _firestore
+            .collection('users')
+            .where('enterpriseUid', isEqualTo: targetUid)
+            .get();
+
+        for (final uDoc in usersSnap.docs) {
+          final uData = uDoc.data();
+          final uEmail = (uData['email'] as String? ?? '').trim();
+          if (uEmail.isNotEmpty && !existingEmails.contains(uEmail.toLowerCase())) {
+            existingEmails.add(uEmail.toLowerCase());
+            final uName = (uData['fullName'] ?? uData['name'] as String?)?.trim();
+            final name = (uName != null && uName.isNotEmpty) ? uName : uEmail.split('@').first;
+            final uAvatar = (uData['avatarUrl'] ?? uData['profilePhoto']) as String?;
+            final uStatus = (uData['status'] as String?)?.trim() ?? 'Active';
+            final uRole = (uData['role'] as String?)?.trim() ?? 'Employee';
+
+            list.add(EnterpriseEmployeeModel(
+              id: uDoc.id,
+              name: name,
+              email: uEmail,
+              roleTitle: 'Team Member',
+              role: uRole.toLowerCase() == 'admin' ? 'Admin' : 'Employee',
+              status: uStatus.isNotEmpty ? uStatus : 'Active',
+              avatarUrl: uAvatar,
+              views: (uData['views'] as num?)?.toInt() ?? 0,
+              leads: (uData['leads'] as num?)?.toInt() ?? 0,
+            ));
+          }
+        }
+
+        // Also query by enterprise companyName if available
+        final compName = profile?.companyName.trim();
+        if (compName != null && compName.isNotEmpty) {
+          final compUsersSnap = await _firestore
+              .collection('users')
+              .where('companyName', isEqualTo: compName)
+              .get();
+
+          for (final uDoc in compUsersSnap.docs) {
+            final uData = uDoc.data();
+            final uEmail = (uData['email'] as String? ?? '').trim();
+            final uRole = (uData['role'] as String? ?? '').trim().toLowerCase();
+            if (uEmail.isNotEmpty &&
+                uRole == 'employee' &&
+                !existingEmails.contains(uEmail.toLowerCase())) {
+              existingEmails.add(uEmail.toLowerCase());
+              final uName = (uData['fullName'] ?? uData['name'] as String?)?.trim();
+              final name = (uName != null && uName.isNotEmpty) ? uName : uEmail.split('@').first;
+              final uAvatar = (uData['avatarUrl'] ?? uData['profilePhoto']) as String?;
+              final uStatus = (uData['status'] as String?)?.trim() ?? 'Active';
+
+              list.add(EnterpriseEmployeeModel(
+                id: uDoc.id,
+                name: name,
+                email: uEmail,
+                roleTitle: 'Team Member',
+                role: 'Employee',
+                status: uStatus.isNotEmpty ? uStatus : 'Active',
+                avatarUrl: uAvatar,
+                views: (uData['views'] as num?)?.toInt() ?? 0,
+                leads: (uData['leads'] as num?)?.toInt() ?? 0,
+              ));
+            }
+          }
+        }
+      } catch (uErr) {
+        debugPrint('[EnterpriseEmployeesService] Error merging joined users: $uErr');
+      }
+
+      // Also check enterprises/{uid} invitedEmails array so pending invites also show up
+      try {
+        final entDoc = await _firestore.collection('enterprises').doc(targetUid).get();
+        if (entDoc.exists && entDoc.data() != null) {
+          final data = entDoc.data()!;
+          final invitedEmails = (data['invitedEmails'] as List<dynamic>?) ?? [];
+          final existingEmails = list.map((e) => e.email.toLowerCase().trim()).toSet();
+
+          for (int i = 0; i < invitedEmails.length; i++) {
+            final em = invitedEmails[i].toString().trim();
+            if (em.isNotEmpty && !existingEmails.contains(em.toLowerCase())) {
+              existingEmails.add(em.toLowerCase());
+              final prefix = em.split('@').first;
+              final name = prefix.isNotEmpty
+                  ? prefix[0].toUpperCase() + prefix.substring(1)
+                  : 'Invited Member';
+              list.add(EnterpriseEmployeeModel(
+                id: 'invited_$i',
+                name: name,
+                email: em,
+                roleTitle: 'Team Member',
+                role: 'Employee',
+                status: 'Pending Invite',
+              ));
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('[EnterpriseEmployeesService] Error loading invitedEmails: $e');
       }
 
       // Apply Search Filter
@@ -347,9 +528,13 @@ class EnterpriseEmployeesService {
     required String enterpriseUid,
     required String email,
     String? name,
+    String? uid,
   }) async {
     try {
       final cleanEmail = email.trim().toLowerCase();
+      final authUid = uid?.trim().isNotEmpty == true
+          ? uid!
+          : (_auth.currentUser?.uid ?? '');
       saveActiveEmployeeSession(enterpriseUid, cleanEmail);
 
       final snap = await _firestore
@@ -360,15 +545,27 @@ class EnterpriseEmployeesService {
           .get();
 
       if (snap.docs.isNotEmpty) {
-        // Employee exists -> set status to Active
+        // Employee exists -> persist uid and mark Active ONLY if admin has NOT set them Inactive.
+        // If adminSetInactive is true, the enterprise admin explicitly deactivated this employee.
+        // In that case, we still store the uid/name but do NOT flip status back to Active.
         final docId = snap.docs.first.id;
+        final existingData = snap.docs.first.data();
+        final adminSetInactive = (existingData['adminSetInactive'] as bool?) == true;
+
         final updateMap = <String, dynamic>{
-          'status': 'Active',
           'updatedAt': FieldValue.serverTimestamp(),
         };
+        if (authUid.isNotEmpty) updateMap['uid'] = authUid;
         if (name != null && name.trim().isNotEmpty) {
           updateMap['name'] = name.trim();
         }
+
+        // Only reset to Active if admin hasn't explicitly inactivated this employee
+        if (!adminSetInactive) {
+          updateMap['status'] = 'Active';
+          updateMap['isPublished'] = true;
+        }
+
         await _firestore
             .collection('enterprises')
             .doc(enterpriseUid)
@@ -377,26 +574,36 @@ class EnterpriseEmployeesService {
             .update(updateMap);
       } else {
         // Employee does not exist -> add new employee record automatically
-        final empId = 'emp_${DateTime.now().millisecondsSinceEpoch}';
+        final empId = authUid.isNotEmpty
+            ? authUid
+            : 'emp_${DateTime.now().millisecondsSinceEpoch}';
         final newName = (name != null && name.trim().isNotEmpty)
             ? name.trim()
             : cleanEmail.split('@').first;
 
-        final newEmp = EnterpriseEmployeeModel(
-          id: empId,
-          name: newName,
-          email: cleanEmail,
-          roleTitle: 'Team Member',
-          role: 'Employee',
-          status: 'Active',
-        );
+        final newEmp = <String, dynamic>{
+          'id': empId,
+          'uid': authUid,
+          'name': newName,
+          'fullName': newName,
+          'email': cleanEmail,
+          'roleTitle': 'Team Member',
+          'role': 'Employee',
+          'status': 'Active',
+          'isPublished': true,
+          'views': 0,
+          'leads': 0,
+          'isBannerLocked': false,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        };
 
         await _firestore
             .collection('enterprises')
             .doc(enterpriseUid)
             .collection('employees')
             .doc(empId)
-            .set(newEmp.toFirestore());
+            .set(newEmp);
 
         // Update invitedEmails list on enterprise
         await _firestore.collection('enterprises').doc(enterpriseUid).set({
@@ -681,9 +888,22 @@ class EnterpriseEmployeeListBackend extends StatelessWidget {
     final isPending = emp.status.toLowerCase() == 'pending' ||
         emp.status.toLowerCase() == 'pending invite';
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => WorkspaceEmployeeProfileView(
+                employee: emp,
+                enterpriseUid: enterpriseUid,
+              ),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
         children: [
           // Employee Avatar Initials
           Container(
@@ -698,39 +918,43 @@ class EnterpriseEmployeeListBackend extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: ClipOval(
-              child: emp.avatarUrl != null && emp.avatarUrl!.isNotEmpty
-                  ? Image.network(
-                      emp.avatarUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, _) => Center(
-                        child: Text(
-                          emp.initials,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            color: isAdmin
-                                ? const Color(0xFF9333EA)
-                                : isPending
-                                    ? const Color(0xFFCA8A04)
-                                    : const Color(0xFF0052FF),
-                          ),
-                        ),
-                      ),
-                    )
-                  : Center(
-                      child: Text(
-                        emp.initials,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: isAdmin
-                              ? const Color(0xFF9333EA)
-                              : isPending
-                                  ? const Color(0xFFCA8A04)
-                                  : const Color(0xFF0052FF),
-                        ),
-                      ),
-                    ),
+              child: Builder(
+                builder: (context) {
+                  final av = emp.avatarUrl?.trim();
+                  Widget? imageWidget;
+
+                  if (av != null && av.isNotEmpty) {
+                    if (av.startsWith('data:image')) {
+                      try {
+                        final commaIdx = av.indexOf(',');
+                        final b64 = commaIdx != -1 ? av.substring(commaIdx + 1) : av;
+                        imageWidget = Image.memory(
+                          base64Decode(b64),
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              _buildFallbackInitialWidget(emp, isAdmin, isPending),
+                        );
+                      } catch (_) {}
+                    } else if (av.startsWith('http')) {
+                      imageWidget = Image.network(
+                        av,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            _buildFallbackInitialWidget(emp, isAdmin, isPending),
+                      );
+                    } else if (File(av).existsSync()) {
+                      imageWidget = Image.file(
+                        File(av),
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            _buildFallbackInitialWidget(emp, isAdmin, isPending),
+                      );
+                    }
+                  }
+
+                  return imageWidget ?? _buildFallbackInitialWidget(emp, isAdmin, isPending);
+                },
+              ),
             ),
           ),
 
@@ -861,6 +1085,18 @@ class EnterpriseEmployeeListBackend extends StatelessWidget {
             onSelected: (action) async {
               if (enterpriseUid == null || enterpriseUid.isEmpty) return;
 
+              if (action == 'view_profile') {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => WorkspaceEmployeeProfileView(
+                      employee: emp,
+                      enterpriseUid: enterpriseUid,
+                    ),
+                  ),
+                );
+                return;
+              }
+
               if (action == 'lock_banner') {
                 final newLock = !emp.isBannerLocked;
                 await EnterpriseEmployeesService.instance.toggleEmployeeBannerLock(
@@ -874,6 +1110,56 @@ class EnterpriseEmployeeListBackend extends StatelessWidget {
                       content: Text(newLock
                           ? "Brand banner locked for ${emp.name}"
                           : "Brand banner unlocked for ${emp.name}"),
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
+                  );
+                }
+              } else if (action == 'toggle_status') {
+                // Toggle Active <-> Inactive directly on enterprise employee doc.
+                // adminSetInactive flag ensures streamEmployees does NOT override
+                // the enterprise admin's explicit decision with the user's card status.
+                final isCurrentlyActive = emp.status.toLowerCase() == 'active';
+                final newStatus = isCurrentlyActive ? 'Inactive' : 'Active';
+                final settingInactive = isCurrentlyActive; // true when going Active -> Inactive
+
+                await EnterpriseEmployeesService.instance.updateEmployee(
+                  enterpriseUid: enterpriseUid,
+                  employeeId: emp.id,
+                  data: {
+                    'status': newStatus,
+                    'isPublished': !settingInactive,
+                    // Guard flag: prevents streamEmployees from re-overriding status
+                    'adminSetInactive': settingInactive,
+                  },
+                );
+
+                // Also sync the status to the user's own Firestore document
+                try {
+                  final empDoc = await FirebaseFirestore.instance
+                      .collection('enterprises')
+                      .doc(enterpriseUid)
+                      .collection('employees')
+                      .doc(emp.id)
+                      .get();
+                  final empUid = (empDoc.data()?['uid'] as String?)?.trim() ?? '';
+                  if (empUid.isNotEmpty) {
+                    await FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(empUid)
+                        .set({
+                      'status': newStatus,
+                      'isPublished': !settingInactive,
+                      'cardStatus': settingInactive ? 'Unpublished' : 'Published',
+                      'updatedAt': FieldValue.serverTimestamp(),
+                    }, SetOptions(merge: true));
+                  }
+                } catch (_) {}
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("${emp.name} is now $newStatus"),
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
@@ -923,7 +1209,55 @@ class EnterpriseEmployeeListBackend extends StatelessWidget {
                 }
               }
             },
-            itemBuilder: (context) => [
+            itemBuilder: (context) {
+              final isCurrentlyActive = emp.status.toLowerCase() == 'active';
+              return [
+              const PopupMenuItem(
+                value: 'view_profile',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.person_rounded,
+                      size: 18,
+                      color: Color(0xFF0052FF),
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      "View Profile",
+                      style: TextStyle(
+                        color: Color(0xFF0052FF),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'toggle_status',
+                child: Row(
+                  children: [
+                    Icon(
+                      isCurrentlyActive
+                          ? Icons.person_off_rounded
+                          : Icons.check_circle_outline_rounded,
+                      size: 18,
+                      color: isCurrentlyActive
+                          ? const Color(0xFFEF4444)
+                          : const Color(0xFF16A34A),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      isCurrentlyActive ? "Set Inactive" : "Set Active",
+                      style: TextStyle(
+                        color: isCurrentlyActive
+                            ? const Color(0xFFEF4444)
+                            : const Color(0xFF16A34A),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               PopupMenuItem(
                 value: 'toggle_role',
                 child: Row(
@@ -976,9 +1310,30 @@ class EnterpriseEmployeeListBackend extends StatelessWidget {
                   ],
                 ),
               ),
-            ],
+            ];
+            },
           ),
         ],
+      ),
+    ),
+  ),
+);
+  }
+
+  static Widget _buildFallbackInitialWidget(
+      EnterpriseEmployeeModel emp, bool isAdmin, bool isPending) {
+    return Center(
+      child: Text(
+        emp.initials,
+        style: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w800,
+          color: isAdmin
+              ? const Color(0xFF9333EA)
+              : isPending
+                  ? const Color(0xFFCA8A04)
+                  : const Color(0xFF0052FF),
+        ),
       ),
     );
   }

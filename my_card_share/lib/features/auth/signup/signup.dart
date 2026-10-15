@@ -21,7 +21,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  int _selectedTab = 0; // 0: Individual, 1: Enterprise, 2: Employee
+  int _selectedTab = 0; // 0: Individual, 1: Enterprise
   bool _obscurePassword = true;
   bool _agreeTerms = false;
   bool _isLoading = false;
@@ -63,11 +63,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       _isLoading = true;
     });
 
-    final roleStr = _selectedTab == 1
-        ? 'enterprise'
-        : _selectedTab == 2
-            ? 'employee'
-            : 'individual';
+    final roleStr = _selectedTab == 1 ? 'enterprise' : 'individual';
 
     if (_selectedTab == 1) {
       // ── Enterprise: REAL Firebase Auth + Firestore sign-up ──
@@ -140,11 +136,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
 
   void _onGoogleSignup() async {
-    final roleStr = _selectedTab == 1
-        ? 'enterprise'
-        : _selectedTab == 2
-            ? 'employee'
-            : 'individual';
+    final roleStr = _selectedTab == 1 ? 'enterprise' : 'individual';
 
     if (_selectedTab != 0) {
       // ── Enterprise: REAL Firebase Google Sign-In ──
@@ -307,7 +299,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
                   const SizedBox(height: 24),
 
-                  // 3-Segmented Role Selection Pills Bar
+                  // 2-Segmented Role Selection Pills Bar (Only Individual and Enterprise)
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
@@ -318,7 +310,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       children: [
                         _buildTabPill(index: 0, icon: Icons.person_outline_rounded, label: "Individual"),
                         _buildTabPill(index: 1, icon: Icons.domain_rounded, label: "Enterprise"),
-                        _buildTabPill(index: 2, icon: Icons.groups_outlined, label: "Employee"),
                       ],
                     ),
                   ),

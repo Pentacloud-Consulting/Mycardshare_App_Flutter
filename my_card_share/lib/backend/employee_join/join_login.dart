@@ -3,9 +3,11 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../enterprise/home_backend/employees_page.dart';
 import '../enterprise/multiple_store/enterprise_multi_store.dart';
 import 'invite_resolver/invite_code_resolver.dart';
+import 'home/employee_home_backend.dart';
 import '../../models/user_model.dart';
 
 /// Result object for Workspace Join requests
@@ -109,12 +111,16 @@ class JoinLoginBackendService {
     }
 
     try {
-      // 1. Resolve enterprise doc ID & company name
+      // 1. Resolve enterprise doc ID & check expiration first
       final info = await lookupEnterpriseByInviteCode(cleanCode);
-      final targetUid = info?['enterpriseUid'] ?? 'ent_1';
-      final companyName = info?['companyName'] ?? _formatCompanyNameFromCode(cleanCode);
+      if (info != null && info['isExpired'] == true) {
+        return const JoinWorkspaceResult(
+          success: false,
+          message: "The invite code got expired. Please request a new invite link from your company.",
+        );
+      }
 
-      // 2. Try Firebase Auth sign in / sign up safely
+      // 2. Try Firebase Auth sign in / sign up first so authUid is guaranteed
       try {
         if (_auth.currentUser == null) {
           try {
@@ -135,13 +141,67 @@ class JoinLoginBackendService {
         debugPrint('[JoinLoginBackendService] Firebase Auth note: $authErr');
       }
 
-      // 3. Update employee in Firestore safely
+      final authUid = _auth.currentUser?.uid ?? '';
+
+      var targetUid = info?['enterpriseUid'] ?? '';
+      var companyName = info?['companyName'] ?? _formatCompanyNameFromCode(cleanCode);
+
+      // If targetUid is still empty or default, search Firestore enterprises
+      if (targetUid.isEmpty || targetUid == 'ent_1') {
+        try {
+          final querySnap = await _firestore
+              .collection('enterprises')
+              .where('inviteCode', isEqualTo: cleanCode)
+              .limit(1)
+              .get();
+          if (querySnap.docs.isNotEmpty) {
+            targetUid = querySnap.docs.first.id;
+            final d = querySnap.docs.first.data();
+            if (d['companyName'] != null && (d['companyName'] as String).isNotEmpty) {
+              companyName = d['companyName'];
+            }
+          }
+        } catch (_) {}
+      }
+
+      // If still empty, check if code suffix is a known doc
+      if (targetUid.isEmpty || targetUid == 'ent_1') {
+        final codeParts = cleanCode.split('-');
+        if (codeParts.length >= 2) {
+          final candidateShort = codeParts.last;
+          try {
+            final allEnt = await _firestore.collection('enterprises').limit(50).get();
+            for (final doc in allEnt.docs) {
+              if (doc.id.toUpperCase().contains(candidateShort) ||
+                  candidateShort.contains(doc.id.length >= 8 ? doc.id.substring(0, 8).toUpperCase() : doc.id.toUpperCase())) {
+                targetUid = doc.id;
+                final d = doc.data();
+                if (d['companyName'] != null && (d['companyName'] as String).isNotEmpty) {
+                  companyName = d['companyName'];
+                }
+                break;
+              }
+            }
+          } catch (_) {}
+        }
+      }
+
+      if (targetUid.isEmpty) targetUid = 'ent_1';
+
+      // 3. Update employee in Firestore safely under enterprises/{targetUid}/employees
       try {
         await EnterpriseEmployeesService.instance.markEmployeeActive(
           enterpriseUid: targetUid,
           email: cleanEmail,
           name: cleanName,
+          uid: authUid,
         );
+
+        // Also ensure enterprise document record has invitedEmails & employeeCount
+        await _firestore.collection('enterprises').doc(targetUid).set({
+          'invitedEmails': FieldValue.arrayUnion([cleanEmail]),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       } catch (fsErr) {
         debugPrint('[JoinLoginBackendService] Firestore employee update note: $fsErr');
       }
@@ -149,14 +209,26 @@ class JoinLoginBackendService {
       // 4. Update global user doc in Firestore safely
       try {
         final docId = cleanEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-        await _firestore.collection('users').doc(docId).set({
+        final userMap = <String, dynamic>{
           'fullName': cleanName,
+          'name': cleanName,
           'email': cleanEmail,
           'role': 'employee',
           'enterpriseUid': targetUid,
           'companyName': companyName,
+          'isPublished': true,
+          'cardStatus': 'Published',
+          'status': 'Active',
           'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+        };
+        if (authUid.isNotEmpty) userMap['uid'] = authUid;
+
+        // Write to email-based doc
+        await _firestore.collection('users').doc(docId).set(userMap, SetOptions(merge: true));
+        // Also write to uid-based doc (primary lookup path)
+        if (authUid.isNotEmpty) {
+          await _firestore.collection('users').doc(authUid).set(userMap, SetOptions(merge: true));
+        }
       } catch (userErr) {
         debugPrint('[JoinLoginBackendService] Firestore user doc note: $userErr');
       }
@@ -170,6 +242,23 @@ class JoinLoginBackendService {
       );
 
       EnterpriseEmployeesService.instance.saveActiveEmployeeSession(targetUid, cleanEmail);
+
+      // Cache directly to SharedPreferences for instant launch fidelity
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('emp_cached_email', cleanEmail);
+        await prefs.setString('emp_cached_name', cleanName);
+        await prefs.setString('emp_cached_company', companyName);
+        await prefs.setString('emp_cached_ent_uid', targetUid);
+        await prefs.setString('emp_cached_role', 'Employee');
+      } catch (_) {}
+
+      // Update in-memory EmployeeHomeBackendService right now
+      EmployeeHomeBackendService.instance.updateHomeProfile(
+        userName: cleanName,
+        companyName: companyName,
+        role: 'Employee',
+      );
 
       // 6. Sync to mycardshare.com Cloud MongoDB Backend API
       _syncToMyCardShareCloudMongoDB(

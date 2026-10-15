@@ -18,6 +18,8 @@ import '../../../backend/employee_join/home/employee_stats_backend.dart';
 import '../../../notifications/individual/login_popup.dart';
 import '../../../notifications/enterprise/login_popup.dart';
 import '../../../backend/app view/app_view_auth_gate.dart';
+import '../../../backend/individual/profile/individual_profile_store.dart';
+import '../../../backend/individual/previews/publish_unpublish.dart';
 import '../back/smart_back_handler.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -216,7 +218,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ref.read(authProvider.notifier).login(user);
         await AppViewAuthGate.instance.savePersistentSession(user);
 
-        // Hydrate employee home & stats data live
+        // Hydrate employee profile, home & stats data live
+        if (fbUid != null) {
+          IndividualProfileStore.instance.loadProfile(fbUid, email, user.name);
+          PublishUnpublishService.instance.loadPublishStatus(fbUid);
+        }
         EmployeeHomeBackendService.instance.loadEmployeeHomeData();
         EmployeeStatsBackendService.instance.loadEmployeeStats();
 

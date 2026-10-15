@@ -18,35 +18,39 @@ class EnterpriseInviteLinkService {
   String? get currentUid => _auth.currentUser?.uid;
   String? get currentEmail => _auth.currentUser?.email;
 
-  /// Generates a unique, per-enterprise workspace invite URL.
+  /// Generates an 8-digit numeric code based on enterprise UID and current 15-minute time window.
+  /// Rotates automatically every 15 minutes (900 seconds) so old codes expire.
+  static String generate8DigitCode(String uid, [DateTime? time]) {
+    final now = time ?? DateTime.now();
+    // 15-minute slot index since epoch
+    final slot = now.millisecondsSinceEpoch ~/ (15 * 60 * 1000);
+    // Combine uid hash with slot to generate a deterministic 8-digit number (10000000 - 99999999)
+    final hash = (uid.hashCode ^ slot).abs();
+    final codeNum = 10000000 + (hash % 90000000);
+    return codeNum.toString();
+  }
+
+  /// Generates a unique, per-enterprise workspace invite URL with 8-digit code.
   /// If [inviteeEmail] is provided, generates an individual-specific invite link for that employee.
   String buildInviteUrl({
     required String uid,
     required String companyName,
     String? cardSlug,
     String? inviteeEmail,
+    String? custom8DigitCode,
   }) {
-    final cleanSlug = cardSlug?.trim().isNotEmpty == true
-        ? cardSlug!.trim()
-        : companyName
-            .toLowerCase()
-            .replaceAll(RegExp(r'[^a-z0-9]'), '')
-            .trim();
-
-    final shortUid = uid.length >= 8 ? uid.substring(0, 8).toUpperCase() : uid.toUpperCase();
-    final baseCode = '${cleanSlug.isNotEmpty ? cleanSlug.toUpperCase() : "COMPANY"}-$shortUid';
+    final code = custom8DigitCode ?? generate8DigitCode(uid);
 
     if (inviteeEmail != null && inviteeEmail.trim().isNotEmpty) {
       final cleanEmail = Uri.encodeComponent(inviteeEmail.trim().toLowerCase());
-      return "mycardshare.com/join-workspace?enterpriseId=$uid&code=$baseCode&invitee=$cleanEmail";
+      return "mycardshare.com/join-workspace?enterpriseId=$uid&code=$code&invitee=$cleanEmail";
     }
 
-    return "mycardshare.com/join-workspace?enterpriseId=$uid&code=$baseCode";
+    return "mycardshare.com/join-workspace?enterpriseId=$uid&code=$code";
   }
 
-  /// Streams the real-time unique invite link URL for a specific enterprise UID.
-  /// Automatically syncs with Firestore (`enterprises/{uid}`), `EnterpriseProfileStore`,
-  /// `EnterpriseMultiStore`, and `EnterpriseAuthService`.
+  /// Streams the real-time unique 8-digit invite link URL for a specific enterprise UID.
+  /// Automatically rotates every 15 minutes and syncs with Firestore (`enterprises/{uid}`).
   Stream<String> streamInviteLink({String? uid, String? inviteeEmail}) {
     final targetUid = uid ?? currentUid;
     if (targetUid == null || targetUid.isEmpty) {
@@ -67,38 +71,44 @@ class EnterpriseInviteLinkService {
           ? (doc.data()!['cardSlug'] as String? ?? profile?.cardSlug)
           : profile?.cardSlug;
 
-      final storedUrl = (doc.exists && doc.data() != null)
-          ? doc.data()!['inviteUrl'] as String?
-          : null;
+      // Check existing 8-digit code and expiration (15 minutes)
+      final existingCode = doc.data()?['inviteCode']?.toString().trim();
+      final codeCreatedAtTs = doc.data()?['inviteCodeCreatedAt'] as Timestamp?;
+      final now = DateTime.now();
 
-      // If invitee email is specified, always return an individual link
-      if (inviteeEmail != null && inviteeEmail.trim().isNotEmpty) {
-        return buildInviteUrl(
-          uid: targetUid,
-          companyName: companyName,
-          cardSlug: cardSlug,
-          inviteeEmail: inviteeEmail,
-        );
-      }
+      String active8DigitCode;
+      bool needsUpdate = false;
 
-      if (storedUrl != null && storedUrl.trim().isNotEmpty) {
-        return storedUrl;
+      if (existingCode != null &&
+          RegExp(r'^\d{8}$').hasMatch(existingCode) &&
+          codeCreatedAtTs != null &&
+          now.difference(codeCreatedAtTs.toDate()).inMinutes < 15) {
+        active8DigitCode = existingCode;
+      } else {
+        // Generate fresh 8-digit code for this 15-min window
+        active8DigitCode = generate8DigitCode(targetUid, now);
+        needsUpdate = true;
       }
 
       final generated = buildInviteUrl(
         uid: targetUid,
         companyName: companyName,
         cardSlug: cardSlug,
+        inviteeEmail: inviteeEmail,
+        custom8DigitCode: active8DigitCode,
       );
 
-      // Persist generated invite URL & code to Firestore asynchronously
-      _firestore.collection('enterprises').doc(targetUid).set({
-        'inviteUrl': generated,
-        'inviteCode': generated.split('code=').last,
-        'companyName': companyName,
-        'cardSlug': cardSlug ?? '',
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      // Persist fresh 8-digit invite URL & timestamp to Firestore asynchronously if rotated
+      if (needsUpdate || doc.data()?['inviteUrl'] != generated) {
+        _firestore.collection('enterprises').doc(targetUid).set({
+          'inviteUrl': generated,
+          'inviteCode': active8DigitCode,
+          'inviteCodeCreatedAt': FieldValue.serverTimestamp(),
+          'companyName': companyName,
+          'cardSlug': cardSlug ?? '',
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
 
       return generated;
     });
@@ -277,13 +287,8 @@ class EnterpriseInviteLinkWidget extends StatelessWidget {
         }
 
         if (inviteCode.isEmpty) {
-          final profile = EnterpriseProfileStore.instance.currentProfile;
-          final targetUid = uid ?? profile?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? "7687";
-          final shortUid = targetUid.length >= 8 ? targetUid.substring(0, 8).toUpperCase() : targetUid.toUpperCase();
-          final companyPrefix = (profile?.companyName ?? "ZUHAIB")
-              .replaceAll(RegExp(r'[^a-zA-Z0-9]'), '')
-              .toUpperCase();
-          inviteCode = "${companyPrefix.isNotEmpty ? companyPrefix : 'ENTERPRISE'}-$shortUid";
+          final targetUid = uid ?? FirebaseAuth.instance.currentUser?.uid ?? "7687";
+          inviteCode = EnterpriseInviteLinkService.generate8DigitCode(targetUid);
         }
 
         return Container(

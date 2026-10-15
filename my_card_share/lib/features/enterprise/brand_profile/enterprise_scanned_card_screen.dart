@@ -6,6 +6,7 @@ import 'package:my_card_share/backend/enterprise/qr_scan/enterprice_generate_qr.
 import 'package:my_card_share/backend/individual/connects/save_contact.dart';
 import 'package:my_card_share/backend/individual/connects/share.dart';
 import 'package:my_card_share/backend/individual/previews/publish_unpublish.dart';
+import 'package:my_card_share/backend/enterprise/home_backend/overall.dart';
 
 /// ────────────────────────────────────────────────────────────────────────────
 /// EnterpriseScannedCardScreen
@@ -43,6 +44,9 @@ class _EnterpriseScannedCardScreenState
     _profileFuture = EnterpriseQRService.instance
         .fetchCardBySlug(widget.cardSlug)
         .then((p) {
+      if (p != null && p.uid.isNotEmpty) {
+        EnterpriseOverallService.instance.recordEnterpriseProfileCardView(p.uid);
+      }
       _fadeCtrl.forward();
       return p;
     });

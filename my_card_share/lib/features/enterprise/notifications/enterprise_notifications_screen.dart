@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'widgets/notification_header_stats.dart';
 import 'widgets/notification_filter_pills.dart';
@@ -180,6 +181,10 @@ class _EnterpriseNotificationsScreenState
                           onTap: () async {
                             if (uid != null) {
                               await EnterpriseNotificationsService.instance.markAsRead(item.id, uid);
+                            }
+                            if (!context.mounted) return;
+                            if (item.category == 'team') {
+                              context.push('/enterprise/settings/requests');
                             }
                           },
                         );

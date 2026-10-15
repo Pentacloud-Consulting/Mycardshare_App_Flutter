@@ -6,72 +6,86 @@ import 'companies/company_profile_card_section.dart';
 import 'companies/company_info_grid_section.dart';
 import 'companies/company_branding_card_section.dart';
 import 'companies/company_links_card_section.dart';
+import '../../../../backend/employee_join/home/employee_home_backend.dart';
 
 class EmployeeCompaniesScreen extends StatelessWidget {
   const EmployeeCompaniesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return SmartPopScope(
-      onBack: () {
-        if (Navigator.canPop(context)) {
-          Navigator.pop(context);
-        } else {
-          context.go('/portal');
-        }
-        return true;
-      },
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        body: Stack(
-          children: [
-            // Soft baby-blue gradient blob top-right corner
-            Positioned(
-              top: -60,
-              right: -60,
-              child: Container(
-                width: 240,
-                height: 240,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFFDBEAFE).withValues(alpha: 0.75),
-                      const Color(0xFFEFF6FF).withValues(alpha: 0.25),
-                      Colors.white.withValues(alpha: 0.0),
-                    ],
+    return ListenableBuilder(
+      listenable: EmployeeHomeBackendService.instance,
+      builder: (context, _) {
+        final empBackend = EmployeeHomeBackendService.instance;
+        final companyName = (empBackend.companyName.isNotEmpty &&
+                empBackend.companyName != "Enterprise Workspace")
+            ? empBackend.companyName
+            : "Acme Realty Group";
+        final role = empBackend.role.isNotEmpty ? empBackend.role : "Employee";
+        final initials = companyName.isNotEmpty
+            ? companyName.trim().split(' ').map((w) => w.isNotEmpty ? w[0] : '').take(2).join().toUpperCase()
+            : "AR";
+
+        return SmartPopScope(
+          onBack: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              context.go('/portal');
+            }
+            return true;
+          },
+          child: Scaffold(
+            backgroundColor: Colors.white,
+            body: Stack(
+              children: [
+                // Soft baby-blue gradient blob top-right corner
+                Positioned(
+                  top: -60,
+                  right: -60,
+                  child: Container(
+                    width: 240,
+                    height: 240,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          const Color(0xFFDBEAFE).withValues(alpha: 0.75),
+                          const Color(0xFFEFF6FF).withValues(alpha: 0.25),
+                          Colors.white.withValues(alpha: 0.0),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
 
-            SafeArea(
-              child: DefaultTextStyle(
-                style: AppFontStyle.bodyMedium,
-                child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 1. Company Profile Card Section
-                    const CompanyProfileCardSection(
-                      companyName: "Acme Realty Group",
-                      logoInitials: "AR",
-                      planTag: "Enterprise Pro",
-                      employeeCount: "34 employees",
-                    ),
+                SafeArea(
+                  child: DefaultTextStyle(
+                    style: AppFontStyle.bodyMedium,
+                    child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 1. Company Profile Card Section
+                        CompanyProfileCardSection(
+                          companyName: companyName,
+                          logoInitials: initials.isNotEmpty ? initials : "AR",
+                          planTag: "Enterprise Pro",
+                          employeeCount: "Verified Enterprise",
+                        ),
 
-                    const SizedBox(height: 18),
+                        const SizedBox(height: 18),
 
-                    // 2. 2x2 Info Grid Section
-                    const CompanyInfoGridSection(
-                      location: "New York, NY",
-                      website: "acmerealty.com",
-                      role: "Employee",
-                      joinedDate: "March 2026",
-                    ),
+                        // 2. 2x2 Info Grid Section
+                        CompanyInfoGridSection(
+                          location: "Corporate Office",
+                          website: "${companyName.toLowerCase().replaceAll(' ', '')}.com",
+                          role: role,
+                          joinedDate: "Active Member",
+                        ),
 
-                    const SizedBox(height: 20),
+                        const SizedBox(height: 20),
 
                     // 3. Your Card Branding Section
                     const CompanyBrandingCardSection(),
@@ -110,6 +124,8 @@ class EmployeeCompaniesScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+      },
     );
   }
 }

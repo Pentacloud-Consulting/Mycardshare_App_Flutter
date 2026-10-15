@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +13,7 @@ import '../../../providers/auth_provider.dart';
 import '../../../backend/enterprise/profile/enterprise_profile_store.dart';
 import '../../../backend/app view/app_view_auth_gate.dart';
 import '../../../backend/enterprise/invite_employee/invite_link.dart';
+import '../../../core/utils/image_cropper_util.dart';
 
 class EnterpriseOnboardingScreen extends ConsumerStatefulWidget {
   const EnterpriseOnboardingScreen({super.key});
@@ -41,14 +43,19 @@ class _EnterpriseOnboardingScreenState extends ConsumerState<EnterpriseOnboardin
       final picked = await _picker.pickImage(
         source: ImageSource.gallery,
         imageQuality: 90,
-        maxWidth: 1024,
-        maxHeight: 1024,
       );
       if (picked != null) {
-        final bytes = await picked.readAsBytes();
-        setState(() {
-          _logoBytes = bytes;
-        });
+        final croppedPath = await AppImageCropper.cropImage(
+          context: context,
+          sourcePath: picked.path,
+          cropType: AppCropType.logo,
+        );
+        if (croppedPath != null) {
+          final bytes = await File(croppedPath).readAsBytes();
+          setState(() {
+            _logoBytes = bytes;
+          });
+        }
       }
     } catch (e) {
       debugPrint('[Onboarding] Error picking logo: $e');
@@ -59,15 +66,20 @@ class _EnterpriseOnboardingScreenState extends ConsumerState<EnterpriseOnboardin
     try {
       final picked = await _picker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 85,
-        maxWidth: 1400,
-        maxHeight: 600,
+        imageQuality: 90,
       );
       if (picked != null) {
-        final bytes = await picked.readAsBytes();
-        setState(() {
-          _bannerBytes = bytes;
-        });
+        final croppedPath = await AppImageCropper.cropImage(
+          context: context,
+          sourcePath: picked.path,
+          cropType: AppCropType.banner,
+        );
+        if (croppedPath != null) {
+          final bytes = await File(croppedPath).readAsBytes();
+          setState(() {
+            _bannerBytes = bytes;
+          });
+        }
       }
     } catch (e) {
       debugPrint('[Onboarding] Error picking banner: $e');

@@ -13,6 +13,7 @@ import 'widgets/profile_live_card_preview.dart';
 import 'widgets/profile_slug_section.dart';
 import 'widgets/profile_social_links.dart';
 import 'widgets/profile_template_selector.dart';
+import '../../../core/utils/image_cropper_util.dart';
 
 class ProfileEditorScreen extends StatefulWidget {
   const ProfileEditorScreen({super.key});
@@ -201,18 +202,23 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
         try {
           final XFile? pickedFile = await _picker.pickImage(
             source: source,
-            maxWidth: 1200,
-            maxHeight: 600,
-            imageQuality: 85,
+            imageQuality: 90,
           );
           if (pickedFile != null) {
-            setState(() {
-              _bannerImagePath = pickedFile.path;
-            });
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Banner image selected! Tap checkmark to save.')),
+            final croppedPath = await AppImageCropper.cropImage(
+              context: context,
+              sourcePath: pickedFile.path,
+              cropType: AppCropType.banner,
             );
+            if (croppedPath != null) {
+              setState(() {
+                _bannerImagePath = croppedPath;
+              });
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Banner image selected! Tap checkmark to save.')),
+              );
+            }
           }
         } catch (e) {
           debugPrint('Error picking banner image: $e');
@@ -234,18 +240,23 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
         try {
           final XFile? pickedFile = await _picker.pickImage(
             source: source,
-            maxWidth: 800,
-            maxHeight: 800,
-            imageQuality: 85,
+            imageQuality: 90,
           );
           if (pickedFile != null) {
-            setState(() {
-              _profileImagePath = pickedFile.path;
-            });
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Profile picture selected! Tap checkmark to save.')),
+            final croppedPath = await AppImageCropper.cropImage(
+              context: context,
+              sourcePath: pickedFile.path,
+              cropType: AppCropType.avatar,
             );
+            if (croppedPath != null) {
+              setState(() {
+                _profileImagePath = croppedPath;
+              });
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Profile picture selected! Tap checkmark to save.')),
+              );
+            }
           }
         } catch (e) {
           debugPrint('Error picking profile picture: $e');

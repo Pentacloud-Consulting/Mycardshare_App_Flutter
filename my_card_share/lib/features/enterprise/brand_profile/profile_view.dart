@@ -8,6 +8,7 @@ import 'package:my_card_share/backend/enterprise/profile/enterprise_profile_stor
 import 'package:my_card_share/backend/enterprise/invite_employee/invite_link.dart';
 import 'package:my_card_share/backend/individual/previews/publish_unpublish.dart';
 import 'package:my_card_share/backend/enterprise/view_employee/view_employee.dart';
+import 'package:my_card_share/backend/enterprise/home_backend/overall.dart';
 import 'enterprise_scanned_card_screen.dart';
 import 'widgets/brand_slug.dart';
 
@@ -429,6 +430,8 @@ class _EnterpriseProfileViewScreenState
                             ),
                             child: ElevatedButton.icon(
                               onPressed: () {
+                                EnterpriseOverallService.instance
+                                    .recordEnterpriseProfileCardView();
                                 Navigator.of(context, rootNavigator: false).push(
                                   MaterialPageRoute(
                                     builder: (_) => EnterpriseScannedCardScreen(
@@ -543,7 +546,7 @@ class _EnterpriseProfileViewScreenState
                             children: [
                               Expanded(
                                 child: _buildRow(Icons.mail_outline_rounded,
-                                    "Work Email", email.isEmpty ? "Not provided" : email),
+                                    "Company Email", email.isEmpty ? "Not provided" : email),
                               ),
                               _buildExpandBtn(_isContactDetailsExpanded),
                             ],

@@ -25,7 +25,8 @@ class EnterpriseTopNav extends StatelessWidget implements PreferredSizeWidget {
     final isCampaigns = currentPath.startsWith('/enterprise/campaign');
     final isAnalytics = currentPath.startsWith('/enterprise/analytics');
     final isConnectors = currentPath.startsWith('/enterprise/connectors');
-    final isSettings = currentPath.startsWith('/enterprise/settings');
+    final isRequests = currentPath.contains('requests');
+    final isSettings = currentPath.startsWith('/enterprise/settings') && !isRequests;
     final isNotifications = currentPath.startsWith('/enterprise/notifications');
     final isProfileView = currentPath.startsWith('/enterprise/profile-view');
     final isBrandProfile = currentPath.startsWith('/enterprise/brand-profile');
@@ -65,6 +66,8 @@ class EnterpriseTopNav extends StatelessWidget implements PreferredSizeWidget {
               onTap: () {
                 if (context.canPop()) {
                   context.pop();
+                } else if (isRequests) {
+                  context.go('/enterprise/settings');
                 } else {
                   context.go('/enterprise/dashboard');
                 }
@@ -87,27 +90,29 @@ class EnterpriseTopNav extends StatelessWidget implements PreferredSizeWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                isWorkspace
-                    ? "Workspace"
-                    : isLeads
-                        ? "Leads"
-                        : isCampaigns
-                            ? "Campaigns"
-                            : isAnalytics
-                                ? "Analytics"
-                                : isConnectors
-                                    ? "CRM Connectors"
-                                    : isSettings
-                                        ? "Settings"
-                                        : isNotifications
-                                            ? "Notifications"
-                                            : isProfileView
-                                                ? "Enterprise Profile View"
-                                                : isBrandProfile
-                                                    ? "Brand Profile"
-                                                    : isProfile
-                                                        ? "Brand Profile & Hub"
-                                                        : "Enterprise Admin",
+                isRequests
+                    ? "Join Enterprise Requests"
+                    : isWorkspace
+                        ? "Workspace"
+                        : isLeads
+                            ? "Leads"
+                            : isCampaigns
+                                ? "Campaigns"
+                                : isAnalytics
+                                    ? "Analytics"
+                                    : isConnectors
+                                        ? "CRM Connectors"
+                                        : isSettings
+                                            ? "Settings"
+                                            : isNotifications
+                                                ? "Notifications"
+                                                : isProfileView
+                                                    ? "Enterprise Profile View"
+                                                    : isBrandProfile
+                                                        ? "Brand Profile"
+                                                        : isProfile
+                                                            ? "Brand Profile & Hub"
+                                                            : "Enterprise Admin",
                 style: const TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,

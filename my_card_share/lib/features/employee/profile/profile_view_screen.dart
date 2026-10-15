@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../backend/individual/profile/individual_profile_store.dart';
 import '../../../backend/individual/multiple_store/individual_multi_store.dart';
 import '../../../backend/individual/previews/publish_unpublish.dart';
+import '../../../backend/employee_join/home/employee_home_backend.dart';
+import '../../../backend/employee_join/email/fetching_emails.dart';
 import 'profile_editor_screen.dart';
 import 'widgets/profile_live_card_preview.dart';
 import 'widgets/profile_social_links.dart';
@@ -27,6 +29,7 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
     if (uid != null && uid.isNotEmpty) {
       PublishUnpublishService.instance.loadPublishStatus(uid);
     }
+    EmployeeEmailService.instance.fetchEmployeeEmails();
   }
 
   @override
@@ -35,21 +38,47 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
       listenable: Listenable.merge([
         IndividualProfileStore.instance,
         PublishUnpublishService.instance,
+        EmployeeHomeBackendService.instance,
+        EmployeeEmailService.instance,
       ]),
       builder: (context, _) {
         final activeProfile = IndividualProfileStore.instance.activeProfile;
+        final empBackend = EmployeeHomeBackendService.instance;
         final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
         final isPublished = PublishUnpublishService.instance.isPublished;
 
-        final name = activeProfile?.fullName ?? storedUser?.fullName ?? "User";
-        final role = activeProfile?.jobTitle.isNotEmpty == true ? activeProfile!.jobTitle : "Not specified";
-        final company = activeProfile?.companyName.isNotEmpty == true ? activeProfile!.companyName : "Not specified";
+        final name = (activeProfile?.fullName.isNotEmpty == true && activeProfile!.fullName != "User")
+            ? activeProfile.fullName
+            : (empBackend.userName.isNotEmpty && empBackend.userName != "User"
+                ? empBackend.userName
+                : (storedUser?.fullName ?? "User"));
+
+        final role = (activeProfile?.jobTitle.isNotEmpty == true && activeProfile!.jobTitle != "Member")
+            ? activeProfile.jobTitle
+            : (empBackend.role.isNotEmpty && empBackend.role != "Member"
+                ? empBackend.role
+                : "Member");
+
+        final emailsModel = EmployeeEmailService.instance.currentEmails;
+        final company = (activeProfile?.companyName.isNotEmpty == true && activeProfile!.companyName != "Enterprise Workspace")
+            ? activeProfile.companyName
+            : (empBackend.companyName.isNotEmpty && empBackend.companyName != "Enterprise Workspace"
+                ? empBackend.companyName
+                : (emailsModel?.companyName.isNotEmpty == true ? emailsModel!.companyName : "Enterprise Workspace"));
+
         final bio = activeProfile?.shortBio.isNotEmpty == true
             ? activeProfile!.shortBio
             : "No bio added yet.";
         final status = activeProfile?.networkingStatus.isNotEmpty == true ? activeProfile!.networkingStatus : "ACTIVELY NETWORKING";
         final phone = activeProfile?.phoneNumber.isNotEmpty == true ? activeProfile!.phoneNumber : "";
-        final email = activeProfile?.email ?? storedUser?.email ?? "";
+        final email = (activeProfile?.email.isNotEmpty == true)
+            ? activeProfile!.email
+            : (empBackend.email.isNotEmpty
+                ? empBackend.email
+                : (emailsModel?.employeeEmail.isNotEmpty == true
+                    ? emailsModel!.employeeEmail
+                    : (storedUser?.email ?? "")));
+        final companyEmail = emailsModel?.companyEmail ?? "";
         final website = activeProfile?.websiteUrl ?? "";
         final slug = activeProfile?.cardSlug ?? IndividualProfileStore.generateCardSlug(name);
         final templateIndex = IndividualProfileStore.getTemplateIndex(activeProfile?.templateStyle);
@@ -354,9 +383,31 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                     secondChild: Column(
                       children: [
                         const Divider(color: Color(0xFFF1F5F9), height: 24),
-                        _buildViewRow(Icons.email_rounded, "Email", email.isEmpty ? "Not provided" : email),
+                        _buildViewRow(
+                          Icons.email_rounded,
+                          "Employee Email",
+                          email.isEmpty ? "Not provided" : email,
+                          badgeText: email.isNotEmpty ? "Verified" : null,
+                          badgeColor: const Color(0xFF16A34A),
+                        ),
                         const Divider(color: Color(0xFFF1F5F9), height: 24),
-                        _buildViewRow(Icons.language_rounded, "Website", website.isEmpty ? "Not provided" : website),
+                        _buildViewRow(
+                          Icons.business_rounded,
+                          "Company Email",
+                          companyEmail.isNotEmpty ? companyEmail : (emailsModel?.companyEmail.isNotEmpty == true ? emailsModel!.companyEmail : "Not provided"),
+                          badgeText: (companyEmail.isNotEmpty || emailsModel?.companyEmail.isNotEmpty == true) ? "Verified" : null,
+                          badgeColor: const Color(0xFF16A34A),
+                        ),
+                        const Divider(color: Color(0xFFF1F5F9), height: 24),
+                        _buildViewRow(
+                          Icons.language_rounded,
+                          "Website",
+                          (website.isNotEmpty)
+                              ? website
+                              : (emailsModel?.companyWebsite.isNotEmpty == true
+                                  ? emailsModel!.companyWebsite
+                                  : "Not provided"),
+                        ),
                       ],
                     ),
                     crossFadeState: _isContactDetailsExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
@@ -474,7 +525,14 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
     );
   }
 
-  Widget _buildViewRow(IconData icon, String label, String value, {bool isMultiLine = false}) {
+  Widget _buildViewRow(
+    IconData icon,
+    String label,
+    String value, {
+    bool isMultiLine = false,
+    String? badgeText,
+    Color? badgeColor,
+  }) {
     return Row(
       crossAxisAlignment: isMultiLine ? CrossAxisAlignment.start : CrossAxisAlignment.center,
       children: [
@@ -484,13 +542,35 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF94A3B8),
-                ),
+              Row(
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF94A3B8),
+                    ),
+                  ),
+                  if (badgeText != null) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                      decoration: BoxDecoration(
+                        color: (badgeColor ?? const Color(0xFF16A34A)).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        badgeText,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: badgeColor ?? const Color(0xFF16A34A),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
               const SizedBox(height: 4),
               Text(

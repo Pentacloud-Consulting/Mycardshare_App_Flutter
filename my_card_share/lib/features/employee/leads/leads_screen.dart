@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../backend/individual/previews/user_leads.dart';
 import 'widgets/lead_add_lead.dart';
+import 'widgets/leads_header.dart';
 import 'widgets/lead_list_tile.dart';
 import 'widgets/leads_filter_pills.dart';
 import 'widgets/leads_metrics_row.dart';
@@ -70,6 +71,10 @@ class _LeadsScreenState extends State<LeadsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Header (Back, Title, Export)
+                  const LeadsHeader(),
+                  const SizedBox(height: 16),
+
                   // Metrics Row (Total, New, This Week)
                   const LeadsMetricsRow(),
 

@@ -1,4 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
@@ -47,6 +48,12 @@
                     android:pathPrefix="/card/" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
@@ -82,12 +89,37 @@
         <package android:name="com.samsung.android.wallet" />
         <package android:name="com.samsung.android.spay" />
         <!-- Google Wallet / Google Pay Intent Queries (Android 11+) -->
+        <package android:name="com.google.android.apps.walletnfcrel" />
         <package android:name="com.google.android.apps.walletsimulations" />
         <package android:name="com.google.android.apps.nbu.paisa.user" />
+        <package android:name="com.google.android.gms" />
+        <!-- Google Wallet save URL domain -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" android:host="pay.google.com" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" android:host="walletobjects.googleapis.com" />
+        </intent>
+        <!-- Samsung Wallet save URL domains -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" android:host="a.swallet.link" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" android:host="r.samsung.com" />
+        </intent>
         <!-- Samsung Wallet custom URI scheme -->
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="samsungwallet" />
+        </intent>
+        <!-- Samsung Pay custom URI scheme -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="samsungpay" />
         </intent>
     </queries>
 </manifest>

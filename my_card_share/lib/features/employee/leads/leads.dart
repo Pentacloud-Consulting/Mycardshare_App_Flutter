@@ -17,4 +17,13 @@ class IndividualLeadsScreen extends StatelessWidget {
   }
 }
 
+class EmployeeLeadsScreen extends StatelessWidget {
+  const EmployeeLeadsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const LeadsScreen();
+  }
+}
+
 

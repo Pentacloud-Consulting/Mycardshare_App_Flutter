@@ -87,6 +87,18 @@ class EnterpriseProfileMenuHub extends ConsumerWidget {
         ),
         const SizedBox(height: 10),
 
+        // Join Enterprise Requests
+        _buildMenuItem(
+          context: context,
+          icon: Icons.person_add_alt_1_rounded,
+          iconColor: const Color(0xFF0066FF),
+          bgColor: const Color(0xFFEFF6FF),
+          title: "Join Enterprise Requests",
+          subtitle: "Review & approve prospective employee join requests",
+          onTap: () => context.push('/enterprise/settings/requests'),
+        ),
+        const SizedBox(height: 10),
+
         // Security & Domain Verification
         _buildMenuItem(
           context: context,

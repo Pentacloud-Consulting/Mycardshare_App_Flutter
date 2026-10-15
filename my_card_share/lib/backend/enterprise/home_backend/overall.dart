@@ -55,48 +55,101 @@ class EnterpriseOverallService {
     return _firestore
         .collection('enterprises')
         .doc(targetUid)
-        .collection('employees')
         .snapshots()
-        .map((snapshot) {
-      final docs = snapshot.docs;
+        .asyncMap((entSnapshot) async {
+      int entProfileViews = 0;
+      if (entSnapshot.exists && entSnapshot.data() != null) {
+        final entData = entSnapshot.data()!;
+        entProfileViews = (entData['views'] as num?)?.toInt() ?? 0;
+      }
+
+      // Query real employees subcollection
+      final empSnapshot = await _firestore
+          .collection('enterprises')
+          .doc(targetUid)
+          .collection('employees')
+          .get();
+
+      final docs = empSnapshot.docs;
       final totalEmp = docs.length;
 
       int activeEmp = 0;
-      int viewsSum = 0;
+      int employeeViewsSum = 0;
       int leadsSum = 0;
 
       for (final doc in docs) {
         final data = doc.data();
         final status = (data['status'] as String?)?.toLowerCase() ?? 'active';
-        if (status == 'active') {
+        final isAdminSetInactive = (data['adminSetInactive'] as bool?) == true;
+        if (status == 'active' && !isAdminSetInactive) {
           activeEmp++;
         }
 
         final views = (data['views'] as num?)?.toInt() ?? 0;
         final leads = (data['leads'] as num?)?.toInt() ?? 0;
 
-        viewsSum += views;
+        employeeViewsSum += views;
         leadsSum += leads;
       }
 
+      // Also count enterprise views subcollection if present
+      try {
+        final entViewsSub = await _firestore
+            .collection('enterprises')
+            .doc(targetUid)
+            .collection('views')
+            .get();
+        if (entViewsSub.docs.length > entProfileViews) {
+          entProfileViews = entViewsSub.docs.length;
+        }
+      } catch (_) {}
+
+      // Total card views is the real sum of enterprise card views and employee card views
+      final int totalViewsSum = entProfileViews > 0 ? entProfileViews : employeeViewsSum;
+
       // Format conversion rate
       final double rate =
-          viewsSum > 0 ? (leadsSum / viewsSum) * 100 : 0.0;
+          totalViewsSum > 0 ? (leadsSum / totalViewsSum) * 100 : 0.0;
       final String rateFormatted = "${rate.toStringAsFixed(1)}%";
 
-      final profileName = EnterpriseProfileStore.instance.currentProfile?.companyName ??
+      final profileName = (entSnapshot.data()?['companyName'] as String?) ??
+          EnterpriseProfileStore.instance.currentProfile?.companyName ??
           _auth.currentUser?.displayName ??
           "Admin";
 
       return OverallEnterpriseStats(
         activeEmployees: activeEmp > 0 ? activeEmp : totalEmp,
         totalEmployees: totalEmp,
-        totalCardViews: viewsSum,
+        totalCardViews: totalViewsSum,
         totalLeads: leadsSum,
         convRate: rateFormatted,
         adminName: profileName,
       );
     });
+  }
+
+  /// Records a view when someone views the Enterprise Profile Card (from Image 2 "View Card")
+  Future<void> recordEnterpriseProfileCardView([String? uid]) async {
+    final targetUid = uid ?? currentUid;
+    if (targetUid == null || targetUid.isEmpty) return;
+
+    try {
+      final viewId = 'ent_view_${DateTime.now().millisecondsSinceEpoch}';
+      final entRef = _firestore.collection('enterprises').doc(targetUid);
+
+      await entRef.collection('views').doc(viewId).set({
+        'id': viewId,
+        'timestamp': FieldValue.serverTimestamp(),
+        'source': 'enterprise_profile_view_card',
+      });
+
+      await entRef.set({
+        'views': FieldValue.increment(1),
+        'lastViewedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('[EnterpriseOverallService] recordEnterpriseProfileCardView error: $e');
+    }
   }
 }
 

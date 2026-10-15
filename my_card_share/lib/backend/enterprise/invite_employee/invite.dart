@@ -385,10 +385,10 @@ class _EnterpriseInviteFormModalState extends State<EnterpriseInviteFormModal>
           ),
           const SizedBox(height: 14),
 
-          _buildLabel("Work Email"),
+          _buildLabel("Company email"),
           _buildInputField(
             controller: _emailController,
-            hint: "e.g. alex.stanton@company.com",
+            hint: "e.g. employee@company.com",
             icon: Icons.mail_outline_rounded,
             keyboardType: TextInputType.emailAddress,
           ),

@@ -6,6 +6,7 @@ import 'workforce/workforce_summary_card_section.dart';
 import 'workforce/workforce_search_and_filters_section.dart';
 import 'workforce/workforce_teammates_list_section.dart';
 import 'workforce/workforce_footer_caption_section.dart';
+import '../../../../backend/employee_join/home/employee_home_backend.dart';
 
 class EmployeeWorkforceScreen extends StatefulWidget {
   const EmployeeWorkforceScreen({super.key});
@@ -81,10 +82,16 @@ class _EmployeeWorkforceScreenState extends State<EmployeeWorkforceScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // 1. Summary Card Section
-                    const WorkforceSummaryCardSection(
-                      companyName: "Acme Realty Group",
-                      logoText: "AR",
-                      memberCountText: "34 members",
+                    WorkforceSummaryCardSection(
+                      companyName: (EmployeeHomeBackendService.instance.companyName.isNotEmpty &&
+                              EmployeeHomeBackendService.instance.companyName != "Enterprise Workspace")
+                          ? EmployeeHomeBackendService.instance.companyName
+                          : "Acme Realty Group",
+                      logoText: (EmployeeHomeBackendService.instance.companyName.isNotEmpty &&
+                              EmployeeHomeBackendService.instance.companyName != "Enterprise Workspace")
+                          ? EmployeeHomeBackendService.instance.companyName.trim().split(' ').map((w) => w.isNotEmpty ? w[0] : '').take(2).join().toUpperCase()
+                          : "AR",
+                      memberCountText: "Enterprise Workforce",
                     ),
 
                     const SizedBox(height: 14),

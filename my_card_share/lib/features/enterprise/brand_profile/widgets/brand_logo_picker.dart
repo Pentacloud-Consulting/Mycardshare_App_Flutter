@@ -1,13 +1,16 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../backend/enterprise/profile/enterprise_profile_store.dart';
+import '../../../../core/utils/image_cropper_util.dart';
+import '../../../../core/utils/app_image_helper.dart';
 
-/// Real BrandLogoPicker — picks company logo from gallery, uploads to Firebase Storage,
-/// updates Firestore & EnterpriseProfileStore, and shows live image preview.
+/// Real BrandLogoPicker — picks company logo from gallery, allows flexible cropping/adjusting,
+/// uploads to Firebase Storage, updates Firestore & EnterpriseProfileStore, and shows live image preview.
 class BrandLogoPicker extends StatefulWidget {
   final VoidCallback? onTap;
 
@@ -48,15 +51,21 @@ class _BrandLogoPickerState extends State<BrandLogoPicker> {
     try {
       final XFile? picked = await _picker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 90,
-        maxWidth: 1024,
-        maxHeight: 1024,
+        imageQuality: 95,
       );
       if (picked == null) return;
 
+      // Let user crop & adjust image freely
+      final String? croppedPath = await AppImageCropper.cropImage(
+        context: context,
+        sourcePath: picked.path,
+        cropType: AppCropType.logo,
+      );
+      if (croppedPath == null) return;
+
       setState(() => _isUploading = true);
 
-      final bytes = await picked.readAsBytes();
+      final bytes = await File(croppedPath).readAsBytes();
       final base64Str = base64Encode(bytes);
       final dataUrl = 'data:image/jpeg;base64,$base64Str';
 
@@ -179,7 +188,17 @@ class _BrandLogoPickerState extends State<BrandLogoPicker> {
                                 ),
                               )
                             : (_logoUrl != null && _logoUrl!.isNotEmpty)
-                                ? Image.network(_logoUrl!, fit: BoxFit.cover)
+                                ? AppImageHelper.buildImage(
+                                    _logoUrl!,
+                                    fit: BoxFit.cover,
+                                    fallback: const Center(
+                                      child: Icon(
+                                        Icons.apartment_rounded,
+                                        color: Color(0xFF0052FF),
+                                        size: 44,
+                                      ),
+                                    ),
+                                  )
                                 : const Center(
                                     child: Icon(
                                       Icons.apartment_rounded,

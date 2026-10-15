@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../backend/enterprise/settings/company_employee.dart';
 import '../../../../backend/enterprise/settings/employee_popup.dart';
 import 'settings_custom_domain.dart';
@@ -62,6 +63,14 @@ class SettingsWorkspaceCard extends StatelessWidget {
               const Divider(height: 1, color: Color(0xFFF1F5F9)),
               SettingsEmployeeLimitRow(
                 onTap: onEmployeeLimitTap ?? () => showEmployeeLimitPopup(context),
+              ),
+              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              _buildSettingRow(
+                icon: Icons.person_add_alt_1_rounded,
+                iconColor: const Color(0xFF7C3AED),
+                iconBg: const Color(0xFFF3E8FF),
+                title: "Join Enterprise Requests",
+                onTap: () => context.push('/enterprise/settings/requests'),
               ),
               const Divider(height: 1, color: Color(0xFFF1F5F9)),
               SettingsCrmConnectorRow(

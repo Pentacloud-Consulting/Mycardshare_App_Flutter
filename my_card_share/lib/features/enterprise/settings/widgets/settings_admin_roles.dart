@@ -538,18 +538,18 @@ class _AssignAdminRoleModalState extends State<AssignAdminRoleModal> {
               ),
               const SizedBox(height: 14),
 
-              // Work Email
+              // Company Email
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
-                  labelText: "Work Email Address",
-                  hintText: "sarah@yourcompany.com",
+                  labelText: "Company email",
+                  hintText: "admin@yourcompany.com",
                   prefixIcon: const Icon(Icons.mail_outline_rounded, color: Color(0xFF0052FF)),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 ),
-                validator: (val) => (val == null || !val.contains('@')) ? "Enter valid work email" : null,
+                validator: (val) => (val == null || !val.contains('@')) ? "Enter valid company email" : null,
               ),
               const SizedBox(height: 14),
 

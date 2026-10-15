@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../employee_join/home/employee_home_backend.dart';
 import '../multiple_store/individual_multi_store.dart';
 import '../profile/individual_profile_store.dart';
@@ -152,7 +153,7 @@ class GoogleWalletService {
     }
 
     try {
-      await WalletService.addToGoogleWallet(
+      final saveUrl = await WalletService.addToGoogleWallet(
         profile: profile,
         publicProfile: publicProfile,
       );
@@ -167,7 +168,7 @@ class GoogleWalletService {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Google Wallet pass opened for $name!',
+                    'Google Wallet pass saved for $name!',
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -179,9 +180,18 @@ class GoogleWalletService {
           ),
         );
       }
+      debugPrint('[GoogleWalletService] Successfully launched: $saveUrl');
       return true;
+    } on WalletException catch (e) {
+      // Structured wallet error — show actionable dialog
+      debugPrint('[GoogleWalletService] WalletException: ${e.title}: ${e.message}');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        await _showWalletErrorDialog(context, error: e, cardUrl: e.cardUrl);
+      }
+      return false;
     } catch (e) {
-      debugPrint('[GoogleWalletService] Error: $e');
+      debugPrint('[GoogleWalletService] Unexpected error: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -568,6 +578,92 @@ class GoogleWalletService {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  /// Shows a user-friendly dialog when wallet opening fails,
+  /// with options to open the card in browser or dismiss.
+  Future<void> _showWalletErrorDialog(
+    BuildContext context, {
+    required WalletException error,
+    required String cardUrl,
+  }) {
+    return showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        contentPadding: const EdgeInsets.all(24),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Icon
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF3CD),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: const Icon(Icons.account_balance_wallet_rounded,
+                  color: Color(0xFFB45309), size: 30),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              error.title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              error.message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 13,
+                color: Color(0xFF64748B),
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Open card in browser button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  Navigator.of(ctx).pop();
+                  final uri = Uri.parse(cardUrl);
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                },
+                icon: const Icon(Icons.open_in_browser_rounded, size: 18),
+                label: const Text('Open Card in Browser'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4285F4),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                ),
+                child: const Text('Dismiss',
+                    style: TextStyle(color: Color(0xFF475569), fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ],
         ),
       ),
     );

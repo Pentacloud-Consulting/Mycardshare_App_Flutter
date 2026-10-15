@@ -18,4 +18,13 @@ class IndividualVaultScreen extends StatelessWidget {
   }
 }
 
+class EmployeeVaultScreen extends StatelessWidget {
+  const EmployeeVaultScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const VaultScreen();
+  }
+}
+
 

@@ -3,6 +3,7 @@ import '../../../../../core/theme/app_theme.dart';
 import '../../../../../backend/individual/vault/share_card.dart';
 
 class ViewVaultModal extends StatelessWidget {
+  final String? id;
   final String name;
   final String role;
   final String company;
@@ -13,9 +14,11 @@ class ViewVaultModal extends StatelessWidget {
   final String dateAdded;
   final String tag;
   final String? initials;
+  final VoidCallback? onDelete;
 
   const ViewVaultModal({
     super.key,
+    this.id,
     required this.name,
     required this.role,
     required this.company,
@@ -26,6 +29,7 @@ class ViewVaultModal extends StatelessWidget {
     required this.dateAdded,
     required this.tag,
     this.initials,
+    this.onDelete,
   });
 
   String get _effectivePhone {
@@ -230,8 +234,33 @@ class ViewVaultModal extends StatelessWidget {
                   ],
                 ),
                 
-                const SizedBox(height: 12),
-                
+                const SizedBox(height: 14),
+
+                // Delete Contact Button
+                if (onDelete != null)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context); // close sheet first
+                        onDelete!();
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFEF4444),
+                        side: const BorderSide(color: Color(0xFFFCA5A5)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                      label: const Text(
+                        "Delete Contact",
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+
+                const SizedBox(height: 6),
+
                 // Close Button
                 SizedBox(
                   width: double.infinity,

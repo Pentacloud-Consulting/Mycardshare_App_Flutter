@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../backend/reset_password/individual/individual_reset_password.dart';
+import '../../../backend/reset_password/employee/employee_reset_password.dart';
 import '../../../backend/reset_password/enterprice/enterprice_reset_password.dart';
+import '../../../backend/reset_password/master_admin/master_admin_reset_password.dart';
 import '../back/smart_back_handler.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
@@ -51,27 +53,18 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       _isLoading = true;
     });
 
-    // Dispatch reset link API calls for Individual & Enterprise
-    await IndividualResetPassword.sendResetLink(email);
-    await EnterpriseResetPassword.sendResetLink(email);
+    // Dispatch reset link API calls for Individual, Employee, Enterprise & Master Admin
+    final indOk = await IndividualResetPassword.sendResetLink(email);
+    final empOk = await EmployeeResetPassword.sendResetLink(email);
+    final entOk = await EnterpriseResetPassword.sendResetLink(email);
+    final masOk = await MasterAdminResetPassword.sendResetLink(email);
 
-    final newPass = _newPasswordController.text.trim().isNotEmpty
-        ? _newPasswordController.text.trim()
-        : 'newPassword123';
-        
-    IndividualResetPassword.updatePasswordSecurely(
-      email: email,
-      newPassword: newPass,
-    );
-    EnterpriseResetPassword.updatePasswordSecurely(
-      email: email,
-      newPassword: newPass,
-    );
+    final success = indOk || empOk || entOk || masOk;
 
     if (mounted) {
       setState(() {
         _isLoading = false;
-        _isSubmitted = true;
+        _isSubmitted = success;
       });
     }
   }

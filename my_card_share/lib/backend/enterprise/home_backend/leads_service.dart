@@ -201,6 +201,52 @@ class EnterpriseLeadsService {
       return false;
     }
   }
+
+  /// Update enterprise lead status or details
+  Future<bool> updateLead({
+    required String uid,
+    required String leadId,
+    String? name,
+    String? company,
+    String? email,
+    String? status,
+  }) async {
+    try {
+      final Map<String, dynamic> updates = {};
+      if (name != null) updates['name'] = name.trim();
+      if (company != null) updates['company'] = company.trim();
+      if (email != null) updates['email'] = email.trim();
+      if (status != null) updates['status'] = status.trim();
+      updates['updatedAt'] = FieldValue.serverTimestamp();
+
+      await _firestore
+          .collection('enterprises')
+          .doc(uid)
+          .collection('leads')
+          .doc(leadId)
+          .update(updates);
+      return true;
+    } catch (e) {
+      debugPrint('[EnterpriseLeadsService] updateLead error: $e');
+      return false;
+    }
+  }
+
+  /// Delete enterprise lead
+  Future<bool> deleteLead(String uid, String leadId) async {
+    try {
+      await _firestore
+          .collection('enterprises')
+          .doc(uid)
+          .collection('leads')
+          .doc(leadId)
+          .delete();
+      return true;
+    } catch (e) {
+      debugPrint('[EnterpriseLeadsService] deleteLead error: $e');
+      return false;
+    }
+  }
 }
 
 

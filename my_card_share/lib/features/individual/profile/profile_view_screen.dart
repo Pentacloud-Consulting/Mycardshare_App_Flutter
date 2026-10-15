@@ -168,7 +168,7 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                           size: 20,
                         ),
                         label: Text(
-                          isPublished ? "Publish" : "Unpublished",
+                          isPublished ? "Published" : "Publish",
                           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
                         ),
                         style: ElevatedButton.styleFrom(

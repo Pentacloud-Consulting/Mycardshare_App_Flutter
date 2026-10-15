@@ -8,6 +8,7 @@ import 'widgets/leads_filter_pills.dart';
 import 'widgets/leads_metrics_row.dart';
 import 'widgets/leads_search_bar.dart';
 import 'widgets/lead_detail_sheet.dart';
+import 'widgets/lead_date_filter_sheet.dart';
 
 class LeadsScreen extends StatefulWidget {
   const LeadsScreen({super.key});
@@ -20,6 +21,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedFilter = 'all';
   String _searchQuery = '';
+  LeadDateFilterResult _dateFilter = const LeadDateFilterResult(preset: LeadDatePreset.allTime);
 
   @override
   void initState() {
@@ -43,6 +45,18 @@ class _LeadsScreenState extends State<LeadsScreen> {
     );
   }
 
+  void _openDateFilterSheet() async {
+    final result = await LeadDateFilterSheet.show(
+      context,
+      currentFilter: _dateFilter,
+    );
+    if (result != null) {
+      setState(() {
+        _dateFilter = result;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -56,9 +70,12 @@ class _LeadsScreenState extends State<LeadsScreen> {
           final queryMatch = _searchQuery.isEmpty ||
               lead.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
               lead.company.toLowerCase().contains(_searchQuery.toLowerCase());
+          final dateMatch = _dateFilter.matches(lead.createdAt);
 
-          return statusMatch && queryMatch;
+          return statusMatch && queryMatch && dateMatch;
         }).toList();
+
+        final isDateFiltered = _dateFilter.preset != LeadDatePreset.allTime;
 
         return Scaffold(
           backgroundColor: const Color(0xFFF8FAFD),
@@ -83,12 +100,54 @@ class _LeadsScreenState extends State<LeadsScreen> {
                   // Search Bar + Calendar Date Filter
                   LeadsSearchBar(
                     controller: _searchController,
+                    isDateFiltered: isDateFiltered,
                     onChanged: (value) {
                       setState(() {
                         _searchQuery = value.trim();
                       });
                     },
+                    onCalendarTap: _openDateFilterSheet,
                   ),
+
+                  if (isDateFiltered) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0052FF).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFF0052FF).withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.filter_alt_rounded, size: 13, color: Color(0xFF0052FF)),
+                              const SizedBox(width: 4),
+                              Text(
+                                "Date: ${_dateFilter.label}",
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF0052FF),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _dateFilter = const LeadDateFilterResult(preset: LeadDatePreset.allTime);
+                                  });
+                                },
+                                child: const Icon(Icons.close_rounded, size: 14, color: Color(0xFF0052FF)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
 
                   const SizedBox(height: 14),
 

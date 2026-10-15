@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import '../../Cloud Image Upload/cloud_upload_service.dart';
 import '../api_service.dart';
 
 /// Central resilient image upload service for profile photos (avatars) and banners.
@@ -46,7 +47,27 @@ class ImageUploadService {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final fileName = '${folder}_$timestamp.$ext';
 
-    // ── Tier 1: Firebase Storage (Primary) ──────────────────────────────────
+    // ── Tier 1: Next.js Cloud Sync API Gateway (/api/sync/cloud-upload) ───
+    try {
+      debugPrint('[ImageUploadService] Attempting CloudUploadService (/api/sync/cloud-upload)...');
+      final category = folder.contains('banner')
+          ? 'banner'
+          : folder.contains('logo')
+              ? 'logo'
+              : 'avatar';
+      final cloudUrl = await CloudUploadService.uploadImageFile(
+        imageFile: file,
+        category: category,
+      );
+      if (cloudUrl != null && cloudUrl.isNotEmpty && cloudUrl.startsWith('http')) {
+        debugPrint('[ImageUploadService] ✅ CloudUploadService upload success: $cloudUrl');
+        return cloudUrl;
+      }
+    } catch (cloudErr) {
+      debugPrint('[ImageUploadService] Tier 1 (CloudUploadService) note: $cloudErr');
+    }
+
+    // ── Tier 2: Firebase Storage Fallback ──────────────────────────────────
     try {
       debugPrint('[ImageUploadService] Attempting Firebase Storage upload for $fileName...');
       final storageRef = FirebaseStorage.instance
@@ -67,10 +88,10 @@ class ImageUploadService {
         return downloadUrl;
       }
     } catch (storageErr) {
-      debugPrint('[ImageUploadService] Tier 1 (Firebase Storage) note: $storageErr');
+      debugPrint('[ImageUploadService] Tier 2 (Firebase Storage) note: $storageErr');
     }
 
-    // ── Tier 2: Next.js API Gateway (/api/user/upload) ──────────────────────
+    // ── Tier 3: Next.js API Gateway (/api/user/upload) ──────────────────────
     try {
       debugPrint('[ImageUploadService] Attempting API Gateway upload...');
       final type = folder.contains('banner') ? 'banner' : 'avatar';
@@ -80,7 +101,7 @@ class ImageUploadService {
         return apiUrl;
       }
     } catch (apiErr) {
-      debugPrint('[ImageUploadService] Tier 2 (API Gateway) note: $apiErr');
+      debugPrint('[ImageUploadService] Tier 3 (API Gateway) note: $apiErr');
     }
 
     // ── Tier 3: In-line Base64 Data URL Fallback ────────────────────────────

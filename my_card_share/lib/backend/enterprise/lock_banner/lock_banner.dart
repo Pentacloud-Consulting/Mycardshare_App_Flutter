@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../Cloud Image Upload/cloud_upload_service.dart';
 import '../profile/enterprise_profile_store.dart';
 import '../../../core/utils/image_cropper_util.dart';
 
@@ -82,7 +83,7 @@ class LockBannerService {
       debugPrint('[LockBannerService] Image picked: ${picked.path}');
 
       String filePath = picked.path;
-      if (context != null) {
+      if (context != null && context.mounted) {
         final cropped = await AppImageCropper.cropImage(
           context: context,
           sourcePath: picked.path,
@@ -92,25 +93,44 @@ class LockBannerService {
         filePath = cropped;
       }
 
-      final bytes = await File(filePath).readAsBytes();
+
+      final file = File(filePath);
+      final bytes = await file.readAsBytes();
       final base64Str = base64Encode(bytes);
       final dataUrl = 'data:image/jpeg;base64,$base64Str';
       String downloadUrl = dataUrl;
 
+      // ── Tier 1: Next.js Cloud Sync API Gateway (/api/sync/cloud-upload) ───
       try {
-        final storageRef = _storage
-            .ref()
-            .child('enterprise_banners')
-            .child(uid)
-            .child('banner.jpg');
+        final cloudUrl = await CloudUploadService.uploadImageFile(
+          imageFile: file,
+          category: 'banner',
+        );
+        if (cloudUrl != null && cloudUrl.isNotEmpty && cloudUrl.startsWith('http')) {
+          downloadUrl = cloudUrl;
+          debugPrint('[LockBannerService] ✅ CloudUploadService banner upload success: $downloadUrl');
+        }
+      } catch (cloudErr) {
+        debugPrint('[LockBannerService] Cloud upload API note: $cloudErr');
+      }
 
-        final task = await storageRef.putData(
-          bytes,
-          SettableMetadata(contentType: 'image/jpeg'),
-        ).timeout(const Duration(seconds: 8));
-        downloadUrl = await task.ref.getDownloadURL();
-      } catch (storageErr) {
-        debugPrint('[LockBannerService] Storage upload note: $storageErr (using local data URL)');
+      // ── Tier 2: Firebase Storage Fallback ──────────────────────────────────
+      if (!downloadUrl.startsWith('http')) {
+        try {
+          final storageRef = _storage
+              .ref()
+              .child('enterprise_banners')
+              .child(uid)
+              .child('banner.jpg');
+
+          final task = await storageRef.putData(
+            bytes,
+            SettableMetadata(contentType: 'image/jpeg'),
+          ).timeout(const Duration(seconds: 8));
+          downloadUrl = await task.ref.getDownloadURL();
+        } catch (storageErr) {
+          debugPrint('[LockBannerService] Storage upload note: $storageErr (using local data URL)');
+        }
       }
 
       try {

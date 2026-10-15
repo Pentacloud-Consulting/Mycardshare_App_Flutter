@@ -6,6 +6,7 @@ import 'widgets/leads_search_filter.dart';
 import 'widgets/leads_filter_chips.dart';
 import 'widgets/leads_list_cards.dart';
 import 'widgets/retry_sync_button.dart';
+import 'widgets/edit_lead.dart';
 import '../../../backend/enterprise/home_backend/leads_service.dart';
 
 class EnterpriseLeadsScreen extends StatefulWidget {
@@ -54,14 +55,53 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    lead["name"] as String,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
+                  Expanded(
+                    child: Text(
+                      lead["name"] as String,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                      ),
                     ),
                   ),
+                  InkWell(
+                    onTap: () {
+                      Navigator.pop(context);
+                      EnterpriseEditLeadSheet.show(
+                        context,
+                        lead: lead,
+                        onLeadUpdated: (updated) {
+                          setState(() {});
+                        },
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0052FF).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFF0052FF).withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.edit_rounded, size: 14, color: Color(0xFF0052FF)),
+                          SizedBox(width: 4),
+                          Text(
+                            "Edit",
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0052FF),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
@@ -94,24 +134,52 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
                 style: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
               ),
               const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _handleRetrySync(lead);
-                  },
-                  icon: const Icon(Icons.sync_rounded, size: 18),
-                  label: const Text("Push to Enterprise CRM"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0052FF),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        EnterpriseEditLeadSheet.show(
+                          context,
+                          lead: lead,
+                          onLeadUpdated: (updated) {
+                            setState(() {});
+                          },
+                        );
+                      },
+                      icon: const Icon(Icons.edit_outlined, size: 18),
+                      label: const Text("Edit Lead"),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF0052FF),
+                        side: const BorderSide(color: Color(0xFF0052FF)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _handleRetrySync(lead);
+                      },
+                      icon: const Icon(Icons.sync_rounded, size: 18),
+                      label: const Text("Push to CRM"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0052FF),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

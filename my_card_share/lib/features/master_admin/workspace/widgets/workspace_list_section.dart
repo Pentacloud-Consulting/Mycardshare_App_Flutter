@@ -24,37 +24,11 @@ class WorkspaceListSection extends StatelessWidget {
     this.onMenuTap,
   });
 
-  static const List<WorkspaceItem> defaultWorkspaces = [
-    WorkspaceItem(
-      domain: "acme-realty.mycardshare.com",
-      companyName: "Acme Realty Group",
-      isActive: true,
-    ),
-    WorkspaceItem(
-      domain: "zenith-tech.mycardshare.com",
-      companyName: "Zenith Technologies",
-      isActive: false,
-    ),
-    WorkspaceItem(
-      domain: "nova-consulting.mycardshare.com",
-      companyName: "Nova Consulting",
-      isActive: true,
-    ),
-    WorkspaceItem(
-      domain: "pixel-studio.mycardshare.com",
-      companyName: "Pixel Studio",
-      isActive: false,
-    ),
-    WorkspaceItem(
-      domain: "orion-trading.mycardshare.com",
-      companyName: "Orion Trading Co.",
-      isActive: true,
-    ),
-  ];
+
 
   @override
   Widget build(BuildContext context) {
-    final list = workspaces ?? defaultWorkspaces;
+    final list = workspaces ?? [];
 
     if (list.isEmpty) {
       return Container(

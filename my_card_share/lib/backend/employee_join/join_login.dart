@@ -8,6 +8,7 @@ import '../enterprise/home_backend/employees_page.dart';
 import '../enterprise/multiple_store/enterprise_multi_store.dart';
 import 'invite_resolver/invite_code_resolver.dart';
 import 'home/employee_home_backend.dart';
+import '../enterprise/invite_employee/enterprise_invite_sync_service.dart';
 import '../../models/user_model.dart';
 
 /// Result object for Workspace Join requests
@@ -111,7 +112,15 @@ class JoinLoginBackendService {
     }
 
     try {
-      // 1. Resolve enterprise doc ID & check expiration first
+      // 1. Verify via Next.js 15-minute rotating code API & InviteCodeResolver
+      final liveVerify = await EnterpriseInviteSyncService.verifyJoinCode(code: cleanCode);
+      if (liveVerify != null && liveVerify['valid'] == false) {
+        return const JoinWorkspaceResult(
+          success: false,
+          message: "The invite code got expired. Please request a new invite link from your company.",
+        );
+      }
+
       final info = await lookupEnterpriseByInviteCode(cleanCode);
       if (info != null && info['isExpired'] == true) {
         return const JoinWorkspaceResult(

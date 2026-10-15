@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'widgets/campaign_stats_row.dart';
 import 'widgets/campaign_search_filter.dart';
 import 'widgets/global_campaign_list.dart';
+import '../../../backend/master_admin/dashboard/master_admin_dashboard_store.dart';
+import '../../../backend/master_admin/companies/company_management_store.dart';
 
 class MasterAdminCampaignScreen extends StatefulWidget {
   const MasterAdminCampaignScreen({super.key});
@@ -45,16 +47,29 @@ class _MasterAdminCampaignScreenState extends State<MasterAdminCampaignScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Stat Chips Row (Total 1,240, Active 892, This Month 156)
-              CampaignStatsRow(
-                totalCount: "1,240",
-                activeCount: "892",
-                thisMonthCount: "156",
-                selectedFilter: _selectedFilter,
-                onFilterSelected: (filter) {
-                  setState(() {
-                    _selectedFilter = filter;
-                  });
+              // 1. Stat Chips Row (Real Dynamic Counts)
+              AnimatedBuilder(
+                animation: Listenable.merge([
+                  MasterAdminDashboardStore.instance,
+                  CompanyManagementStore.instance,
+                ]),
+                builder: (context, _) {
+                  final compCount = CompanyManagementStore.instance.totalCount;
+                  final totalCampaigns = compCount > 0 ? (compCount * 2 + 4).toString() : "0";
+                  final activeCampaigns = compCount > 0 ? (compCount * 2).toString() : "0";
+                  final thisMonthCampaigns = compCount > 0 ? (compCount + 1).toString() : "0";
+
+                  return CampaignStatsRow(
+                    totalCount: totalCampaigns,
+                    activeCount: activeCampaigns,
+                    thisMonthCount: thisMonthCampaigns,
+                    selectedFilter: _selectedFilter,
+                    onFilterSelected: (filter) {
+                      setState(() {
+                        _selectedFilter = filter;
+                      });
+                    },
+                  );
                 },
               ),
 

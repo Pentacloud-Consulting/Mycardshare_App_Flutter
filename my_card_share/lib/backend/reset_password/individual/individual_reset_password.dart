@@ -1,53 +1,55 @@
-import 'package:flutter/foundation.dart';
-import '../../individual/sign/user_sign_up_store.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../reset_passowrd.dart';
 
-/// IndividualResetPassword handles password reset workflows, API integration,
-/// email dispatch per Backend.md, and secure synchronization with UserSignUpStore & LoginIdentity.
 class IndividualResetPassword {
-  IndividualResetPassword._internal();
-  static final IndividualResetPassword instance = IndividualResetPassword._internal();
+  static const String baseUrl = "https://mycardshare.com";
 
-  /// Send password reset link to user's email per Backend.md API specification (/api/auth/reset-password).
   static Future<bool> sendResetLink(String email) async {
     final normalizedEmail = email.trim().toLowerCase();
-    debugPrint('[IndividualResetPassword] Dispatching reset link API request for: $normalizedEmail');
-
-    // Simulate API network call delay per Backend.md specifications
-    await Future.delayed(const Duration(milliseconds: 600));
-
-    // Register active reset token request in ResetPasswordStore
-    ResetPasswordStore.recordResetRequest(normalizedEmail);
-    return true;
+    try {
+      final res = await http.post(
+        Uri.parse("$baseUrl/api/sync/reset-password"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "email": normalizedEmail,
+          "role": "individual",
+        }),
+      );
+      if (res.statusCode == 200) {
+        final json = jsonDecode(res.body);
+        final token = json['data']?['resetToken'] ??
+            'token_${DateTime.now().millisecondsSinceEpoch}';
+        ResetPasswordStore.recordResetRequest(normalizedEmail, token: token);
+        return true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
   }
 
-  /// Securely updates user's password and synchronizes across stores.
-  static bool updatePasswordSecurely({
+  static Future<bool> updatePasswordSecurely({
     required String email,
     required String newPassword,
-  }) {
+  }) async {
     final normalizedEmail = email.trim().toLowerCase();
-
-    // 1. Update in UserSignUpStore & IndividualMultiStore
-    final success = UserSignUpStore.updateUserPassword(normalizedEmail, newPassword);
-
-    // 2. Synchronize in ResetPasswordStore
-    ResetPasswordStore.saveResetPasswordRecord(normalizedEmail, newPassword);
-
-    if (success) {
-      debugPrint('[IndividualResetPassword] Password securely updated across UserSignUpStore & LoginIdentity for $normalizedEmail');
-    } else {
-      debugPrint('[IndividualResetPassword] Warning: User $normalizedEmail was not found in signup store. Registering record now.');
-      UserSignUpStore.saveUserSignUp(
-        fullName: 'Individual User',
-        email: normalizedEmail,
-        password: newPassword,
-        role: 'individual',
+    try {
+      final res = await http.patch(
+        Uri.parse("$baseUrl/api/sync/reset-password"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "email": normalizedEmail,
+          "newPassword": newPassword,
+        }),
       );
+      if (res.statusCode == 200) {
+        ResetPasswordStore.saveResetPasswordRecord(normalizedEmail, newPassword);
+        return true;
+      }
+      return false;
+    } catch (_) {
+      return false;
     }
-
-    return true;
   }
 }
-
-

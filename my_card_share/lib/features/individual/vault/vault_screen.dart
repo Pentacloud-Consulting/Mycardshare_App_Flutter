@@ -32,6 +32,53 @@ class _VaultScreenState extends ConsumerState<VaultScreen> {
     );
   }
 
+  void _confirmAndDeleteContact(Map<String, String> contact) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text(
+          "Delete Contact?",
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+        ),
+        content: Text(
+          "Are you sure you want to delete ${contact['name'] ?? 'this contact'} from your Contact Vault?",
+          style: const TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel", style: TextStyle(color: Color(0xFF64748B))),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              ref.read(vaultNotifierProvider.notifier).deleteContact(
+                    id: contact['id'],
+                    name: contact['name'] ?? '',
+                    email: contact['email'],
+                  );
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text("✓ ${contact['name'] ?? 'Contact'} removed from Vault"),
+                  backgroundColor: const Color(0xFF0F172A),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final allContacts = ref.watch(vaultNotifierProvider);
@@ -108,6 +155,7 @@ class _VaultScreenState extends ConsumerState<VaultScreen> {
                   itemBuilder: (context, index) {
                     final item = filteredContacts[index];
                     return VaultContactCard(
+                      id: item['id'],
                       name: item['name']!,
                       role: item['role'] ?? '',
                       company: item['company']!,
@@ -118,6 +166,7 @@ class _VaultScreenState extends ConsumerState<VaultScreen> {
                       dateAdded: item['dateAdded'] ?? 'Just now',
                       tag: item['tag']!,
                       initials: item['initials'],
+                      onDelete: () => _confirmAndDeleteContact(item),
                     );
                   },
                 ),

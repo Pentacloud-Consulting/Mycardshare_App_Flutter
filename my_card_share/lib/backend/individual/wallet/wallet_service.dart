@@ -199,9 +199,38 @@ class WalletService {
     final slug = cardData['cardSlug'] as String;
     final publicCardUrl = cardData['publicCardUrl'] as String;
 
-    // ── Step 1: Backend POST → JWT-signed saveUrl ─────────────
+    // ── Step 1: Backend POST /api/sync/wallet → JWT-signed saveUrl ───────
     try {
-      debugPrint('[WalletService] Calling POST /api/wallet/google ...');
+      debugPrint('[WalletService] Calling POST /api/sync/wallet (google) ...');
+      final syncResponse = await http.post(
+        Uri.parse('$_baseUrl/api/sync/wallet'),
+        headers: headers,
+        body: jsonEncode({
+          'walletType': 'google',
+          'cardData': cardData,
+        }),
+      ).timeout(const Duration(seconds: 15));
+
+      debugPrint('[WalletService] Sync Response ${syncResponse.statusCode}: ${syncResponse.body.substring(0, syncResponse.body.length.clamp(0, 300))}');
+
+      if (syncResponse.statusCode == 200) {
+        final json = jsonDecode(syncResponse.body) as Map<String, dynamic>;
+        final saveUrl = _extractString(json, [
+          'data.saveUrl', 'saveUrl', 'data.url', 'url',
+          'data.addToWalletUrl', 'addToWalletUrl',
+          'data.walletUrl', 'walletUrl',
+        ]);
+        if (saveUrl != null && saveUrl.isNotEmpty) {
+          debugPrint('[WalletService] Got saveUrl via /api/sync/wallet: $saveUrl');
+          // Launch as externalApplication so Google Play Services / Google Wallet catches it natively!
+          if (await _tryLaunch(saveUrl, mode: LaunchMode.externalApplication)) {
+            return saveUrl;
+          }
+        }
+      }
+
+      // Legacy fallback: /api/wallet/google
+      debugPrint('[WalletService] Calling fallback POST /api/wallet/google ...');
       final response = await http.post(
         Uri.parse('$_baseUrl/api/wallet/google'),
         headers: headers,
@@ -224,20 +253,14 @@ class WalletService {
         }),
       ).timeout(const Duration(seconds: 15));
 
-      debugPrint('[WalletService] Response ${response.statusCode}: ${response.body.substring(0, response.body.length.clamp(0, 300))}');
-
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
-        // Try all common response shapes
-        final saveUrl = _extractString(json, ['data.saveUrl', 'saveUrl', 'data.url', 'url',
-                                               'data.addToWalletUrl', 'addToWalletUrl',
-                                               'data.walletUrl', 'walletUrl']);
+        final saveUrl = _extractString(json, [
+          'data.saveUrl', 'saveUrl', 'data.url', 'url',
+          'data.addToWalletUrl', 'addToWalletUrl',
+          'data.walletUrl', 'walletUrl',
+        ]);
         if (saveUrl != null && saveUrl.isNotEmpty) {
-          debugPrint('[WalletService] Got saveUrl: $saveUrl');
-          // Try native app first (externalNonBrowserApplication), then browser
-          if (await _tryLaunch(saveUrl, mode: LaunchMode.externalNonBrowserApplication)) {
-            return saveUrl;
-          }
           if (await _tryLaunch(saveUrl, mode: LaunchMode.externalApplication)) {
             return saveUrl;
           }
@@ -311,9 +334,34 @@ class WalletService {
     final slug = cardData['cardSlug'] as String;
     final publicCardUrl = cardData['publicCardUrl'] as String;
 
-    // ── Step 1: Backend POST ───────────────────────────────────
+    // ── Step 1: Backend POST /api/sync/wallet (samsung) ────────
     try {
-      debugPrint('[WalletService] Calling POST /api/wallet/samsung ...');
+      debugPrint('[WalletService] Calling POST /api/sync/wallet (samsung) ...');
+      final syncResponse = await http.post(
+        Uri.parse('$_baseUrl/api/sync/wallet'),
+        headers: headers,
+        body: jsonEncode({
+          'walletType': 'samsung',
+          'cardData': cardData,
+        }),
+      ).timeout(const Duration(seconds: 15));
+
+      if (syncResponse.statusCode == 200) {
+        final json = jsonDecode(syncResponse.body) as Map<String, dynamic>;
+        final addToWalletUrl = _extractString(json, [
+          'data.addToWalletUrl', 'addToWalletUrl', 'data.url', 'url',
+          'data.saveUrl', 'saveUrl', 'data.walletUrl', 'walletUrl',
+        ]);
+        if (addToWalletUrl != null && addToWalletUrl.isNotEmpty) {
+          debugPrint('[WalletService] Got addToWalletUrl via /api/sync/wallet: $addToWalletUrl');
+          if (await _tryLaunch(addToWalletUrl, mode: LaunchMode.externalApplication)) {
+            return addToWalletUrl;
+          }
+        }
+      }
+
+      // Legacy fallback: /api/wallet/samsung
+      debugPrint('[WalletService] Calling fallback POST /api/wallet/samsung ...');
       final response = await http.post(
         Uri.parse('$_baseUrl/api/wallet/samsung'),
         headers: headers,
@@ -342,8 +390,6 @@ class WalletService {
         }),
       ).timeout(const Duration(seconds: 15));
 
-      debugPrint('[WalletService] Samsung Response ${response.statusCode}: ${response.body.substring(0, response.body.length.clamp(0, 300))}');
-
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
         final addToWalletUrl = _extractString(json, [
@@ -352,10 +398,6 @@ class WalletService {
         ]);
 
         if (addToWalletUrl != null && addToWalletUrl.isNotEmpty) {
-          debugPrint('[WalletService] Got addToWalletUrl: $addToWalletUrl');
-          if (await _tryLaunch(addToWalletUrl, mode: LaunchMode.externalNonBrowserApplication)) {
-            return addToWalletUrl;
-          }
           if (await _tryLaunch(addToWalletUrl, mode: LaunchMode.externalApplication)) {
             return addToWalletUrl;
           }

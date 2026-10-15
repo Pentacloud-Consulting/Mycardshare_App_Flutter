@@ -302,6 +302,7 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
             imageQuality: 90,
           );
           if (pickedFile != null) {
+            if (!mounted) return;
             final croppedPath = await AppImageCropper.cropImage(
               context: context,
               sourcePath: pickedFile.path,
@@ -340,6 +341,7 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
             imageQuality: 90,
           );
           if (pickedFile != null) {
+            if (!mounted) return;
             final croppedPath = await AppImageCropper.cropImage(
               context: context,
               sourcePath: pickedFile.path,
@@ -859,6 +861,7 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
                 onSelectTemplate: (index) {
                   setState(() {
                     _selectedTemplateIndex = index;
+                    _bannerImagePath = ""; // Clear uploaded banner so template shows cleanly
                   });
                 },
               ),

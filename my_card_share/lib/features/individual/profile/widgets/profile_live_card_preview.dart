@@ -119,7 +119,9 @@ class ProfileLiveCardPreview extends StatelessWidget {
   }
 
   Widget _buildBannerImageWidget() {
-    final activeBanner = bannerPhoto ?? IndividualProfileStore.instance.activeProfile?.bannerPhoto;
+    // If bannerPhoto is explicitly provided (even if empty string to clear it), respect it.
+    final hasExplicitBanner = bannerPhoto != null;
+    final activeBanner = hasExplicitBanner ? bannerPhoto! : (IndividualProfileStore.instance.activeProfile?.bannerPhoto ?? '');
     return _buildImageWidget(activeBanner, fallback: const SizedBox.shrink());
   }
 

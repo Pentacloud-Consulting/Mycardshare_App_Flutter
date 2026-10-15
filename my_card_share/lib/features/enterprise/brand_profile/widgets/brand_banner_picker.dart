@@ -130,29 +130,25 @@ class _BrandBannerPickerState extends State<BrandBannerPicker> {
               ? LockBannerService.instance.bannerStream(uid)
               : const Stream.empty(),
           builder: (context, snapshot) {
-            final liveBannerUrl = snapshot.data?.bannerUrl ?? _bannerUrl;
-            final liveIsLocked = snapshot.data?.isLocked ?? _isLocked;
-
-            if (snapshot.hasData && snapshot.data != null) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted && _isLocked != liveIsLocked) {
-                  setState(() => _isLocked = liveIsLocked);
-                }
-              });
-            }
+            final liveBannerUrl = (snapshot.hasData && snapshot.data != null)
+                ? snapshot.data!.bannerUrl
+                : _bannerUrl;
+            final liveIsLocked = (snapshot.hasData && snapshot.data != null)
+                ? snapshot.data!.isLocked
+                : _isLocked;
 
             return GestureDetector(
               onTap: _isUploading ? null : _handleUpload,
               child: Stack(
                 children: [
                   // ── Banner Container ─────────────────────────────────
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
+                  Container(
                     height: 120,
                     width: double.infinity,
+                    clipBehavior: Clip.antiAlias,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                      gradient: liveBannerUrl == null
+                      gradient: (liveBannerUrl == null || liveBannerUrl.isEmpty)
                           ? const LinearGradient(
                               colors: [
                                 Color(0xFF0052FF),
@@ -163,12 +159,6 @@ class _BrandBannerPickerState extends State<BrandBannerPicker> {
                               end: Alignment.bottomRight,
                             )
                           : null,
-                      image: liveBannerUrl != null && AppImageHelper.getImageProvider(liveBannerUrl) != null
-                          ? DecorationImage(
-                              image: AppImageHelper.getImageProvider(liveBannerUrl)!,
-                              fit: BoxFit.cover,
-                            )
-                          : null,
                       boxShadow: [
                         BoxShadow(
                           color: const Color(0xFF0052FF).withValues(alpha: 0.15),
@@ -177,8 +167,14 @@ class _BrandBannerPickerState extends State<BrandBannerPicker> {
                         ),
                       ],
                     ),
-                    child: liveBannerUrl == null
-                        ? Center(
+                    child: (liveBannerUrl != null && liveBannerUrl.isNotEmpty)
+                        ? AppImageHelper.buildImage(
+                            liveBannerUrl,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: 120,
+                          )
+                        : Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -207,8 +203,7 @@ class _BrandBannerPickerState extends State<BrandBannerPicker> {
                                 ),
                               ],
                             ),
-                          )
-                        : null,
+                          ),
                   ),
 
                   // ── Upload Loading Overlay ───────────────────────────

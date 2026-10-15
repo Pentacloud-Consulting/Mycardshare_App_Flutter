@@ -85,8 +85,10 @@ class CardQuickActions extends StatelessWidget {
                   );
 
                   if (context.mounted) {
+                    final messenger = ScaffoldMessenger.of(context);
+                    messenger.clearSnackBars();
                     if (launched) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         SnackBar(
                           content: Row(
                             children: [
@@ -108,20 +110,22 @@ class CardQuickActions extends StatelessWidget {
                             textColor: const Color(0xFF38BDF8),
                             onPressed: () {
                               EmailConnectService.instance.copyEmailToClipboard(targetEmail);
+                              messenger.hideCurrentSnackBar();
                             },
                           ),
-                          duration: const Duration(seconds: 4),
+                          duration: const Duration(milliseconds: 1800),
                         ),
                       );
                     } else {
                       await EmailConnectService.instance.copyEmailToClipboard(targetEmail);
                       if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        messenger.showSnackBar(
                           SnackBar(
                             content: Text("Email copied to clipboard: $targetEmail"),
                             backgroundColor: const Color(0xFF0F172A),
                             behavior: SnackBarBehavior.floating,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            duration: const Duration(milliseconds: 1800),
                           ),
                         );
                       }

@@ -27,28 +27,9 @@ class SuperAdminAccountsSection extends StatelessWidget {
     this.onAddSuperAdmin,
   });
 
-  static const List<AdminAccountItem> _defaultAdmins = [
-    AdminAccountItem(
-      initials: "MA",
-      name: "System Master Admin",
-      email: "admin@mycardshare.com",
-      isPrimary: true,
-    ),
-    AdminAccountItem(
-      initials: "AR",
-      name: "Alex Rivera",
-      email: "alex.r@mycardshare.com",
-    ),
-    AdminAccountItem(
-      initials: "SC",
-      name: "Sarah Chen",
-      email: "sarah.c@mycardshare.com",
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
-    final list = adminAccounts ?? _defaultAdmins;
+    final list = adminAccounts ?? [];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

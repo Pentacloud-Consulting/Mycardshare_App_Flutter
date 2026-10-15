@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../backend/employee_join/join_login.dart';
 import '../../../backend/employee_join/email_send_request.dart';
+import '../../../backend/employee_join/employee_join_request_service.dart';
 import '../../../backend/app view/app_view_auth_gate.dart';
 import '../../../backend/employee_join/home/employee_home_backend.dart';
 import '../../../backend/employee_join/home/employee_stats_backend.dart';
@@ -264,6 +265,13 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
                                 applicantName: _fullNameController.text.trim(),
                                 applicantEmail: _emailController.text.trim().toLowerCase(),
                                 applicantPassword: _passwordController.text.trim(),
+                              );
+
+                              // Sync with Next.js Backend /api/sync/employee-join-request
+                              await EmployeeJoinRequestService.submitWorkEmailJoinRequest(
+                                workEmail: _emailController.text.trim().toLowerCase(),
+                                fullName: _fullNameController.text.trim(),
+                                jobTitle: 'Team Member',
                               );
 
                               if (ctx.mounted) {

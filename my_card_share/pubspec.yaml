@@ -55,6 +55,8 @@ dependencies:
   share_plus: ^10.0.0
   google_mlkit_text_recognition: ^0.14.0
   image_cropper: ^12.2.1
+  firebase_messaging: ^16.7.0
+  nfc_manager: ^3.3.0
 
 dev_dependencies:
   flutter_test:

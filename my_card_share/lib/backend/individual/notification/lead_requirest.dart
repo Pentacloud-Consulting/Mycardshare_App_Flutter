@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../notifications/notification_sync_service.dart';
 import '../lead/active_lead.dart';
 import 'app_notification_service.dart';
 
@@ -31,5 +32,19 @@ class LeadRequestNotification {
 
     await AppNotificationService.instance.addNotification(item, targetUid: targetUid);
     debugPrint('[LeadRequestNotification] Sent lead notification for UID: $targetUid');
+
+    // Trigger real Native Push Notification via Next.js backend
+    await NotificationSyncService.triggerAlert(
+      targetUserId: targetUid,
+      title: title,
+      body: subtitle,
+      type: 'lead_capture',
+      data: {
+        'leadId': lead.id,
+        'leadName': lead.name,
+        'email': lead.email,
+        'phone': lead.phone,
+      },
+    );
   }
 }

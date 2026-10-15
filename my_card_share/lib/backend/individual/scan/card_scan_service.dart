@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import '../../Camera Card Scan & Voice/camera/camera_card_scan_service.dart';
 import '../previews/individual_metrics_store.dart';
 
 class ScannedContactData {
@@ -88,59 +89,70 @@ class CardScanService {
     'partners', 'enterprise', 'enterprises',
   ];
 
-  /// Runs real ML Kit OCR on device (or web fallback) and returns parsed contact fields.
+  /// Runs real backend Gemini AI Vision OCR with local on-device ML Kit fallback.
   Future<ScannedContactData> processCardScan({
     required String imagePath,
   }) async {
-    debugPrint('[CardScanService] Running OCR on: $imagePath');
+    debugPrint('[CardScanService] Processing card image: $imagePath');
 
-    if (kIsWeb) {
-      debugPrint('[CardScanService] Web platform detected — using smart web OCR fallback');
-      return ScannedContactData(
-        id: 'scan_${DateTime.now().millisecondsSinceEpoch}',
-        name: 'Alex Morgan',
-        role: 'Senior Product Designer',
-        company: 'NexTech Solutions',
-        phone: '+1 (555) 234-5678',
-        email: 'alex.morgan@nextech.io',
-        website: 'www.nextech.io',
-        address: '100 Innovation Way, Suite 400',
-        tag: 'OCR',
-        imagePath: imagePath,
-      );
+    // ── 1. Try Backend Gemini AI Vision OCR Endpoint (/api/sync/camera-card-scan) ──
+    try {
+      final file = File(imagePath);
+      if (await file.exists()) {
+        final backendResult =
+            await CameraCardScanService.scanCardImage(imageFile: file);
+        if (backendResult != null &&
+            (backendResult.fullName.isNotEmpty ||
+                backendResult.email.isNotEmpty ||
+                backendResult.phone.isNotEmpty)) {
+          debugPrint(
+              '[CardScanService] ✅ Successfully parsed via Backend AI Vision OCR: ${backendResult.fullName}');
+          return ScannedContactData(
+            id: backendResult.id,
+            name: backendResult.fullName,
+            role: backendResult.jobTitle,
+            company: backendResult.company,
+            phone: backendResult.phone,
+            email: backendResult.email,
+            website: backendResult.website,
+            address: backendResult.address,
+            tag: 'OCR',
+            imagePath: imagePath,
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('[CardScanService] Backend AI Vision attempt notice: $e');
     }
 
+    // ── 2. On-device Google ML Kit OCR fallback ──
     try {
       final inputImage = InputImage.fromFile(File(imagePath));
       final RecognizedText recognizedText =
           await _textRecognizer.processImage(inputImage);
 
       final raw = recognizedText.text;
-      debugPrint('[CardScanService] Raw OCR text:\n$raw');
+      debugPrint('[CardScanService] Raw on-device OCR text:\n$raw');
 
-      if (raw.trim().isEmpty) {
-        return _parseContactFromText(
-          "Alex Morgan\nSenior Product Designer\nNexTech Solutions\n+1 (555) 234-5678\nalex.morgan@nextech.io\nwww.nextech.io",
-          imagePath: imagePath,
-        );
+      if (raw.trim().isNotEmpty) {
+        return _parseContactFromText(raw, imagePath: imagePath);
       }
-
-      return _parseContactFromText(raw, imagePath: imagePath);
     } catch (e) {
-      debugPrint('[CardScanService] Native OCR exception fallback: $e');
-      return ScannedContactData(
-        id: 'scan_${DateTime.now().millisecondsSinceEpoch}',
-        name: 'Alex Morgan',
-        role: 'Senior Product Designer',
-        company: 'NexTech Solutions',
-        phone: '+1 (555) 234-5678',
-        email: 'alex.morgan@nextech.io',
-        website: 'www.nextech.io',
-        address: '100 Innovation Way, Suite 400',
-        tag: 'OCR',
-        imagePath: imagePath,
-      );
+      debugPrint('[CardScanService] Native on-device OCR notice: $e');
     }
+
+    return ScannedContactData(
+      id: 'scan_${DateTime.now().millisecondsSinceEpoch}',
+      name: 'Business Card Contact',
+      role: '',
+      company: '',
+      phone: '',
+      email: '',
+      website: '',
+      address: '',
+      tag: 'OCR',
+      imagePath: imagePath,
+    );
   }
 
   /// Parses raw OCR text into structured contact data using smart field heuristics.

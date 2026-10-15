@@ -32,6 +32,68 @@ class UserLeadsService extends ChangeNotifier {
     }
   }
 
+  /// Updates an existing lead in local state, Firestore, and metrics.
+  Future<void> updateLead(String targetUid, LeadData updatedLead) async {
+    final idx = _leads.indexWhere((l) => l.id == updatedLead.id);
+    if (idx != -1) {
+      _leads[idx] = updatedLead;
+    } else {
+      _leads.insert(0, updatedLead);
+    }
+    notifyListeners();
+
+    final currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final effectiveUid = targetUid.isNotEmpty ? targetUid : currentUid;
+
+    if (effectiveUid.isNotEmpty) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(effectiveUid)
+            .collection('leads')
+            .doc(updatedLead.id)
+            .set(updatedLead.toJson(), SetOptions(merge: true));
+      } catch (e) {
+        debugPrint('[UserLeadsService] Firestore user lead update notice: $e');
+      }
+
+      try {
+        await FirebaseFirestore.instance
+            .collection('leads')
+            .doc(updatedLead.id)
+            .set(updatedLead.toJson(), SetOptions(merge: true));
+      } catch (e) {
+        debugPrint('[UserLeadsService] Global lead update notice: $e');
+      }
+    }
+  }
+
+  /// Deletes a lead from local state and Firestore.
+  Future<void> deleteLead(String targetUid, String leadId) async {
+    _leads.removeWhere((l) => l.id == leadId);
+    notifyListeners();
+
+    final currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    final effectiveUid = targetUid.isNotEmpty ? targetUid : currentUid;
+
+    if (effectiveUid.isNotEmpty) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(effectiveUid)
+            .collection('leads')
+            .doc(leadId)
+            .delete();
+      } catch (_) {}
+
+      try {
+        await FirebaseFirestore.instance.collection('leads').doc(leadId).delete();
+      } catch (_) {}
+
+      IndividualMetricsStore.instance.updateLeadsCount(effectiveUid, totalLeadsCount);
+    }
+  }
+
   /// Fetches real leads from Firestore for a given user.
   Future<List<LeadData>> fetchUserLeads([String? uid]) async {
     final curUser = FirebaseAuth.instance.currentUser;

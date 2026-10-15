@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../backend/Stripe  Payment & Subscription/subscription_sync_service.dart';
 
 class SubscriptionActionButtons extends StatefulWidget {
   const SubscriptionActionButtons({super.key});
@@ -12,32 +13,74 @@ class _SubscriptionActionButtonsState extends State<SubscriptionActionButtons> {
 
   void _handleStartTrial() async {
     setState(() => _isProcessing = true);
-    await Future.delayed(const Duration(milliseconds: 1000));
-    if (!mounted) return;
-    setState(() => _isProcessing = false);
+    try {
+      final success = await SubscriptionSyncService.startStripeUpgrade(
+        plan: 'pro',
+        cycle: 'yearly',
+      );
+      if (!mounted) return;
+      setState(() => _isProcessing = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("🎉 Pro 7-Day Free Trial Activated! Welcome to Pro!"),
-        backgroundColor: Color(0xFF16A34A),
-        behavior: SnackBarBehavior.floating,
-        duration: Duration(seconds: 3),
-      ),
-    );
-
-    if (Navigator.canPop(context)) {
-      Navigator.pop(context);
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("🎉 Pro Subscription Checkout Launched!"),
+            backgroundColor: Color(0xFF16A34A),
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 3),
+          ),
+        );
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Stripe checkout could not be opened. Please verify network."),
+            backgroundColor: Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isProcessing = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error launching subscription: $e"),
+          backgroundColor: const Color(0xFFDC2626),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
-  void _handleRestore() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Restoring previous purchases... Success!"),
-        backgroundColor: Color(0xFF0284C7),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+  void _handleRestore() async {
+    setState(() => _isProcessing = true);
+    final status = await SubscriptionSyncService.fetchSubscriptionStatus();
+    if (!mounted) return;
+    setState(() => _isProcessing = false);
+
+    final isPro = status['isPro'] == true;
+    final plan = (status['plan'] ?? 'free').toString();
+
+    if (isPro) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("🎉 Active ${plan.toUpperCase()} subscription restored!"),
+          backgroundColor: const Color(0xFF16A34A),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("No previous Pro subscription found for this account."),
+          backgroundColor: Color(0xFF0284C7),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override

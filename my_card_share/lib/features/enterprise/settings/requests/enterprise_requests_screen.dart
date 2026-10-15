@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../backend/enterprise/request/request_fetch.dart';
 import '../../../../backend/employee_join/email_send_request.dart';
+import '../../../../backend/enterprise/multiple_store/enterprise_multi_store.dart';
+
 
 /// Screen in `lib/features/enterprise/settings/requests/enterprise_requests_screen.dart`
 /// Displays and manages all real incoming "Join Enterprise Requests" submitted by employees.
@@ -22,7 +24,16 @@ class _EnterpriseRequestsScreenState extends State<EnterpriseRequestsScreen> {
   }
 
   void _handleApprove(EnterpriseJoinRequestModel req) async {
+    // 1. Primary local & Firestore approval
     final success = await EnterpriseRequestFetchService.instance.approveJoinRequest(request: req);
+    // 2. Also notify Next.js /api/sync/enterprise live sync
+    EnterpriseMultiStore.instance.approveJoinRequest(
+      requestId: req.id,
+      userId: req.applicantUid,
+      userName: req.applicantName,
+      userEmail: req.applicantEmail,
+    );
+
     if (!mounted) return;
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -55,6 +66,8 @@ class _EnterpriseRequestsScreenState extends State<EnterpriseRequestsScreen> {
 
   void _handleReject(EnterpriseJoinRequestModel req) async {
     final success = await EnterpriseRequestFetchService.instance.rejectJoinRequest(request: req);
+    EnterpriseMultiStore.instance.rejectJoinRequest(requestId: req.id);
+
     if (!mounted) return;
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -67,6 +80,7 @@ class _EnterpriseRequestsScreenState extends State<EnterpriseRequestsScreen> {
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

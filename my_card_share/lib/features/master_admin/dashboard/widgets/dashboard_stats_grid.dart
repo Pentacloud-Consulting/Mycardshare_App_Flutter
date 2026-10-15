@@ -84,7 +84,7 @@ class DashboardStatsGrid extends StatelessWidget {
                   iconColor: const Color(0xFFF59E0B),
                   value: pendingApprovals,
                   label: "Pending Approvals",
-                  badgeText: "6 pending",
+                  badgeText: "$pendingApprovals pending",
                   badgeColor: const Color(0xFFD97706),
                   badgeBg: const Color(0xFFFFFBEB),
                   route: '/master-admin/approval',

@@ -9,6 +9,7 @@ import 'package:my_card_share/backend/enterprise/invite_employee/invite_link.dar
 import 'package:my_card_share/backend/individual/previews/publish_unpublish.dart';
 import 'package:my_card_share/backend/enterprise/view_employee/view_employee.dart';
 import 'package:my_card_share/backend/enterprise/home_backend/overall.dart';
+import 'package:my_card_share/core/utils/app_image_helper.dart';
 import 'enterprise_scanned_card_screen.dart';
 import 'widgets/brand_slug.dart';
 
@@ -114,9 +115,11 @@ class _EnterpriseProfileViewScreenState
                           Stack(
                             clipBehavior: Clip.none,
                             children: [
+                              // Banner Box Container
                               Container(
                                 height: 140,
                                 width: double.infinity,
+                                clipBehavior: Clip.antiAlias,
                                 decoration: BoxDecoration(
                                   borderRadius: const BorderRadius.vertical(
                                     top: Radius.circular(22),
@@ -132,13 +135,15 @@ class _EnterpriseProfileViewScreenState
                                           end: Alignment.bottomRight,
                                         )
                                       : null,
-                                  image: (bannerUrl != null && bannerUrl.isNotEmpty)
-                                      ? DecorationImage(
-                                          image: NetworkImage(bannerUrl),
-                                          fit: BoxFit.cover,
-                                        )
-                                      : null,
                                 ),
+                                child: (bannerUrl != null && bannerUrl.isNotEmpty)
+                                    ? AppImageHelper.buildImage(
+                                        bannerUrl,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        height: 140,
+                                      )
+                                    : null,
                               ),
 
                               // Floating Active / Inactive Highlight Status Badge over Banner
@@ -214,7 +219,20 @@ class _EnterpriseProfileViewScreenState
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(18),
                                     child: (logoUrl != null && logoUrl.isNotEmpty)
-                                        ? Image.network(logoUrl, fit: BoxFit.cover)
+                                        ? AppImageHelper.buildImage(
+                                            logoUrl,
+                                            fit: BoxFit.cover,
+                                            width: 70,
+                                            height: 70,
+                                            fallback: Container(
+                                              color: const Color(0xFFEFF6FF),
+                                              child: const Icon(
+                                                Icons.apartment_rounded,
+                                                color: Color(0xFF0052FF),
+                                                size: 38,
+                                              ),
+                                            ),
+                                          )
                                         : Container(
                                             color: const Color(0xFFEFF6FF),
                                             child: const Icon(

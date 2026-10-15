@@ -22,6 +22,7 @@ class VaultNotifier extends StateNotifier<List<Map<String, String>>> {
         final loaded = snapshot.docs.map((doc) {
           final data = doc.data();
           return {
+            'id': doc.id,
             'name': (data['name'] as String?) ?? 'Contact',
             'role': (data['role'] as String?) ?? 'Role',
             'company': (data['company'] as String?) ?? 'Company',
@@ -42,6 +43,42 @@ class VaultNotifier extends StateNotifier<List<Map<String, String>>> {
 
   void addContact(Map<String, String> contact) {
     state = [contact, ...state];
+  }
+
+  Future<void> deleteContact({String? id, required String name, String? email}) async {
+    // 1. Remove optimistically from local state
+    state = state.where((c) {
+      if (id != null && id.isNotEmpty && c['id'] != null && c['id']!.isNotEmpty) {
+        return c['id'] != id;
+      }
+      final nameMatch = c['name']?.trim().toLowerCase() == name.trim().toLowerCase();
+      final emailMatch = email != null && email.isNotEmpty && c['email']?.trim().toLowerCase() == email.trim().toLowerCase();
+      if (emailMatch) return false;
+      return !nameMatch;
+    }).toList();
+
+    // 2. Delete from Firestore if authenticated
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || uid.isEmpty) return;
+
+    try {
+      final contactsRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('contacts');
+
+      if (id != null && id.isNotEmpty) {
+        await contactsRef.doc(id).delete();
+      } else {
+        // Find documents with matching name or email
+        final querySnap = await contactsRef.where('name', isEqualTo: name.trim()).get();
+        for (final doc in querySnap.docs) {
+          await doc.reference.delete();
+        }
+      }
+    } catch (e) {
+      // Non-fatal
+    }
   }
 }
 

@@ -5,9 +5,11 @@ import '../home_backend/employees_page.dart';
 import '../multiple_store/enterprise_multi_store.dart';
 import '../profile/enterprise_profile_store.dart';
 import 'invite_link.dart';
+import 'enterprise_invite_sync_service.dart';
 
 export 'popup_invite.dart';
 export 'invite_link.dart';
+export 'enterprise_invite_sync_service.dart';
 
 /// Opens the complete, real-time Enterprise Invite Form Page Modal.
 Future<void> showEnterpriseInviteModal(BuildContext context) async {
@@ -161,6 +163,14 @@ class _EnterpriseInviteFormModalState extends State<EnterpriseInviteFormModal>
         role: _selectedRole,
       );
 
+      // Real-time Next.js API sync to register on MongoDB cards database
+      await EnterpriseInviteSyncService.addSingleEmployee(
+        fullName: name,
+        workEmail: email,
+        jobTitle: title.isNotEmpty ? title : 'Employee',
+        role: _selectedRole.toLowerCase(),
+      );
+
       if (mounted) {
         setState(() => _isSubmitting = false);
         if (success) {
@@ -226,6 +236,9 @@ class _EnterpriseInviteFormModalState extends State<EnterpriseInviteFormModal>
           role: 'Employee',
         );
       }
+
+      // Sync batch invites to Next.js API /api/sync/invite-code
+      await EnterpriseInviteSyncService.batchInviteEmails(_invitedEmailsList);
 
       if (mounted) {
         setState(() => _isSubmitting = false);

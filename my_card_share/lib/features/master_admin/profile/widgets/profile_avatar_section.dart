@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/app_image_helper.dart';
 
 class ProfileAvatarSection extends StatelessWidget {
   final VoidCallback? onCameraTap;
   final String initials;
   final String role;
+  final String? avatarUrl;
 
   const ProfileAvatarSection({
     super.key,
     this.onCameraTap,
     this.initials = "MA",
     this.role = "SUPER ADMIN",
+    this.avatarUrl,
   });
 
   @override
@@ -20,34 +23,54 @@ class ProfileAvatarSection extends StatelessWidget {
           // Avatar with camera badge
           Stack(
             children: [
-              Container(
-                width: 90,
-                height: 90,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF0F172A).withValues(alpha: 0.15),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
+              ClipOval(
+                child: Container(
+                  width: 90,
+                  height: 90,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    initials,
-                    style: const TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      letterSpacing: -0.5,
-                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF0F172A).withValues(alpha: 0.15),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
+                  child: (avatarUrl != null && avatarUrl!.trim().isNotEmpty)
+                      ? AppImageHelper.buildImage(
+                          avatarUrl!,
+                          width: 90,
+                          height: 90,
+                          fit: BoxFit.cover,
+                          fallback: Center(
+                            child: Text(
+                              initials,
+                              style: const TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                          ),
+                        )
+                      : Center(
+                          child: Text(
+                            initials,
+                            style: const TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                        ),
                 ),
               ),
               Positioned(

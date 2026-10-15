@@ -1,39 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../backend/master_admin/companies/company_management_store.dart';
+import '../../../../backend/master_admin/companies/models/master_company_model.dart';
 
 class AnalyticsTopCompanies extends StatelessWidget {
   const AnalyticsTopCompanies({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final topCompanies = [
-      {
-        'rank': '#1',
-        'name': 'Acme Realty Group',
-        'scans': '4,204 scans this month',
-        'logoText': 'AR',
-        'logoBg': const Color(0xFF0052FF),
-        'rankBg': const Color(0xFFFEF3C7),
-        'rankColor': const Color(0xFFD97706),
-      },
-      {
-        'rank': '#2',
-        'name': 'TechFlow Solutions',
-        'scans': '3,180 scans this month',
-        'logoText': 'TF',
-        'logoBg': const Color(0xFF8B5CF6),
-        'rankBg': const Color(0xFFF1F5F9),
-        'rankColor': const Color(0xFF475569),
-      },
-      {
-        'rank': '#3',
-        'name': 'Apex Logistics Ltd',
-        'scans': '2,840 scans this month',
-        'logoText': 'AL',
-        'logoBg': const Color(0xFF0D9488),
-        'rankBg': const Color(0xFFFEF2F2),
-        'rankColor': const Color(0xFFDC2626),
-      },
-    ];
+    return StreamBuilder<List<MasterCompanyModel>>(
+      stream: CompanyManagementStore.instance.streamCompanies(),
+      builder: (context, snapshot) {
+        final companies = snapshot.data ?? CompanyManagementStore.instance.companies;
+        final list = companies.take(3).toList();
 
     return Container(
       width: double.infinity,
@@ -71,110 +50,142 @@ class AnalyticsTopCompanies extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          Column(
-            children: topCompanies.asMap().entries.map((entry) {
-              final index = entry.key;
-              final company = entry.value;
-              final isLast = index == topCompanies.length - 1;
-
-              return Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Row(
-                      children: [
-                        // Rank Badge (#1, #2, #3)
-                        Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            color: company['rankBg'] as Color,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Center(
-                            child: Text(
-                              company['rank'] as String,
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w900,
-                                color: company['rankColor'] as Color,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-
-                        // Logo Circle
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: (company['logoBg'] as Color).withValues(alpha: 0.12),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: (company['logoBg'] as Color).withValues(alpha: 0.25),
-                              width: 1,
-                            ),
-                          ),
-                          child: Center(
-                            child: Text(
-                              company['logoText'] as String,
-                              style: TextStyle(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w900,
-                                color: company['logoBg'] as Color,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-
-                        // Company Name & Scans Subtitle
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                company['name'] as String,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF0F172A),
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                company['scans'] as String,
-                                style: const TextStyle(
-                                  fontSize: 11.5,
-                                  color: Color(0xFF64748B),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const Icon(
-                          Icons.chevron_right_rounded,
-                          color: Color(0xFF94A3B8),
-                          size: 18,
-                        ),
-                      ],
-                    ),
+          if (list.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(
+                child: Text(
+                  "No active companies registered yet",
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF64748B),
+                    fontWeight: FontWeight.w600,
                   ),
-                  if (!isLast)
-                    const Divider(
-                      height: 12,
-                      indent: 40,
-                      color: Color(0xFFF1F5F9),
+                ),
+              ),
+            )
+          else
+            Column(
+              children: list.asMap().entries.map((entry) {
+                final index = entry.key;
+                final company = entry.value;
+                final isLast = index == list.length - 1;
+
+                final rank = "#${index + 1}";
+                final rankBg = index == 0
+                    ? const Color(0xFFFEF3C7)
+                    : (index == 1 ? const Color(0xFFF1F5F9) : const Color(0xFFFEF2F2));
+                final rankColor = index == 0
+                    ? const Color(0xFFD97706)
+                    : (index == 1 ? const Color(0xFF475569) : const Color(0xFFDC2626));
+                const logoBg = Color(0xFF0052FF);
+
+                return Column(
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        context.push('/master-admin/company/${company.id}');
+                      },
+                      borderRadius: BorderRadius.circular(10),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Row(
+                          children: [
+                            // Rank Badge
+                            Container(
+                              width: 28,
+                              height: 28,
+                              decoration: BoxDecoration(
+                                color: rankBg,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  rank,
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w900,
+                                    color: rankColor,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+
+                            // Logo Circle
+                            Container(
+                              width: 38,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: logoBg.withValues(alpha: 0.12),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: logoBg.withValues(alpha: 0.25),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  company.initials,
+                                  style: const TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w900,
+                                    color: logoBg,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+
+                            // Company Name & Plan / Seat Count
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    company.name,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    "${company.plan} · ${company.employeeCount} seats",
+                                    style: const TextStyle(
+                                      fontSize: 11.5,
+                                      color: Color(0xFF64748B),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const Icon(
+                              Icons.chevron_right_rounded,
+                              color: Color(0xFF94A3B8),
+                              size: 18,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                ],
-              );
-            }).toList(),
-          ),
+                    if (!isLast)
+                      const Divider(
+                        height: 12,
+                        indent: 40,
+                        color: Color(0xFFF1F5F9),
+                      ),
+                  ],
+                );
+              }).toList(),
+            ),
         ],
       ),
+    );
+      },
     );
   }
 }

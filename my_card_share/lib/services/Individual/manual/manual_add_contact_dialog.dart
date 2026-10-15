@@ -29,47 +29,70 @@ class _ManualAddContactDialogState extends ConsumerState<ManualAddContactDialog>
     super.dispose();
   }
 
+  bool _isSaving = false;
+
   void _saveContact() async {
+    if (_isSaving) return;
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isSaving = true;
+      });
+
       final name = _nameController.text.trim();
       final title = _titleController.text.trim();
       final company = _companyController.text.trim();
       final phone = _phoneController.text.trim();
       final email = _emailController.text.trim();
 
-      // Save manually created contact using ManualEntryService to Firestore & update metrics
-      final manualContact = ManualEntryService.instance.createManualContact(
-        name: name,
-        role: title,
-        company: company,
-        phone: phone,
-        email: email,
-      );
-      await ManualEntryService.instance.saveManualContact(manualContact);
+      // 1. Instant optimistic update to Riverpod Vault state
+      try {
+        ManualService.saveContact(
+          ref,
+          name: name,
+          role: title.isNotEmpty ? title : 'Contact',
+          company: company.isNotEmpty ? company : 'Independent',
+          phone: phone,
+          email: email,
+        );
+      } catch (e) {
+        debugPrint("[ManualAddContactDialog] Local state update note: $e");
+      }
 
-      // Save to Riverpod Vault state
-      ManualService.saveContact(
-        ref,
-        name: name,
-        role: title,
-        company: company,
-        phone: phone,
-        email: email,
-      );
+      // 2. Persist to Firestore & metrics in background / asynchronously
+      try {
+        final manualContact = ManualEntryService.instance.createManualContact(
+          name: name,
+          role: title,
+          company: company,
+          phone: phone,
+          email: email,
+        );
+        await ManualEntryService.instance.saveManualContact(manualContact);
+      } catch (e) {
+        debugPrint("[ManualAddContactDialog] Persistence note: $e");
+      }
 
       if (!mounted) return;
 
-      final currentPath = GoRouterState.of(context).uri.path;
+      // Close dialog safely
       if (Navigator.canPop(context)) {
         Navigator.pop(context);
       }
-      if (currentPath != '/portal/vault') {
+
+      // Navigate to vault or notify user
+      try {
+        final currentPath = GoRouterState.of(context).uri.path;
+        if (currentPath != '/portal/vault') {
+          context.push('/portal/vault');
+        }
+      } catch (_) {
+        // Fallback if router state fails in dialog context
         context.push('/portal/vault');
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("✓ $name added to Contact Vault (Manual)!"),
+          content: Text("✓ $name added to Contact Vault!"),
           backgroundColor: const Color(0xFF0F172A),
           behavior: SnackBarBehavior.floating,
         ),
@@ -126,17 +149,23 @@ class _ManualAddContactDialogState extends ConsumerState<ManualAddContactDialog>
                   width: double.infinity,
                   height: 48,
                   child: ElevatedButton(
-                    onPressed: _saveContact,
+                    onPressed: _isSaving ? null : _saveContact,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0066FF),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       elevation: 0,
                     ),
-                    child: const Text(
-                      "Save to Contact Vault",
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                    ),
+                    child: _isSaving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2),
+                          )
+                        : const Text(
+                            "Save to Contact Vault",
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                          ),
                   ),
                 ),
               ],

@@ -1,94 +1,22 @@
 import 'package:flutter/material.dart';
-
-class IndividualUserItem {
-  final String id;
-  final String initials;
-  final String name;
-  final String email;
-  final String plan; // "Free", "Pro", "Deactivated"
-  final String joinedDate;
-  final bool isDeactivated;
-
-  const IndividualUserItem({
-    required this.id,
-    required this.initials,
-    required this.name,
-    required this.email,
-    required this.plan,
-    required this.joinedDate,
-    this.isDeactivated = false,
-  });
-}
+import '../../../../backend/master_admin/individuals/models/master_individual_model.dart';
 
 class IndividualsListSection extends StatelessWidget {
-  final List<IndividualUserItem>? users;
-  final Function(IndividualUserItem)? onUserTap;
-  final Function(IndividualUserItem)? onMenuTap;
+  final List<MasterIndividualModel> users;
+  final Function(MasterIndividualModel)? onUserTap;
+  final Function(MasterIndividualModel)? onMenuTap;
 
   const IndividualsListSection({
     super.key,
-    this.users,
+    required this.users,
     this.onUserTap,
     this.onMenuTap,
   });
 
-  static const List<IndividualUserItem> defaultUsers = [
-    IndividualUserItem(
-      id: "1",
-      initials: "AJ",
-      name: "Alex Johnson",
-      email: "alex.johnson@gmail.com",
-      plan: "Pro",
-      joinedDate: "Joined Mar 2026",
-    ),
-    IndividualUserItem(
-      id: "2",
-      initials: "MG",
-      name: "Maria Garcia",
-      email: "maria.g@outlook.com",
-      plan: "Free",
-      joinedDate: "Joined Feb 2026",
-    ),
-    IndividualUserItem(
-      id: "3",
-      initials: "DS",
-      name: "David Smith",
-      email: "david.smith@techcorp.io",
-      plan: "Pro",
-      joinedDate: "Joined Jan 2026",
-    ),
-    IndividualUserItem(
-      id: "4",
-      initials: "ER",
-      name: "Elena Rostova",
-      email: "elena.r@designstudio.co",
-      plan: "Deactivated",
-      joinedDate: "Joined Dec 2025",
-      isDeactivated: true,
-    ),
-    IndividualUserItem(
-      id: "5",
-      initials: "LW",
-      name: "Liam Wilson",
-      email: "liam.w@freelance.dev",
-      plan: "Free",
-      joinedDate: "Joined Nov 2025",
-    ),
-    IndividualUserItem(
-      id: "6",
-      initials: "SP",
-      name: "Sophia Patel",
-      email: "sophia.patel@innovate.org",
-      plan: "Pro",
-      joinedDate: "Joined Oct 2025",
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {
-    final list = users ?? defaultUsers;
-
-    if (list.isEmpty) {
+    if (users.isEmpty) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
@@ -150,19 +78,19 @@ class IndividualsListSection extends StatelessWidget {
       child: ListView.separated(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        itemCount: list.length,
+        itemCount: users.length,
         separatorBuilder: (context, index) => const Divider(
           height: 1,
           thickness: 1,
           color: Color(0xFFF1F5F9),
         ),
         itemBuilder: (context, index) {
-          final item = list[index];
+          final item = users[index];
           return InkWell(
             onTap: () => onUserTap?.call(item),
             borderRadius: BorderRadius.vertical(
               top: index == 0 ? const Radius.circular(16) : Radius.zero,
-              bottom: index == list.length - 1 ? const Radius.circular(16) : Radius.zero,
+              bottom: index == users.length - 1 ? const Radius.circular(16) : Radius.zero,
             ),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -227,14 +155,14 @@ class IndividualsListSection extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
 
-                  // Right Side: Plan Tag + Joined Date
+                  // Right Side: Plan Tag + Views / Status
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       _buildPlanTag(item.plan),
                       const SizedBox(height: 4),
                       Text(
-                        item.joinedDate,
+                        "${item.views} views",
                         style: const TextStyle(
                           fontSize: 10.5,
                           color: Color(0xFF94A3B8),
@@ -264,6 +192,7 @@ class IndividualsListSection extends StatelessWidget {
       ),
     );
   }
+
 
   Widget _buildPlanTag(String plan) {
     if (plan == "Pro") {

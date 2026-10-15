@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../view_vault/view_vault_modal.dart';
 
 class VaultContactCard extends StatelessWidget {
+  final String? id;
   final String name;
   final String role;
   final String company;
@@ -14,9 +15,11 @@ class VaultContactCard extends StatelessWidget {
   final String? initials;
   final String? logoUrl;
   final VoidCallback? onTap;
+  final VoidCallback? onDelete;
 
   const VaultContactCard({
     super.key,
+    this.id,
     required this.name,
     required this.role,
     required this.company,
@@ -29,6 +32,7 @@ class VaultContactCard extends StatelessWidget {
     this.initials,
     this.logoUrl,
     this.onTap,
+    this.onDelete,
   });
 
   @override
@@ -55,6 +59,7 @@ class VaultContactCard extends StatelessWidget {
                 isScrollControlled: true,
                 backgroundColor: Colors.transparent,
                 builder: (context) => ViewVaultModal(
+                  id: id,
                   name: name,
                   role: role,
                   company: company,
@@ -65,6 +70,7 @@ class VaultContactCard extends StatelessWidget {
                   dateAdded: dateAdded,
                   tag: tag,
                   initials: initials,
+                  onDelete: onDelete,
                 ),
               );
             },
@@ -129,12 +135,31 @@ class VaultContactCard extends StatelessWidget {
                 ),
               ),
 
-              // Right Column: Tag Badge
+              // Right Column: Tag Badge and optional Delete button
               Column(
-                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   _buildTagBadge(tag),
+                  if (onDelete != null) ...[
+                    const SizedBox(height: 10),
+                    InkWell(
+                      onTap: onDelete,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEE2E2).withAlpha(150),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.delete_outline_rounded,
+                          size: 16,
+                          color: Color(0xFFEF4444),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ],

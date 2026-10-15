@@ -37,6 +37,36 @@ class LeadData {
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
+  LeadData copyWith({
+    String? id,
+    String? targetUid,
+    String? name,
+    String? email,
+    String? phone,
+    String? company,
+    String? notes,
+    String? status,
+    String? source,
+    String? website,
+    String? location,
+    DateTime? createdAt,
+  }) {
+    return LeadData(
+      id: id ?? this.id,
+      targetUid: targetUid ?? this.targetUid,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+      company: company ?? this.company,
+      notes: notes ?? this.notes,
+      status: status ?? this.status,
+      source: source ?? this.source,
+      website: website ?? this.website,
+      location: location ?? this.location,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
   String get initials {
     if (name.trim().isEmpty) return 'LD';
     final parts = name.trim().split(RegExp(r'\s+'));

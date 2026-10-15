@@ -20,6 +20,7 @@ import '../../../notifications/enterprise/login_popup.dart';
 import '../../../backend/app view/app_view_auth_gate.dart';
 import '../../../backend/individual/profile/individual_profile_store.dart';
 import '../../../backend/individual/previews/publish_unpublish.dart';
+import '../../../backend/Global User Directory/global_auth_sync_service.dart';
 import '../back/smart_back_handler.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -74,6 +75,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<String?> _fetchRegisteredUserRole(String uid) async {
     try {
+      // 1. Try unified backend sync bridge
+      final roleData = await GlobalAuthSyncService.resolveUserRoleOnLogin();
+      if (roleData != null && roleData['role'] != null) {
+        return roleData['role'].toString().toLowerCase().trim();
+      }
+
+      // 2. Fallback to Firestore user document
       final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
       if (userDoc.exists && userDoc.data() != null) {
         final role = (userDoc.data()!['role'] as String?)?.toLowerCase().trim();

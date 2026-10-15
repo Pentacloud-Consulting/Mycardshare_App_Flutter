@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../notification_sync_service.dart';
 
 /// Notification service for notifying Enterprises about incoming Employee Join Requests.
 /// Directly creates real notification entries in `enterprises/{enterpriseUid}/notifications`
@@ -47,6 +48,19 @@ class EnterpriseRequestNotificationService {
 
         await notifRef.set(notifData);
         debugPrint('[EnterpriseRequestNotificationService] Sent notification to enterprise $uid for $applicantName');
+
+        // Also trigger real Firebase Cloud Messaging push notification via Next.js backend
+        await NotificationSyncService.triggerAlert(
+          targetUserId: uid,
+          title: 'New Join Workspace Request',
+          body: '$applicantName ($applicantEmail) requested to join $companyName team.',
+          type: 'team_invite',
+          data: {
+            'applicantEmail': applicantEmail,
+            'applicantName': applicantName,
+            'enterpriseUid': uid,
+          },
+        );
       }
     } catch (e) {
       debugPrint('[EnterpriseRequestNotificationService] Error notifying enterprise: $e');

@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../backend/Cloud Image Upload/cloud_upload_service.dart';
 import '../../../../backend/enterprise/profile/enterprise_profile_store.dart';
 import '../../../../core/utils/image_cropper_util.dart';
 import '../../../../core/utils/app_image_helper.dart';
@@ -55,6 +56,7 @@ class _BrandLogoPickerState extends State<BrandLogoPicker> {
       );
       if (picked == null) return;
 
+      if (!mounted) return;
       // Let user crop & adjust image freely
       final String? croppedPath = await AppImageCropper.cropImage(
         context: context,
@@ -63,29 +65,48 @@ class _BrandLogoPickerState extends State<BrandLogoPicker> {
       );
       if (croppedPath == null) return;
 
+
       setState(() => _isUploading = true);
 
-      final bytes = await File(croppedPath).readAsBytes();
+      final file = File(croppedPath);
+      final bytes = await file.readAsBytes();
       final base64Str = base64Encode(bytes);
       final dataUrl = 'data:image/jpeg;base64,$base64Str';
 
       String downloadUrl = dataUrl;
       final uid = FirebaseAuth.instance.currentUser?.uid ?? EnterpriseProfileStore.instance.currentProfile?.uid ?? 'ent_active';
 
+      // ── Tier 1: Next.js Cloud Sync API Gateway (/api/sync/cloud-upload) ───
       try {
-        final ref = FirebaseStorage.instance
-            .ref()
-            .child('enterprise_logos')
-            .child(uid)
-            .child('logo.jpg');
+        final cloudUrl = await CloudUploadService.uploadImageFile(
+          imageFile: file,
+          category: 'logo',
+        );
+        if (cloudUrl != null && cloudUrl.isNotEmpty && cloudUrl.startsWith('http')) {
+          downloadUrl = cloudUrl;
+          debugPrint('[BrandLogoPicker] ✅ CloudUploadService logo upload success: $downloadUrl');
+        }
+      } catch (cloudErr) {
+        debugPrint('[BrandLogoPicker] Cloud upload API note: $cloudErr');
+      }
 
-        final task = await ref.putData(
-          bytes,
-          SettableMetadata(contentType: 'image/jpeg'),
-        ).timeout(const Duration(seconds: 8));
-        downloadUrl = await task.ref.getDownloadURL();
-      } catch (storageErr) {
-        debugPrint('[BrandLogoPicker] Firebase Storage upload note: $storageErr (using local data URL)');
+      // ── Tier 2: Firebase Storage Fallback ──────────────────────────────────
+      if (!downloadUrl.startsWith('http')) {
+        try {
+          final ref = FirebaseStorage.instance
+              .ref()
+              .child('enterprise_logos')
+              .child(uid)
+              .child('logo.jpg');
+
+          final task = await ref.putData(
+            bytes,
+            SettableMetadata(contentType: 'image/jpeg'),
+          ).timeout(const Duration(seconds: 8));
+          downloadUrl = await task.ref.getDownloadURL();
+        } catch (storageErr) {
+          debugPrint('[BrandLogoPicker] Firebase Storage upload note: $storageErr (using local data URL)');
+        }
       }
 
       try {

@@ -272,11 +272,13 @@ class _IndividualOnboardingFormScreenState
         imageQuality: 90,
       );
       if (pickedFile != null) {
+        if (!mounted) return;
         final croppedPath = await AppImageCropper.cropImage(
           context: context,
           sourcePath: pickedFile.path,
           cropType: AppCropType.avatar,
         );
+
         if (croppedPath != null) {
           final bytes = await File(croppedPath).readAsBytes();
           setState(() {
@@ -391,11 +393,13 @@ class _IndividualOnboardingFormScreenState
         imageQuality: 90,
       );
       if (pickedFile != null) {
+        if (!mounted) return;
         final croppedPath = await AppImageCropper.cropImage(
           context: context,
           sourcePath: pickedFile.path,
           cropType: AppCropType.banner,
         );
+
         if (croppedPath != null) {
           final bytes = await File(croppedPath).readAsBytes();
           setState(() {

@@ -36,28 +36,46 @@ class AppImageCropper {
           initAspectRatio: isAvatar
               ? CropAspectRatioPreset.square
               : (isBanner ? CropAspectRatioPreset.ratio16x9 : CropAspectRatioPreset.original),
-          lockAspectRatio: false, // User can freely adjust however they want!
+          lockAspectRatio: false, // User can freely adjust to any size
           cropStyle: isAvatar ? CropStyle.circle : CropStyle.rectangle,
-          aspectRatioPresets: [
-            CropAspectRatioPreset.original,
-            CropAspectRatioPreset.square,
-            CropAspectRatioPreset.ratio3x2,
-            CropAspectRatioPreset.ratio4x3,
-            CropAspectRatioPreset.ratio16x9,
-          ],
+          hideBottomControls: false,
+          showCropGrid: true,
+          aspectRatioPresets: isBanner
+              ? [
+                  CropAspectRatioPreset.ratio16x9,
+                  CropAspectRatioPreset.ratio3x2,
+                  CropAspectRatioPreset.ratio4x3,
+                  CropAspectRatioPreset.original,
+                  CropAspectRatioPreset.square,
+                ]
+              : [
+                  CropAspectRatioPreset.original,
+                  CropAspectRatioPreset.square,
+                  CropAspectRatioPreset.ratio3x2,
+                  CropAspectRatioPreset.ratio4x3,
+                  CropAspectRatioPreset.ratio16x9,
+                ],
         ),
         IOSUiSettings(
           title: title ?? defaultTitle,
           cropStyle: isAvatar ? CropStyle.circle : CropStyle.rectangle,
           aspectRatioLockEnabled: false,
           resetAspectRatioEnabled: true,
-          aspectRatioPresets: [
-            CropAspectRatioPreset.original,
-            CropAspectRatioPreset.square,
-            CropAspectRatioPreset.ratio3x2,
-            CropAspectRatioPreset.ratio4x3,
-            CropAspectRatioPreset.ratio16x9,
-          ],
+          aspectRatioPresets: isBanner
+              ? [
+                  CropAspectRatioPreset.ratio16x9,
+                  CropAspectRatioPreset.ratio3x2,
+                  CropAspectRatioPreset.ratio4x3,
+                  CropAspectRatioPreset.original,
+                  CropAspectRatioPreset.square,
+                ]
+              : [
+                  CropAspectRatioPreset.original,
+                  CropAspectRatioPreset.square,
+                  CropAspectRatioPreset.ratio3x2,
+                  CropAspectRatioPreset.ratio4x3,
+                  CropAspectRatioPreset.ratio16x9,
+                ],
         ),
         WebUiSettings(
           context: context,

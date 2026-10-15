@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../../backend/individual/lead/active_lead.dart';
+import 'edit_lead.dart';
 
-/// Modal bottom sheet to view full lead details (matching Image 3 Vault detail view styling).
-class LeadDetailSheet extends StatelessWidget {
+/// Modal bottom sheet to view full lead details (matching Image 3 Vault detail view styling) with Edit support.
+class LeadDetailSheet extends StatefulWidget {
   final LeadData lead;
 
   const LeadDetailSheet({
@@ -20,7 +21,22 @@ class LeadDetailSheet extends StatelessWidget {
   }
 
   @override
+  State<LeadDetailSheet> createState() => _LeadDetailSheetState();
+}
+
+class _LeadDetailSheetState extends State<LeadDetailSheet> {
+  late LeadData _currentLead;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentLead = widget.lead;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final lead = _currentLead;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
       decoration: const BoxDecoration(
@@ -47,12 +63,12 @@ class LeadDetailSheet extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // Top Profile Header (Avatar + Name + Tag)
+            // Top Profile Header (Avatar + Name + Tag + Edit Button)
             Row(
               children: [
                 Container(
-                  width: 64,
-                  height: 64,
+                  width: 60,
+                  height: 60,
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
                     color: Color(0xFFF3E8FF),
@@ -61,14 +77,14 @@ class LeadDetailSheet extends StatelessWidget {
                     child: Text(
                       lead.initials,
                       style: const TextStyle(
-                        fontSize: 24,
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF9333EA),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,11 +109,52 @@ class LeadDetailSheet extends StatelessWidget {
                     ],
                   ),
                 ),
+                // Edit Lead Action Button
+                InkWell(
+                  onTap: () async {
+                    final updated = await EditLeadSheet.show(
+                      context,
+                      lead: lead,
+                      targetUid: lead.targetUid,
+                      onLeadUpdated: (newLead) {
+                        if (mounted) setState(() => _currentLead = newLead);
+                      },
+                    );
+                    if (updated is LeadData && mounted) {
+                      setState(() => _currentLead = updated);
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0052FF).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFF0052FF).withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.edit_rounded, size: 14, color: Color(0xFF0052FF)),
+                        SizedBox(width: 4),
+                        Text(
+                          "Edit",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0052FF),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF3E8FF),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     lead.source.replaceAll('via ', ''),

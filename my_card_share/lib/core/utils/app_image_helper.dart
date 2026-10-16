@@ -55,24 +55,17 @@ class AppImageHelper {
     else if (p.startsWith('http://') || p.startsWith('https://')) {
       imgWidget = Image.network(
         p,
+        key: ValueKey(p),
         fit: fit,
         width: width,
         height: height,
+        gaplessPlayback: true,
         errorBuilder: (_, error, stackTrace) => placeholder,
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Container(
-            width: width,
-            height: height,
-            color: const Color(0xFFF1F5F9),
-            child: const Center(
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0052FF)),
-              ),
-            ),
-          );
+        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+          if (wasSynchronouslyLoaded || frame != null) {
+            return child;
+          }
+          return placeholder;
         },
       );
     }

@@ -298,12 +298,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ref.read(authProvider.notifier).login(user);
         await AppViewAuthGate.instance.savePersistentSession(user);
         if (mounted) {
-          if (result.onboardingCompleted) {
+          if (!result.isApproved) {
+            context.go('/registration-pending');
+          } else if (result.onboardingCompleted) {
             context.go('/enterprise/dashboard');
           } else {
             context.go('/enterprise-onboarding');
           }
         }
+
       } else {
         final msg = result.message;
         if (msg.contains('No account') || msg.contains('not valid') || msg.contains('not found')) {

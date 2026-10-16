@@ -64,6 +64,27 @@ class EnterpriseNotificationsService {
 
   String? get currentUid => _auth.currentUser?.uid;
 
+  /// Stream all notifications from enterprises/{uid}/notifications without filter for real-time counts
+  Stream<List<EnterpriseNotificationModel>> streamAllNotifications([String? uid]) {
+    final targetUid = uid ?? currentUid;
+    if (targetUid == null || targetUid.isEmpty) {
+      return Stream.value(const []);
+    }
+
+    return _firestore
+        .collection('enterprises')
+        .doc(targetUid)
+        .collection('notifications')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs
+          .map((doc) =>
+              EnterpriseNotificationModel.fromFirestore(doc.id, doc.data()))
+          .toList();
+    });
+  }
+
   /// Stream notifications from enterprises/{uid}/notifications
   Stream<List<EnterpriseNotificationModel>> streamNotifications([
     String? uid,

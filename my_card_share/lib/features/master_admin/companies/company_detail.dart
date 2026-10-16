@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../backend/master_admin/companies/company_management_store.dart';
 import '../../../backend/master_admin/companies/models/master_company_model.dart';
+import '../../../backend/enterprise/profile/enterprise_profile_store.dart';
 import 'widgets/company_detail_header.dart';
 import 'widgets/company_detail_stats_grid.dart';
+import 'widgets/company_detail_team_section.dart';
 import 'widgets/company_detail_subscription_card.dart';
 import 'widgets/company_detail_admin_contact.dart';
 import 'widgets/company_detail_danger_zone.dart';
@@ -18,31 +20,50 @@ class MasterAdminCompanyDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveId = companyId ?? 'acme_realty';
+    // 1. Resolve effective company ID: from route param, or active EnterpriseProfileStore, or default
+    final activeProfile = EnterpriseProfileStore.instance.currentProfile;
+    final effectiveId = (companyId != null && companyId!.isNotEmpty && companyId != 'acme_realty')
+        ? companyId!
+        : (activeProfile?.uid ?? 'acme_realty');
 
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance.collection('enterprises').doc(effectiveId).snapshots(),
       builder: (context, snapshot) {
         final data = snapshot.data?.data() ?? {};
-        final companyName = data['companyName'] ?? data['name'] ?? 'Enterprise Company';
-        final planName = data['planName'] ?? data['plan'] ?? 'Enterprise Pro';
+        
+        // Priority: Firestore enterprises doc -> active EnterpriseProfileStore -> fallback
+        final companyName = (data['companyName'] as String?)?.trim().isNotEmpty == true
+            ? (data['companyName'] as String)
+            : ((data['name'] as String?)?.trim().isNotEmpty == true
+                ? (data['name'] as String)
+                : (activeProfile?.companyName.trim().isNotEmpty == true
+                    ? activeProfile!.companyName
+                    : 'Islamic Web'));
+
+        final logoUrl = (data['logoUrl'] as String?)?.trim().isNotEmpty == true
+            ? (data['logoUrl'] as String)
+            : ((data['companyLogo'] as String?)?.trim().isNotEmpty == true
+                ? (data['companyLogo'] as String)
+                : activeProfile?.logoUrl);
+
+        final planName = data['planName'] ?? data['plan'] ?? (activeProfile?.plan.isNotEmpty == true ? activeProfile!.plan : 'Enterprise Pro');
         final statusText = (data['status'] as String?)?.capitalizeFirst() ?? 'Active';
         final sinceText = data['createdAt'] != null
             ? "Since ${(data['createdAt'] is Timestamp ? (data['createdAt'] as Timestamp).toDate().year : '2026')}"
             : "Since Jan 2026";
-        final employeeCount = (data['employeeCount'] as num?)?.toInt() ?? 1;
+        final employeeCount = (data['employeeCount'] as num?)?.toInt() ?? (activeProfile?.employeeCount ?? 1);
         final employeeLimit = (data['employeeLimit'] as num?)?.toInt() ?? 50;
         final totalLeads = (data['totalLeads'] ?? '0').toString();
         final cardViews = (data['cardViews'] ?? '0').toString();
         final planValue = data['planValue'] ?? '\$299/mo';
         final adminName = data['adminName'] ?? data['contactName'] ?? 'Admin Contact';
-        final adminEmail = data['email'] ?? data['adminEmail'] ?? 'admin@company.com';
-        final adminPhone = data['phone'] ?? data['adminPhone'] ?? '+1 (555) 000-0000';
+        final adminEmail = data['email'] ?? data['adminEmail'] ?? (activeProfile?.email.isNotEmpty == true ? activeProfile!.email : 'admin@company.com');
+        final adminPhone = data['phone'] ?? data['adminPhone'] ?? (activeProfile?.phoneNumber.isNotEmpty == true ? activeProfile!.phoneNumber : '+1 (555) 000-0000');
         final expiryDate = data['subscriptionExpiry'] ?? 'Expires: Dec 31, 2027';
 
         final initials = () {
           final clean = companyName.trim();
-          if (clean.isEmpty) return 'CO';
+          if (clean.isEmpty) return 'IW';
           final parts = clean.split(RegExp(r'\s+'));
           if (parts.length == 1) {
             return parts[0].substring(0, parts[0].length >= 2 ? 2 : 1).toUpperCase();
@@ -88,13 +109,14 @@ class MasterAdminCompanyDetailScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1. Header Card (Real Data)
+                  // 1. Header Card (Real Data & Real Logo)
                   CompanyDetailHeader(
                     companyName: companyName,
                     planName: planName,
                     statusText: statusText,
                     sinceText: sinceText,
                     logoInitials: initials,
+                    logoUrl: logoUrl,
                   ),
 
                   const SizedBox(height: 18),
@@ -110,7 +132,14 @@ class MasterAdminCompanyDetailScreen extends StatelessWidget {
 
                   const SizedBox(height: 22),
 
-                  // 3. Subscription Section (Real Plan)
+                  // 3. Team Members Section (Above Subscription - shows all employees with logos & roles)
+                  CompanyDetailTeamSection(
+                    companyId: effectiveId,
+                  ),
+
+                  const SizedBox(height: 22),
+
+                  // 4. Subscription Section (Real Plan)
                   CompanyDetailSubscriptionCard(
                     planName: planName,
                     expiryDate: expiryDate,

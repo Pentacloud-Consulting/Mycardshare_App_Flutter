@@ -3,30 +3,32 @@ import 'package:flutter/material.dart';
 class NotificationFilterPills extends StatelessWidget {
   final String activeFilter;
   final ValueChanged<String> onFilterChanged;
-
-  static const List<Map<String, String>> filterCategories = [
-    {"id": "all", "label": "All", "badge": "12"},
-    {"id": "unread", "label": "Unread", "badge": "3"},
-    {"id": "leads", "label": "Leads & CRM", "badge": "5"},
-    {"id": "team", "label": "Team Access", "badge": "3"},
-    {"id": "security", "label": "Security", "badge": "1"},
-  ];
+  final Map<String, int>? counts;
 
   const NotificationFilterPills({
     super.key,
     required this.activeFilter,
     required this.onFilterChanged,
+    this.counts,
   });
 
   @override
   Widget build(BuildContext context) {
+    final categories = [
+      {"id": "all", "label": "All", "count": counts?['all'] ?? 0},
+      {"id": "unread", "label": "Unread", "count": counts?['unread'] ?? 0},
+      {"id": "leads", "label": "Leads & CRM", "count": counts?['leads'] ?? 0},
+      {"id": "team", "label": "Team Access", "count": counts?['team'] ?? 0},
+      {"id": "security", "label": "Security", "count": counts?['security'] ?? 0},
+    ];
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
-        children: filterCategories.map((item) {
-          final id = item["id"]!;
-          final label = item["label"]!;
-          final badge = item["badge"]!;
+        children: categories.map((item) {
+          final id = item["id"] as String;
+          final label = item["label"] as String;
+          final count = item["count"] as int;
           final isSelected = id == activeFilter;
 
           return Padding(
@@ -66,24 +68,26 @@ class NotificationFilterPills extends StatelessWidget {
                         color: isSelected ? Colors.white : const Color(0xFF475569),
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? Colors.white.withValues(alpha: 0.25)
-                            : const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        badge,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: isSelected ? Colors.white : const Color(0xFF64748B),
+                    if (count > 0) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? Colors.white.withValues(alpha: 0.25)
+                              : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '$count',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: isSelected ? Colors.white : const Color(0xFF64748B),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),

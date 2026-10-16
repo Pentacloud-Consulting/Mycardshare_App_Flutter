@@ -6,6 +6,7 @@ class CompanyDetailHeader extends StatelessWidget {
   final String statusText;
   final String sinceText;
   final String logoInitials;
+  final String? logoUrl;
 
   const CompanyDetailHeader({
     super.key,
@@ -14,6 +15,7 @@ class CompanyDetailHeader extends StatelessWidget {
     this.statusText = "Active",
     this.sinceText = "Since Jan 2026",
     this.logoInitials = "AR",
+    this.logoUrl,
   });
 
   @override
@@ -55,16 +57,32 @@ class CompanyDetailHeader extends StatelessWidget {
                 ),
               ],
             ),
-            child: Center(
-              child: Text(
-                logoInitials,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                ),
-              ),
-            ),
+            clipBehavior: Clip.antiAlias,
+            child: logoUrl != null && logoUrl!.trim().isNotEmpty
+                ? Image.network(
+                    logoUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Center(
+                      child: Text(
+                        logoInitials,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  )
+                : Center(
+                    child: Text(
+                      logoInitials,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
           ),
           const SizedBox(width: 16),
 

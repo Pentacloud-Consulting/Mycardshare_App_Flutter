@@ -86,12 +86,15 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         );
         ref.read(authProvider.notifier).login(user);
         if (mounted) {
-          if (result.onboardingCompleted) {
+          if (!result.isApproved) {
+            context.go('/registration-pending');
+          } else if (result.onboardingCompleted) {
             context.go('/enterprise/dashboard');
           } else {
             context.go('/enterprise-onboarding');
           }
         }
+
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

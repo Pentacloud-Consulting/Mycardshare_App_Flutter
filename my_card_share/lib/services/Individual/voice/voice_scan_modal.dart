@@ -91,8 +91,8 @@ class _VoiceScanModalState extends ConsumerState<VoiceScanModal> with SingleTick
 
       if (!mounted) return;
 
-      // Update local state
-      VoiceService.saveContact(
+      // Update local state and persist to Firestore
+      await VoiceService.saveContact(
         ref,
         name: extracted.fullName.isNotEmpty ? extracted.fullName : 'Contact',
         role: extracted.jobTitle.isNotEmpty ? extracted.jobTitle : 'Contact',
@@ -105,7 +105,7 @@ class _VoiceScanModalState extends ConsumerState<VoiceScanModal> with SingleTick
         _isProcessing = false;
         _isSuccess = true;
         _extractedContact = extracted;
-        _statusMessage = "Saved to Vault!";
+        _statusMessage = "✓ Saved ${extracted.fullName} to Vault!";
       });
 
       await Future.delayed(const Duration(milliseconds: 900));

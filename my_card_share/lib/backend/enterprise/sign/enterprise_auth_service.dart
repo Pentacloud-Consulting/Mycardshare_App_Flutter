@@ -25,6 +25,8 @@ class EnterpriseAuthResult {
   final EnterpriseProfileData? profileData;
   /// True when the enterprise user has already completed the onboarding wizard.
   final bool onboardingCompleted;
+  /// True when Master Admin has approved this enterprise (approvalStatus != 'pending').
+  final bool isApproved;
 
   const EnterpriseAuthResult({
     required this.isSuccess,
@@ -33,10 +35,11 @@ class EnterpriseAuthResult {
     this.userModel,
     this.profileData,
     this.onboardingCompleted = false,
+    this.isApproved = true,
   });
 
   factory EnterpriseAuthResult.error(String message) =>
-      EnterpriseAuthResult(isSuccess: false, message: message);
+      EnterpriseAuthResult(isSuccess: false, message: message, isApproved: false);
 }
 
 /// Real Firebase Authentication service for Enterprise users.
@@ -81,7 +84,9 @@ class EnterpriseAuthService {
         'companyName': companyName.trim(),
         'fullName': companyName.trim(),
         'role': 'enterprise',
-        'status': 'active',
+        'status': 'pending',
+        'approvalStatus': 'pending',
+        'isSuspended': true,
         'cardSlug': slug,
         'plan': 'free',
         'createdAt': FieldValue.serverTimestamp(),
@@ -100,15 +105,20 @@ class EnterpriseAuthService {
         plan: 'free',
       );
 
+      final enterpriseMap = profileData.toFirestore();
+      enterpriseMap['status'] = 'Pending';
+      enterpriseMap['approvalStatus'] = 'pending';
+      enterpriseMap['isSuspended'] = true;
+
       await _firestore
           .collection('enterprises')
           .doc(uid)
-          .set(profileData.toFirestore());
+          .set(enterpriseMap);
 
       EnterpriseProfileStore.instance.setCurrentProfile(profileData);
 
       debugPrint(
-          '[EnterpriseAuthService] Firestore enterprise docs created for $uid');
+          '[EnterpriseAuthService] Firestore enterprise docs created for $uid (Pending Master Admin Approval)');
 
       final userModel = UserModel(
         id: uid,
@@ -119,11 +129,13 @@ class EnterpriseAuthService {
 
       return EnterpriseAuthResult(
         isSuccess: true,
-        message: 'Enterprise account created successfully!',
+        message: 'Registration submitted! Awaiting Master Admin approval.',
         firebaseUser: user,
         userModel: userModel,
         profileData: profileData,
+        isApproved: false,
       );
+
     } on FirebaseAuthException catch (e) {
       debugPrint('[EnterpriseAuthService] SignUp error: ${e.code}');
       return EnterpriseAuthResult.error(_mapFirebaseError(e.code));
@@ -239,6 +251,7 @@ class EnterpriseAuthService {
     // Determine company name from Firestore or display name
     String companyName = user.displayName ?? 'My Company';
     bool onboardingCompleted = false;
+    bool isApproved = true;
 
     try {
       final userDoc = await _firestore.collection('users').doc(user.uid).get();
@@ -247,6 +260,11 @@ class EnterpriseAuthService {
         companyName = uData['companyName'] ?? uData['fullName'] ?? companyName;
         if (uData['onboardingCompleted'] == true) {
           onboardingCompleted = true;
+        }
+        final status = (uData['status'] as String? ?? '').toLowerCase();
+        final approvalStatus = (uData['approvalStatus'] as String? ?? '').toLowerCase();
+        if (status == 'pending' || approvalStatus == 'pending' || uData['isSuspended'] == true) {
+          isApproved = false;
         }
       }
     } catch (_) {}
@@ -260,6 +278,11 @@ class EnterpriseAuthService {
         if (eData['onboardingCompleted'] == true ||
             (eData['companyName'] != null && (eData['companyName'] as String).isNotEmpty && eData['address'] != null)) {
           onboardingCompleted = true;
+        }
+        final status = (eData['status'] as String? ?? '').toLowerCase();
+        final approvalStatus = (eData['approvalStatus'] as String? ?? '').toLowerCase();
+        if (status == 'pending' || approvalStatus == 'pending' || eData['isSuspended'] == true) {
+          isApproved = false;
         }
       }
     } catch (_) {}
@@ -280,7 +303,7 @@ class EnterpriseAuthService {
     );
 
     debugPrint(
-        '[EnterpriseAuthService] onboardingCompleted=$onboardingCompleted for ${user.uid}');
+        '[EnterpriseAuthService] isApproved=$isApproved, onboardingCompleted=$onboardingCompleted for ${user.uid}');
 
     return EnterpriseAuthResult(
       isSuccess: true,
@@ -289,7 +312,9 @@ class EnterpriseAuthService {
       userModel: userModel,
       profileData: profile,
       onboardingCompleted: onboardingCompleted,
+      isApproved: isApproved,
     );
+
   }
 
   // ─── Restore Session ──────────────────────────────────────────────────────

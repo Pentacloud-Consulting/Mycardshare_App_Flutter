@@ -29,12 +29,14 @@ class _EnterpriseProfileViewScreenState
   bool _isContactDetailsExpanded = false;
   bool _isSocialExpanded = false;
   final GlobalKey _publishBtnKey = GlobalKey();
+  Stream<EnterpriseProfileData?>? _profileStream;
 
   @override
   void initState() {
     super.initState();
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null && uid.isNotEmpty) {
+      _profileStream = EnterpriseProfileStore.instance.profileStream(uid);
       PublishUnpublishService.instance.loadPublishStatus(uid);
     }
   }
@@ -64,9 +66,7 @@ class _EnterpriseProfileViewScreenState
           final isPublished = PublishUnpublishService.instance.isPublished;
 
           return StreamBuilder<EnterpriseProfileData?>(
-            stream: uid.isNotEmpty
-                ? EnterpriseProfileStore.instance.profileStream(uid)
-                : const Stream.empty(),
+            stream: _profileStream ?? (uid.isNotEmpty ? EnterpriseProfileStore.instance.profileStream(uid) : const Stream.empty()),
             builder: (context, snapshot) {
               final profile =
                   snapshot.data ?? EnterpriseProfileStore.instance.currentProfile;

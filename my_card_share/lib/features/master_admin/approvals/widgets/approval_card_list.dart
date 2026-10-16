@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../../../backend/employee_join/email_send_request.dart';
 import '../../../../backend/master_admin/approvals/approvals_queue_store.dart';
 
 class ApprovalCardList extends StatelessWidget {
   const ApprovalCardList({super.key});
 
-  Future<void> _handleApprove(BuildContext context, EnterpriseJoinRequestModel req) async {
+  Future<void> _handleApprove(BuildContext context, MasterApprovalItem item) async {
     final messenger = ScaffoldMessenger.of(context);
-    final ok = await ApprovalsQueueStore.instance.approveRequest(req);
+    final ok = await ApprovalsQueueStore.instance.approveItem(item);
 
     messenger.clearSnackBars();
     messenger.showSnackBar(
@@ -18,7 +17,7 @@ class ApprovalCardList extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(ok
-                  ? "${req.applicantName} (${req.enterpriseEmail}) approved!"
+                  ? "${item.title} (${item.email}) approved successfully!"
                   : "Approval failed. Please check connection."),
             ),
           ],
@@ -30,9 +29,9 @@ class ApprovalCardList extends StatelessWidget {
     );
   }
 
-  Future<void> _handleReject(BuildContext context, EnterpriseJoinRequestModel req) async {
+  Future<void> _handleReject(BuildContext context, MasterApprovalItem item) async {
     final messenger = ScaffoldMessenger.of(context);
-    final ok = await ApprovalsQueueStore.instance.rejectRequest(req);
+    final ok = await ApprovalsQueueStore.instance.rejectItem(item);
 
     messenger.clearSnackBars();
     messenger.showSnackBar(
@@ -43,7 +42,7 @@ class ApprovalCardList extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(ok
-                  ? "Request for ${req.applicantName} was declined."
+                  ? "Request for ${item.title} was declined."
                   : "Failed to decline request."),
             ),
           ],
@@ -57,10 +56,10 @@ class ApprovalCardList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<EnterpriseJoinRequestModel>>(
+    return StreamBuilder<List<MasterApprovalItem>>(
       stream: ApprovalsQueueStore.instance.streamPendingQueue(),
       builder: (context, snapshot) {
-        final requests = snapshot.data ?? ApprovalsQueueStore.instance.pendingQueue;
+        final requests = snapshot.data ?? ApprovalsQueueStore.instance.pendingItems;
 
         if (snapshot.connectionState == ConnectionState.waiting && requests.isEmpty) {
           return Container(
@@ -118,9 +117,8 @@ class ApprovalCardList extends StatelessWidget {
 
         return Column(
           children: requests.map((req) {
-            final initials = req.applicantName.trim().isNotEmpty
-                ? req.applicantName.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase()
-                : "REQ";
+            final initials = req.initials;
+            final isCompany = req.type == 'company';
 
             return Container(
               margin: const EdgeInsets.only(bottom: 16),
@@ -155,15 +153,34 @@ class ApprovalCardList extends StatelessWidget {
                             width: 1,
                           ),
                         ),
-                        child: Center(
-                          child: Text(
-                            initials.isEmpty ? "EP" : initials,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w900,
-                              color: Color(0xFF0052FF),
-                            ),
-                          ),
+                        child: ClipOval(
+                          child: req.logoUrl != null && req.logoUrl!.isNotEmpty
+                              ? Image.network(
+                                  req.logoUrl!,
+                                  width: 44,
+                                  height: 44,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, error, stackTrace) => Center(
+                                    child: Text(
+                                      initials,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w900,
+                                        color: Color(0xFF0052FF),
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : Center(
+                                  child: Text(
+                                    initials,
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFF0052FF),
+                                    ),
+                                  ),
+                                ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -173,7 +190,7 @@ class ApprovalCardList extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              req.applicantName.isNotEmpty ? req.applicantName : "Join Request",
+                              req.title.isNotEmpty ? req.title : (isCompany ? "Pending Enterprise" : "Join Request"),
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w900,
@@ -183,7 +200,9 @@ class ApprovalCardList extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              "Target: ${req.enterpriseEmail}",
+                              isCompany
+                                  ? (req.domain != null && req.domain!.isNotEmpty ? "Domain: ${req.domain}" : req.email)
+                                  : "Target: ${req.targetCompany}",
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: Color(0xFF64748B),
@@ -197,16 +216,18 @@ class ApprovalCardList extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
+                          color: isCompany ? const Color(0xFFEFF6FF) : const Color(0xFFF0FDF4),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFBFDBFE)),
+                          border: Border.all(
+                            color: isCompany ? const Color(0xFFBFDBFE) : const Color(0xFFBBF7D0),
+                          ),
                         ),
-                        child: const Text(
-                          "Enterprise",
+                        child: Text(
+                          isCompany ? "New Company" : "Employee Join",
                           style: TextStyle(
                             fontSize: 10.5,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF0052FF),
+                            color: isCompany ? const Color(0xFF0052FF) : const Color(0xFF16A34A),
                           ),
                         ),
                       ),
@@ -236,8 +257,8 @@ class ApprovalCardList extends StatelessWidget {
                                     text: TextSpan(
                                       style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontFamily: 'sans-serif'),
                                       children: [
-                                        const TextSpan(text: "User Email: ", style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF475569))),
-                                        TextSpan(text: req.applicantEmail, style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF0F172A))),
+                                        TextSpan(text: isCompany ? "Admin Email: " : "User Email: ", style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF475569))),
+                                        TextSpan(text: req.email, style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF0F172A))),
                                       ],
                                     ),
                                   ),
@@ -340,6 +361,7 @@ class ApprovalCardList extends StatelessWidget {
     );
   }
 }
+
 
 
 

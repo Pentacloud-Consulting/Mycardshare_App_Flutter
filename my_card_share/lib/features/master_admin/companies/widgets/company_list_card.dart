@@ -128,7 +128,7 @@ class CompanyListCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       child: Row(
                         children: [
-                          // Company Logo Circle
+                          // Company Logo Circle (Image logo if available, else Initials)
                           Container(
                             width: 44,
                             height: 44,
@@ -140,16 +140,32 @@ class CompanyListCard extends StatelessWidget {
                                 width: 1,
                               ),
                             ),
-                            child: Center(
-                              child: Text(
-                                company.initials,
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w900,
-                                  color: logoBg,
-                                ),
-                              ),
-                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: company.logoUrl != null && company.logoUrl!.trim().isNotEmpty
+                                ? Image.network(
+                                    company.logoUrl!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Center(
+                                      child: Text(
+                                        company.initials,
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w900,
+                                          color: logoBg,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                : Center(
+                                    child: Text(
+                                      company.initials,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w900,
+                                        color: logoBg,
+                                      ),
+                                    ),
+                                  ),
                           ),
                           const SizedBox(width: 14),
 

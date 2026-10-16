@@ -65,38 +65,80 @@ class VoiceAddService {
 
   /// Local dynamic parser fallback if network is temporarily unreachable
   static ExtractedCardContact _parseTranscriptLocally(String text) {
-    String name = 'Spoken Contact';
+    String name = '';
     String phone = '';
     String email = '';
     String company = '';
     String title = '';
+    String website = '';
 
-    // Regex email match
+    // 1. Regex email match
     final emailMatch = RegExp(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}').firstMatch(text);
     if (emailMatch != null) email = emailMatch.group(0) ?? '';
 
-    // Regex phone match
-    final phoneMatch = RegExp(r'(?:\+?[\d\s-]{10,15})').firstMatch(text);
-    if (phoneMatch != null) phone = phoneMatch.group(0)?.replaceAll(RegExp(r'\s+'), ' ').trim() ?? '';
+    // 2. Regex website match
+    final webMatch = RegExp(r'(?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?').firstMatch(text);
+    if (webMatch != null && !webMatch.group(0)!.contains('@')) {
+      website = webMatch.group(0) ?? '';
+    }
 
-    // Extract name heuristically from common patterns: "Save [Name]", "Add [Name]", "Contact [Name]"
-    final nameRegex = RegExp(r'(?:save|add|this is|contact|meet|name is)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)', caseSensitive: false);
-    final nameMatch = nameRegex.firstMatch(text);
-    if (nameMatch != null && nameMatch.groupCount >= 1) {
-      name = nameMatch.group(1)?.trim() ?? 'Spoken Contact';
+    // 3. Regex phone match (international or local numbers)
+    final phoneMatch = RegExp(r'(\+?\d{1,4}[\s-]?)?\(?\d{2,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{3,4}').firstMatch(text);
+    if (phoneMatch != null) {
+      phone = phoneMatch.group(0)?.replaceAll(RegExp(r'\s+'), ' ').trim() ?? '';
+    }
+
+    // 4. Role / Job Title extraction: e.g. "CEO at", "Product Designer at", "CTO", "Manager"
+    final roleRegex = RegExp(r'(?:is|as|working as|role is|the)\s+([A-Za-z\s]+?)\s+(?:at|in|for|from)\b', caseSensitive: false);
+    final roleMatch = roleRegex.firstMatch(text);
+    if (roleMatch != null && roleMatch.groupCount >= 1) {
+      title = roleMatch.group(1)?.trim() ?? '';
     } else {
-      final words = text.split(' ').where((w) => w.isNotEmpty).toList();
-      if (words.isNotEmpty && words.length >= 2) {
-        name = '${words[0]} ${words[1]}';
+      // Check standard titles
+      final standardRoleRegex = RegExp(r'\b(CEO|CTO|CFO|COO|Founder|Co-Founder|Director|Manager|Lead|Designer|Developer|Engineer|Consultant|Partner|Agent|Specialist)\b', caseSensitive: false);
+      final sMatch = standardRoleRegex.firstMatch(text);
+      if (sMatch != null) {
+        title = sMatch.group(0)?.trim() ?? '';
       }
     }
 
-    // Extract company: "at [Company]", "from [Company]"
-    final companyRegex = RegExp(r'(?:at|from|with)\s+([A-Za-z0-9]+(?:\s+[A-Za-z0-9]+)?)', caseSensitive: false);
+    // 5. Company extraction: "at Acme", "from Google", "works at Stripe"
+    final companyRegex = RegExp(r'(?:at|from|with|for|company is)\s+([A-Za-z0-9&.\s]+?)(?:,|\.|\band\b|\bemail\b|\bphone\b|$)', caseSensitive: false);
     final compMatch = companyRegex.firstMatch(text);
     if (compMatch != null && compMatch.groupCount >= 1) {
-      company = compMatch.group(1)?.trim() ?? '';
+      final cand = compMatch.group(1)?.trim() ?? '';
+      if (!cand.toLowerCase().startsWith('the ') && cand.length <= 40) {
+        company = cand;
+      }
     }
+
+    // 6. Name extraction:
+    // Patterns: "Met John Doe", "Save John Doe", "Contact John Doe", "Name is John Doe", or first capitalized words
+    final nameIntroRegex = RegExp(r'(?:save|add|this is|contact|meet|met|name is|call|called)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)', caseSensitive: false);
+    final nameMatch = nameIntroRegex.firstMatch(text);
+    if (nameMatch != null && nameMatch.groupCount >= 1) {
+      name = nameMatch.group(1)?.trim() ?? '';
+    }
+
+    // Fallback: take first 2 clean capitalized words that aren't stop words
+    if (name.isEmpty) {
+      final stopWords = {'met', 'i', 'add', 'save', 'contact', 'new', 'this', 'is', 'here', 'the', 'a', 'an'};
+      final words = text.replaceAll(RegExp(r'[^\w\s]'), '').split(' ').where((w) => w.trim().isNotEmpty).toList();
+      final candidates = <String>[];
+      for (final w in words) {
+        if (!stopWords.contains(w.toLowerCase()) && w.length > 1) {
+          candidates.add(w);
+          if (candidates.length == 2) break;
+        }
+      }
+      if (candidates.isNotEmpty) {
+        name = candidates.map((w) => w[0].toUpperCase() + w.substring(1)).join(' ');
+      }
+    }
+
+    if (name.isEmpty) name = 'Spoken Contact';
+    if (company.isEmpty) company = 'Independent';
+    if (title.isEmpty) title = 'Contact';
 
     return ExtractedCardContact(
       id: 'voice_${DateTime.now().millisecondsSinceEpoch}',
@@ -105,6 +147,7 @@ class VoiceAddService {
       company: company,
       email: email,
       phone: phone,
+      website: website,
       notes: text,
       tag: 'Voice',
     );

@@ -89,12 +89,29 @@ class _EnterpriseNotificationsScreenState
     final uid = FirebaseAuth.instance.currentUser?.uid;
 
     return StreamBuilder<List<EnterpriseNotificationModel>>(
-      stream: EnterpriseNotificationsService.instance.streamNotifications(uid, _activeFilter),
+      stream: EnterpriseNotificationsService.instance.streamAllNotifications(uid),
       builder: (context, snapshot) {
-        final notifications = snapshot.data ?? [];
-        final unreadCount = notifications.where((item) => item.isUnread).length;
+        final allNotifications = snapshot.data ?? [];
 
-        final uiItems = notifications.map((n) {
+        // Real dynamic category counts
+        final counts = <String, int>{
+          'all': allNotifications.length,
+          'unread': allNotifications.where((n) => n.isUnread).length,
+          'leads': allNotifications.where((n) => n.category == 'leads').length,
+          'team': allNotifications.where((n) => n.category == 'team').length,
+          'security': allNotifications.where((n) => n.category == 'security').length,
+        };
+
+        // Filter for UI display
+        final filteredList = allNotifications.where((item) {
+          if (_activeFilter == 'unread') return item.isUnread;
+          if (_activeFilter != 'all') return item.category == _activeFilter;
+          return true;
+        }).toList();
+
+        final unreadCount = counts['unread'] ?? 0;
+
+        final uiItems = filteredList.map((n) {
           return EnterpriseNotificationItem(
             id: n.id,
             title: n.title,
@@ -151,9 +168,10 @@ class _EnterpriseNotificationsScreenState
 
                   const SizedBox(height: 18),
 
-                  // Filter Pills Row
+                  // Filter Pills Row with real dynamic counts
                   NotificationFilterPills(
                     activeFilter: _activeFilter,
+                    counts: counts,
                     onFilterChanged: (filter) {
                       setState(() {
                         _activeFilter = filter;

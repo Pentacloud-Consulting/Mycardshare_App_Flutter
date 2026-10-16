@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../core/master_admin_api_client.dart';
 import '../core/master_admin_endpoints.dart';
+import '../approvals/approvals_queue_store.dart';
 import '../../Global User Directory/global_auth_sync_service.dart';
 
 /// State and live metrics for Master Admin Dashboard.
@@ -77,13 +78,10 @@ class MasterAdminDashboardStore extends ChangeNotifier {
           .get();
       if (_totalIndividuals == 0) _totalIndividuals = userSnap.count ?? _totalIndividuals;
 
-      // Pending join requests & approvals
-      final reqSnap = await _firestore
-          .collection('enterprise_join_requests')
-          .where('status', isEqualTo: 'pending')
-          .count()
-          .get();
-      _pendingApprovals = reqSnap.count ?? _pendingApprovals;
+      // Pending join requests & company approvals via ApprovalsQueueStore
+      await ApprovalsQueueStore.instance.streamPendingQueue().first.then((items) {
+        _pendingApprovals = items.length;
+      }).catchError((_) {});
 
       // Real calculated MRR based on company count
       if (_mrr == "\$0" || _mrr.isEmpty) {
@@ -98,14 +96,10 @@ class MasterAdminDashboardStore extends ChangeNotifier {
     }
   }
 
-  /// Live Firestore stream for pending requests count
+  /// Live stream for pending requests count (Companies + Employee Requests)
   Stream<int> streamPendingCount() {
-    return _firestore
-        .collection('enterprise_join_requests')
-        .where('status', isEqualTo: 'pending')
-        .snapshots()
-        .map((snap) {
-      _pendingApprovals = snap.docs.length;
+    return ApprovalsQueueStore.instance.streamPendingQueue().map((items) {
+      _pendingApprovals = items.length;
       notifyListeners();
       return _pendingApprovals;
     });

@@ -1,5 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../providers/vault_provider.dart';
+import '../../../backend/individual/previews/individual_metrics_store.dart';
+import '../../../backend/individual/notification/vault_notification_service.dart';
 
 class VoiceService {
   VoiceService._();
@@ -14,28 +19,76 @@ class VoiceService {
     return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
   }
 
-  /// Save a voice-dictated contact into the Vault notifier
-  static void saveContact(
+  /// Save a voice-dictated contact into the Vault notifier and Firestore
+  static Future<void> saveContact(
     WidgetRef ref, {
     required String name,
     String? role,
     String? company,
     String? phone,
     String? email,
-  }) {
-    final initials = getInitials(name);
+  }) async {
+    final cleanName = name.trim().isNotEmpty ? name.trim() : 'Contact';
+    final cleanRole = (role != null && role.trim().isNotEmpty) ? role.trim() : 'Contact';
+    final cleanCompany = (company != null && company.trim().isNotEmpty) ? company.trim() : 'Independent';
+    final cleanPhone = phone?.trim() ?? '';
+    final cleanEmail = email?.trim() ?? '';
+    final initials = getInitials(cleanName);
+    final contactId = 'voice_${DateTime.now().millisecondsSinceEpoch}';
+
     final contact = {
-      'name': name.trim(),
-      'role': (role != null && role.trim().isNotEmpty) ? role.trim() : 'Contact',
-      'company': (company != null && company.trim().isNotEmpty) ? company.trim() : 'Independent',
-      'phone': phone?.trim() ?? '',
-      'email': email?.trim() ?? '',
+      'id': contactId,
+      'name': cleanName,
+      'role': cleanRole,
+      'company': cleanCompany,
+      'phone': cleanPhone,
+      'email': cleanEmail,
       'dateAdded': 'Just now',
       'tag': 'Voice',
       'initials': initials,
     };
 
+    // 1. Instant local state update
     ref.read(vaultNotifierProvider.notifier).addContact(contact);
+
+    // 2. Direct Firestore persistence
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null && uid.isNotEmpty) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('contacts')
+            .doc(contactId)
+            .set({
+          'id': contactId,
+          'name': cleanName,
+          'role': cleanRole,
+          'company': cleanCompany,
+          'phone': cleanPhone,
+          'email': cleanEmail,
+          'website': '',
+          'address': '',
+          'tag': 'Voice',
+          'initials': initials,
+          'createdAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
+        // 3. Increment scans / voice metrics on dashboard
+        await IndividualMetricsStore.instance.incrementScans(uid);
+
+        // 4. Send notification
+        await VaultNotificationService.instance.notifyContactSaved(
+          targetUid: uid,
+          contactName: cleanName,
+          method: 'Voice',
+        );
+
+        debugPrint('[VoiceService] Voice contact persisted to Firestore & metrics incremented for UID: $uid');
+      } catch (e) {
+        debugPrint('[VoiceService] Firestore save error: $e');
+      }
+    }
   }
 }
 

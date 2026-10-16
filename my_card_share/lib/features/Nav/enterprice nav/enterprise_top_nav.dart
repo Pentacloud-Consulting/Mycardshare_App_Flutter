@@ -54,7 +54,7 @@ class EnterpriseTopNav extends StatelessWidget implements PreferredSizeWidget {
       ),
       child: Row(
         children: [
-          // LEFT ACTION / BRAND TITLE (Image 1: Real Company Header)
+          // LEFT ACTION / BRAND TITLE (Dashboard shows company header, root tabs show screen title without back button)
           if (isDashboard)
             Expanded(
               child: EnterpriseCompanyHeaderWidget(
@@ -62,32 +62,34 @@ class EnterpriseTopNav extends StatelessWidget implements PreferredSizeWidget {
               ),
             )
           else ...[
-            GestureDetector(
-              onTap: () {
-                if (context.canPop()) {
-                  context.pop();
-                } else if (isRequests) {
-                  context.go('/enterprise/settings');
-                } else {
-                  context.go('/enterprise/dashboard');
-                }
-              },
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
-                ),
-                child: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: Color(0xFF0F172A),
-                  size: 16,
+            if (context.canPop() || isRequests || isNotifications || isProfileView) ...[
+              GestureDetector(
+                onTap: () {
+                  if (context.canPop()) {
+                    context.pop();
+                  } else if (isRequests) {
+                    context.go('/enterprise/settings');
+                  } else {
+                    context.go('/enterprise/dashboard');
+                  }
+                },
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+                  ),
+                  child: const Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: Color(0xFF0F172A),
+                    size: 16,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
+              const SizedBox(width: 12),
+            ],
             Expanded(
               child: Text(
                 isRequests

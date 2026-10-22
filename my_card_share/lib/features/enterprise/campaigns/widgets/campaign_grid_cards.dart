@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 
 class CampaignGridCards extends StatelessWidget {
   final String selectedFilter;
+  final List<Map<String, dynamic>>? campaigns;
   final VoidCallback? onNewCampaignTap;
   final Function(Map<String, dynamic> campaign)? onCampaignTap;
 
   const CampaignGridCards({
     super.key,
     this.selectedFilter = "All",
+    this.campaigns,
     this.onNewCampaignTap,
     this.onCampaignTap,
   });
@@ -48,7 +50,8 @@ class CampaignGridCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _campaigns.where((c) {
+    final list = (campaigns != null && campaigns!.isNotEmpty) ? campaigns! : _campaigns;
+    final filtered = list.where((c) {
       if (selectedFilter == "Active" && c["status"] != "Active") return false;
       if (selectedFilter == "Ended" && c["status"] != "Ended") return false;
       return true;
@@ -71,7 +74,11 @@ class CampaignGridCards extends StatelessWidget {
         }
 
         final camp = filtered[index];
-        final Color cardColor = camp["color"] as Color;
+        final Color cardColor = camp["color"] is Color
+            ? (camp["color"] as Color)
+            : (camp["color"] is int
+                ? Color(camp["color"] as int)
+                : const Color(0xFF0052FF));
 
         return Container(
           padding: const EdgeInsets.all(14),

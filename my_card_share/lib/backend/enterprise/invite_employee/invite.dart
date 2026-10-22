@@ -6,10 +6,12 @@ import '../multiple_store/enterprise_multi_store.dart';
 import '../profile/enterprise_profile_store.dart';
 import 'invite_link.dart';
 import 'enterprise_invite_sync_service.dart';
+import 'invite_email.dart';
 
 export 'popup_invite.dart';
 export 'invite_link.dart';
 export 'enterprise_invite_sync_service.dart';
+export 'invite_email.dart';
 
 /// Opens the complete, real-time Enterprise Invite Form Page Modal.
 Future<void> showEnterpriseInviteModal(BuildContext context) async {
@@ -171,6 +173,12 @@ class _EnterpriseInviteFormModalState extends State<EnterpriseInviteFormModal>
         role: _selectedRole.toLowerCase(),
       );
 
+      // Dispatch real branded invite email to the new employee
+      await EnterpriseEmailInviteService.sendBatchEmailInvites(
+        emails: [email],
+        enterpriseId: uid,
+      );
+
       if (mounted) {
         setState(() => _isSubmitting = false);
         if (success) {
@@ -236,6 +244,12 @@ class _EnterpriseInviteFormModalState extends State<EnterpriseInviteFormModal>
           role: 'Employee',
         );
       }
+
+      // Dispatch real branded email invites via Nodemailer / SMTP backend
+      await EnterpriseEmailInviteService.sendBatchEmailInvites(
+        emails: _invitedEmailsList,
+        enterpriseId: uid,
+      );
 
       // Sync batch invites to Next.js API /api/sync/invite-code
       await EnterpriseInviteSyncService.batchInviteEmails(_invitedEmailsList);

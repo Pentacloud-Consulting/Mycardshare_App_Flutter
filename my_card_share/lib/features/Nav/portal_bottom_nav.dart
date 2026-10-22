@@ -69,6 +69,7 @@ class _PortalBottomNavState extends State<PortalBottomNav> {
   }
 
   void _onItemTapped(int index, BuildContext context) {
+    ScaffoldMessenger.of(context).clearSnackBars();
     final selectedIndex = _calculateSelectedIndex(context);
     final targetLocation = switch (index) {
       0 => '/portal',

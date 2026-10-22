@@ -80,14 +80,25 @@ class SettingsSupportCard extends StatelessWidget {
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF0F172A),
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const Text(
-                        "Contact",
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF0052FF),
+                      const SizedBox(width: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF4FF),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFFDBEAFE), width: 1),
+                        ),
+                        child: const Text(
+                          "Contact",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0052FF),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 6),

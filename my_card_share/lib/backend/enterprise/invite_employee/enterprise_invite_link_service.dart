@@ -43,7 +43,7 @@ class EnterpriseInviteLinkService {
         body: jsonEncode({
           "action": "lookup_code",
           "code": code.trim(),
-          if (enterpriseId != null) "enterpriseId": enterpriseId,
+          "enterpriseId": ?enterpriseId,
         }),
       );
       if (res.statusCode == 200) {

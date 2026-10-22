@@ -7,6 +7,7 @@ import 'widgets/leads_filter_chips.dart';
 import 'widgets/leads_list_cards.dart';
 import 'widgets/retry_sync_button.dart';
 import 'widgets/edit_lead.dart';
+import 'widgets/add_lead_sheet.dart';
 import '../../../backend/enterprise/home_backend/leads_service.dart';
 
 class EnterpriseLeadsScreen extends StatefulWidget {
@@ -20,11 +21,67 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
   String _selectedFilter = "All";
+  DateTimeRange? _selectedDateRange;
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleCalendarTap() async {
+    final now = DateTime.now();
+    final DateTimeRange? pickedRange = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2023, 1, 1),
+      lastDate: now.add(const Duration(days: 365)),
+      initialDateRange: _selectedDateRange ??
+          DateTimeRange(
+            start: now.subtract(const Duration(days: 7)),
+            end: now,
+          ),
+      helpText: "Select Date Range for Leads",
+      saveText: "Apply",
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF0052FF),
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Color(0xFF0F172A),
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF0052FF),
+                textStyle: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (pickedRange != null) {
+      setState(() {
+        _selectedDateRange = pickedRange;
+      });
+    }
+  }
+
+  void _clearDateFilter() {
+    setState(() {
+      _selectedDateRange = null;
+    });
+  }
+
+  String _formatDate(DateTime d) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return '${months[d.month - 1]} ${d.day}, ${d.year}';
   }
 
   void _handleRetrySync([Map<String, dynamic>? lead]) {
@@ -188,16 +245,61 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
     );
   }
 
+  void _openAddLeadModal() {
+    EnterpriseAddLeadSheet.show(
+      context,
+      onLeadAdded: () {
+        setState(() {});
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFD),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 10, right: 4),
-        child: RetrySyncButton(
-          onTap: () => _handleRetrySync(),
+        padding: const EdgeInsets.only(bottom: 10, right: 6),
+        child: StreamBuilder<EnterpriseLeadStats>(
+          stream: EnterpriseLeadsService.instance.streamLeadStats(uid, _selectedDateRange),
+          builder: (context, snapshot) {
+            final syncFailed = snapshot.data?.syncFailedCount ?? 0;
+
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 1. Retry Failed Syncs Button (Visible if there are failed leads)
+                if (syncFailed > 0) ...[
+                  RetrySyncButton(
+                    onTap: () => _handleRetrySync(),
+                  ),
+                  const SizedBox(width: 10),
+                ],
+
+                // 2. Primary "+ Add Lead" Floating Action Button
+                FloatingActionButton.extended(
+                  heroTag: "enterprise_add_lead_fab",
+                  backgroundColor: const Color(0xFF0052FF),
+                  foregroundColor: Colors.white,
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  icon: const Icon(Icons.add_rounded, size: 22),
+                  label: const Text(
+                    "Add Lead",
+                    style: TextStyle(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                  onPressed: _openAddLeadModal,
+                ),
+              ],
+            );
+          },
         ),
       ),
       body: Stack(
@@ -231,7 +333,7 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
                 children: [
                   // 1. Real Lead Stats Row (Total, This Week, Sync Failed)
                   StreamBuilder<EnterpriseLeadStats>(
-                    stream: EnterpriseLeadsService.instance.streamLeadStats(uid),
+                    stream: EnterpriseLeadsService.instance.streamLeadStats(uid, _selectedDateRange),
                     builder: (context, snapshot) {
                       final stats = snapshot.data ??
                           const EnterpriseLeadStats(
@@ -253,23 +355,55 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
                   // 2. Search Bar + Calendar Date Filter
                   LeadsSearchFilter(
                     controller: _searchController,
+                    isDateFiltered: _selectedDateRange != null,
                     onChanged: (val) {
                       setState(() {
                         _searchQuery = val;
                       });
                     },
-                    onCalendarTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text("Date range filter opened"),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      );
-                    },
+                    onCalendarTap: _handleCalendarTap,
                   ),
+
+                  // 2b. Active Date Range Filter Chip
+                  if (_selectedDateRange != null) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF4FF),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFBFDBFE), width: 1.2),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.date_range_rounded, size: 16, color: Color(0xFF0052FF)),
+                          const SizedBox(width: 8),
+                          Text(
+                            "${_formatDate(_selectedDateRange!.start)} – ${_formatDate(_selectedDateRange!.end)}",
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF0052FF),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          InkWell(
+                            onTap: _clearDateFilter,
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0052FF).withValues(alpha: 0.12),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.close_rounded, size: 14, color: Color(0xFF0052FF)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
 
                   const SizedBox(height: 14),
 
@@ -289,6 +423,7 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
                   LeadsListCards(
                     searchQuery: _searchQuery,
                     selectedFilter: _selectedFilter,
+                    dateRange: _selectedDateRange,
                     onLeadTap: _handleLeadTap,
                     onRetrySync: _handleRetrySync,
                   ),

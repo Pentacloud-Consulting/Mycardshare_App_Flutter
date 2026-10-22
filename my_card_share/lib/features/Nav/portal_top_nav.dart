@@ -364,7 +364,10 @@ class PortalTopNav extends ConsumerWidget implements PreferredSizeWidget {
                     Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        onTap: () => context.push('/portal/notifications'),
+                        onTap: () {
+                          ScaffoldMessenger.of(context).clearSnackBars();
+                          context.push('/portal/notifications');
+                        },
                         borderRadius: BorderRadius.circular(20),
                         child: Container(
                           width: 40,

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'campaign_sync_service.dart';
+import '../../../backend/campaign/unified_campaign_service.dart';
 
 class IndividualCampaignScreen extends StatefulWidget {
   const IndividualCampaignScreen({super.key});
@@ -23,29 +21,12 @@ class _IndividualCampaignScreenState extends State<IndividualCampaignScreen> {
 
   Future<void> _loadCampaignData() async {
     setState(() => _isLoading = true);
-    final data = await CampaignSyncService.fetchCampaigns();
-    
-    // Fallback/merge with Firestore individual campaigns if available
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    List<dynamic> campaignList = data['campaigns'] is List ? List.from(data['campaigns']) : [];
-    
-    if (campaignList.isEmpty && uid != null) {
-      try {
-        final snap = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .collection('campaigns')
-            .get();
-        if (snap.docs.isNotEmpty) {
-          campaignList = snap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
-        }
-      } catch (_) {}
-    }
+    final data = await UnifiedCampaignService.fetchCampaigns(isEnterprise: false);
 
     if (mounted) {
       setState(() {
         _summary = data['summary'] is Map<String, dynamic> ? data['summary'] : {};
-        _campaigns = campaignList;
+        _campaigns = data['campaigns'] is List ? List.from(data['campaigns']) : [];
         _isLoading = false;
       });
     }
@@ -53,7 +34,6 @@ class _IndividualCampaignScreenState extends State<IndividualCampaignScreen> {
 
   void _openCreateCampaignDialog() {
     final nameCtrl = TextEditingController();
-    String source = "print_flyer";
 
     showDialog(
       context: context,
@@ -96,40 +76,41 @@ class _IndividualCampaignScreenState extends State<IndividualCampaignScreen> {
               final n = nameCtrl.text.trim();
               if (n.isNotEmpty) {
                 Navigator.pop(ctx);
-                await CampaignSyncService.createCampaign(
-                  name: n,
-                  utmSource: source,
-                  utmMedium: "qr_code",
+
+                ScaffoldMessenger.of(context).clearSnackBars();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Creating marketing campaign... ⏳"),
+                    duration: Duration(milliseconds: 1500),
+                    behavior: SnackBarBehavior.floating,
+                  ),
                 );
 
-                // Also record in Firestore
-                final uid = FirebaseAuth.instance.currentUser?.uid;
-                if (uid != null) {
-                  try {
-                    await FirebaseFirestore.instance
-                        .collection('users')
-                        .doc(uid)
-                        .collection('campaigns')
-                        .add({
-                      'name': n,
-                      'utmSource': source,
-                      'scans': 0,
-                      'leads': 0,
-                      'status': 'Active',
-                      'createdAt': FieldValue.serverTimestamp(),
-                    });
-                  } catch (_) {}
-                }
+                final res = await UnifiedCampaignService.createCampaign(
+                  isEnterprise: false,
+                  name: n,
+                );
 
-                _loadCampaignData();
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text("Campaign '$n' created successfully!"),
-                      backgroundColor: const Color(0xFF10B981),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
+                  ScaffoldMessenger.of(context).clearSnackBars();
+                  if (res["success"] == true) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Campaign '$n' created successfully!"),
+                        backgroundColor: const Color(0xFF10B981),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                    _loadCampaignData();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(res["error"] ?? "Failed to create campaign"),
+                        backgroundColor: Colors.redAccent,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
                 }
               }
             },

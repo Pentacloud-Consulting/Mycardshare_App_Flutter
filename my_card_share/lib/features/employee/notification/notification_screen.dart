@@ -19,30 +19,83 @@ class _NotificationScreenState extends State<NotificationScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+      }
+    });
     final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
     AppNotificationService.instance.fetchNotifications(uid);
   }
 
   void _markAllRead() {
+    ScaffoldMessenger.of(context).clearSnackBars();
     AppNotificationService.instance.markAllAsRead();
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text("All notifications marked as read!"),
         backgroundColor: Color(0xFF16A34A),
         behavior: SnackBarBehavior.floating,
+        duration: Duration(milliseconds: 1500),
+      ),
+    );
+  }
+
+  void _clearAllNotifications() {
+    ScaffoldMessenger.of(context).clearSnackBars();
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    AppNotificationService.instance.clearAllNotifications(targetUid: uid);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("All notifications cleared"),
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(milliseconds: 1500),
       ),
     );
   }
 
   void _deleteNotification(String id) {
+    ScaffoldMessenger.of(context).clearSnackBars();
     AppNotificationService.instance.deleteNotification(id);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text("Notification deleted"),
-        duration: Duration(seconds: 2),
+        duration: Duration(milliseconds: 1500),
         behavior: SnackBarBehavior.floating,
       ),
     );
+  }
+
+  void _handleNotificationTap(AppNotificationItem n) {
+    ScaffoldMessenger.of(context).clearSnackBars();
+    AppNotificationService.instance.markAsRead(n.id);
+
+    String targetRoute = n.route ?? '';
+    if (targetRoute.isEmpty) {
+      final cat = n.category.toLowerCase();
+      final title = n.title.toLowerCase();
+      if (cat == 'leads' || title.contains('lead')) {
+        targetRoute = '/portal/leads';
+      } else if (cat == 'scans' || title.contains('scan') || title.contains('view')) {
+        targetRoute = '/portal/analytics';
+      } else if (title.contains('vault') || title.contains('contact')) {
+        targetRoute = '/portal/vault';
+      } else if (title.contains('password') || title.contains('security') || cat == 'system') {
+        targetRoute = '/portal/settings';
+      } else {
+        targetRoute = '/portal';
+      }
+    }
+
+    try {
+      context.go(targetRoute);
+    } catch (_) {
+      try {
+        context.push(targetRoute);
+      } catch (e) {
+        debugPrint('[NotificationScreen] Navigation error: $e');
+      }
+    }
   }
 
   @override
@@ -69,7 +122,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Top Action Row (Recent Notifications | Mark all read)
+                  // Top Action Row (Recent Notifications | Clear all | Mark all read)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -82,21 +135,43 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         ),
                       ),
                       if (notifications.isNotEmpty)
-                        TextButton(
-                          onPressed: _markAllRead,
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: const Text(
-                            "Mark all read",
-                            style: TextStyle(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF2563EB),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            TextButton(
+                              onPressed: _clearAllNotifications,
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: const Text(
+                                "Clear all",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFFEF4444),
+                                ),
+                              ),
                             ),
-                          ),
+                            const SizedBox(width: 8),
+                            TextButton(
+                              onPressed: _markAllRead,
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: const Text(
+                                "Mark all read",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF2563EB),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                     ],
                   ),
@@ -165,12 +240,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           iconBg: n.iconBg,
                           iconColor: n.iconColor,
                           isUnread: n.isUnread,
-                          onTap: () {
-                            AppNotificationService.instance.markAsRead(n.id);
-                            if (n.route != null && n.route!.isNotEmpty) {
-                              context.push(n.route!);
-                            }
-                          },
+                          onTap: () => _handleNotificationTap(n),
                           onDelete: () => _deleteNotification(n.id),
                         )),
                   ],
@@ -187,12 +257,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           iconBg: n.iconBg,
                           iconColor: n.iconColor,
                           isUnread: n.isUnread,
-                          onTap: () {
-                            AppNotificationService.instance.markAsRead(n.id);
-                            if (n.route != null && n.route!.isNotEmpty) {
-                              context.push(n.route!);
-                            }
-                          },
+                          onTap: () => _handleNotificationTap(n),
                           onDelete: () => _deleteNotification(n.id),
                         )),
                   ],
@@ -209,12 +274,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           iconBg: n.iconBg,
                           iconColor: n.iconColor,
                           isUnread: n.isUnread,
-                          onTap: () {
-                            AppNotificationService.instance.markAsRead(n.id);
-                            if (n.route != null && n.route!.isNotEmpty) {
-                              context.push(n.route!);
-                            }
-                          },
+                          onTap: () => _handleNotificationTap(n),
                           onDelete: () => _deleteNotification(n.id),
                         )),
                   ],

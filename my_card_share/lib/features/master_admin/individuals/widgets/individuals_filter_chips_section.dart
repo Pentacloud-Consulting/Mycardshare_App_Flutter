@@ -3,11 +3,15 @@ import 'package:flutter/material.dart';
 class IndividualsFilterChipsSection extends StatelessWidget {
   final String selectedFilter;
   final ValueChanged<String> onFilterSelected;
+  final VoidCallback? onDeletionRequestsTap;
+  final int deletionRequestsCount;
 
   const IndividualsFilterChipsSection({
     super.key,
     required this.selectedFilter,
     required this.onFilterSelected,
+    this.onDeletionRequestsTap,
+    this.deletionRequestsCount = 0,
   });
 
   static const List<String> _filters = [
@@ -23,7 +27,8 @@ class IndividualsFilterChipsSection extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
       child: Row(
-        children: _filters.map((filter) {
+        children: [
+          ..._filters.map((filter) {
           final isSelected = filter == selectedFilter;
 
           return Padding(
@@ -77,7 +82,36 @@ class IndividualsFilterChipsSection extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
           );
-        }).toList(),
+        }),
+          if (onDeletionRequestsTap != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 4.0),
+              child: ActionChip(
+                avatar: const Icon(
+                  Icons.delete_sweep_rounded,
+                  color: Color(0xFFEF4444),
+                  size: 16,
+                ),
+                label: Text(
+                  deletionRequestsCount > 0
+                      ? "Deletion Requests ($deletionRequestsCount)"
+                      : "Deletion Requests",
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFFEF4444),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                backgroundColor: const Color(0xFFFEF2F2),
+                side: const BorderSide(color: Color(0xFFFECACA), width: 1.0),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                onPressed: onDeletionRequestsTap,
+              ),
+            ),
+        ],
       ),
     );
   }

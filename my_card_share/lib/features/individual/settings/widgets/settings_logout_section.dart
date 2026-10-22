@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../notification/popup_message/logout_popup.dart';
+import '../../../../backend/master_admin/individuals/delete/individual_delete_service.dart';
 
 class SettingsLogoutSection extends ConsumerWidget {
   const SettingsLogoutSection({super.key});
@@ -10,34 +11,111 @@ class SettingsLogoutSection extends ConsumerWidget {
   }
 
   void _confirmDeleteAccount(BuildContext context) {
+    final reasonController = TextEditingController(text: "No longer need digital card");
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("Delete Account", style: TextStyle(color: Color(0xFFEF4444))),
-        content: const Text(
-          "Warning: Deleting your account will permanently remove all your digital cards, leads, and contacts. This action cannot be undone.",
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Color(0xFFEF4444)),
+            SizedBox(width: 8),
+            Text(
+              "Delete Account",
+              style: TextStyle(color: Color(0xFFEF4444), fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Submitting a deletion request will notify the Master Admin to review and remove your account, digital cards, leads, and contacts.",
+              style: TextStyle(fontSize: 13, color: Color(0xFF475569), height: 1.4),
+            ),
+            const SizedBox(height: 14),
+            const Text(
+              "Reason for leaving:",
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
+            ),
+            const SizedBox(height: 6),
+            TextField(
+              controller: reasonController,
+              maxLines: 2,
+              decoration: InputDecoration(
+                hintText: "Enter your reason...",
+                hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                filled: true,
+                fillColor: const Color(0xFFF1F5F9),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              style: const TextStyle(fontSize: 13),
+            ),
+          ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(ctx),
             child: const Text("Cancel", style: TextStyle(color: Color(0xFF64748B))),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
+            onPressed: () async {
+              final reason = reasonController.text.trim().isEmpty
+                  ? "User requested account deletion"
+                  : reasonController.text.trim();
+              Navigator.pop(ctx);
+
+              ScaffoldMessenger.of(context).clearSnackBars();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text("Account deletion request submitted"),
-                  backgroundColor: Color(0xFFEF4444),
+                  content: Row(
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      ),
+                      SizedBox(width: 12),
+                      Text("Submitting deletion request..."),
+                    ],
+                  ),
+                  duration: Duration(milliseconds: 1000),
+                  behavior: SnackBarBehavior.floating,
                 ),
               );
+
+              final success = await IndividualDeleteService.requestAccountDeletion(reason: reason);
+
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).clearSnackBars();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      success
+                          ? "Account deletion request submitted to Master Admin"
+                          : "Account deletion request recorded",
+                    ),
+                    backgroundColor: const Color(0xFFEF4444),
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(milliseconds: 2500),
+                  ),
+                );
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFEF4444),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text("Delete Permanently", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: const Text(
+              "Submit Deletion",
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),

@@ -5,6 +5,7 @@ import '../../../../backend/enterprise/home_backend/leads_service.dart';
 class LeadsListCards extends StatelessWidget {
   final String searchQuery;
   final String selectedFilter;
+  final DateTimeRange? dateRange;
   final Function(Map<String, dynamic> lead)? onLeadTap;
   final Function(Map<String, dynamic> lead)? onRetrySync;
 
@@ -12,6 +13,7 @@ class LeadsListCards extends StatelessWidget {
     super.key,
     this.searchQuery = "",
     this.selectedFilter = "All",
+    this.dateRange,
     this.onLeadTap,
     this.onRetrySync,
   });
@@ -25,6 +27,7 @@ class LeadsListCards extends StatelessWidget {
         uid,
         selectedFilter,
         searchQuery,
+        dateRange,
       ),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {

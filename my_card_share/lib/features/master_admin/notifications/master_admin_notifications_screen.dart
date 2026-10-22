@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../auth/back/smart_back_handler.dart';
@@ -5,6 +6,7 @@ import '../../auth/font style/font_style.dart';
 import 'widgets/notification_filter_chips.dart';
 import 'widgets/notification_list_section.dart';
 import 'widgets/notification_item_card.dart';
+import '../../../backend/notifications/mater admin/individual_delete_notification.dart';
 
 class MasterAdminNotificationsScreen extends StatefulWidget {
   const MasterAdminNotificationsScreen({super.key});
@@ -17,6 +19,7 @@ class MasterAdminNotificationsScreen extends StatefulWidget {
 class _MasterAdminNotificationsScreenState
     extends State<MasterAdminNotificationsScreen> {
   String _selectedFilter = "All";
+  StreamSubscription? _deletionSub;
 
   List<NotificationModel> _todayList = [
     const NotificationModel(
@@ -88,10 +91,40 @@ class _MasterAdminNotificationsScreenState
   void initState() {
     super.initState();
     NotificationStore.hasUnreadNotifier.addListener(_onUnreadStateChanged);
+
+    _deletionSub = IndividualDeleteNotification.instance
+        .streamDeletionNotifications()
+        .listen((deletionNotifs) {
+      if (!mounted) return;
+      setState(() {
+        _todayList.removeWhere((n) => n.id.startsWith("del_"));
+
+        for (final d in deletionNotifs) {
+          final id = "del_${d['id']}";
+          _todayList.insert(
+            0,
+            NotificationModel(
+              id: id,
+              title: d["title"] ?? "Account Deletion Request ⚠️",
+              subtext: d["body"] ?? "",
+              timestamp: "Recent",
+              category: NotificationCategory.system,
+              isUnread: !(d["isRead"] as bool? ?? false),
+              icon: Icons.person_remove_rounded,
+              iconColor: const Color(0xFFDC2626),
+              iconBgColor: const Color(0xFFFEE2E2),
+              route: "/master-admin/individuals",
+            ),
+          );
+        }
+        _checkGlobalUnreadStatus();
+      });
+    });
   }
 
   @override
   void dispose() {
+    _deletionSub?.cancel();
     NotificationStore.hasUnreadNotifier.removeListener(_onUnreadStateChanged);
     super.dispose();
   }
@@ -113,6 +146,11 @@ class _MasterAdminNotificationsScreenState
   }
 
   void _handleNotificationTap(NotificationModel item) {
+    if (item.id.startsWith("del_")) {
+      final realId = item.id.replaceFirst("del_", "");
+      IndividualDeleteNotification.instance.markAsRead(realId);
+    }
+
     // 1. Mark notification as read
     setState(() {
       _todayList = _todayList.map((n) {
@@ -133,6 +171,11 @@ class _MasterAdminNotificationsScreenState
   }
 
   void _handleNotificationDelete(NotificationModel item) {
+    if (item.id.startsWith("del_")) {
+      final realId = item.id.replaceFirst("del_", "");
+      IndividualDeleteNotification.instance.deleteNotification(realId);
+    }
+
     setState(() {
       _todayList.removeWhere((n) => n.id == item.id);
       _yesterdayList.removeWhere((n) => n.id == item.id);

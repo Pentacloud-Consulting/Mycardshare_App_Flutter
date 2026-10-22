@@ -311,6 +311,31 @@ class AppNotificationService extends ChangeNotifier {
     }
   }
 
+  /// Clears all notifications from local state and Firestore
+  Future<void> clearAllNotifications({String? targetUid}) async {
+    _notifications.clear();
+    notifyListeners();
+
+    final effectiveUid = targetUid ?? _currentUid;
+    if (effectiveUid.isNotEmpty) {
+      try {
+        final docs = await _firestore
+            .collection('users')
+            .doc(effectiveUid)
+            .collection('notifications')
+            .get();
+        final batch = _firestore.batch();
+        for (var doc in docs.docs) {
+          batch.delete(doc.reference);
+        }
+        await batch.commit();
+        debugPrint('[AppNotificationService] Cleared all notifications from Firestore');
+      } catch (e) {
+        debugPrint('[AppNotificationService] Error clearing notifications from Firestore: $e');
+      }
+    }
+  }
+
   @override
   void dispose() {
     _realtimeSubscription?.cancel();

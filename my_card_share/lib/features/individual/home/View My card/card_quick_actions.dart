@@ -105,15 +105,7 @@ class CardQuickActions extends StatelessWidget {
                           backgroundColor: const Color(0xFF0F172A),
                           behavior: SnackBarBehavior.floating,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          action: SnackBarAction(
-                            label: "Copy",
-                            textColor: const Color(0xFF38BDF8),
-                            onPressed: () {
-                              EmailConnectService.instance.copyEmailToClipboard(targetEmail);
-                              messenger.hideCurrentSnackBar();
-                            },
-                          ),
-                          duration: const Duration(milliseconds: 1800),
+                          duration: const Duration(milliseconds: 1500),
                         ),
                       );
                     } else {
@@ -125,7 +117,7 @@ class CardQuickActions extends StatelessWidget {
                             backgroundColor: const Color(0xFF0F172A),
                             behavior: SnackBarBehavior.floating,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            duration: const Duration(milliseconds: 1800),
+                            duration: const Duration(milliseconds: 1500),
                           ),
                         );
                       }

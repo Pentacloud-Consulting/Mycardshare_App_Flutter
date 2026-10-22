@@ -7,6 +7,8 @@ class EnterpriseLeadModel {
   final String name;
   final String company;
   final String email;
+  final String phone;
+  final String notes;
   final String capturedBy;
   final DateTime date;
   final String status; // 'Synced' or 'Failed'
@@ -16,6 +18,8 @@ class EnterpriseLeadModel {
     required this.name,
     required this.company,
     required this.email,
+    this.phone = '',
+    this.notes = '',
     required this.capturedBy,
     required this.date,
     required this.status,
@@ -41,6 +45,8 @@ class EnterpriseLeadModel {
       name: data['name'] ?? 'New Lead',
       company: data['company'] ?? 'N/A',
       email: data['email'] ?? '',
+      phone: data['phone'] ?? data['mobile'] ?? '',
+      notes: data['notes'] ?? '',
       capturedBy: data['capturedBy'] ?? 'Team Member',
       date: d,
       status: data['status'] ?? 'Synced',
@@ -51,6 +57,9 @@ class EnterpriseLeadModel {
         'name': name,
         'company': company,
         'email': email,
+        'phone': phone,
+        'mobile': phone,
+        'notes': notes,
         'capturedBy': capturedBy,
         'createdAt': FieldValue.serverTimestamp(),
         'status': status,
@@ -83,6 +92,7 @@ class EnterpriseLeadsService {
     String? uid,
     String selectedFilter = 'All',
     String searchQuery = '',
+    DateTimeRange? dateRange,
   ]) {
     final targetUid = uid ?? currentUid;
     if (targetUid == null || targetUid.isEmpty) {
@@ -110,6 +120,14 @@ class EnterpriseLeadsService {
         }).toList();
       }
 
+      if (dateRange != null) {
+        final start = DateTime(dateRange.start.year, dateRange.start.month, dateRange.start.day);
+        final end = DateTime(dateRange.end.year, dateRange.end.month, dateRange.end.day, 23, 59, 59, 999);
+        list = list.where((lead) {
+          return !lead.date.isBefore(start) && !lead.date.isAfter(end);
+        }).toList();
+      }
+
       if (selectedFilter == 'CRM Synced' || selectedFilter == 'Synced') {
         list = list.where((lead) => lead.status == 'Synced').toList();
       } else if (selectedFilter == 'Failed') {
@@ -121,7 +139,7 @@ class EnterpriseLeadsService {
   }
 
   /// Stream leads summary stats for the logged-in enterprise.
-  Stream<EnterpriseLeadStats> streamLeadStats([String? uid]) {
+  Stream<EnterpriseLeadStats> streamLeadStats([String? uid, DateTimeRange? dateRange]) {
     final targetUid = uid ?? currentUid;
     if (targetUid == null || targetUid.isEmpty) {
       return Stream.value(const EnterpriseLeadStats(
@@ -131,7 +149,7 @@ class EnterpriseLeadsService {
       ));
     }
 
-    return streamLeads(targetUid, 'All', '').map((leads) {
+    return streamLeads(targetUid, 'All', '', dateRange).map((leads) {
       final now = DateTime.now();
       final oneWeekAgo = now.subtract(const Duration(days: 7));
 
@@ -156,7 +174,9 @@ class EnterpriseLeadsService {
     required String uid,
     required String name,
     required String company,
+    String phone = '',
     String email = '',
+    String notes = '',
     required String capturedBy,
     String status = 'Synced',
   }) async {
@@ -166,7 +186,9 @@ class EnterpriseLeadsService {
         id: leadId,
         name: name,
         company: company,
+        phone: phone,
         email: email,
+        notes: notes,
         capturedBy: capturedBy,
         date: DateTime.now(),
         status: status,
@@ -208,14 +230,21 @@ class EnterpriseLeadsService {
     required String leadId,
     String? name,
     String? company,
+    String? phone,
     String? email,
+    String? notes,
     String? status,
   }) async {
     try {
       final Map<String, dynamic> updates = {};
       if (name != null) updates['name'] = name.trim();
       if (company != null) updates['company'] = company.trim();
+      if (phone != null) {
+        updates['phone'] = phone.trim();
+        updates['mobile'] = phone.trim();
+      }
       if (email != null) updates['email'] = email.trim();
+      if (notes != null) updates['notes'] = notes.trim();
       if (status != null) updates['status'] = status.trim();
       updates['updatedAt'] = FieldValue.serverTimestamp();
 

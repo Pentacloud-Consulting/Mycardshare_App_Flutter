@@ -66,7 +66,7 @@ class CopyWorkspaceInviteTile extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
               ),
               child: const Icon(
-                Icons.link_rounded,
+                Icons.confirmation_number_outlined,
                 color: Color(0xFFD97706),
                 size: 22,
               ),
@@ -79,7 +79,7 @@ class CopyWorkspaceInviteTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Copy Workspace Invite Link",
+                    "Copy Workspace Invite Code",
                     style: TextStyle(
                       fontSize: 14.5,
                       fontWeight: FontWeight.w700,
@@ -89,7 +89,7 @@ class CopyWorkspaceInviteTile extends StatelessWidget {
                   ),
                   SizedBox(height: 2),
                   Text(
-                    "Share join link with new employees to onboard instantly",
+                    "Share invite code with new employees to onboard instantly",
                     style: TextStyle(
                       fontSize: 12,
                       color: Color(0xFF64748B),
@@ -114,7 +114,7 @@ class CopyWorkspaceInviteTile extends StatelessWidget {
   }
 }
 
-/// The actual Popup Modal Sheet layout for copying the enterprise invite link.
+/// The actual Popup Modal Sheet layout for copying the enterprise invite code.
 class EnterpriseInvitePopupModal extends StatelessWidget {
   final String? uid;
   final String? inviteeEmail;
@@ -166,17 +166,15 @@ class EnterpriseInvitePopupModal extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
-                      Icons.link_rounded,
+                      Icons.confirmation_number_outlined,
                       color: Color(0xFFD97706),
                       size: 20,
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Text(
-                    inviteeEmail != null && inviteeEmail!.isNotEmpty
-                        ? "Employee Invite Link"
-                        : "Workspace Invite Link",
-                    style: const TextStyle(
+                  const Text(
+                    "Workspace Invite Code",
+                    style: TextStyle(
                       fontSize: 17.5,
                       fontWeight: FontWeight.w800,
                       color: Color(0xFF0F172A),
@@ -207,7 +205,7 @@ class EnterpriseInvitePopupModal extends StatelessWidget {
 
           // Description Subtitle
           const Text(
-            "Share this link with team members to let them join your organization workspace directly.",
+            "Share this invite code with team members to let them join your organization workspace directly.",
             style: TextStyle(
               fontSize: 13,
               color: Color(0xFF64748B),
@@ -217,7 +215,7 @@ class EnterpriseInvitePopupModal extends StatelessWidget {
 
           const SizedBox(height: 18),
 
-          // Real-Time Streamed Link Box
+          // Real-Time Streamed Code Box
           StreamBuilder<String>(
             stream: EnterpriseInviteLinkService.instance.streamInviteLink(
               uid: targetUid,
@@ -225,35 +223,49 @@ class EnterpriseInvitePopupModal extends StatelessWidget {
             ),
             builder: (context, snapshot) {
               final inviteLink = snapshot.data ?? "mycardshare.com/join-workspace";
+              String inviteCode = "";
+              if (inviteLink.contains('code=')) {
+                final parts = inviteLink.split('code=');
+                if (parts.length > 1) {
+                  inviteCode = parts[1].split('&').first;
+                }
+              }
+              if (inviteCode.isEmpty) {
+                if (targetUid != null && targetUid.isNotEmpty) {
+                  final hash = targetUid.hashCode.abs().toString();
+                  inviteCode = hash.length >= 8 ? hash.substring(0, 8) : hash.padRight(8, '0');
+                } else {
+                  inviteCode = "78408430";
+                }
+              }
 
               return Column(
                 children: [
-                  // Link Text Box
+                  // Code Display Box
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
                     ),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Icon(
-                          Icons.link_rounded,
+                          Icons.confirmation_number_outlined,
                           color: Color(0xFF0052FF),
-                          size: 18,
+                          size: 20,
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            inviteLink,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF334155),
-                            ),
+                        const SizedBox(width: 12),
+                        Text(
+                          inviteCode,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 2.0,
+                            color: Color(0xFF0F172A),
                           ),
                         ),
                       ],
@@ -262,7 +274,7 @@ class EnterpriseInvitePopupModal extends StatelessWidget {
 
                   const SizedBox(height: 18),
 
-                  // Action Buttons Row (Copy Link & Share)
+                  // Action Buttons Row (Copy Code & Share)
                   Row(
                     children: [
                       // Primary Copy Button
@@ -278,10 +290,9 @@ class EnterpriseInvitePopupModal extends StatelessWidget {
                               ),
                             ),
                             onPressed: () {
-                              EnterpriseInviteLinkService.instance.copyInviteLink(
+                              EnterpriseInviteLinkService.instance.copyInviteCode(
                                 context,
-                                inviteLink,
-                                inviteeEmail: inviteeEmail,
+                                inviteCode,
                               );
                               Navigator.pop(context);
                             },
@@ -291,7 +302,7 @@ class EnterpriseInvitePopupModal extends StatelessWidget {
                               color: Colors.white,
                             ),
                             label: const Text(
-                              "Copy Link",
+                              "Copy Code",
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
@@ -317,7 +328,7 @@ class EnterpriseInvitePopupModal extends StatelessWidget {
                           onPressed: () {
                             EnterpriseInviteLinkService.instance.shareInviteLink(
                               context,
-                              inviteLink,
+                              "Join my workspace on My Card Share with invite code: $inviteCode",
                             );
                             Navigator.pop(context);
                           },

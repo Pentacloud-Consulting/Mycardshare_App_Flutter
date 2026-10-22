@@ -75,14 +75,14 @@ class EnterpriseProfileMenuHub extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
 
-        // Reusable Workspace Invite Link
+        // Reusable Workspace Invite Code
         _buildMenuItem(
           context: context,
-          icon: Icons.link_rounded,
+          icon: Icons.confirmation_number_outlined,
           iconColor: const Color(0xFFD97706),
           bgColor: const Color(0xFFFEF3C7),
-          title: "Copy Workspace Invite Link",
-          subtitle: "Share join link with new employees to onboard instantly",
+          title: "Copy Workspace Invite Code",
+          subtitle: "Share 8-digit invite code with new employees to onboard instantly",
           onTap: () => _copyInviteLink(context),
         ),
         const SizedBox(height: 10),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import '../../../../backend/enterprise/home_backend/leads_service.dart';
+import '../../../../backend/number logic/phone_number_service.dart';
 
 class EnterpriseAddLeadSheet extends StatefulWidget {
   final VoidCallback? onLeadAdded;
@@ -272,16 +273,21 @@ class _EnterpriseAddLeadSheetState extends State<EnterpriseAddLeadSheet> {
               TextFormField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
+                maxLength: 15,
                 validator: (val) {
                   if (val == null || val.trim().isEmpty) {
                     return "Mobile number is required";
+                  }
+                  final validation = PhoneValidationModel.validateLocal(val);
+                  if (!validation.isValid) {
+                    return validation.errorMessage;
                   }
                   return null;
                 },
                 decoration: _buildInputDecoration(
                   hintText: "e.g. +91 98765 43210",
                   prefixIcon: Icons.phone_outlined,
-                ),
+                ).copyWith(counterText: ""),
               ),
 
               const SizedBox(height: 14),

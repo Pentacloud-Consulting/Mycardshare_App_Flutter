@@ -6,6 +6,7 @@ import '../../../models/user_model.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../backend/individual/sign/individual_auth_service.dart';
 import '../../../backend/enterprise/sign/enterprise_auth_service.dart';
+import '../../../services/auth/password_validator.dart';
 import '../login/login_screen.dart'; // import GoogleLogoWidget
 import '../back/smart_back_handler.dart';
 
@@ -20,6 +21,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
+  PasswordValidationResult _passwordValidation = PasswordValidationResult.empty();
 
   int _selectedTab = 0; // 0: Individual, 1: Enterprise
   bool _obscurePassword = true;
@@ -54,6 +57,19 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         const SnackBar(
           content: Text("Please enter both email address and password"),
           backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    // Strict 5-rule password validation matching website
+    final validation = PasswordValidationResult.validate(password);
+    if (!validation.isValid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(validation.firstErrorMessage ?? "Password does not meet required criteria"),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
@@ -419,6 +435,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     child: TextField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
+                      onChanged: (val) {
+                        setState(() {
+                          _passwordValidation = PasswordValidationResult.validate(val);
+                        });
+                      },
                       style: const TextStyle(
                         fontSize: 15,
                         color: Color(0xFF0F172A),
@@ -453,6 +474,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       ),
                     ),
                   ),
+
+                  // Live Password Strength & 5-Rule Checklist (Matching Website Policy)
+                  if (_passwordController.text.isNotEmpty)
+                    PasswordStrengthIndicatorWidget(validation: _passwordValidation),
 
                   const SizedBox(height: 14),
 

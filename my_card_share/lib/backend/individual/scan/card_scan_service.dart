@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import '../../Camera Card Scan & Voice/camera/camera_card_scan_service.dart';
 import '../previews/individual_metrics_store.dart';
+import '../vault/contact_duplicate_service.dart';
 
 class ScannedContactData {
   final String id;
@@ -323,20 +324,40 @@ class CardScanService {
       s.replaceAllMapped(RegExp(r'\b\w'), (m) => m.group(0)!.toUpperCase());
 
   /// Saves scanned contact to Firestore & increments real Scans counter on Home page.
+  /// Detects existing duplicate contacts to avoid duplicate Firestore documents.
   Future<void> saveScannedContact(ScannedContactData contact) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null && uid.isNotEmpty) {
       try {
-        await FirebaseFirestore.instance
+        final contactsRef = FirebaseFirestore.instance
             .collection('users')
             .doc(uid)
-            .collection('contacts')
-            .doc(contact.id)
-            .set(contact.toJson());
+            .collection('contacts');
 
-        // Increment real Scans metric on Home dashboard
-        await IndividualMetricsStore.instance.incrementScans(uid);
-        debugPrint('[CardScanService] Contact saved & scan metric incremented for UID: $uid');
+        // Check if duplicate contact already exists in Firestore
+        final existingDoc = await ContactDuplicateService.findDuplicateInFirestore(
+          uid: uid,
+          name: contact.name,
+          phone: contact.phone,
+          email: contact.email,
+          company: contact.company,
+          excludeId: contact.id,
+        );
+
+        final targetDocId = existingDoc?.id ?? contact.id;
+        final isUpdate = existingDoc != null;
+
+        await contactsRef.doc(targetDocId).set(
+              contact.toJson(),
+              SetOptions(merge: true),
+            );
+
+        if (!isUpdate) {
+          // Increment real Scans metric on Home dashboard only for new contacts
+          await IndividualMetricsStore.instance.incrementScans(uid);
+        }
+
+        debugPrint('[CardScanService] Contact ${isUpdate ? "updated" : "saved"} for UID: $uid (Doc ID: $targetDocId)');
       } catch (e) {
         debugPrint('[CardScanService] Firestore save notice: $e');
       }

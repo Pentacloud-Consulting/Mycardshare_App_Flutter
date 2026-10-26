@@ -13,6 +13,7 @@ import 'package:my_card_share/backend/individual/qr_scan/slug_validator.dart';
 import 'package:my_card_share/features/auth/back/smart_back_handler.dart';
 import 'package:my_card_share/features/auth/font style/font_style.dart';
 import 'package:my_card_share/core/utils/image_cropper_util.dart';
+import 'package:my_card_share/backend/number logic/phone_number_service.dart';
 
 class IndividualOnboardingFormScreen extends StatefulWidget {
   final String? initialFullName;
@@ -47,6 +48,7 @@ class _IndividualOnboardingFormScreenState
   final TextEditingController _jobTitleController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _websiteController = TextEditingController();
+  String? _phoneError;
 
   // Real Profile Image Upload bytes / path
   Uint8List? _profileImageBytes;
@@ -272,6 +274,7 @@ class _IndividualOnboardingFormScreenState
         imageQuality: 90,
       );
       if (pickedFile != null) {
+        if (!mounted) return;
         final croppedPath = await AppImageCropper.cropImage(
           context: context,
           sourcePath: pickedFile.path,
@@ -391,6 +394,7 @@ class _IndividualOnboardingFormScreenState
         imageQuality: 90,
       );
       if (pickedFile != null) {
+        if (!mounted) return;
         final croppedPath = await AppImageCropper.cropImage(
           context: context,
           sourcePath: pickedFile.path,
@@ -419,6 +423,12 @@ class _IndividualOnboardingFormScreenState
       }
       if (_phoneController.text.trim().isEmpty) {
         _showSnackBar('Please enter your Phone Number');
+        return;
+      }
+      final phoneValidation = PhoneValidationModel.validateLocal(_phoneController.text.trim());
+      if (!phoneValidation.isValid) {
+        setState(() => _phoneError = phoneValidation.errorMessage);
+        _showSnackBar(phoneValidation.errorMessage ?? 'Please enter a valid 10-digit mobile number');
         return;
       }
     }
@@ -1073,13 +1083,23 @@ class _IndividualOnboardingFormScreenState
 
           const SizedBox(height: 16),
 
-          // Phone Number (Required)
+          // Phone Number (Required with strict 10-digit validation)
           _buildTextField(
             controller: _phoneController,
             label: 'Phone Number *',
             hint: 'e.g. +91 98765 43210',
             icon: Icons.phone_outlined,
             keyboardType: TextInputType.phone,
+            maxLength: 15,
+            errorText: _phoneError,
+            onChanged: (val) {
+              if (val.trim().isNotEmpty) {
+                final v = PhoneValidationModel.validateLocal(val);
+                setState(() => _phoneError = v.isValid ? null : v.errorMessage);
+              } else {
+                setState(() => _phoneError = null);
+              }
+            },
           ),
         ],
       ),
@@ -1516,6 +1536,9 @@ class _IndividualOnboardingFormScreenState
     required String hint,
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
+    int? maxLength,
+    String? errorText,
+    ValueChanged<String>? onChanged,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1528,28 +1551,65 @@ class _IndividualOnboardingFormScreenState
         TextField(
           controller: controller,
           keyboardType: keyboardType,
+          maxLength: maxLength,
+          onChanged: onChanged,
           style: const TextStyle(fontSize: 14.5, color: Color(0xFF0F172A)),
           decoration: InputDecoration(
             hintText: hint,
+            counterText: "",
             hintStyle: const TextStyle(fontSize: 13.5, color: Color(0xFF94A3B8)),
-            prefixIcon: Icon(icon, color: const Color(0xFF0052FF), size: 20),
+            prefixIcon: Icon(
+              icon,
+              color: errorText != null ? const Color(0xFFDC2626) : const Color(0xFF0052FF),
+              size: 20,
+            ),
             filled: true,
             fillColor: Colors.white,
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+              borderSide: BorderSide(
+                color: errorText != null ? const Color(0xFFEF4444) : const Color(0xFFCBD5E1),
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              borderSide: BorderSide(
+                color: errorText != null ? const Color(0xFFEF4444) : const Color(0xFFE2E8F0),
+                width: errorText != null ? 1.4 : 1.0,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: Color(0xFF0052FF), width: 1.8),
+              borderSide: BorderSide(
+                color: errorText != null ? const Color(0xFFDC2626) : const Color(0xFF0052FF),
+                width: 1.8,
+              ),
             ),
           ),
         ),
+        if (errorText != null) ...[
+          const SizedBox(height: 5),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(
+              children: [
+                const Icon(Icons.error_outline_rounded, size: 13, color: Color(0xFFDC2626)),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    errorText,
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      color: Color(0xFFDC2626),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }

@@ -168,7 +168,7 @@ class SamsungWalletService {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Samsung Wallet pass saved for $name!',
+                    'Opening Samsung Wallet to save card for $name...',
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),

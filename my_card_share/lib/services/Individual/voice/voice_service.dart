@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../providers/vault_provider.dart';
 import '../../../backend/individual/previews/individual_metrics_store.dart';
 import '../../../backend/individual/notification/vault_notification_service.dart';
+import '../../../backend/individual/vault/contact_duplicate_service.dart';
 
 class VoiceService {
   VoiceService._();
@@ -36,8 +37,16 @@ class VoiceService {
     final initials = getInitials(cleanName);
     final contactId = 'voice_${DateTime.now().millisecondsSinceEpoch}';
 
+    final existingLocal = ref.read(vaultNotifierProvider.notifier).findExistingContact(
+      name: cleanName,
+      phone: cleanPhone,
+      email: cleanEmail,
+      company: cleanCompany,
+    );
+    final targetId = existingLocal?['id'] ?? contactId;
+
     final contact = {
-      'id': contactId,
+      'id': targetId,
       'name': cleanName,
       'role': cleanRole,
       'company': cleanCompany,
@@ -48,20 +57,32 @@ class VoiceService {
       'initials': initials,
     };
 
-    // 1. Instant local state update
+    // 1. Instant local state update (deduplicated)
     ref.read(vaultNotifierProvider.notifier).addContact(contact);
 
     // 2. Direct Firestore persistence
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null && uid.isNotEmpty) {
       try {
+        final existingDoc = await ContactDuplicateService.findDuplicateInFirestore(
+          uid: uid,
+          name: cleanName,
+          phone: cleanPhone,
+          email: cleanEmail,
+          company: cleanCompany,
+          excludeId: targetId,
+        );
+
+        final docId = existingDoc?.id ?? targetId;
+        final isUpdate = existingDoc != null || existingLocal != null;
+
         await FirebaseFirestore.instance
             .collection('users')
             .doc(uid)
             .collection('contacts')
-            .doc(contactId)
+            .doc(docId)
             .set({
-          'id': contactId,
+          'id': docId,
           'name': cleanName,
           'role': cleanRole,
           'company': cleanCompany,
@@ -74,17 +95,19 @@ class VoiceService {
           'createdAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
 
-        // 3. Increment scans / voice metrics on dashboard
-        await IndividualMetricsStore.instance.incrementScans(uid);
+        if (!isUpdate) {
+          // 3. Increment scans / voice metrics on dashboard only for new contacts
+          await IndividualMetricsStore.instance.incrementScans(uid);
 
-        // 4. Send notification
-        await VaultNotificationService.instance.notifyContactSaved(
-          targetUid: uid,
-          contactName: cleanName,
-          method: 'Voice',
-        );
+          // 4. Send notification
+          await VaultNotificationService.instance.notifyContactSaved(
+            targetUid: uid,
+            contactName: cleanName,
+            method: 'Voice',
+          );
+        }
 
-        debugPrint('[VoiceService] Voice contact persisted to Firestore & metrics incremented for UID: $uid');
+        debugPrint('[VoiceService] Voice contact ${isUpdate ? "updated" : "persisted"} to Firestore for UID: $uid (Doc ID: $docId)');
       } catch (e) {
         debugPrint('[VoiceService] Firestore save error: $e');
       }

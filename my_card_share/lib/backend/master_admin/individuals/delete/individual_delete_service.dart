@@ -6,7 +6,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../backend/individual/profile/individual_profile_store.dart';
 
 class IndividualDeleteService {
-  static const String baseUrl = "https://mycardshare.com";
+  static const String primaryUrl = "https://digitalbusinesscloudcard.com";
+  static const String fallbackUrl = "https://mycardshare.com";
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   static Future<Map<String, String>> _getHeaders() async {
@@ -74,23 +75,24 @@ class IndividualDeleteService {
         "createdAt": FieldValue.serverTimestamp(),
       });
 
-      // 4. Send to Backend API if online
-      try {
-        final headers = await _getHeaders();
-        await http.post(
-          Uri.parse("$baseUrl/api/sync/individual-deletion"),
-          headers: headers,
-          body: jsonEncode({
-            "action": "request_deletion",
-            "userId": uid,
-            "userName": userName,
-            "userEmail": email,
-            "reason": reason,
-            "feedback": feedback,
-          }),
-        ).timeout(const Duration(seconds: 4));
-      } catch (apiErr) {
-        debugPrint("[IndividualDeleteService] Backend API sync note (Firestore already updated): $apiErr");
+      // 4. Send to Backend API
+      for (final host in [primaryUrl, fallbackUrl]) {
+        try {
+          final headers = await _getHeaders();
+          final res = await http.post(
+            Uri.parse("$host/api/sync/individual-deletion"),
+            headers: headers,
+            body: jsonEncode({
+              "action": "request_deletion",
+              "userId": uid,
+              "userName": userName,
+              "userEmail": email,
+              "reason": reason,
+              "feedback": feedback,
+            }),
+          ).timeout(const Duration(seconds: 4));
+          if (res.statusCode == 200 || res.statusCode == 201) break;
+        } catch (_) {}
       }
 
       debugPrint("[IndividualDeleteService] Deletion request created successfully for $userName ($uid)");
@@ -101,75 +103,151 @@ class IndividualDeleteService {
     }
   }
 
-  /// 2. MASTER ADMIN: STREAM PENDING DELETION REQUESTS (Real-Time)
+  /// 2. MASTER ADMIN: STREAM PENDING DELETION REQUESTS (Real-Time Multi-Source)
   static Stream<List<Map<String, dynamic>>> streamPendingDeletions() {
     return _firestore
         .collection("account_deletion_requests")
-        .where("status", isEqualTo: "pending")
         .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) {
+        .asyncMap((snapshot) async {
+      final Map<String, Map<String, dynamic>> requestsMap = {};
+
+      // 1. Process account_deletion_requests collection (tolerant of status formatting)
+      for (final doc in snapshot.docs) {
         final data = doc.data();
+        final statusStr = (data["status"] ?? "pending").toString().toLowerCase().trim();
+        if (statusStr == "confirmed" || statusStr == "rejected" || statusStr == "completed") {
+          continue;
+        }
+
         DateTime dt = DateTime.now();
         if (data["createdAt"] is Timestamp) {
           dt = (data["createdAt"] as Timestamp).toDate();
         }
-        return {
+
+        final uid = (data["userId"] ?? doc.id).toString();
+        requestsMap[uid] = {
           "requestId": doc.id,
-          "userId": data["userId"] ?? doc.id,
+          "userId": uid,
           "userName": data["userName"] ?? "User",
           "userEmail": data["userEmail"] ?? "",
-          "reason": data["reason"] ?? "No reason specified",
+          "reason": data["reason"] ?? "User requested account deletion",
           "feedback": data["feedback"] ?? "",
-          "status": data["status"] ?? "pending",
+          "status": "pending",
           "createdAt": dt,
         };
-      }).toList();
+      }
+
+      // 2. Also check users collection for any deletion_pending or deactivated accounts
+      try {
+        final usersSnap = await _firestore.collection("users").get();
+        for (final uDoc in usersSnap.docs) {
+          final uData = uDoc.data();
+          final uStatus = (uData["status"] ?? "").toString().toLowerCase();
+          final isDelPending = uData["deletion_pending"] == true ||
+              uStatus == "deletion_pending" ||
+              uStatus == "deactivated" ||
+              uData["isDeactivated"] == true;
+
+          if (isDelPending && !requestsMap.containsKey(uDoc.id)) {
+            DateTime uDt = DateTime.now();
+            if (uData["deletionRequestedAt"] is Timestamp) {
+              uDt = (uData["deletionRequestedAt"] as Timestamp).toDate();
+            } else if (uData["updatedAt"] is Timestamp) {
+              uDt = (uData["updatedAt"] as Timestamp).toDate();
+            }
+
+            requestsMap[uDoc.id] = {
+              "requestId": uDoc.id,
+              "userId": uDoc.id,
+              "userName": uData["displayName"] ?? uData["name"] ?? uData["fullName"] ?? "Individual User",
+              "userEmail": uData["email"] ?? "",
+              "reason": uData["deletionReason"] ?? "Account marked for deactivation / deletion",
+              "feedback": "",
+              "status": "pending",
+              "createdAt": uDt,
+            };
+          }
+        }
+      } catch (uErr) {
+        debugPrint("[IndividualDeleteService] Users pending check note: $uErr");
+      }
+
+      // 3. Fallback to live backend API if Firestore returned empty
+      if (requestsMap.isEmpty) {
+        final apiList = await _fetchFromApi();
+        for (final req in apiList) {
+          final id = (req["userId"] ?? req["requestId"] ?? req["id"] ?? "").toString();
+          if (id.isNotEmpty) requestsMap[id] = req;
+        }
+      }
+
+      return requestsMap.values.toList();
+    }).handleError((err) {
+      debugPrint("[IndividualDeleteService] streamPendingDeletions error: $err");
+      return <Map<String, dynamic>>[];
     });
   }
 
   /// 3. MASTER ADMIN: FETCH ALL PENDING DELETION REQUESTS
   static Future<List<Map<String, dynamic>>> fetchPendingDeletions() async {
+    final Map<String, Map<String, dynamic>> requestsMap = {};
+
     try {
-      final snap = await _firestore
-          .collection("account_deletion_requests")
-          .where("status", isEqualTo: "pending")
-          .get();
+      final snap = await _firestore.collection("account_deletion_requests").get();
+      for (final doc in snap.docs) {
+        final data = doc.data();
+        final statusStr = (data["status"] ?? "pending").toString().toLowerCase().trim();
+        if (statusStr == "confirmed" || statusStr == "rejected" || statusStr == "completed") {
+          continue;
+        }
 
-      if (snap.docs.isNotEmpty) {
-        return snap.docs.map((doc) {
-          final data = doc.data();
-          DateTime dt = DateTime.now();
-          if (data["createdAt"] is Timestamp) {
-            dt = (data["createdAt"] as Timestamp).toDate();
-          }
-          return {
-            "requestId": doc.id,
-            "userId": data["userId"] ?? doc.id,
-            "userName": data["userName"] ?? "User",
-            "userEmail": data["userEmail"] ?? "",
-            "reason": data["reason"] ?? "No reason specified",
-            "feedback": data["feedback"] ?? "",
-            "status": data["status"] ?? "pending",
-            "createdAt": dt,
-          };
-        }).toList();
-      }
+        DateTime dt = DateTime.now();
+        if (data["createdAt"] is Timestamp) {
+          dt = (data["createdAt"] as Timestamp).toDate();
+        }
 
-      // Fallback: Check backend API
-      final headers = await _getHeaders();
-      final res = await http.get(
-        Uri.parse("$baseUrl/api/sync/individual-deletion"),
-        headers: headers,
-      ).timeout(const Duration(seconds: 4));
-
-      if (res.statusCode == 200) {
-        final json = jsonDecode(res.body);
-        final list = json["data"]?["requests"] ?? [];
-        return List<Map<String, dynamic>>.from(list);
+        final uid = (data["userId"] ?? doc.id).toString();
+        requestsMap[uid] = {
+          "requestId": doc.id,
+          "userId": uid,
+          "userName": data["userName"] ?? "User",
+          "userEmail": data["userEmail"] ?? "",
+          "reason": data["reason"] ?? "User requested account deletion",
+          "feedback": data["feedback"] ?? "",
+          "status": "pending",
+          "createdAt": dt,
+        };
       }
     } catch (e) {
-      debugPrint("[IndividualDeleteService] Fetch deletions error: $e");
+      debugPrint("[IndividualDeleteService] Firestore get error: $e");
+    }
+
+    if (requestsMap.isEmpty) {
+      final apiList = await _fetchFromApi();
+      for (final req in apiList) {
+        final id = (req["userId"] ?? req["requestId"] ?? req["id"] ?? "").toString();
+        if (id.isNotEmpty) requestsMap[id] = req;
+      }
+    }
+
+    return requestsMap.values.toList();
+  }
+
+  static Future<List<Map<String, dynamic>>> _fetchFromApi() async {
+    for (final host in [primaryUrl, fallbackUrl]) {
+      try {
+        final headers = await _getHeaders();
+        final res = await http.get(
+          Uri.parse("$host/api/sync/individual-deletion"),
+          headers: headers,
+        ).timeout(const Duration(seconds: 4));
+
+        if (res.statusCode == 200) {
+          final json = jsonDecode(res.body);
+          final list = json["data"]?["requests"] ?? json["requests"] ?? [];
+          return List<Map<String, dynamic>>.from(list);
+        }
+      } catch (_) {}
     }
     return [];
   }
@@ -204,19 +282,22 @@ class IndividualDeleteService {
       }
 
       // 4. Trigger backend sync endpoint to delete from MongoDB/Auth
-      try {
-        final headers = await _getHeaders();
-        await http.post(
-          Uri.parse("$baseUrl/api/sync/individual-deletion"),
-          headers: headers,
-          body: jsonEncode({
-            "action": "confirm_delete",
-            "requestId": requestId,
-            "targetUserId": targetUserId,
-          }),
-        ).timeout(const Duration(seconds: 4));
-      } catch (apiErr) {
-        debugPrint("[IndividualDeleteService] Backend API confirm delete note: $apiErr");
+      for (final host in [primaryUrl, fallbackUrl]) {
+        try {
+          final headers = await _getHeaders();
+          final res = await http.post(
+            Uri.parse("$host/api/sync/individual-deletion"),
+            headers: headers,
+            body: jsonEncode({
+              "action": "confirm_delete",
+              "requestId": requestId,
+              "targetUserId": targetUserId,
+            }),
+          ).timeout(const Duration(seconds: 4));
+          if (res.statusCode == 200) break;
+        } catch (apiErr) {
+          debugPrint("[IndividualDeleteService] Backend API confirm delete note: $apiErr");
+        }
       }
 
       return true;
@@ -259,20 +340,23 @@ class IndividualDeleteService {
       }
 
       // 4. Trigger backend sync endpoint
-      try {
-        final headers = await _getHeaders();
-        await http.post(
-          Uri.parse("$baseUrl/api/sync/individual-deletion"),
-          headers: headers,
-          body: jsonEncode({
-            "action": "reject_deletion",
-            "requestId": requestId,
-            "targetUserId": targetUserId,
-            "rejectReason": reason ?? "Declined by admin",
-          }),
-        ).timeout(const Duration(seconds: 4));
-      } catch (apiErr) {
-        debugPrint("[IndividualDeleteService] Backend API reject delete note: $apiErr");
+      for (final host in [primaryUrl, fallbackUrl]) {
+        try {
+          final headers = await _getHeaders();
+          final res = await http.post(
+            Uri.parse("$host/api/sync/individual-deletion"),
+            headers: headers,
+            body: jsonEncode({
+              "action": "reject_deletion",
+              "requestId": requestId,
+              "targetUserId": targetUserId,
+              "rejectReason": reason ?? "Declined by admin",
+            }),
+          ).timeout(const Duration(seconds: 4));
+          if (res.statusCode == 200) break;
+        } catch (apiErr) {
+          debugPrint("[IndividualDeleteService] Backend API reject delete note: $apiErr");
+        }
       }
 
       return true;

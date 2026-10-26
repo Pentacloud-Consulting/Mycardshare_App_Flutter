@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../backend/individual/change_password/change_password_service.dart';
+import '../../../../services/auth/password_validator.dart';
 
 class ChangePasswordDialog extends StatefulWidget {
   const ChangePasswordDialog({super.key});
@@ -13,6 +14,8 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
   final _currentController = TextEditingController();
   final _newController = TextEditingController();
   final _confirmController = TextEditingController();
+
+  PasswordValidationResult _newPasswordValidation = PasswordValidationResult.empty();
 
   bool _obscureCurrent = true;
   bool _obscureNew = true;
@@ -79,119 +82,138 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
         padding: const EdgeInsets.all(22.0),
         child: Form(
           key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header Title & Close Button
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "Change Password",
-                    style: TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
-                      letterSpacing: -0.3,
-                    ),
-                  ),
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () => Navigator.pop(context),
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        width: 34,
-                        height: 34,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFE2E8F0),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.close_rounded, color: Color(0xFF475569), size: 18),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Title & Close Button
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Change Password",
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                        letterSpacing: -0.3,
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-
-              // Current Password Field (Clay Inset, No Black Border)
-              _buildClayInputField(
-                controller: _currentController,
-                obscureText: _obscureCurrent,
-                hintText: "Current Password",
-                icon: Icons.lock_outline_rounded,
-                onToggleVisibility: () => setState(() => _obscureCurrent = !_obscureCurrent),
-                validator: (val) => val == null || val.isEmpty ? "Enter current password" : null,
-              ),
-              const SizedBox(height: 14),
-
-              // New Password Field (Clay Inset, No Black Border)
-              _buildClayInputField(
-                controller: _newController,
-                obscureText: _obscureNew,
-                hintText: "New Password",
-                icon: Icons.lock_reset_rounded,
-                onToggleVisibility: () => setState(() => _obscureNew = !_obscureNew),
-                validator: (val) => val == null || val.length < 6 ? "Minimum 6 characters" : null,
-              ),
-              const SizedBox(height: 14),
-
-              // Confirm Password Field (Clay Inset, No Black Border)
-              _buildClayInputField(
-                controller: _confirmController,
-                obscureText: _obscureConfirm,
-                hintText: "Confirm New Password",
-                icon: Icons.check_circle_outline_rounded,
-                onToggleVisibility: () => setState(() => _obscureConfirm = !_obscureConfirm),
-                validator: (val) {
-                  if (val == null || val.isEmpty) return "Confirm your password";
-                  if (val != _newController.text) return "Passwords do not match";
-                  return null;
-                },
-              ),
-              const SizedBox(height: 22),
-
-              // 3D Clay Action Button
-              Container(
-                width: double.infinity,
-                height: 50,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x380052FF),
-                      blurRadius: 14,
-                      offset: Offset(0, 5),
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => Navigator.pop(context),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFE2E8F0),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.close_rounded, color: Color(0xFF475569), size: 18),
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _savePassword,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0052FF),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                        )
-                      : const Text(
-                          "Update Password",
-                          style: TextStyle(
-                            fontSize: 15.5,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            letterSpacing: -0.1,
-                          ),
-                        ),
+                const SizedBox(height: 18),
+
+                // Current Password Field (Clay Inset, No Black Border)
+                _buildClayInputField(
+                  controller: _currentController,
+                  obscureText: _obscureCurrent,
+                  hintText: "Current Password",
+                  icon: Icons.lock_outline_rounded,
+                  onToggleVisibility: () => setState(() => _obscureCurrent = !_obscureCurrent),
+                  validator: (val) => val == null || val.isEmpty ? "Enter current password" : null,
                 ),
-              ),
-            ],
+                const SizedBox(height: 14),
+
+                // New Password Field with strict validation & live strength meter
+                _buildClayInputField(
+                  controller: _newController,
+                  obscureText: _obscureNew,
+                  hintText: "New Password",
+                  icon: Icons.lock_reset_rounded,
+                  onToggleVisibility: () => setState(() => _obscureNew = !_obscureNew),
+                  onChanged: (val) {
+                    setState(() {
+                      _newPasswordValidation = PasswordValidationResult.validate(val);
+                    });
+                  },
+                  validator: (val) {
+                    if (val == null || val.isEmpty) return "Enter new password";
+                    final validation = PasswordValidationResult.validate(val);
+                    if (!validation.isValid) {
+                      return validation.firstErrorMessage ?? "Password does not meet required criteria";
+                    }
+                    return null;
+                  },
+                ),
+
+                // Live Password Strength Meter & 5-Rule Checklist
+                if (_newController.text.isNotEmpty)
+                  PasswordStrengthIndicatorWidget(validation: _newPasswordValidation),
+
+                const SizedBox(height: 14),
+
+                // Confirm Password Field (Clay Inset, No Black Border)
+                _buildClayInputField(
+                  controller: _confirmController,
+                  obscureText: _obscureConfirm,
+                  hintText: "Confirm New Password",
+                  icon: Icons.check_circle_outline_rounded,
+                  onToggleVisibility: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                  validator: (val) {
+                    if (val == null || val.isEmpty) return "Confirm your password";
+                    if (val != _newController.text) return "Passwords do not match";
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 22),
+
+                // 3D Clay Action Button
+                Container(
+                  width: double.infinity,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x380052FF),
+                        blurRadius: 14,
+                        offset: Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _savePassword,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0052FF),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          )
+                        : const Text(
+                            "Update Password",
+                            style: TextStyle(
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: -0.1,
+                            ),
+                          ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -205,6 +227,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
     required IconData icon,
     required VoidCallback onToggleVisibility,
     required String? Function(String?) validator,
+    ValueChanged<String>? onChanged,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -221,6 +244,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
       child: TextFormField(
         controller: controller,
         obscureText: obscureText,
+        onChanged: onChanged,
         style: const TextStyle(fontSize: 14.5, color: Color(0xFF0F172A), fontWeight: FontWeight.w600),
         decoration: InputDecoration(
           hintText: hintText,
@@ -255,5 +279,3 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
     );
   }
 }
-
-

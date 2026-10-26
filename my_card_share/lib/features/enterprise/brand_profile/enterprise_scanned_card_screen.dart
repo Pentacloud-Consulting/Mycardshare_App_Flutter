@@ -378,21 +378,17 @@ class _EnterpriseScannedCardScreenState
                         ],
                       ),
                       child: ElevatedButton.icon(
-                        onPressed: () async {
-                          final contactData = ContactExportData(
+                        onPressed: () {
+                          SaveContactService.saveContactDirectly(
+                            context,
                             fullName: companyName,
-                            phoneNumber: phone,
-                            emailAddress: email,
-                            companyName: companyName,
+                            phone: phone,
+                            email: email,
+                            company: companyName,
                             jobTitle: profile.industry,
-                            websiteUrl: website,
-                            shortBio: profile.shortBio,
+                            website: website,
+                            bio: profile.shortBio,
                           );
-                          final success = await SaveContactService.instance
-                              .saveContactToPhone(contactData);
-                          _showToast(success
-                              ? "Exported $companyName to mobile contacts!"
-                              : "Contact details: $companyName ($phone)");
                         },
                         icon: const Icon(Icons.download_rounded,
                             color: Colors.white, size: 22),

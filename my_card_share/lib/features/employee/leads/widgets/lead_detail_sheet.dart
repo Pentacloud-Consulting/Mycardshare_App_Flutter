@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../backend/individual/lead/active_lead.dart';
+import '../../../../backend/individual/lead/lead_action_helper.dart';
 import 'edit_lead.dart';
 
 /// Modal bottom sheet to view full lead details (matching Image 3 Vault detail view styling) with Edit support.
@@ -174,10 +175,34 @@ class _LeadDetailSheetState extends State<LeadDetailSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildQuickActionButton(Icons.phone_rounded, "Call", const Color(0xFFDCFCE7), const Color(0xFF16A34A)),
-                _buildQuickActionButton(Icons.message_rounded, "Message", const Color(0xFFEFF6FF), const Color(0xFF2563EB)),
-                _buildQuickActionButton(Icons.email_rounded, "Email", const Color(0xFFFEF3C7), const Color(0xFFD97706)),
-                _buildQuickActionButton(Icons.share_rounded, "Share", const Color(0xFFF3E8FF), const Color(0xFF9333EA)),
+                _buildQuickActionButton(
+                  icon: Icons.phone_rounded,
+                  label: "Call",
+                  bg: const Color(0xFFDCFCE7),
+                  fg: const Color(0xFF16A34A),
+                  onTap: () => LeadActionHelper.callLead(context, name: lead.name, phone: lead.phone),
+                ),
+                _buildQuickActionButton(
+                  icon: Icons.message_rounded,
+                  label: "Message",
+                  bg: const Color(0xFFEFF6FF),
+                  fg: const Color(0xFF2563EB),
+                  onTap: () => LeadActionHelper.messageLead(context, name: lead.name, phone: lead.phone),
+                ),
+                _buildQuickActionButton(
+                  icon: Icons.email_rounded,
+                  label: "Email",
+                  bg: const Color(0xFFFEF3C7),
+                  fg: const Color(0xFFD97706),
+                  onTap: () => LeadActionHelper.emailLead(context, name: lead.name, email: lead.email),
+                ),
+                _buildQuickActionButton(
+                  icon: Icons.share_rounded,
+                  label: "Share",
+                  bg: const Color(0xFFF3E8FF),
+                  fg: const Color(0xFF9333EA),
+                  onTap: () => LeadActionHelper.shareLead(context, lead),
+                ),
               ],
             ),
 
@@ -195,29 +220,54 @@ class _LeadDetailSheetState extends State<LeadDetailSheet> {
               child: Column(
                 children: [
                   _buildDetailRow(
-                    Icons.phone_outlined,
-                    lead.phone.trim().isNotEmpty ? lead.phone.trim() : "Not provided",
+                    icon: Icons.phone_outlined,
+                    value: lead.phone.trim().isNotEmpty ? lead.phone.trim() : "Not provided",
+                    label: "phone number",
+                    onTap: lead.phone.trim().isNotEmpty && lead.phone.trim().toLowerCase() != "not provided"
+                        ? () => LeadActionHelper.callLead(context, name: lead.name, phone: lead.phone)
+                        : null,
                   ),
                   const Divider(height: 20, color: Color(0xFFF1F5F9)),
                   _buildDetailRow(
-                    Icons.mail_outline_rounded,
-                    lead.email.trim().isNotEmpty ? lead.email.trim() : "Not provided",
+                    icon: Icons.mail_outline_rounded,
+                    value: lead.email.trim().isNotEmpty ? lead.email.trim() : "Not provided",
+                    label: "email address",
+                    onTap: lead.email.trim().isNotEmpty && lead.email.trim().toLowerCase() != "not provided"
+                        ? () => LeadActionHelper.emailLead(context, name: lead.name, email: lead.email)
+                        : null,
                   ),
                   const Divider(height: 20, color: Color(0xFFF1F5F9)),
                   _buildDetailRow(
-                    Icons.language_rounded,
-                    lead.website.trim().isNotEmpty
+                    icon: Icons.language_rounded,
+                    value: lead.website.trim().isNotEmpty
                         ? lead.website.trim()
                         : "www.${lead.company.trim().replaceAll(' ', '').toLowerCase()}.com",
+                    label: "website",
+                    onTap: () {
+                      final site = lead.website.trim().isNotEmpty
+                          ? lead.website.trim()
+                          : "www.${lead.company.trim().replaceAll(' ', '').toLowerCase()}.com";
+                      LeadActionHelper.openUrl(context, site);
+                    },
                   ),
                   const Divider(height: 20, color: Color(0xFFF1F5F9)),
                   _buildDetailRow(
-                    Icons.location_on_outlined,
-                    lead.location.trim().isNotEmpty ? lead.location.trim() : "San Francisco, CA",
+                    icon: Icons.location_on_outlined,
+                    value: lead.location.trim().isNotEmpty ? lead.location.trim() : "San Francisco, CA",
+                    label: "location",
+                    onTap: () {
+                      final loc = lead.location.trim().isNotEmpty ? lead.location.trim() : "San Francisco, CA";
+                      LeadActionHelper.openUrl(context, "https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(loc)}");
+                    },
                   ),
                   if (lead.notes.trim().isNotEmpty) ...[
                     const Divider(height: 20, color: Color(0xFFF1F5F9)),
-                    _buildDetailRow(Icons.chat_bubble_outline_rounded, lead.notes.trim()),
+                    _buildDetailRow(
+                      icon: Icons.chat_bubble_outline_rounded,
+                      value: lead.notes.trim(),
+                      label: "notes",
+                      onTap: null,
+                    ),
                   ],
                 ],
               ),
@@ -247,48 +297,85 @@ class _LeadDetailSheetState extends State<LeadDetailSheet> {
     );
   }
 
-  Widget _buildQuickActionButton(IconData icon, String label, Color bg, Color fg) {
-    return Column(
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: bg,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: fg, size: 22),
+  Widget _buildQuickActionButton({
+    required IconData icon,
+    required String label,
+    required Color bg,
+    required Color fg,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(25),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        child: Column(
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: bg,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: fg.withValues(alpha: 0.15),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Icon(icon, color: fg, size: 22),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF64748B),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF64748B),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String value) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: const Color(0xFF64748B)),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF0F172A),
+  Widget _buildDetailRow({
+    required IconData icon,
+    required String value,
+    required String label,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap ?? () => LeadActionHelper.copyToClipboard(context, value, label),
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: const Color(0xFF64748B)),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
             ),
-          ),
+            IconButton(
+              icon: const Icon(Icons.copy_rounded, size: 16, color: Color(0xFF94A3B8)),
+              splashRadius: 18,
+              onPressed: () => LeadActionHelper.copyToClipboard(context, value, label),
+              tooltip: "Copy $label",
+            ),
+          ],
         ),
-        const Icon(Icons.copy_rounded, size: 16, color: Color(0xFFCBD5E1)),
-      ],
+      ),
     );
   }
 

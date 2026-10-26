@@ -22,7 +22,7 @@ class GlobalCampaignModel {
   });
 
   factory GlobalCampaignModel.fromFirestore(String id, Map<String, dynamic> data, String fallbackCompany) {
-    final title = data['title'] ?? data['name'] ?? 'Campaign $id';
+    final title = data['name'] ?? data['title'] ?? data['campaignName'] ?? data['label'] ?? 'Campaign $id';
     final company = data['companyName'] ?? data['company'] ?? fallbackCompany;
     final scanCount = data['scans'] ?? data['scanCount'] ?? data['views'] ?? 0;
     final conv = data['conversion'] ?? data['conversionRate'] ?? '15%';

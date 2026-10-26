@@ -14,6 +14,7 @@ import 'widgets/profile_slug_section.dart';
 import 'widgets/profile_social_links.dart';
 import 'widgets/profile_template_selector.dart';
 import '../../../core/utils/image_cropper_util.dart';
+import '../../../backend/number logic/phone_number_service.dart';
 
 class ProfileEditorScreen extends StatefulWidget {
   const ProfileEditorScreen({super.key});
@@ -465,7 +466,27 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
       }
     }
 
-    // ── 2. Upload images via resilient ImageUploadService ──────────────────────
+    // ── 2. Phone number validation (Fixes 9729041 bug) ───────────────────────
+    final phoneInput = _phoneController.text.trim();
+    if (phoneInput.isNotEmpty) {
+      final phoneValidation = PhoneValidationModel.validateLocal(phoneInput);
+      if (!phoneValidation.isValid) {
+        if (mounted) {
+          setState(() => _isSaving = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(phoneValidation.errorMessage ?? 'Please enter a valid 10-digit mobile number'),
+              backgroundColor: const Color(0xFFDC2626),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          );
+        }
+        return;
+      }
+    }
+
+    // ── 3. Upload images via resilient ImageUploadService ──────────────────────
     String? uploadedAvatarUrl = _profileImagePath;
     if (_profileImagePath != null &&
         _profileImagePath!.isNotEmpty &&

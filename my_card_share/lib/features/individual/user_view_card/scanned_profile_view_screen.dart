@@ -234,22 +234,17 @@ class _ScannedProfileViewScreenState extends State<ScannedProfileViewScreen>
                         name: profile.fullName,
                         isOwnerView: false,
                         showBranding: false,
-                        onSaveContactTap: () async {
-                          final contactData = ContactExportData.fromPublicProfile(profile);
-                          final success = await SaveContactService.instance.saveContactToPhone(contactData);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  success
-                                      ? "✓ Exported ${profile.fullName} to mobile contacts!"
-                                      : "Contact details: ${profile.fullName} (${profile.phone})",
-                                ),
-                                backgroundColor: themeColor,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }
+                        onSaveContactTap: () {
+                          SaveContactService.saveContactDirectly(
+                            context,
+                            fullName: profile.fullName,
+                            phone: profile.phone,
+                            email: profile.email,
+                            company: profile.company,
+                            jobTitle: profile.jobTitle,
+                            website: profile.website,
+                            bio: profile.bio,
+                          );
                         },
                         onShareTap: () => ShareCardService.instance.shareCard(
                           context: context,

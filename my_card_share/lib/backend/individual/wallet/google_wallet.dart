@@ -168,7 +168,7 @@ class GoogleWalletService {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Google Wallet pass saved for $name!',
+                    'Opening Google Wallet to save card for $name...',
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),

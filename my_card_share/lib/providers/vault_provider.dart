@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../backend/individual/vault/contact_duplicate_service.dart';
 
 class VaultNotifier extends StateNotifier<List<Map<String, String>>> {
   VaultNotifier() : super([]) {
@@ -34,14 +35,60 @@ class VaultNotifier extends StateNotifier<List<Map<String, String>>> {
             'tag': (data['tag'] as String?) ?? 'OCR',
           };
         }).toList();
-        state = loaded;
+
+        // 🛡️ Automatic Deduplication: Clean up any duplicate contacts
+        state = ContactDuplicateService.deduplicateContactsList(loaded);
       }
     } catch (e) {
       // Non-fatal
     }
   }
 
-  void addContact(Map<String, String> contact) {
+  /// Finds an existing contact with matching phone, email, or normalized name + company
+  Map<String, String>? findExistingContact({
+    required String name,
+    String? phone,
+    String? email,
+    String? company,
+    String? excludeId,
+  }) {
+    return ContactDuplicateService.findDuplicateInList(
+      state,
+      name: name,
+      phone: phone,
+      email: email,
+      company: company,
+      excludeId: excludeId,
+    );
+  }
+
+  /// Adds or updates contact in vault without creating duplicates
+  void addContact(Map<String, String> contact, {bool updateIfExists = true}) {
+    final existing = findExistingContact(
+      name: contact['name'] ?? '',
+      phone: contact['phone'],
+      email: contact['email'],
+      company: contact['company'],
+    );
+
+    if (existing != null) {
+      if (updateIfExists) {
+        // Update existing contact in place rather than creating duplicate
+        final targetId = existing['id'] ?? contact['id'] ?? '';
+        state = state.map((c) {
+          if (c == existing || (targetId.isNotEmpty && c['id'] == targetId)) {
+            return {
+              ...c,
+              ...contact,
+              if (targetId.isNotEmpty) 'id': targetId,
+            };
+          }
+          return c;
+        }).toList();
+      }
+      return;
+    }
+
     state = [contact, ...state];
   }
 

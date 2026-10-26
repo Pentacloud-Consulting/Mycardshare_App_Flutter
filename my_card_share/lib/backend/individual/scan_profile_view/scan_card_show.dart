@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../contact/save_contact_service.dart';
 import 'scan_profile_view.dart';
 import '../lead/active_lead.dart';
 
@@ -26,12 +27,15 @@ class _ScanCardShowScreenState extends State<ScanCardShowScreen> {
   }
 
   void _onSaveContact(PublicProfileData profile) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("✓ Saved ${profile.fullName}'s contact to your phone!"),
-        backgroundColor: const Color(0xFF0052FF),
-        behavior: SnackBarBehavior.floating,
-      ),
+    SaveContactService.saveContactDirectly(
+      context,
+      fullName: profile.fullName,
+      phone: profile.phone,
+      email: profile.email,
+      company: profile.company,
+      jobTitle: profile.jobTitle,
+      website: profile.website,
+      bio: profile.bio,
     );
   }
 

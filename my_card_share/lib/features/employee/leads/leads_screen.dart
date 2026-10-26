@@ -225,6 +225,8 @@ class _LeadsScreenState extends State<LeadsScreen> {
                             source: item.source,
                             date: 'Sept ${item.createdAt.day}',
                             status: item.status,
+                            phone: item.phone,
+                            email: item.email,
                             onMoreTap: () => LeadDetailSheet.show(context, item),
                           ),
                         );

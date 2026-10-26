@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../previews/individual_metrics_store.dart';
 import 'card_scan_service.dart';
 import '../notification/vault_notification_service.dart';
+import '../vault/contact_duplicate_service.dart';
 
 /// Service to process Voice Add contact recording, parse spoken details, save to Firestore, and update Scan metrics.
 class VoiceAddService {
@@ -28,28 +29,47 @@ class VoiceAddService {
   }
 
   /// Saves voice contact to Firestore & increments real Scans counter on Home page.
+  /// Detects existing duplicate contacts to avoid duplicate Firestore documents.
   Future<void> saveVoiceContact(ScannedContactData contact) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null && uid.isNotEmpty) {
       try {
-        await FirebaseFirestore.instance
+        final contactsRef = FirebaseFirestore.instance
             .collection('users')
             .doc(uid)
-            .collection('contacts')
-            .doc(contact.id)
-            .set(contact.toJson());
+            .collection('contacts');
 
-        // Increment real Scans metric on Home dashboard
-        await IndividualMetricsStore.instance.incrementScans(uid);
-
-        // Send real notification to Contact Vault owner
-        await VaultNotificationService.instance.notifyContactSaved(
-          targetUid: uid,
-          contactName: contact.name,
-          method: 'Voice',
+        // Check if duplicate contact already exists in Firestore
+        final existingDoc = await ContactDuplicateService.findDuplicateInFirestore(
+          uid: uid,
+          name: contact.name,
+          phone: contact.phone,
+          email: contact.email,
+          company: contact.company,
+          excludeId: contact.id,
         );
 
-        debugPrint('[VoiceAddService] Voice contact saved & scan metric incremented for UID: $uid');
+        final targetDocId = existingDoc?.id ?? contact.id;
+        final isUpdate = existingDoc != null;
+
+        await contactsRef.doc(targetDocId).set(
+              contact.toJson(),
+              SetOptions(merge: true),
+            );
+
+        if (!isUpdate) {
+          // Increment real Scans metric on Home dashboard only for new contacts
+          await IndividualMetricsStore.instance.incrementScans(uid);
+
+          // Send real notification to Contact Vault owner
+          await VaultNotificationService.instance.notifyContactSaved(
+            targetUid: uid,
+            contactName: contact.name,
+            method: 'Voice',
+          );
+        }
+
+        debugPrint('[VoiceAddService] Voice contact ${isUpdate ? "updated" : "saved"} for UID: $uid (Doc ID: $targetDocId)');
       } catch (e) {
         debugPrint('[VoiceAddService] Firestore save notice: $e');
       }

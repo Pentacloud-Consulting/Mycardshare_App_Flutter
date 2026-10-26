@@ -161,7 +161,7 @@ class CampaignGridCards extends StatelessWidget {
 
                 // Bold Title
                 Text(
-                  camp["title"] as String,
+                  (camp["title"] ?? camp["name"] ?? camp["campaignName"] ?? camp["label"] ?? "Campaign").toString(),
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,

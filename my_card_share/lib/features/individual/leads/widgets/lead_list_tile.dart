@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../backend/individual/lead/lead_action_helper.dart';
 
 class LeadListTile extends StatelessWidget {
   final String initials;
@@ -7,6 +8,8 @@ class LeadListTile extends StatelessWidget {
   final String source; // 'via qr_scan', 'via Voice', 'via Manual'
   final String date; // 'Sept 15'
   final String status; // 'New', 'Contacted', 'Qualified', 'Lost'
+  final String? phone;
+  final String? email;
   final VoidCallback? onCallTap;
   final VoidCallback? onEmailTap;
   final VoidCallback? onMoreTap;
@@ -19,6 +22,8 @@ class LeadListTile extends StatelessWidget {
     required this.source,
     required this.date,
     required this.status,
+    this.phone,
+    this.email,
     this.onCallTap,
     this.onEmailTap,
     this.onMoreTap,
@@ -129,15 +134,10 @@ class LeadListTile extends StatelessWidget {
                   children: [
                     // Call Button
                     GestureDetector(
-                      onTap: onCallTap ??
-                          () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text("Calling $name...")),
-                            );
-                          },
+                      onTap: onCallTap ?? () => LeadActionHelper.callLead(context, name: name, phone: phone),
                       child: Container(
-                        width: 22,
-                        height: 22,
+                        width: 24,
+                        height: 24,
                         decoration: BoxDecoration(
                           color: const Color(0xFFEFF6FF),
                           shape: BoxShape.circle,
@@ -149,22 +149,17 @@ class LeadListTile extends StatelessWidget {
                         child: const Icon(
                           Icons.phone_rounded,
                           color: Color(0xFF0066FF),
-                          size: 11,
+                          size: 12,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 5),
+                    const SizedBox(width: 6),
                     // Email Button
                     GestureDetector(
-                      onTap: onEmailTap ??
-                          () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text("Emailing $name...")),
-                            );
-                          },
+                      onTap: onEmailTap ?? () => LeadActionHelper.emailLead(context, name: name, email: email),
                       child: Container(
-                        width: 22,
-                        height: 22,
+                        width: 24,
+                        height: 24,
                         decoration: BoxDecoration(
                           color: const Color(0xFFEFF6FF),
                           shape: BoxShape.circle,
@@ -176,7 +171,7 @@ class LeadListTile extends StatelessWidget {
                         child: const Icon(
                           Icons.mail_outline_rounded,
                           color: Color(0xFF0066FF),
-                          size: 11,
+                          size: 12,
                         ),
                       ),
                     ),

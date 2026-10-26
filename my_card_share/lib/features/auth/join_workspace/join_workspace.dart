@@ -9,6 +9,7 @@ import '../../../backend/employee_join/employee_join_request_service.dart';
 import '../../../backend/app view/app_view_auth_gate.dart';
 import '../../../backend/employee_join/home/employee_home_backend.dart';
 import '../../../backend/employee_join/home/employee_stats_backend.dart';
+import '../../../services/auth/password_validator.dart';
 
 class JoinWorkspaceScreen extends ConsumerStatefulWidget {
   const JoinWorkspaceScreen({super.key});
@@ -23,6 +24,8 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _targetEnterpriseEmailController = TextEditingController();
+
+  PasswordValidationResult _passwordValidation = PasswordValidationResult.empty();
 
   bool _obscurePassword = true;
   bool _isLoading = false;
@@ -103,6 +106,12 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
     }
     if (password.isEmpty) {
       _showSnackBar("Please enter your password", Colors.redAccent);
+      return;
+    }
+
+    final validation = PasswordValidationResult.validate(password);
+    if (!validation.isValid) {
+      _showSnackBar(validation.firstErrorMessage ?? "Password does not meet required criteria", Colors.redAccent);
       return;
     }
 
@@ -335,6 +344,12 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
     }
     if (password.isEmpty) {
       _showSnackBar("Please enter your password", Colors.redAccent);
+      return;
+    }
+
+    final validation = PasswordValidationResult.validate(password);
+    if (!validation.isValid) {
+      _showSnackBar(validation.firstErrorMessage ?? "Password does not meet required criteria", Colors.redAccent);
       return;
     }
 
@@ -820,6 +835,11 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
                     child: TextField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
+                      onChanged: (val) {
+                        setState(() {
+                          _passwordValidation = PasswordValidationResult.validate(val);
+                        });
+                      },
                       style: const TextStyle(
                         fontSize: 15,
                         color: Color(0xFF0F172A),
@@ -854,6 +874,10 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
                       ),
                     ),
                   ),
+
+                  // Live Password Strength Meter & Checklist (Matching Website Policy)
+                  if (_passwordController.text.isNotEmpty)
+                    PasswordStrengthIndicatorWidget(validation: _passwordValidation),
 
                   const SizedBox(height: 24),
 

@@ -73,30 +73,29 @@ class CardFooterActions extends StatelessWidget {
             ),
             child: ElevatedButton(
               onPressed: onSaveContactTap ??
-                  () async {
+                  () {
                     final activeProfile = IndividualProfileStore.instance.activeProfile;
                     final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
-                    final contactData = ContactExportData.fromProfile(
-                      activeProfile,
-                      defaultName: name,
-                      defaultEmail: storedUser?.email,
-                    );
+                    final fullName = (activeProfile?.fullName.trim().isNotEmpty == true)
+                        ? activeProfile!.fullName.trim()
+                        : name;
+                    final phone = (activeProfile?.phoneNumber.trim().isNotEmpty == true)
+                        ? activeProfile!.phoneNumber.trim()
+                        : '';
+                    final email = (activeProfile?.email.trim().isNotEmpty == true)
+                        ? activeProfile!.email.trim()
+                        : (storedUser?.email ?? '');
 
-                    final success = await SaveContactService.instance.saveContactToPhone(contactData);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            success
-                                ? "Saving ${contactData.fullName} to mobile contacts..."
-                                : "Contact details: ${contactData.fullName} (${contactData.phoneNumber})",
-                          ),
-                          backgroundColor: const Color(0xFF0052FF),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                      );
-                    }
+                    SaveContactService.saveContactDirectly(
+                      context,
+                      fullName: fullName,
+                      phone: phone,
+                      email: email,
+                      company: activeProfile?.companyName,
+                      jobTitle: activeProfile?.jobTitle,
+                      website: activeProfile?.websiteUrl,
+                      bio: activeProfile?.shortBio,
+                    );
                   },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.transparent,

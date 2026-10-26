@@ -62,12 +62,18 @@ class UnifiedCampaignService {
           if (status == "active" && campStatus.toString().toLowerCase() != "active") continue;
           if (status == "ended" && campStatus.toString().toLowerCase() != "ended") continue;
 
+          final resolvedName = (data["name"] ?? data["title"] ?? data["campaignName"] ?? data["label"] ?? "Marketing Campaign").toString();
           firestoreCampaigns.add({
             "id": doc.id,
-            "title": data["name"] ?? data["title"] ?? "Marketing Campaign",
+            "name": resolvedName,
+            "title": resolvedName,
+            "campaignName": resolvedName,
+            "label": resolvedName,
             "tag": "CAMPAIGN",
             "color": _getColorForIndex(firestoreCampaigns.length),
             "scans": data["scans"] ?? 0,
+            "leads": data["leads"] ?? data["leadsWon"] ?? 0,
+            "leadsWon": data["leadsWon"] ?? data["leads"] ?? 0,
             "conv": data["conversionRate"] ?? "0%",
             "endsCaption": data["endsCaption"] ?? "Ends in ${data["durationDays"] ?? 14} days",
             "status": campStatus,
@@ -94,12 +100,18 @@ class UnifiedCampaignService {
       if (c is Map<String, dynamic>) {
         final id = (c["id"] ?? c["_id"] ?? "").toString();
         if (id.isNotEmpty) {
+          final resolvedName = (c["name"] ?? c["title"] ?? c["campaignName"] ?? c["label"] ?? "Campaign").toString();
           combinedMap[id] = {
             "id": id,
-            "title": c["name"] ?? c["title"] ?? "Campaign",
+            "name": resolvedName,
+            "title": resolvedName,
+            "campaignName": resolvedName,
+            "label": resolvedName,
             "tag": "CAMPAIGN",
             "color": _getColorForIndex(combinedMap.length),
-            "scans": c["scans"] ?? c["scansCount"] ?? 0,
+            "scans": c["scans"] ?? c["scansCount"] ?? c["totalScans"] ?? 0,
+            "leads": c["leads"] ?? c["leadsWon"] ?? c["leadsCount"] ?? 0,
+            "leadsWon": c["leadsWon"] ?? c["leads"] ?? c["leadsCount"] ?? 0,
             "conv": c["conversionRate"] ?? c["conv"] ?? "0%",
             "endsCaption": c["endsCaption"] ?? "Ends in ${c["durationDays"] ?? 14} days",
             "status": c["status"] ?? "Active",
@@ -161,11 +173,16 @@ class UnifiedCampaignService {
         await docRef.set({
           "id": docRef.id,
           "name": name.trim(),
+          "title": name.trim(),
+          "label": name.trim(),
+          "campaignName": name.trim(),
           "description": description ?? "",
           "durationDays": durationDays,
           "budget": budget,
           "status": "Active",
           "scans": 0,
+          "leads": 0,
+          "leadsWon": 0,
           "conversionRate": "0%",
           "targetUrl": trackingUrl,
           "qrCodeUrl": qrCodeUrl,
@@ -186,6 +203,9 @@ class UnifiedCampaignService {
           body: jsonEncode({
             "action": "create",
             "name": name.trim(),
+            "title": name.trim(),
+            "label": name.trim(),
+            "campaignName": name.trim(),
             "description": description ?? "",
             "durationDays": durationDays,
             "budget": ?budget,
@@ -201,13 +221,26 @@ class UnifiedCampaignService {
         debugPrint("[UnifiedCampaignService] Backend sync note: $err");
       }
 
+      if (apiCampaign != null) {
+        final rName = (apiCampaign["name"] ?? apiCampaign["title"] ?? apiCampaign["label"] ?? apiCampaign["campaignName"] ?? name.trim()).toString();
+        apiCampaign["name"] = rName;
+        apiCampaign["title"] = rName;
+        apiCampaign["label"] = rName;
+        apiCampaign["campaignName"] = rName;
+      }
+
       return {
         "success": true,
         "campaign": apiCampaign ?? {
           "id": docRef?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+          "name": name.trim(),
           "title": name.trim(),
+          "label": name.trim(),
+          "campaignName": name.trim(),
           "status": "Active",
           "scans": 0,
+          "leads": 0,
+          "leadsWon": 0,
           "conv": "0%",
           "endsCaption": "Ends in $durationDays days",
         },

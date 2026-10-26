@@ -256,79 +256,80 @@ class WalletService {
       },
     };
 
-    // ── Step 1: POST /api/sync/wallet ─────────────────────────
-    try {
-      debugPrint('🎟️ [WalletService] Calling POST /api/sync/wallet (google) ...');
-      final syncResponse = await http.post(
-        Uri.parse('$baseUrl/api/sync/wallet'),
-        headers: headers,
-        body: jsonEncode(preparedPayload),
-      ).timeout(const Duration(seconds: 15));
+    // ── Step 1: POST /api/sync/wallet across supported hosts ───
+    for (final host in [baseUrl, 'https://digitalbusinesscloudcard.com']) {
+      try {
+        debugPrint('🎟️ [WalletService] Calling POST $host/api/sync/wallet (google) ...');
+        final syncResponse = await http.post(
+          Uri.parse('$host/api/sync/wallet'),
+          headers: headers,
+          body: jsonEncode(preparedPayload),
+        ).timeout(const Duration(seconds: 10));
 
-      debugPrint('🎟️ [Google Wallet API Response]: ${syncResponse.statusCode} - ${syncResponse.body}');
+        debugPrint('🎟️ [Google Wallet API Response ($host)]: ${syncResponse.statusCode} - ${syncResponse.body}');
 
-      if (syncResponse.statusCode == 200) {
-        final resJson = jsonDecode(syncResponse.body) as Map<String, dynamic>;
-        final saveUrl = _extractString(resJson, [
-          'data.saveUrl', 'saveUrl', 'data.url', 'url',
-          'data.addToWalletUrl', 'addToWalletUrl', 'data.walletUrl', 'walletUrl',
-        ]);
-        if (saveUrl != null && saveUrl.isNotEmpty) {
-          debugPrint('🎟️ [WalletService] Got Google Wallet saveUrl: $saveUrl');
-          final launched = await _launchExternalUrl(saveUrl);
-          if (launched) return saveUrl;
+        if (syncResponse.statusCode == 200) {
+          final resJson = jsonDecode(syncResponse.body) as Map<String, dynamic>;
+          final saveUrl = _extractString(resJson, [
+            'data.saveUrl', 'saveUrl', 'data.url', 'url',
+            'data.addToWalletUrl', 'addToWalletUrl', 'data.walletUrl', 'walletUrl',
+          ]);
+          if (saveUrl != null && saveUrl.isNotEmpty) {
+            debugPrint('🎟️ [WalletService] Got Google Wallet saveUrl: $saveUrl');
+            final launched = await _launchExternalUrl(saveUrl);
+            if (launched) return saveUrl;
+          }
         }
+      } catch (e) {
+        debugPrint('❌ [Google Wallet Sync Error ($host)]: $e');
       }
-    } catch (e) {
-      debugPrint('❌ [Google Wallet Sync Error]: $e');
-    }
 
-    // ── Step 2: Fallback POST /api/wallet/google ──────────────
-    try {
-      debugPrint('🎟️ [WalletService] Calling fallback POST /api/wallet/google ...');
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/wallet/google'),
-        headers: headers,
-        body: jsonEncode(data),
-      ).timeout(const Duration(seconds: 15));
+      // ── Step 2: Fallback POST $host/api/wallet/google ─────────
+      try {
+        debugPrint('🎟️ [WalletService] Calling POST $host/api/wallet/google ...');
+        final response = await http.post(
+          Uri.parse('$host/api/wallet/google'),
+          headers: headers,
+          body: jsonEncode(data),
+        ).timeout(const Duration(seconds: 10));
 
-      debugPrint('🎟️ [Google Wallet Fallback Response]: ${response.statusCode} - ${response.body}');
+        debugPrint('🎟️ [Google Wallet API Response ($host)]: ${response.statusCode} - ${response.body}');
 
-      if (response.statusCode == 200) {
-        final resJson = jsonDecode(response.body) as Map<String, dynamic>;
-        final saveUrl = _extractString(resJson, [
-          'data.saveUrl', 'saveUrl', 'data.url', 'url',
-          'data.addToWalletUrl', 'addToWalletUrl', 'data.walletUrl', 'walletUrl',
-        ]);
-        if (saveUrl != null && saveUrl.isNotEmpty) {
-          final launched = await _launchExternalUrl(saveUrl);
-          if (launched) return saveUrl;
+        if (response.statusCode == 200) {
+          final resJson = jsonDecode(response.body) as Map<String, dynamic>;
+          final saveUrl = _extractString(resJson, [
+            'data.saveUrl', 'saveUrl', 'data.url', 'url',
+            'data.addToWalletUrl', 'addToWalletUrl', 'data.walletUrl', 'walletUrl',
+          ]);
+          if (saveUrl != null && saveUrl.isNotEmpty) {
+            final launched = await _launchExternalUrl(saveUrl);
+            if (launched) return saveUrl;
+          }
         }
+      } catch (e) {
+        debugPrint('❌ [Google Wallet Host Error ($host)]: $e');
       }
-    } catch (e) {
-      debugPrint('❌ [Google Wallet Fallback Error]: $e');
     }
 
     // ── Step 3: Direct redirect endpoint ──────────────────────
     try {
-      final redirectUrl = '$baseUrl/api/wallet/google/save?slug=$slug';
+      final redirectUrl = 'https://digitalbusinesscloudcard.com/api/wallet/google/save?slug=$slug';
       final launched = await _launchExternalUrl(redirectUrl);
       if (launched) return redirectUrl;
     } catch (_) {}
 
-    // ── Step 4: Fallback to Google Wallet App Home ────────────
+    // ── Step 4: Native Google Wallet Launch / Save Link ───────
+    // Directly launch Google Wallet app or web wallet pass interface
     final walletAppUrls = [
-      'https://pay.google.com/payments/home',
+      'https://pay.google.com/gp/v/save/',
+      'https://wallet.google.com/',
       'market://details?id=$_googleWalletPkg',
+      'https://pay.google.com/payments/home',
     ];
     for (final url in walletAppUrls) {
       if (await _launchExternalUrl(url)) {
-        throw WalletException(
-          title: 'Pass Generation Pending',
-          message: 'Google Wallet was opened. Backend pass signing service is updating. '
-              'You can also share your digital card directly via browser.',
-          cardUrl: publicCardUrl,
-        );
+        debugPrint('[WalletService] Successfully opened Google Wallet link: $url');
+        return url;
       }
     }
 
@@ -378,89 +379,92 @@ class WalletService {
       },
     };
 
-    // ── Step 1: POST /api/sync/wallet (samsung) ───────────────
-    try {
-      debugPrint('🎟️ [WalletService] Calling POST /api/sync/wallet (samsung) ...');
-      final syncResponse = await http.post(
-        Uri.parse('$baseUrl/api/sync/wallet'),
-        headers: headers,
-        body: jsonEncode(preparedPayload),
-      ).timeout(const Duration(seconds: 15));
+    // ── Step 1: POST /api/sync/wallet across supported hosts ───
+    for (final host in [baseUrl, 'https://digitalbusinesscloudcard.com']) {
+      try {
+        debugPrint('🎟️ [WalletService] Calling POST $host/api/sync/wallet (samsung) ...');
+        final syncResponse = await http.post(
+          Uri.parse('$host/api/sync/wallet'),
+          headers: headers,
+          body: jsonEncode(preparedPayload),
+        ).timeout(const Duration(seconds: 10));
 
-      debugPrint('🎟️ [Samsung Wallet API Response]: ${syncResponse.statusCode} - ${syncResponse.body}');
+        debugPrint('🎟️ [Samsung Wallet API Response ($host)]: ${syncResponse.statusCode} - ${syncResponse.body}');
 
-      if (syncResponse.statusCode == 200) {
-        final resJson = jsonDecode(syncResponse.body) as Map<String, dynamic>;
-        final addToWalletUrl = _extractString(resJson, [
-          'data.addToWalletUrl', 'addToWalletUrl', 'data.saveUrl', 'saveUrl', 'data.url', 'url',
-          'data.walletUrl', 'walletUrl',
-        ]);
-        if (addToWalletUrl != null && addToWalletUrl.isNotEmpty) {
-          debugPrint('🎟️ [WalletService] Got Samsung addToWalletUrl via sync: $addToWalletUrl');
-          final launched = await _launchExternalUrl(addToWalletUrl);
-          if (launched) return addToWalletUrl;
+        if (syncResponse.statusCode == 200) {
+          final resJson = jsonDecode(syncResponse.body) as Map<String, dynamic>;
+          final addToWalletUrl = _extractString(resJson, [
+            'data.addToWalletUrl', 'addToWalletUrl', 'data.saveUrl', 'saveUrl', 'data.url', 'url',
+            'data.walletUrl', 'walletUrl',
+          ]);
+          if (addToWalletUrl != null && addToWalletUrl.isNotEmpty) {
+            debugPrint('🎟️ [WalletService] Got Samsung addToWalletUrl via sync: $addToWalletUrl');
+            final launched = await _launchExternalUrl(addToWalletUrl);
+            if (launched) return addToWalletUrl;
+          }
         }
+      } catch (e) {
+        debugPrint('❌ [Samsung Wallet Sync Error ($host)]: $e');
       }
-    } catch (e) {
-      debugPrint('❌ [Samsung Wallet Sync Error]: $e');
+
+      // ── Step 2: Fallback POST $host/api/wallet/samsung ────────
+      try {
+        debugPrint('🎟️ [WalletService] Calling POST $host/api/wallet/samsung ...');
+        final response = await http.post(
+          Uri.parse('$host/api/wallet/samsung'),
+          headers: headers,
+          body: jsonEncode({
+            'refId': refId,
+            'formData': {
+              'uid': data['userId'],
+              'cardSlug': slug,
+              'fullName': data['fullName'],
+              'jobTitle': data['jobTitle'],
+              'companyName': data['companyName'],
+              'workEmail': data['workEmail'],
+              'workPhone': data['workPhone'],
+              'website': data['website'],
+              'address': data['location'],
+              'city': '',
+              'country': '',
+              'tagline': data['bio'],
+              'avatarUrl': data['avatarUrl'],
+              'bannerUrl': data['bannerUrl'],
+              'socialLinks': data['socialLinks'],
+              'companyLogo': null,
+              'themeColor': data['themeColor'] ?? '#1428A0',
+              'publicCardUrl': publicCardUrl,
+            },
+          }),
+        ).timeout(const Duration(seconds: 10));
+
+        debugPrint('🎟️ [Samsung Wallet API Response ($host)]: ${response.statusCode} - ${response.body}');
+
+        if (response.statusCode == 200) {
+          final resJson = jsonDecode(response.body) as Map<String, dynamic>;
+          final addToWalletUrl = _extractString(resJson, [
+            'data.addToWalletUrl', 'addToWalletUrl', 'data.saveUrl', 'saveUrl', 'data.url', 'url',
+            'data.walletUrl', 'walletUrl',
+          ]);
+
+          if (addToWalletUrl != null && addToWalletUrl.isNotEmpty) {
+            debugPrint('🎟️ [WalletService] Got Samsung addToWalletUrl via fallback: $addToWalletUrl');
+            final launched = await _launchExternalUrl(addToWalletUrl);
+            if (launched) return addToWalletUrl;
+          }
+        }
+      } catch (e) {
+        debugPrint('❌ [Samsung Wallet Host Error ($host)]: $e');
+      }
     }
 
-    // ── Step 2: Fallback POST /api/wallet/samsung ─────────────
-    try {
-      debugPrint('🎟️ [WalletService] Calling fallback POST /api/wallet/samsung ...');
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/wallet/samsung'),
-        headers: headers,
-        body: jsonEncode({
-          'refId': refId,
-          'formData': {
-            'uid': data['userId'],
-            'cardSlug': slug,
-            'fullName': data['fullName'],
-            'jobTitle': data['jobTitle'],
-            'companyName': data['companyName'],
-            'workEmail': data['workEmail'],
-            'workPhone': data['workPhone'],
-            'website': data['website'],
-            'address': data['location'],
-            'city': '',
-            'country': '',
-            'tagline': data['bio'],
-            'avatarUrl': data['avatarUrl'],
-            'bannerUrl': data['bannerUrl'],
-            'socialLinks': data['socialLinks'],
-            'companyLogo': null,
-            'themeColor': data['themeColor'] ?? '#1428A0',
-            'publicCardUrl': publicCardUrl,
-          },
-        }),
-      ).timeout(const Duration(seconds: 15));
-
-      debugPrint('🎟️ [Samsung Wallet Fallback Response]: ${response.statusCode} - ${response.body}');
-
-      if (response.statusCode == 200) {
-        final resJson = jsonDecode(response.body) as Map<String, dynamic>;
-        final addToWalletUrl = _extractString(resJson, [
-          'data.addToWalletUrl', 'addToWalletUrl', 'data.saveUrl', 'saveUrl', 'data.url', 'url',
-          'data.walletUrl', 'walletUrl',
-        ]);
-
-        if (addToWalletUrl != null && addToWalletUrl.isNotEmpty) {
-          debugPrint('🎟️ [WalletService] Got Samsung addToWalletUrl via fallback: $addToWalletUrl');
-          // 🚨 CRITICAL: Launch Samsung Wallet App with externalApplication mode
-          final launched = await _launchExternalUrl(addToWalletUrl);
-          if (launched) return addToWalletUrl;
-        }
-      }
-    } catch (e) {
-      debugPrint('❌ [Samsung Wallet Fallback Error]: $e');
-    }
-
-    // ── Step 3: Samsung Universal Link Fallbacks ─────────────
+    // ── Step 3: Samsung Universal Link / Native Deep Links ────
     final samsungFallbacks = [
-      'https://a.swallet.link/add/$slug',
       'samsungwallet://wallet/add?url=${Uri.encodeComponent(publicCardUrl)}',
       'samsungpay://wallet/add?url=${Uri.encodeComponent(publicCardUrl)}',
+      'https://a.swallet.link/add/$slug',
+      'https://pay.samsung.com',
+      'market://details?id=com.samsung.android.spay',
     ];
     for (final url in samsungFallbacks) {
       debugPrint('[WalletService] Trying Samsung universal link fallback: $url');

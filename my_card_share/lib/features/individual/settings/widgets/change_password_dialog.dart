@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../backend/individual/change_password/change_password_service.dart';
+import '../../../../services/auth/password_validator.dart';
 
 class ChangePasswordDialog extends StatefulWidget {
   const ChangePasswordDialog({super.key});
@@ -13,6 +14,8 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
   final _currentController = TextEditingController();
   final _newController = TextEditingController();
   final _confirmController = TextEditingController();
+
+  PasswordValidationResult _newPasswordValidation = PasswordValidationResult.empty();
 
   bool _obscureCurrent = true;
   bool _obscureNew = true;
@@ -79,9 +82,10 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
         padding: const EdgeInsets.all(22.0),
         child: Form(
           key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header Title & Close Button
               Row(
@@ -127,15 +131,32 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
               ),
               const SizedBox(height: 14),
 
-              // New Password Field (Clay Inset, No Black Border)
+              // New Password Field with strict validation & live strength meter
               _buildClayInputField(
                 controller: _newController,
                 obscureText: _obscureNew,
                 hintText: "New Password",
                 icon: Icons.lock_reset_rounded,
                 onToggleVisibility: () => setState(() => _obscureNew = !_obscureNew),
-                validator: (val) => val == null || val.length < 6 ? "Minimum 6 characters" : null,
+                onChanged: (val) {
+                  setState(() {
+                    _newPasswordValidation = PasswordValidationResult.validate(val);
+                  });
+                },
+                validator: (val) {
+                  if (val == null || val.isEmpty) return "Enter new password";
+                  final validation = PasswordValidationResult.validate(val);
+                  if (!validation.isValid) {
+                    return validation.firstErrorMessage ?? "Password does not meet required criteria";
+                  }
+                  return null;
+                },
               ),
+
+              // Live Password Strength Meter & 5-Rule Checklist
+              if (_newController.text.isNotEmpty)
+                PasswordStrengthIndicatorWidget(validation: _newPasswordValidation),
+
               const SizedBox(height: 14),
 
               // Confirm Password Field (Clay Inset, No Black Border)
@@ -195,7 +216,8 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildClayInputField({
@@ -205,6 +227,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
     required IconData icon,
     required VoidCallback onToggleVisibility,
     required String? Function(String?) validator,
+    ValueChanged<String>? onChanged,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -221,6 +244,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
       child: TextFormField(
         controller: controller,
         obscureText: obscureText,
+        onChanged: onChanged,
         style: const TextStyle(fontSize: 14.5, color: Color(0xFF0F172A), fontWeight: FontWeight.w600),
         decoration: InputDecoration(
           hintText: hintText,

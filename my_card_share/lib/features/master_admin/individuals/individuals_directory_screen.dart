@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../backend/master_admin/individuals/individuals_directory_store.dart';
 import '../../../backend/master_admin/individuals/models/master_individual_model.dart';
 import '../../../backend/master_admin/individuals/delete/individual_delete_service.dart';
+import '../../../backend/master_admin/master_individuals_service.dart';
 import 'widgets/individuals_stat_chips_section.dart';
 import 'widgets/individuals_search_bar_section.dart';
 import 'widgets/individuals_filter_chips_section.dart';
@@ -20,6 +21,37 @@ class _MasterAdminIndividualsScreenState
   String _searchQuery = '';
   String _selectedFilter = 'All';
   bool _showFilterChips = true;
+  bool _isLoading = false;
+  MasterIndividualsResponse? _backendData;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    try {
+      final token = await MasterIndividualsService.getAuthToken();
+      final result = await MasterIndividualsService.fetchIndividuals(
+        token: token,
+        filter: 'all',
+        search: _searchQuery,
+      );
+      if (mounted) {
+        setState(() {
+          _backendData = result;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('[MasterAdminIndividualsScreen] Load backend data notice: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,129 +63,224 @@ class _MasterAdminIndividualsScreenState
         return StreamBuilder<List<MasterIndividualModel>>(
           stream: IndividualsDirectoryStore.instance.streamIndividuals(),
           builder: (context, snapshot) {
-            final allUsers = snapshot.data ?? IndividualsDirectoryStore.instance.users;
+            final storeUsers = snapshot.data ?? IndividualsDirectoryStore.instance.users;
 
-            final totalCount = allUsers.length;
-        final activeCount = allUsers.where((u) => !u.isDeactivated).length;
-        final deactivatedCount = allUsers.where((u) => u.isDeactivated).length;
+            // Merge storeUsers (Firestore real-time & merged deletions) with backendData
+            final Map<String, MasterIndividualModel> mergedUsersMap = {};
+            for (final u in storeUsers) {
+              mergedUsersMap[u.id] = u;
+            }
+            if (_backendData != null && _backendData!.individuals.isNotEmpty) {
+              for (final u in _backendData!.individuals) {
+                final model = MasterIndividualModel.fromIndividualUserModel(u);
+                if (mergedUsersMap.containsKey(model.id) && mergedUsersMap[model.id]!.isDeactivated) {
+                  continue; // Preserve deactivated & deletion pending state
+                }
+                mergedUsersMap[model.id] = model;
+              }
+            }
+            List<MasterIndividualModel> displayUsers = mergedUsersMap.values.toList();
 
-        // Real-time filtering logic
-        final filteredUsers = allUsers.where((user) {
-          final query = _searchQuery.toLowerCase().trim();
-          final matchesSearch = query.isEmpty ||
-              user.name.toLowerCase().contains(query) ||
-              user.email.toLowerCase().contains(query);
+            // Ensure any users in pending deletions are marked as Deactivated / Deletion Pending
+            final pendingIds = pendingDeletions.map((d) => (d['userId'] ?? d['id'] ?? '').toString()).toSet();
+            for (int i = 0; i < displayUsers.length; i++) {
+              final user = displayUsers[i];
+              if (pendingIds.contains(user.id)) {
+                final dData = pendingDeletions.firstWhere(
+                  (d) => (d['userId'] ?? d['id']) == user.id,
+                  orElse: () => <String, dynamic>{},
+                );
+                displayUsers[i] = MasterIndividualModel(
+                  id: user.id,
+                  name: user.name,
+                  email: user.email,
+                  phone: user.phone,
+                  avatarUrl: user.avatarUrl,
+                  plan: 'Deactivated',
+                  status: 'DELETION_PENDING',
+                  cardSlug: user.cardSlug,
+                  views: user.views,
+                  isDeactivated: true,
+                  deletionReason: dData['reason'] ?? user.deletionReason ?? 'User requested account deletion',
+                  deletionRequest: dData.isNotEmpty ? dData : user.deletionRequest,
+                  createdAt: user.createdAt,
+                );
+              }
+            }
 
-          if (!matchesSearch) return false;
+            // Also append any pending deletions that might not be in the backend list
+            final existingIds = displayUsers.map((u) => u.id).toSet();
+            for (final d in pendingDeletions) {
+              final dId = (d['userId'] ?? d['id'] ?? '').toString();
+              if (dId.isNotEmpty && !existingIds.contains(dId)) {
+                displayUsers.add(
+                  MasterIndividualModel(
+                    id: dId,
+                    name: (d['userName'] ?? 'User').toString(),
+                    email: (d['userEmail'] ?? '').toString(),
+                    plan: 'Deactivated',
+                    status: 'DELETION_PENDING',
+                    cardSlug: dId,
+                    views: 0,
+                    isDeactivated: true,
+                    deletionReason: d['reason'] ?? 'User requested account deletion',
+                    deletionRequest: d,
+                  ),
+                );
+              }
+            }
 
-          if (_selectedFilter == "All") return true;
-          if (_selectedFilter == "Free") return user.plan.toLowerCase() == "free";
-          if (_selectedFilter == "Pro") return user.plan.toLowerCase() == "pro";
-          if (_selectedFilter == "Deactivated") return user.isDeactivated;
+            // Calculate live metric badges with guaranteed real-time accuracy
+            final realDeactivatedCount = displayUsers.where((u) => u.isDeactivated || u.status == 'DELETION_PENDING').length +
+                pendingDeletions.where((d) => !displayUsers.any((u) => u.id == (d['userId'] ?? d['id']))).length;
+            final deactivatedCount = realDeactivatedCount > 0
+                ? realDeactivatedCount
+                : (_backendData?.deactivated ?? 0);
+            final activeCount = displayUsers.where((u) => !u.isDeactivated && u.status != 'DELETION_PENDING').length;
+            final totalCount = activeCount + deactivatedCount;
 
-          return true;
-        }).toList();
+            // Real-time filtering logic
+            final filteredUsers = displayUsers.where((user) {
+              final query = _searchQuery.toLowerCase().trim();
+              final matchesSearch = query.isEmpty ||
+                  user.name.toLowerCase().contains(query) ||
+                  user.email.toLowerCase().contains(query) ||
+                  user.phone.toLowerCase().contains(query) ||
+                  user.cardSlug.toLowerCase().contains(query);
 
-        return Stack(
-          children: [
-            // Soft baby-blue gradient blob top-right corner
-            Positioned(
-              top: -60,
-              right: -60,
-              child: Container(
-                width: 220,
-                height: 220,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFFDBEAFE).withValues(alpha: 0.7),
-                      const Color(0xFFEFF6FF).withValues(alpha: 0.2),
-                      const Color(0xFFF8FAFD).withValues(alpha: 0.0),
-                    ],
+              if (!matchesSearch) return false;
+
+              if (_selectedFilter == "All") return true;
+              if (_selectedFilter == "Free") return user.plan.toLowerCase() == "free";
+              if (_selectedFilter == "Pro") return user.plan.toLowerCase() == "pro";
+              if (_selectedFilter == "Deactivated") {
+                return user.isDeactivated ||
+                    user.status == 'DELETION_PENDING' ||
+                    user.status.toLowerCase().contains('deact') ||
+                    user.status.toLowerCase().contains('del') ||
+                    user.deletionRequest != null;
+              }
+
+              return true;
+            }).toList();
+
+            return Stack(
+              children: [
+                // Soft baby-blue gradient blob top-right corner
+                Positioned(
+                  top: -60,
+                  right: -60,
+                  child: Container(
+                    width: 220,
+                    height: 220,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          const Color(0xFFDBEAFE).withValues(alpha: 0.7),
+                          const Color(0xFFEFF6FF).withValues(alpha: 0.2),
+                          const Color(0xFFF8FAFD).withValues(alpha: 0.0),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
 
-            // Main scrollable content
-            SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 1. Stat Chips Row with Live Database Counts
-                  IndividualsStatChipsSection(
-                    totalCount: totalCount,
-                    activeCount: activeCount,
-                    deactivatedCount: deactivatedCount,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // 2. Search Bar + Filter Icon
-                  IndividualsSearchBarSection(
-                    isFilterActive: _showFilterChips,
-                    onSearchChanged: (val) {
-                      setState(() {
-                        _searchQuery = val;
-                      });
-                    },
-                    onFilterTap: () {
-                      setState(() {
-                        _showFilterChips = !_showFilterChips;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 14),
-
-                  // 3. Filter Chips Row (All, Free, Pro, Deactivated)
-                  AnimatedSize(
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeInOut,
-                    child: _showFilterChips
-                        ? Padding(
-                            padding: const EdgeInsets.only(bottom: 16.0),
-                            child: IndividualsFilterChipsSection(
-                              selectedFilter: _selectedFilter,
-                              onFilterSelected: (filter) {
-                                setState(() {
-                                  _selectedFilter = filter;
-                                });
-                              },
-                              onDeletionRequestsTap: () =>
-                                  _showDeletionRequestsBottomSheet(context),
-                              deletionRequestsCount: pendingDeletions.length,
-                            ),
-                          )
-                        : const SizedBox.shrink(),
-                  ),
-
-                  // 4. Live User Directory Card List
-                  IndividualsListSection(
-                    users: filteredUsers,
-                    onUserTap: (user) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("Selected user: ${user.name}"),
-                          behavior: SnackBarBehavior.floating,
+                // Main scrollable content
+                RefreshIndicator(
+                  onRefresh: _loadData,
+                  color: const Color(0xFF0052FF),
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 1. Stat Chips Row with Live Database Counts
+                        IndividualsStatChipsSection(
+                          totalCount: totalCount,
+                          activeCount: activeCount,
+                          deactivatedCount: deactivatedCount,
                         ),
-                      );
-                    },
-                    onMenuTap: (user) {
-                      _showUserActionsSheet(context, user);
-                    },
+                        const SizedBox(height: 16),
+
+                        // 2. Search Bar + Filter Icon
+                        IndividualsSearchBarSection(
+                          isFilterActive: _showFilterChips,
+                          onSearchChanged: (val) {
+                            setState(() {
+                              _searchQuery = val;
+                            });
+                            _loadData();
+                          },
+                          onFilterTap: () {
+                            setState(() {
+                              _showFilterChips = !_showFilterChips;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 14),
+
+                        // 3. Filter Chips Row (All, Free, Pro, Deactivated, Deletion Requests)
+                        AnimatedSize(
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.easeInOut,
+                          child: _showFilterChips
+                              ? Padding(
+                                  padding: const EdgeInsets.only(bottom: 16.0),
+                                  child: IndividualsFilterChipsSection(
+                                    selectedFilter: _selectedFilter,
+                                    onFilterSelected: (filter) {
+                                      setState(() {
+                                        _selectedFilter = filter;
+                                      });
+                                      _loadData();
+                                    },
+                                    onDeletionRequestsTap: () =>
+                                        _showDeletionRequestsBottomSheet(context, displayUsers: displayUsers),
+                                    deletionRequestsCount: realDeactivatedCount > 0 ? realDeactivatedCount : pendingDeletions.length,
+                                  ),
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+
+                        // Loading Indicator if fetching
+                        if (_isLoading)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8.0),
+                            child: LinearProgressIndicator(
+                              color: Color(0xFF0052FF),
+                              backgroundColor: Color(0xFFEFF6FF),
+                            ),
+                          ),
+
+                        // 4. Live User Directory Card List
+                        IndividualsListSection(
+                          users: filteredUsers,
+                          onUserTap: (user) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Selected user: ${user.name}"),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          },
+                          onMenuTap: (user) {
+                            _showUserActionsSheet(context, user);
+                          },
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
-          ],
+                ),
+              ],
+            );
+          },
         );
       },
     );
-  },
-);
-}
+  }
 
   void _showUserActionsSheet(BuildContext context, MasterIndividualModel user) {
     showModalBottomSheet(
@@ -177,7 +304,64 @@ class _MasterAdminIndividualsScreenState
                   user.email,
                   style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
                 ),
+                if (user.deletionReason != null && user.deletionReason!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF2F2),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFFCA5A5)),
+                    ),
+                    child: Text(
+                      "Deletion Request Reason:\n\"${user.deletionReason}\"",
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        color: Color(0xFFDC2626),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
+
+                // Permanent Delete Action
+                if (user.isDeactivated || user.status == 'DELETION_PENDING')
+                  ListTile(
+                    leading: const Icon(Icons.delete_forever_rounded, color: Color(0xFFDC2626)),
+                    title: const Text(
+                      "Permanently Delete Account",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFFDC2626),
+                      ),
+                    ),
+                    onTap: () async {
+                      Navigator.pop(ctx);
+                      try {
+                        await MasterIndividualsService.confirmDeleteIndividual(userId: user.id);
+                        await IndividualDeleteService.confirmDeleteUser(
+                          requestId: user.id,
+                          targetUserId: user.id,
+                        );
+                        _loadData();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("User ${user.name} permanently deleted"),
+                              backgroundColor: const Color(0xFFDC2626),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        debugPrint('[MasterAdminIndividuals] Delete error: $e');
+                      }
+                    },
+                  ),
+
+                // Reactivate / Deactivate Toggle
                 ListTile(
                   leading: Icon(
                     user.isDeactivated ? Icons.check_circle_rounded : Icons.block_rounded,
@@ -196,6 +380,7 @@ class _MasterAdminIndividualsScreenState
                       user.id,
                       !user.isDeactivated,
                     );
+                    _loadData();
                   },
                 ),
               ],
@@ -206,7 +391,10 @@ class _MasterAdminIndividualsScreenState
     );
   }
 
-  void _showDeletionRequestsBottomSheet(BuildContext context) {
+  void _showDeletionRequestsBottomSheet(
+    BuildContext context, {
+    List<MasterIndividualModel>? displayUsers,
+  }) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -225,7 +413,25 @@ class _MasterAdminIndividualsScreenState
               );
             }
 
-            final requests = snapshot.data ?? [];
+            final requests = List<Map<String, dynamic>>.from(snapshot.data ?? []);
+
+            // Fallback: If stream returned empty, check displayUsers for any accounts marked deletion_pending or deactivated
+            if (requests.isEmpty && displayUsers != null && displayUsers.isNotEmpty) {
+              for (final u in displayUsers) {
+                if (u.isDeactivated || u.status == 'DELETION_PENDING' || u.deletionRequest != null) {
+                  requests.add({
+                    "requestId": u.id,
+                    "userId": u.id,
+                    "userName": u.name,
+                    "userEmail": u.email,
+                    "reason": u.deletionReason ?? "User requested account deletion",
+                    "feedback": "",
+                    "status": "pending",
+                    "createdAt": u.createdAt ?? DateTime.now(),
+                  });
+                }
+              }
+            }
 
             if (requests.isEmpty) {
               return Padding(
@@ -392,6 +598,7 @@ class _MasterAdminIndividualsScreenState
                                         requestId: requestId,
                                         targetUserId: targetUserId,
                                       );
+                                      _loadData();
                                       if (context.mounted) {
                                         ScaffoldMessenger.of(context).showSnackBar(
                                           SnackBar(
@@ -425,10 +632,16 @@ class _MasterAdminIndividualsScreenState
                                       ),
                                     ),
                                     onPressed: () async {
+                                      try {
+                                        await MasterIndividualsService.confirmDeleteIndividual(
+                                          userId: targetUserId,
+                                        );
+                                      } catch (_) {}
                                       await IndividualDeleteService.confirmDeleteUser(
                                         requestId: requestId,
                                         targetUserId: targetUserId,
                                       );
+                                      _loadData();
                                       if (context.mounted) {
                                         ScaffoldMessenger.of(context).showSnackBar(
                                           SnackBar(
@@ -462,6 +675,3 @@ class _MasterAdminIndividualsScreenState
     );
   }
 }
-
-
-

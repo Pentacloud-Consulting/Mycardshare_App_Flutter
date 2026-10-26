@@ -249,9 +249,12 @@ class _IndividualCampaignScreenState extends State<IndividualCampaignScreen> {
                   separatorBuilder: (context, index) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final camp = _campaigns[index];
-                    final name = camp['name'] ?? 'Campaign ${index + 1}';
-                    final scans = camp['scans'] ?? 0;
-                    final leads = camp['leads'] ?? 0;
+                    final rawName = camp['name'] ?? camp['title'] ?? camp['campaignName'] ?? camp['label'];
+                    final name = (rawName != null && rawName.toString().trim().isNotEmpty)
+                        ? rawName.toString().trim()
+                        : 'Campaign ${index + 1}';
+                    final scans = camp['scans'] ?? camp['totalScans'] ?? 0;
+                    final leads = camp['leads'] ?? camp['leadsWon'] ?? camp['leadsCount'] ?? 0;
 
                     return Container(
                       padding: const EdgeInsets.all(16),

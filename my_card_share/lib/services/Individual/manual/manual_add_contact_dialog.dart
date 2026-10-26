@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'manual_service.dart';
 import '../../../backend/individual/scan/manual_entry_service.dart';
 
+import '../../../providers/vault_provider.dart';
+
 class ManualAddContactDialog extends ConsumerStatefulWidget {
   const ManualAddContactDialog({super.key});
 
@@ -34,17 +36,73 @@ class _ManualAddContactDialogState extends ConsumerState<ManualAddContactDialog>
   void _saveContact() async {
     if (_isSaving) return;
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isSaving = true;
-      });
-
       final name = _nameController.text.trim();
       final title = _titleController.text.trim();
       final company = _companyController.text.trim();
       final phone = _phoneController.text.trim();
       final email = _emailController.text.trim();
 
-      // 1. Instant optimistic update to Riverpod Vault state
+      // 🛡️ Find existing contact with matching details in the Vault
+      final existingContact = ref.read(vaultNotifierProvider.notifier).findExistingContact(
+            name: name,
+            phone: phone,
+            email: email,
+            company: company,
+          );
+
+      bool isUpdatingExisting = false;
+
+      if (existingContact != null) {
+        final existingName = existingContact['name'] ?? name;
+        final shouldUpdate = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Row(
+              children: [
+                Icon(Icons.info_outline_rounded, color: Color(0xFFF59E0B), size: 24),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Contact Already Exists',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              'A contact matching "$existingName" with similar details is already in your Contact Vault.\n\nWould you like to update the existing contact instead of creating a duplicate?',
+              style: const TextStyle(fontSize: 13.5, color: Color(0xFF64748B), height: 1.4),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel', style: TextStyle(color: Color(0xFF64748B))),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0F172A),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: const Text('Update Contact'),
+              ),
+            ],
+          ),
+        );
+
+        if (shouldUpdate != true) {
+          return; // User canceled; stay on dialog to adjust fields
+        }
+        isUpdatingExisting = true;
+      }
+
+      setState(() {
+        _isSaving = true;
+      });
+
+      // 1. Instant optimistic update to Riverpod Vault state (deduplicated)
       try {
         ManualService.saveContact(
           ref,
@@ -86,13 +144,16 @@ class _ManualAddContactDialogState extends ConsumerState<ManualAddContactDialog>
           context.push('/portal/vault');
         }
       } catch (_) {
-        // Fallback if router state fails in dialog context
         context.push('/portal/vault');
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("✓ $name added to Contact Vault!"),
+          content: Text(
+            isUpdatingExisting
+                ? "✓ $name updated in Contact Vault!"
+                : "✓ $name added to Contact Vault!",
+          ),
           backgroundColor: const Color(0xFF0F172A),
           behavior: SnackBarBehavior.floating,
         ),

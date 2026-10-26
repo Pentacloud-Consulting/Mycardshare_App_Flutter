@@ -1,9 +1,8 @@
-import 'package:flutter/foundation.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../profile/individual_profile_store.dart';
 import '../scan_profile_view/scan_profile_view.dart';
+export '../../contact/save_contact_service.dart';
 
-/// Data representation of Contact details to be exported into native mobile dialer/contacts app.
+/// Data representation of Contact details to be exported into native mobile contacts app.
 class ContactExportData {
   final String fullName;
   final String jobTitle;
@@ -64,7 +63,7 @@ class ContactExportData {
     );
   }
 
-  /// Generates a standard vCard 3.0 specification string for full end-to-end mobile dialer import
+  /// Generates a standard vCard 3.0 specification string for full contact import
   String toVCardString() {
     final cleanName = fullName.trim().isEmpty ? 'Card Contact' : fullName.trim();
     final nameParts = cleanName.split(' ');
@@ -116,47 +115,5 @@ class ContactExportData {
   }
 }
 
-/// Service to export & save digital card contacts directly to Android & iOS Mobile Dialer / Contacts app.
-class SaveContactService {
-  SaveContactService._internal();
-  static final SaveContactService instance = SaveContactService._internal();
-
-  /// Export complete user profile to native phone dialer/contacts app via vCard
-  Future<bool> saveContactToPhone(ContactExportData data) async {
-    if (data.fullName.isEmpty && data.phoneNumber.isEmpty && data.emailAddress.isEmpty) {
-      debugPrint('[SaveContactService] Warning: Contact data is empty.');
-      return false;
-    }
-
-    final vCard = data.toVCardString();
-    debugPrint('[SaveContactService] Generated vCard for ${data.fullName}:\n$vCard');
-
-    try {
-      // 1. Create vCard data URI
-      final encodedVCard = Uri.encodeComponent(vCard);
-      final dataUri = Uri.parse('data:text/vcard;charset=utf-8,$encodedVCard');
-
-      if (await canLaunchUrl(dataUri)) {
-        final launched = await launchUrl(dataUri, mode: LaunchMode.externalApplication);
-        debugPrint('[SaveContactService] Launched vCard data URI for ${data.fullName} (success: $launched)');
-        return launched;
-      }
-
-      // 2. Fallback: Launch phone dialer with phone number pre-filled
-      if (data.phoneNumber.trim().isNotEmpty) {
-        final cleanPhone = data.phoneNumber.replaceAll(RegExp(r'[^\d+]'), '').trim();
-        final telUri = Uri(scheme: 'tel', path: cleanPhone);
-        final launched = await launchUrl(telUri, mode: LaunchMode.externalApplication);
-        debugPrint('[SaveContactService] Fallback launched phone dialer for $cleanPhone (success: $launched)');
-        return launched;
-      }
-
-      return false;
-    } catch (e) {
-      debugPrint('[SaveContactService] Error saving contact: $e');
-      return false;
-    }
-  }
-}
 
 

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../enterprise/profile/enterprise_profile_store.dart';
 import '../../enterprise/invite_employee/invite_link.dart';
+import '../../enterprise/join_workspace_service.dart';
 
 /// Data model representing resolved Enterprise Workspace Info
 class ResolvedEnterpriseInfo {
@@ -84,13 +85,35 @@ class InviteCodeResolver {
   }
 
   /// Resolves exact Enterprise profile (Company Name, Logo, Member Count) by invitation code.
-  Future<ResolvedEnterpriseInfo?> resolveEnterpriseCode(String code) async {
-    final directEntId = extractEnterpriseIdFromInput(code);
+  Future<ResolvedEnterpriseInfo?> resolveEnterpriseCode(String code, {String? enterpriseId}) async {
+    final directEntId = enterpriseId ?? extractEnterpriseIdFromInput(code);
     final cleanCode = extractCodeFromInput(code).toUpperCase();
     if (cleanCode.isEmpty && directEntId == null) return null;
 
     try {
-      // 0. If direct enterpriseId was extracted from the link, load it directly
+      // 0. Live Backend Verification via JoinWorkspaceService (prevents collision!)
+      try {
+        final apiResult = await JoinWorkspaceService.verifyJoinCode(
+          code: cleanCode,
+          enterpriseId: directEntId,
+        );
+        if (apiResult.isNotEmpty && apiResult['companyName'] != null) {
+          final matchedEntId = apiResult['enterpriseId'] as String? ?? directEntId ?? '';
+          return ResolvedEnterpriseInfo(
+            enterpriseUid: matchedEntId,
+            companyName: apiResult['companyName'] as String? ?? 'Enterprise Workspace',
+            memberCount: (apiResult['memberCount'] as num?)?.toInt() ?? 1,
+            logoUrl: apiResult['logoUrl'] as String?,
+            isVerified: true,
+            isExpired: apiResult['isExpired'] == true,
+            inviteCode: cleanCode,
+          );
+        }
+      } catch (apiErr) {
+        debugPrint('[InviteCodeResolver] Live verifyJoinCode API: $apiErr');
+      }
+
+      // 1. If direct enterpriseId is present, load strictly from that company's document
       if (directEntId != null && directEntId.isNotEmpty) {
         final doc = await _firestore.collection('enterprises').doc(directEntId).get();
         if (doc.exists && doc.data() != null) {
@@ -108,41 +131,6 @@ class InviteCodeResolver {
             workEmail: data['email'] as String?,
             isVerified: true,
             inviteCode: cleanCode.isNotEmpty ? cleanCode : (data['inviteCode'] ?? directEntId),
-          );
-        }
-      }
-      // 1. Check active EnterpriseProfileStore in memory (Image 2 & 3 profile: "Islamic Web", 4 Members)
-      final profile = EnterpriseProfileStore.instance.currentProfile;
-      if (profile != null) {
-        // Match by code, short UID, or company slug
-        final shortUid = profile.uid.length >= 8 ? profile.uid.substring(0, 8).toUpperCase() : profile.uid.toUpperCase();
-        if (cleanCode.contains(shortUid) || cleanCode.contains(profile.uid.toUpperCase()) || cleanCode.contains('ZUHAIB')) {
-          // Count real employees accurately (defaulting to enterprise profile size e.g. 4)
-          int realMemberCount = (profile.employeeCount > 0) ? profile.employeeCount : 4;
-          try {
-            final empSnap = await _firestore
-                .collection('enterprises')
-                .doc(profile.uid)
-                .collection('employees')
-                .get();
-            if (empSnap.docs.length > realMemberCount) {
-              realMemberCount = empSnap.docs.length;
-            }
-          } catch (_) {}
-
-          final logo = (profile.logoUrl != null && profile.logoUrl!.trim().isNotEmpty)
-              ? profile.logoUrl
-              : null;
-
-          return ResolvedEnterpriseInfo(
-            enterpriseUid: profile.uid,
-            companyName: profile.companyName.isNotEmpty ? profile.companyName : 'Islamic Web',
-            memberCount: realMemberCount,
-            logoUrl: logo,
-            industry: profile.industry,
-            workEmail: profile.email,
-            isVerified: true,
-            inviteCode: cleanCode,
           );
         }
       }

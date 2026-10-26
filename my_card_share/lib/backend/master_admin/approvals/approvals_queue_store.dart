@@ -4,6 +4,7 @@ import '../../employee_join/email_send_request.dart';
 import '../../enterprise/request/request_fetch.dart';
 import '../core/master_admin_api_client.dart';
 import '../core/master_admin_endpoints.dart';
+import '../master_approval_service.dart';
 
 /// Data model representing any pending approval item in Master Admin
 class MasterApprovalItem {
@@ -96,6 +97,35 @@ class ApprovalsQueueStore extends ChangeNotifier {
         }
       }
 
+      // 1b. Check companies collection if any pending items exist
+      try {
+        final compPendingSnap = await _firestore
+            .collection('companies')
+            .where('approvalStatus', isEqualTo: 'pending')
+            .get();
+        for (final doc in compPendingSnap.docs) {
+          if (!items.any((it) => it.id == doc.id)) {
+            final data = doc.data();
+            DateTime created = DateTime.now();
+            if (data['createdAt'] is Timestamp) {
+              created = (data['createdAt'] as Timestamp).toDate();
+            }
+            items.add(
+              MasterApprovalItem(
+                id: doc.id,
+                title: data['companyName'] ?? data['name'] ?? 'Pending Enterprise',
+                email: data['email'] ?? '',
+                type: 'company',
+                domain: data['domain'] ?? data['customDomain'] ?? '${doc.id.toLowerCase()}.mycardshare.com',
+                logoUrl: data['logoUrl'],
+                status: 'pending',
+                createdAt: created,
+              ),
+            );
+          }
+        }
+      } catch (_) {}
+
       // 2. Pending Join Requests
       try {
         final reqSnap = await _firestore
@@ -133,28 +163,119 @@ class ApprovalsQueueStore extends ChangeNotifier {
   Future<bool> approveItem(MasterApprovalItem item) async {
     try {
       if (item.type == 'company') {
-        // Unlock enterprise in Firestore
-        await _firestore.collection('enterprises').doc(item.id).set({
-          'approvalStatus': 'approved',
-          'status': 'Active',
-          'isSuspended': false,
-          'approvedAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+        final now = DateTime.now();
+        final renewal = now.add(const Duration(days: 365));
 
-        // Also update users collection if present
-        await _firestore.collection('users').doc(item.id).set({
-          'approvalStatus': 'approved',
-          'status': 'active',
-          'isSuspended': false,
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+        // 1. Unlock enterprise in Firestore enterprises collection
+        try {
+          await _firestore.collection('enterprises').doc(item.id).set({
+            'approvalStatus': 'approved',
+            'status': 'Active',
+            'isSuspended': false,
+            'approvedAt': FieldValue.serverTimestamp(),
+            'subscriptionStartDate': Timestamp.fromDate(now),
+            'renewalDate': Timestamp.fromDate(renewal),
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        } catch (e) {
+          debugPrint('[ApprovalsQueueStore] enterprises doc update note: $e');
+        }
 
-        // Notify Next.js backend API
-        await MasterAdminApiClient.post(
-          MasterAdminEndpoints.companyApproval(item.id),
-          {'action': 'approve', 'status': 'approved'},
-        );
+        // 2. Unlock in companies collection (handles Doc ID, companyId, and slug)
+        try {
+          await _firestore.collection('companies').doc(item.id).set({
+            'approvalStatus': 'approved',
+            'status': 'active',
+            'isSuspended': false,
+            'approvedAt': FieldValue.serverTimestamp(),
+            'renewalDate': Timestamp.fromDate(renewal),
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+
+          final compSnap = await _firestore
+              .collection('companies')
+              .where('companyId', isEqualTo: item.id)
+              .get();
+          for (final doc in compSnap.docs) {
+            await doc.reference.set({
+              'approvalStatus': 'approved',
+              'status': 'active',
+              'isSuspended': false,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          }
+        } catch (e) {
+          debugPrint('[ApprovalsQueueStore] companies doc update note: $e');
+        }
+
+        // 3. Promote Admin User in users collection
+        try {
+          await _firestore.collection('users').doc(item.id).set({
+            'approvalStatus': 'approved',
+            'status': 'active',
+            'role': 'enterprise',
+            'isSuspended': false,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+
+          if (item.email.trim().isNotEmpty) {
+            final emailDocId = item.email.trim().toLowerCase().replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+            await _firestore.collection('users').doc(emailDocId).set({
+              'approvalStatus': 'approved',
+              'status': 'active',
+              'role': 'enterprise',
+              'isSuspended': false,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+
+            final usersByEmail = await _firestore
+                .collection('users')
+                .where('email', isEqualTo: item.email.trim().toLowerCase())
+                .get();
+            for (final doc in usersByEmail.docs) {
+              await doc.reference.set({
+                'approvalStatus': 'approved',
+                'status': 'active',
+                'role': 'enterprise',
+                'isSuspended': false,
+                'updatedAt': FieldValue.serverTimestamp(),
+              }, SetOptions(merge: true));
+            }
+          }
+
+          final usersSnap = await _firestore
+              .collection('users')
+              .where('companyId', isEqualTo: item.id)
+              .get();
+          for (final doc in usersSnap.docs) {
+            await doc.reference.set({
+              'approvalStatus': 'approved',
+              'status': 'active',
+              'isSuspended': false,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          }
+        } catch (e) {
+          debugPrint('[ApprovalsQueueStore] users doc update note: $e');
+        }
+
+        // 4. Notify Next.js live backend sync API (/api/sync/master-admin)
+        try {
+          await MasterApprovalSyncService.approveCompany(
+            companyId: item.id,
+            action: 'approve',
+          );
+        } catch (apiErr) {
+          debugPrint('[ApprovalsQueueStore] MasterApprovalSyncService error: $apiErr');
+        }
+
+        // 5. Notify legacy Next.js backend API
+        try {
+          await MasterAdminApiClient.post(
+            MasterAdminEndpoints.companyApproval(item.id),
+            {'action': 'approve', 'status': 'approved'},
+          );
+        } catch (_) {}
 
         _pendingItems.removeWhere((i) => i.id == item.id);
         notifyListeners();
@@ -174,25 +295,69 @@ class ApprovalsQueueStore extends ChangeNotifier {
     try {
       if (item.type == 'company') {
         // Mark enterprise as rejected / suspended in Firestore
-        await _firestore.collection('enterprises').doc(item.id).set({
-          'approvalStatus': 'rejected',
-          'status': 'Suspended',
-          'isSuspended': true,
-          'rejectionReason': reason ?? 'Declined by Master Admin.',
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+        try {
+          await _firestore.collection('enterprises').doc(item.id).set({
+            'approvalStatus': 'rejected',
+            'status': 'Suspended',
+            'isSuspended': true,
+            'rejectionReason': reason ?? 'Declined by Master Admin.',
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        } catch (_) {}
 
-        await _firestore.collection('users').doc(item.id).set({
-          'approvalStatus': 'rejected',
-          'status': 'suspended',
-          'isSuspended': true,
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+        try {
+          await _firestore.collection('companies').doc(item.id).set({
+            'approvalStatus': 'rejected',
+            'status': 'suspended',
+            'isSuspended': true,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        } catch (_) {}
 
-        await MasterAdminApiClient.post(
-          MasterAdminEndpoints.companyApproval(item.id),
-          {'action': 'reject', 'status': 'rejected', 'reason': reason},
-        );
+        try {
+          await _firestore.collection('users').doc(item.id).set({
+            'approvalStatus': 'rejected',
+            'status': 'suspended',
+            'isSuspended': true,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        } catch (_) {}
+
+        // Cascade rejection to any users tied to this company
+        try {
+          final usersSnap = await _firestore
+              .collection('users')
+              .where('companyId', isEqualTo: item.id)
+              .get();
+          for (final doc in usersSnap.docs) {
+            await doc.reference.set({
+              'approvalStatus': 'rejected',
+              'status': 'suspended',
+              'isSuspended': true,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          }
+        } catch (e) {
+          debugPrint('[ApprovalsQueueStore] Error cascading user rejection: $e');
+        }
+
+        // Notify Next.js live backend sync API
+        try {
+          await MasterApprovalSyncService.approveCompany(
+            companyId: item.id,
+            action: 'reject',
+            reason: reason,
+          );
+        } catch (apiErr) {
+          debugPrint('[ApprovalsQueueStore] MasterApprovalSyncService reject error: $apiErr');
+        }
+
+        try {
+          await MasterAdminApiClient.post(
+            MasterAdminEndpoints.companyApproval(item.id),
+            {'action': 'reject', 'status': 'rejected', 'reason': reason},
+          );
+        } catch (_) {}
 
         _pendingItems.removeWhere((i) => i.id == item.id);
         notifyListeners();

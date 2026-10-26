@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import '../profile/enterprise_profile_store.dart';
 import '../../../models/user_model.dart';
+import 'enterprise_google_auth_sync_service.dart';
 
 // ─── Shared Google Sign-In instance ──────────────────────────────────────────
 const String _webClientId =
@@ -115,10 +116,27 @@ class EnterpriseAuthService {
           .doc(uid)
           .set(enterpriseMap);
 
+      final voucherPrefix = (companyName.replaceAll(RegExp(r'[^a-zA-Z]'), '').substring(0, 3)).toUpperCase();
+      final voucherCode = '${voucherPrefix.isNotEmpty ? voucherPrefix : "MCS"}${100 + (DateTime.now().millisecondsSinceEpoch % 900)}';
+
+      await _firestore.collection('companies').doc(uid).set({
+        'companyId': uid,
+        'companyName': companyName.trim(),
+        'adminUid': uid,
+        'adminEmail': email.trim().toLowerCase(),
+        'adminName': companyName.trim(),
+        'voucherCode': voucherCode,
+        'memberCount': 1,
+        'status': 'pending',
+        'approvalStatus': 'pending',
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
       EnterpriseProfileStore.instance.setCurrentProfile(profileData);
 
       debugPrint(
-          '[EnterpriseAuthService] Firestore enterprise docs created for $uid (Pending Master Admin Approval)');
+          '[EnterpriseAuthService] Firestore enterprise and company docs created for $uid (voucherCode=$voucherCode, Pending Approval)');
 
       final userModel = UserModel(
         id: uid,
@@ -174,73 +192,9 @@ class EnterpriseAuthService {
   Future<EnterpriseAuthResult> signInWithGoogle({
     String? defaultCompanyName,
   }) async {
-    try {
-      debugPrint('[EnterpriseAuthService] Starting Google Sign-In...');
-
-      final googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        return EnterpriseAuthResult.error('Google sign-in was cancelled.');
-      }
-
-      final googleAuth = await googleUser.authentication;
-      final oauthCredential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      final credential = await _auth.signInWithCredential(oauthCredential);
-      final user = credential.user!;
-      final uid = user.uid;
-      final isNewUser = credential.additionalUserInfo?.isNewUser ?? false;
-
-      final resolvedCompany = defaultCompanyName?.trim().isNotEmpty == true
-          ? defaultCompanyName!.trim()
-          : (user.displayName?.trim().isNotEmpty == true
-              ? user.displayName!.trim()
-              : user.email?.split('@').first ?? 'My Company');
-
-      if (isNewUser) {
-        final slug = EnterpriseProfileData.generateCardSlug(resolvedCompany);
-
-        await _firestore.collection('users').doc(uid).set({
-          'uid': uid,
-          'email': user.email ?? googleUser.email,
-          'companyName': resolvedCompany,
-          'fullName': resolvedCompany,
-          'role': 'enterprise',
-          'status': 'active',
-          'cardSlug': slug,
-          'plan': 'free',
-          'avatarUrl': user.photoURL ?? googleUser.photoUrl,
-          'provider': 'google',
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-
-        final profileData = EnterpriseProfileData(
-          uid: uid,
-          companyName: resolvedCompany,
-          email: user.email ?? googleUser.email,
-          logoUrl: user.photoURL ?? googleUser.photoUrl,
-          cardSlug: slug,
-          plan: 'free',
-        );
-
-        await _firestore
-            .collection('enterprises')
-            .doc(uid)
-            .set(profileData.toFirestore());
-      }
-
-      debugPrint(
-          '[EnterpriseAuthService] Google Sign-In OK: $uid (new=$isNewUser)');
-      return await _postLoginSync(user);
-    } on FirebaseAuthException catch (e) {
-      return EnterpriseAuthResult.error(_mapFirebaseError(e.code));
-    } catch (e) {
-      debugPrint('[EnterpriseAuthService] Google sign-in exception: $e');
-      return EnterpriseAuthResult.error('Google sign-in failed: $e');
-    }
+    return await EnterpriseGoogleAuthSyncService.instance.signUpEnterpriseWithGoogle(
+      companyName: defaultCompanyName,
+    );
   }
 
   // ─── Post-Login Sync ──────────────────────────────────────────────────────

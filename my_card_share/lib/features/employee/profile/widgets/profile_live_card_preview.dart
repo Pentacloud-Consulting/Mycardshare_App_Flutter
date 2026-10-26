@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../backend/individual/profile/individual_profile_store.dart';
 import '../../../../backend/employee_join/banner fetch/banner fetch.dart';
 
@@ -98,7 +99,15 @@ class ProfileLiveCardPreview extends StatelessWidget {
   }
 
   Widget _buildAvatarWidget() {
-    final activePhoto = profilePhoto ?? IndividualProfileStore.instance.activeProfile?.profilePhoto;
+    final authUser = FirebaseAuth.instance.currentUser;
+    final googlePhoto = (authUser?.photoURL != null && authUser!.photoURL!.trim().isNotEmpty)
+        ? authUser.photoURL!.trim()
+        : null;
+    final activePhoto = (profilePhoto != null && profilePhoto!.trim().isNotEmpty)
+        ? profilePhoto!.trim()
+        : ((IndividualProfileStore.instance.activeProfile?.profilePhoto != null && IndividualProfileStore.instance.activeProfile!.profilePhoto!.trim().isNotEmpty)
+            ? IndividualProfileStore.instance.activeProfile!.profilePhoto!.trim()
+            : googlePhoto);
     return _buildImageWidget(activePhoto, fallback: _buildAvatarFallback());
   }
 

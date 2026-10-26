@@ -9,9 +9,11 @@ import '../../../backend/enterprise/sign/enterprise_auth_service.dart';
 import '../../../services/auth/password_validator.dart';
 import '../login/login_screen.dart'; // import GoogleLogoWidget
 import '../back/smart_back_handler.dart';
+import '../../../backend/app view/app_view_auth_gate.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
-  const SignupScreen({super.key});
+  final int initialTab;
+  const SignupScreen({super.key, this.initialTab = 0});
 
   @override
   ConsumerState<SignupScreen> createState() => _SignupScreenState();
@@ -24,10 +26,16 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   PasswordValidationResult _passwordValidation = PasswordValidationResult.empty();
 
-  int _selectedTab = 0; // 0: Individual, 1: Enterprise
+  late int _selectedTab; // 0: Individual, 1: Enterprise
   bool _obscurePassword = true;
   bool _agreeTerms = false;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedTab = widget.initialTab;
+  }
 
   @override
   void dispose() {
@@ -172,11 +180,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           role: roleStr,
         );
         ref.read(authProvider.notifier).login(user);
-        // Returning Google users who finished onboarding go to dashboard directly
-        if (result.onboardingCompleted) {
-          context.go('/enterprise/dashboard');
-        } else {
-          context.go('/enterprise-onboarding');
+        await AppViewAuthGate.instance.savePersistentSession(user);
+        if (mounted) {
+          if (result.onboardingCompleted) {
+            context.go('/enterprise/dashboard');
+          } else {
+            context.go('/enterprise-onboarding');
+          }
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -356,20 +366,20 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         color: Color(0xFF0F172A),
                         fontWeight: FontWeight.w500,
                       ),
-                      decoration: const InputDecoration(
-                        hintText: "Full Name",
-                        hintStyle: TextStyle(
+                      decoration: InputDecoration(
+                        hintText: _selectedTab == 1 ? "Company / Organization Name" : "Full Name",
+                        hintStyle: const TextStyle(
                           color: Color(0xFF94A3B8),
                           fontSize: 15,
                           fontWeight: FontWeight.w400,
                         ),
                         prefixIcon: Icon(
-                          Icons.person_outline_rounded,
-                          color: Color(0xFF94A3B8),
+                          _selectedTab == 1 ? Icons.domain_rounded : Icons.person_outline_rounded,
+                          color: const Color(0xFF94A3B8),
                           size: 22,
                         ),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                       ),
                     ),
                   ),
@@ -577,17 +587,17 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               )
                             : Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
+                                children: [
                                   Text(
-                                    "Create Account",
-                                    style: TextStyle(
+                                    _selectedTab == 1 ? "Create Enterprise Account" : "Create Account",
+                                    style: const TextStyle(
                                       fontSize: 17,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
                                     ),
                                   ),
-                                  SizedBox(width: 8),
-                                  Icon(
+                                  const SizedBox(width: 8),
+                                  const Icon(
                                     Icons.arrow_forward_rounded,
                                     color: Colors.white,
                                     size: 20,
@@ -684,13 +694,46 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         ),
                       ),
                       GestureDetector(
-                        onTap: () => context.go('/login'),
+                        onTap: () {
+                          if (_selectedTab == 1) {
+                            context.go('/login?role=enterprise', extra: {'role': 'enterprise', 'tab': 1});
+                          } else {
+                            context.go('/login');
+                          }
+                        },
                         child: const Text(
                           "Log In",
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF0066FF),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // New Employee? Join Workspace
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "New Employee? ",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => context.push('/join-workspace'),
+                        child: const Text(
+                          "Join Workspace",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF10B981),
                           ),
                         ),
                       ),

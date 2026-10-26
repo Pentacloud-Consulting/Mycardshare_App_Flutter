@@ -9,10 +9,10 @@ class DashboardStatsGrid extends StatelessWidget {
 
   const DashboardStatsGrid({
     super.key,
-    this.totalCompanies = "248",
-    this.totalIndividuals = "12,847",
-    this.totalLeads = "18,204",
-    this.pendingApprovals = "6",
+    this.totalCompanies = "0",
+    this.totalIndividuals = "0",
+    this.totalLeads = "0",
+    this.pendingApprovals = "0",
   });
 
   @override

@@ -103,15 +103,14 @@ class IndividualDeleteService {
     }
   }
 
-  /// 2. MASTER ADMIN: STREAM PENDING DELETION REQUESTS (Real-Time Multi-Source)
+  /// 2. MASTER ADMIN: STREAM PENDING DELETION REQUESTS (Real-Time, Instant)
   static Stream<List<Map<String, dynamic>>> streamPendingDeletions() {
     return _firestore
         .collection("account_deletion_requests")
         .snapshots()
-        .asyncMap((snapshot) async {
-      final Map<String, Map<String, dynamic>> requestsMap = {};
+        .map((snapshot) {
+      final List<Map<String, dynamic>> list = [];
 
-      // 1. Process account_deletion_requests collection (tolerant of status formatting)
       for (final doc in snapshot.docs) {
         final data = doc.data();
         final statusStr = (data["status"] ?? "pending").toString().toLowerCase().trim();
@@ -125,7 +124,7 @@ class IndividualDeleteService {
         }
 
         final uid = (data["userId"] ?? doc.id).toString();
-        requestsMap[uid] = {
+        list.add({
           "requestId": doc.id,
           "userId": uid,
           "userName": data["userName"] ?? "User",
@@ -134,54 +133,10 @@ class IndividualDeleteService {
           "feedback": data["feedback"] ?? "",
           "status": "pending",
           "createdAt": dt,
-        };
+        });
       }
 
-      // 2. Also check users collection for any deletion_pending or deactivated accounts
-      try {
-        final usersSnap = await _firestore.collection("users").get();
-        for (final uDoc in usersSnap.docs) {
-          final uData = uDoc.data();
-          final uStatus = (uData["status"] ?? "").toString().toLowerCase();
-          final isDelPending = uData["deletion_pending"] == true ||
-              uStatus == "deletion_pending" ||
-              uStatus == "deactivated" ||
-              uData["isDeactivated"] == true;
-
-          if (isDelPending && !requestsMap.containsKey(uDoc.id)) {
-            DateTime uDt = DateTime.now();
-            if (uData["deletionRequestedAt"] is Timestamp) {
-              uDt = (uData["deletionRequestedAt"] as Timestamp).toDate();
-            } else if (uData["updatedAt"] is Timestamp) {
-              uDt = (uData["updatedAt"] as Timestamp).toDate();
-            }
-
-            requestsMap[uDoc.id] = {
-              "requestId": uDoc.id,
-              "userId": uDoc.id,
-              "userName": uData["displayName"] ?? uData["name"] ?? uData["fullName"] ?? "Individual User",
-              "userEmail": uData["email"] ?? "",
-              "reason": uData["deletionReason"] ?? "Account marked for deactivation / deletion",
-              "feedback": "",
-              "status": "pending",
-              "createdAt": uDt,
-            };
-          }
-        }
-      } catch (uErr) {
-        debugPrint("[IndividualDeleteService] Users pending check note: $uErr");
-      }
-
-      // 3. Fallback to live backend API if Firestore returned empty
-      if (requestsMap.isEmpty) {
-        final apiList = await _fetchFromApi();
-        for (final req in apiList) {
-          final id = (req["userId"] ?? req["requestId"] ?? req["id"] ?? "").toString();
-          if (id.isNotEmpty) requestsMap[id] = req;
-        }
-      }
-
-      return requestsMap.values.toList();
+      return list;
     }).handleError((err) {
       debugPrint("[IndividualDeleteService] streamPendingDeletions error: $err");
       return <Map<String, dynamic>>[];

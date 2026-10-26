@@ -190,9 +190,27 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/privacy', builder: (c, s) => const SupportPrivacyPolicyScreen()),
       GoRoute(path: '/terms', builder: (c, s) => const SupportTermsOfServiceScreen()),
 
-      // Auth
-      GoRoute(path: '/login', builder: (c, s) => const LoginScreen()),
-      GoRoute(path: '/signup', builder: (c, s) => const SignupScreen()),
+      GoRoute(
+        path: '/login',
+        builder: (c, s) {
+          final queryRole = s.uri.queryParameters['role']?.toLowerCase();
+          final extraMap = s.extra is Map ? (s.extra as Map) : null;
+          final extraRole = extraMap?['role']?.toString().toLowerCase();
+          final isEnterprise = queryRole == 'enterprise' || extraRole == 'enterprise' || extraMap?['tab'] == 1;
+          final isEmployee = queryRole == 'employee' || extraRole == 'employee' || extraMap?['tab'] == 2;
+          return LoginScreen(initialTab: isEnterprise ? 1 : (isEmployee ? 2 : 0));
+        },
+      ),
+      GoRoute(
+        path: '/signup',
+        builder: (c, s) {
+          final queryRole = s.uri.queryParameters['role']?.toLowerCase();
+          final extraMap = s.extra is Map ? (s.extra as Map) : null;
+          final extraRole = extraMap?['role']?.toString().toLowerCase();
+          final isEnterprise = queryRole == 'enterprise' || extraRole == 'enterprise' || extraMap?['tab'] == 1;
+          return SignupScreen(initialTab: isEnterprise ? 1 : 0);
+        },
+      ),
       GoRoute(
         path: '/join-workspace',
         builder: (c, s) => const JoinWorkspaceScreen(),

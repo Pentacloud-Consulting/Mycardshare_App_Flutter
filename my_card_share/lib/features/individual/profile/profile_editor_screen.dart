@@ -55,7 +55,10 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
     PublishUnpublishService.instance.loadPublishStatus(_uid);
     _selectedTemplateIndex = IndividualProfileStore.getTemplateIndex(active?.templateStyle);
     _bannerImagePath = active?.bannerPhoto;
-    _profileImagePath = active?.profilePhoto;
+    final fbPhoto = fbUser?.photoURL?.trim();
+    _profileImagePath = (active?.profilePhoto != null && active!.profilePhoto!.trim().isNotEmpty)
+        ? active.profilePhoto!.trim()
+        : ((fbPhoto != null && fbPhoto.isNotEmpty) ? fbPhoto : null);
 
     _nameController = TextEditingController(text: active?.fullName ?? storedUser?.fullName ?? "");
     _roleController = TextEditingController(text: active?.jobTitle ?? "");

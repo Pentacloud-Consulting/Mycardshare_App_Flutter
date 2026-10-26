@@ -68,6 +68,11 @@ class _IndividualCardScreenState extends State<IndividualCardScreen> {
         final templateIndex = IndividualProfileStore.getTemplateIndex(activeProfile?.templateStyle);
         final userEmail = activeProfile?.email ?? storedUser?.email ?? "";
         final userPhone = activeProfile?.phoneNumber ?? "";
+        final authPhoto = FirebaseAuth.instance.currentUser?.photoURL;
+        final rawPhoto = activeProfile?.profilePhoto?.trim();
+        final displayPhoto = (rawPhoto != null && rawPhoto.isNotEmpty)
+            ? rawPhoto
+            : ((authPhoto != null && authPhoto.trim().isNotEmpty) ? authPhoto.trim() : null);
 
         if (_isLoading) {
           return const Scaffold(
@@ -122,7 +127,7 @@ class _IndividualCardScreenState extends State<IndividualCardScreen> {
                         company: company,
                         status: status,
                         selectedTemplateIndex: templateIndex,
-                        avatarUrl: activeProfile?.profilePhoto,
+                        avatarUrl: displayPhoto,
                         bannerUrl: activeProfile?.bannerPhoto,
                         isPublished: isPublished,
                       ),

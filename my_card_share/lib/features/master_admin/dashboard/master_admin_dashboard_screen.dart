@@ -77,8 +77,10 @@ class _MasterAdminDashboardScreenState extends State<MasterAdminDashboardScreen>
 
                     const SizedBox(height: 24),
 
-                    // 3. Quick Actions Section
-                    const DashboardQuickActions(),
+                    // 3. Quick Actions Section (Live real count)
+                    DashboardQuickActions(
+                      pendingApprovalsCount: store.pendingApprovals,
+                    ),
 
                     const SizedBox(height: 24),
 

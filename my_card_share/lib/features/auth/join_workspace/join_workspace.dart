@@ -72,7 +72,10 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
   /// Live lookup using JoinLoginBackendService
   Future<void> _lookupEnterpriseByCode(String code) async {
     try {
-      final info = await JoinLoginBackendService.instance.lookupEnterpriseByInviteCode(code);
+      final info = await JoinLoginBackendService.instance.lookupEnterpriseByInviteCode(
+        code,
+        enterpriseId: _targetEnterpriseUid,
+      );
       if (info != null && mounted) {
         if (info['isExpired'] == true) {
           _showSnackBar("The invite code got expired. Please request a new invite link.", Colors.orange);
@@ -416,55 +419,102 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
     );
   }
 
+  void _handleBack() {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/signup');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFD),
-      body: Stack(
-        children: [
-          // Background Top-Left Ambient Blue Circle Glow
-          Positioned(
-            top: -120,
-            left: -100,
-            child: Container(
-              width: 320,
-              height: 320,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    const Color(0xFF38B6FF).withValues(alpha: 0.18),
-                    Colors.transparent,
-                  ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          _handleBack();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFD),
+        body: Stack(
+          children: [
+            // Background Top-Left Ambient Blue Circle Glow
+            Positioned(
+              top: -120,
+              left: -100,
+              child: Container(
+                width: 320,
+                height: 320,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      const Color(0xFF38B6FF).withValues(alpha: 0.18),
+                      Colors.transparent,
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
 
-          // Small subtle float circle top
-          Positioned(
-            top: 45,
-            left: 110,
-            child: Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF38B6FF).withValues(alpha: 0.15),
+            // Small subtle float circle top
+            Positioned(
+              top: 45,
+              left: 110,
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF38B6FF).withValues(alpha: 0.15),
+                ),
               ),
             ),
-          ),
 
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                children: [
-                  const SizedBox(height: 50),
+            SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 12),
 
-                  // Centered Real Logo Badge
-                  Container(
-                    width: 76,
+                    // Top Navigation Bar with Back Button
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: _handleBack,
+                          child: Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.04),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              color: Color(0xFF0F172A),
+                              size: 18,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Centered Real Logo Badge
+                    Container(
+                      width: 76,
                     height: 76,
                     decoration: BoxDecoration(
                       color: const Color(0xFF0066FF).withValues(alpha: 0.08),
@@ -956,6 +1006,35 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
                     ),
                   ),
 
+                  const SizedBox(height: 16),
+
+                  // Footer: Back to Sign Up Button
+                  GestureDetector(
+                    onTap: _handleBack,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(
+                            Icons.arrow_back_rounded,
+                            size: 16,
+                            color: Color(0xFF0066FF),
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            "Back to Sign Up",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF0066FF),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
                   const SizedBox(height: 24),
                 ],
               ),
@@ -963,8 +1042,9 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildEmptyLogoFallback(String companyName) {
     final cleanName = companyName.trim();

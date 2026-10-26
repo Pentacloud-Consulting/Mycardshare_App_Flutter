@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class CardHeaderBanner extends StatelessWidget {
   final String name;
@@ -90,7 +91,16 @@ class CardHeaderBanner extends StatelessWidget {
   }
 
   Widget _buildAvatarImage() {
-    return _buildImageWidget(avatarUrl ?? avatarAsset, fallback: _buildAvatarFallback());
+    final authUser = FirebaseAuth.instance.currentUser;
+    final googlePhoto = (authUser?.photoURL != null && authUser!.photoURL!.trim().isNotEmpty)
+        ? authUser.photoURL!.trim()
+        : null;
+    final photo = (avatarUrl != null && avatarUrl!.trim().isNotEmpty)
+        ? avatarUrl!.trim()
+        : ((avatarAsset != null && avatarAsset!.trim().isNotEmpty)
+            ? avatarAsset!.trim()
+            : googlePhoto);
+    return _buildImageWidget(photo, fallback: _buildAvatarFallback());
   }
 
   Widget _buildAvatarFallback() {

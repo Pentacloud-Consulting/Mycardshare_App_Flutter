@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../api_service.dart';
 
 class SocialLinkItem {
@@ -285,6 +286,11 @@ class IndividualProfileStore extends ChangeNotifier {
   /// Load profile from Next.js API (/api/cards) or Firestore
   Future<void> loadProfile(String uid, String email, String fullName) async {
     try {
+      final currentAuth = FirebaseAuth.instance.currentUser;
+      final authPhoto = (currentAuth?.photoURL != null && currentAuth!.photoURL!.trim().isNotEmpty)
+          ? currentAuth.photoURL!.trim()
+          : null;
+
       // 1. Try fetching synced profile from Next.js API /api/cards
       try {
         final apiRes = await IndividualApiService.get('/api/cards');
@@ -292,7 +298,12 @@ class IndividualProfileStore extends ChangeNotifier {
           final card = apiRes['data']['card'] ?? apiRes['data'];
           if (card != null && card is Map<String, dynamic>) {
             final rawLinks = (card['socialLinks'] as List<dynamic>?) ?? [];
-            dynamic rawPhoto = card['avatarUrl'] ?? card['profilePhoto'] ?? card['photoUrl'];
+            dynamic rawPhoto = card['avatarUrl'] ??
+                card['profilePhoto'] ??
+                card['photoURL'] ??
+                card['photoUrl'] ??
+                card['picture'] ??
+                card['profileImage'];
             dynamic rawBanner = card['bannerUrl'] ?? card['bannerPhoto'] ?? card['coverImage'];
             String? photo = (rawPhoto != null && rawPhoto.toString().trim().isNotEmpty) ? rawPhoto.toString().trim() : null;
             String? banner = (rawBanner != null && rawBanner.toString().trim().isNotEmpty) ? rawBanner.toString().trim() : null;
@@ -302,11 +313,18 @@ class IndividualProfileStore extends ChangeNotifier {
                 final fsDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
                 if (fsDoc.exists && fsDoc.data() != null) {
                   final fsData = fsDoc.data()!;
-                  photo ??= fsData['profilePhoto'] ?? fsData['avatarUrl'] ?? fsData['photoUrl'];
+                  photo ??= fsData['profilePhoto'] ??
+                      fsData['avatarUrl'] ??
+                      fsData['photoURL'] ??
+                      fsData['photoUrl'] ??
+                      fsData['picture'] ??
+                      fsData['profileImage'];
                   banner ??= fsData['bannerPhoto'] ?? fsData['bannerUrl'] ?? fsData['coverImage'];
                 }
               } catch (_) {}
             }
+
+            photo ??= authPhoto;
 
             _activeProfile = IndividualProfileData(
               uid: uid,
@@ -350,7 +368,13 @@ class IndividualProfileStore extends ChangeNotifier {
       if (fsDoc != null && fsDoc.data() != null) {
         final data = fsDoc.data()!;
         final rawLinks = (data['socialLinks'] as List<dynamic>?) ?? [];
-        final photo = data['profilePhoto'] ?? data['avatarUrl'] ?? data['photoUrl'];
+        final photo = data['profilePhoto'] ??
+            data['avatarUrl'] ??
+            data['photoURL'] ??
+            data['photoUrl'] ??
+            data['picture'] ??
+            data['profileImage'] ??
+            authPhoto;
         final banner = data['bannerPhoto'] ?? data['bannerUrl'] ?? data['coverImage'];
 
         final resolvedName = (data['fullName'] as String?)?.trim().isNotEmpty == true
@@ -392,6 +416,32 @@ class IndividualProfileStore extends ChangeNotifier {
         notifyListeners();
         debugPrint('[IndividualProfileStore] Loaded profile from Firestore users/${fsDoc.id}: $resolvedName ($resolvedRole @ $resolvedComp)');
         return;
+      }
+
+      // 3. Fallback active profile if neither API nor Firestore returned
+      if (_activeProfile == null) {
+        final resolvedName = fullName.trim().isNotEmpty
+            ? fullName.trim()
+            : (email.contains('@') ? email.split('@').first : 'User');
+        _activeProfile = IndividualProfileData(
+          uid: uid,
+          fullName: resolvedName,
+          email: email,
+          cardSlug: generateCardSlug(resolvedName),
+          profilePhoto: authPhoto,
+          jobTitle: 'Member',
+          phoneNumber: '',
+          websiteUrl: '',
+          templateStyle: '0',
+          socialLinks: [],
+          companyName: 'MyCardShare Member',
+          shortBio: '',
+          networkingStatus: 'Actively Networking',
+        );
+        notifyListeners();
+      } else if ((_activeProfile!.profilePhoto == null || _activeProfile!.profilePhoto!.isEmpty) && authPhoto != null) {
+        _activeProfile = _activeProfile!.copyWith(profilePhoto: authPhoto);
+        notifyListeners();
       }
     } catch (e) {
       debugPrint('[IndividualProfileStore] Load error: $e');

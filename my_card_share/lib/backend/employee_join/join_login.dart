@@ -82,8 +82,8 @@ class JoinLoginBackendService {
   }
 
   /// Look up Enterprise info live by invitation code using InviteCodeResolver
-  Future<Map<String, dynamic>?> lookupEnterpriseByInviteCode(String code) async {
-    final info = await InviteCodeResolver.instance.resolveEnterpriseCode(code);
+  Future<Map<String, dynamic>?> lookupEnterpriseByInviteCode(String code, {String? enterpriseId}) async {
+    final info = await InviteCodeResolver.instance.resolveEnterpriseCode(code, enterpriseId: enterpriseId);
     return info?.toMap();
   }
 

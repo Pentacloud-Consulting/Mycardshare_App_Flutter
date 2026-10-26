@@ -663,7 +663,7 @@ class _EmployeeLoginScreenState extends ConsumerState<EmployeeLoginScreen> {
                         ),
                       ),
                       GestureDetector(
-                        onTap: () => context.go('/join-workspace'),
+                        onTap: () => context.push('/join-workspace'),
                         child: const Text(
                           "Join Workspace",
                           style: TextStyle(

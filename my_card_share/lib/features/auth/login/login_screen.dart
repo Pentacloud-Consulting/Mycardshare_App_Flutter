@@ -24,7 +24,8 @@ import '../../../backend/Global User Directory/global_auth_sync_service.dart';
 import '../back/smart_back_handler.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+  final int initialTab;
+  const LoginScreen({super.key, this.initialTab = 0});
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
@@ -33,9 +34,15 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  int _selectedTab = 0; // 0: Individual, 1: Enterprise, 2: Employee
+  late int _selectedTab; // 0: Individual, 1: Enterprise, 2: Employee
   bool _obscurePassword = true;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedTab = widget.initialTab;
+  }
 
   @override
   void dispose() {
@@ -289,6 +296,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           return;
         }
 
+        if (!result.isApproved) {
+          // Block login: clear session and prevent entering enterprise workspace
+          await FirebaseAuth.instance.signOut();
+          ref.read(authProvider.notifier).logout();
+          await AppViewAuthGate.instance.clearPersistentSession();
+
+          if (mounted) {
+            EnterpriseLoginPopupNotification.showPendingApprovalDialog(
+              context,
+              onViewStatusTap: () => context.push('/registration-pending'),
+            );
+          }
+          return;
+        }
+
         final user = UserModel(
           id: fbUser.uid,
           name: result.profileData?.companyName ?? fbUser.displayName ?? email,
@@ -298,9 +320,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ref.read(authProvider.notifier).login(user);
         await AppViewAuthGate.instance.savePersistentSession(user);
         if (mounted) {
-          if (!result.isApproved) {
-            context.go('/registration-pending');
-          } else if (result.onboardingCompleted) {
+          if (result.onboardingCompleted) {
             context.go('/enterprise/dashboard');
           } else {
             context.go('/enterprise-onboarding');
@@ -312,7 +332,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         if (msg.contains('No account') || msg.contains('not valid') || msg.contains('not found')) {
           EnterpriseLoginPopupNotification.showEmailNotFoundDialog(
             context,
-            onSignUpTap: () => context.go('/signup'),
+            onSignUpTap: () => context.go('/signup?role=enterprise', extra: {'role': 'enterprise', 'tab': 1}),
           );
         } else if (msg.contains('Incorrect') || msg.contains('credentials') || msg.contains('password')) {
           EnterpriseLoginPopupNotification.showWrongPasswordDialog(
@@ -425,29 +445,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (result.isSuccess && result.firebaseUser != null) {
         final fbUser = result.firebaseUser!;
 
-        // Role verification check for Google Sign-In
-        final registeredRole = await _fetchRegisteredUserRole(fbUser.uid);
-        if (registeredRole == 'individual' || (registeredRole != null && registeredRole != 'enterprise' && registeredRole != 'employee')) {
-          await FirebaseAuth.instance.signOut();
-          ref.read(authProvider.notifier).logout();
-          if (mounted) {
-            EnterpriseCategoryMismatchDialog.show(
-              context,
-              registeredCategory: 'Individual',
-              currentTabCategory: 'Enterprise',
-              onSwitchTab: () => setState(() => _selectedTab = 0),
-            );
-          }
-          return;
-        }
-
         final user = UserModel(
           id: fbUser.uid,
           name: result.profileData?.companyName ?? fbUser.displayName ?? fbUser.email ?? 'Enterprise',
           email: fbUser.email ?? '',
-          role: roleStr,
+          role: 'enterprise',
         );
         ref.read(authProvider.notifier).login(user);
+        await AppViewAuthGate.instance.savePersistentSession(user);
         if (mounted) {
           if (result.onboardingCompleted) {
             context.go('/enterprise/dashboard');
@@ -824,7 +829,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                       GestureDetector(
-                        onTap: () => context.go('/signup'),
+                        onTap: () {
+                          if (_selectedTab == 1) {
+                            context.go('/signup?role=enterprise', extra: {'role': 'enterprise', 'tab': 1});
+                          } else {
+                            context.go('/signup');
+                          }
+                        },
                         child: Text(
                           "Sign up",
                           style: AppTextStyles.textTheme.bodyMedium?.copyWith(
@@ -851,7 +862,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                       GestureDetector(
-                        onTap: () => context.go('/join-workspace'),
+                        onTap: () => context.push('/join-workspace'),
                         child: Text(
                           "Join Workspace",
                           style: AppTextStyles.textTheme.bodyMedium?.copyWith(

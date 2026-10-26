@@ -1,62 +1,80 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../backend/master_admin/approvals/approvals_queue_store.dart';
 
 class DashboardQuickActions extends StatelessWidget {
-  const DashboardQuickActions({super.key});
+  final int? pendingApprovalsCount;
+
+  const DashboardQuickActions({
+    super.key,
+    this.pendingApprovalsCount,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Quick Actions",
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF0F172A),
-            letterSpacing: -0.3,
-          ),
-        ),
-        const SizedBox(height: 12),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          child: Row(
-            children: [
-              // 1. Review Approvals
-              _buildActionChip(
-                context: context,
-                label: "Review Approvals",
-                icon: Icons.check_circle_rounded,
-                tintColor: const Color(0xFFF59E0B),
-                badgeText: "6",
-                route: '/master-admin/approval',
-              ),
-              const SizedBox(width: 10),
+    return StreamBuilder<List<MasterApprovalItem>>(
+      stream: ApprovalsQueueStore.instance.streamPendingQueue(),
+      builder: (context, snapshot) {
+        final int count = snapshot.hasData
+            ? snapshot.data!.length
+            : (pendingApprovalsCount ?? ApprovalsQueueStore.instance.pendingCount);
 
-              // 2. Manage Companies
-              _buildActionChip(
-                context: context,
-                label: "Manage Companies",
-                icon: Icons.business_rounded,
-                tintColor: const Color(0xFF0052FF),
-                route: '/master-admin/company',
-              ),
-              const SizedBox(width: 10),
+        // Only display badge when there are real pending approvals (> 0)
+        final String? dynamicBadge = count > 0 ? count.toString() : null;
 
-              // 3. View Individuals
-              _buildActionChip(
-                context: context,
-                label: "View Individuals",
-                icon: Icons.people_alt_rounded,
-                tintColor: const Color(0xFF8B5CF6),
-                route: '/master-admin/individuals',
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Quick Actions",
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF0F172A),
+                letterSpacing: -0.3,
               ),
-            ],
-          ),
-        ),
-      ],
+            ),
+            const SizedBox(height: 12),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: [
+                  // 1. Review Approvals (Dynamic real-time badge)
+                  _buildActionChip(
+                    context: context,
+                    label: "Review Approvals",
+                    icon: Icons.check_circle_rounded,
+                    tintColor: const Color(0xFFF59E0B),
+                    badgeText: dynamicBadge,
+                    route: '/master-admin/approval',
+                  ),
+                  const SizedBox(width: 10),
+
+                  // 2. Manage Companies
+                  _buildActionChip(
+                    context: context,
+                    label: "Manage Companies",
+                    icon: Icons.business_rounded,
+                    tintColor: const Color(0xFF0052FF),
+                    route: '/master-admin/company',
+                  ),
+                  const SizedBox(width: 10),
+
+                  // 3. View Individuals
+                  _buildActionChip(
+                    context: context,
+                    label: "View Individuals",
+                    icon: Icons.people_alt_rounded,
+                    tintColor: const Color(0xFF8B5CF6),
+                    route: '/master-admin/individuals',
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

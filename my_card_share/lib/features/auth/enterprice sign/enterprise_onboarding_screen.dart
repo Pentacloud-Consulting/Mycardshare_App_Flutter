@@ -45,6 +45,7 @@ class _EnterpriseOnboardingScreenState extends ConsumerState<EnterpriseOnboardin
         imageQuality: 90,
       );
       if (picked != null) {
+        if (!mounted) return;
         final croppedPath = await AppImageCropper.cropImage(
           context: context,
           sourcePath: picked.path,
@@ -52,6 +53,7 @@ class _EnterpriseOnboardingScreenState extends ConsumerState<EnterpriseOnboardin
         );
         if (croppedPath != null) {
           final bytes = await File(croppedPath).readAsBytes();
+          if (!mounted) return;
           setState(() {
             _logoBytes = bytes;
           });
@@ -69,6 +71,7 @@ class _EnterpriseOnboardingScreenState extends ConsumerState<EnterpriseOnboardin
         imageQuality: 90,
       );
       if (picked != null) {
+        if (!mounted) return;
         final croppedPath = await AppImageCropper.cropImage(
           context: context,
           sourcePath: picked.path,
@@ -76,6 +79,7 @@ class _EnterpriseOnboardingScreenState extends ConsumerState<EnterpriseOnboardin
         );
         if (croppedPath != null) {
           final bytes = await File(croppedPath).readAsBytes();
+          if (!mounted) return;
           setState(() {
             _bannerBytes = bytes;
           });

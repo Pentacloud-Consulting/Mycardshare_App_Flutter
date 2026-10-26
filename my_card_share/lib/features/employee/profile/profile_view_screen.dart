@@ -82,6 +82,11 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
         final website = activeProfile?.websiteUrl ?? "";
         final slug = activeProfile?.cardSlug ?? IndividualProfileStore.generateCardSlug(name);
         final templateIndex = IndividualProfileStore.getTemplateIndex(activeProfile?.templateStyle);
+        final authPhoto = FirebaseAuth.instance.currentUser?.photoURL;
+        final rawPhoto = activeProfile?.profilePhoto?.trim();
+        final displayPhoto = (rawPhoto != null && rawPhoto.isNotEmpty)
+            ? rawPhoto
+            : ((authPhoto != null && authPhoto.trim().isNotEmpty) ? authPhoto.trim() : null);
 
         return Scaffold(
           backgroundColor: const Color(0xFFF8FAFD),
@@ -98,7 +103,7 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                     company: company,
                     status: status,
                     selectedTemplateIndex: templateIndex,
-                    profilePhoto: activeProfile?.profilePhoto,
+                    profilePhoto: displayPhoto,
                     bannerPhoto: activeProfile?.bannerPhoto,
                     isPublished: isPublished,
                   ),

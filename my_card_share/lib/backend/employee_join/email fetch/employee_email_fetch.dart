@@ -224,7 +224,7 @@ class EmployeeEmailFetchService {
                       if (onJoinWorkspace != null) {
                         onJoinWorkspace();
                       } else {
-                        context.go('/join-workspace');
+                        context.push('/join-workspace');
                       }
                     },
                     style: ElevatedButton.styleFrom(

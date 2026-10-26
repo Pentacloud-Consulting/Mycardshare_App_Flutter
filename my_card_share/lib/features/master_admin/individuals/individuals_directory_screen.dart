@@ -24,14 +24,18 @@ class _MasterAdminIndividualsScreenState
   bool _isLoading = false;
   MasterIndividualsResponse? _backendData;
 
+  late final Stream<List<Map<String, dynamic>>> _deletionsStream;
+  late final Stream<List<MasterIndividualModel>> _individualsStream;
+
   @override
   void initState() {
     super.initState();
+    _deletionsStream = IndividualDeleteService.streamPendingDeletions();
+    _individualsStream = IndividualsDirectoryStore.instance.streamIndividuals();
     _loadData();
   }
 
   Future<void> _loadData() async {
-    setState(() => _isLoading = true);
     try {
       final token = await MasterIndividualsService.getAuthToken();
       final result = await MasterIndividualsService.fetchIndividuals(
@@ -56,12 +60,12 @@ class _MasterAdminIndividualsScreenState
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: IndividualDeleteService.streamPendingDeletions(),
+      stream: _deletionsStream,
       builder: (context, deletionSnap) {
         final pendingDeletions = deletionSnap.data ?? [];
 
         return StreamBuilder<List<MasterIndividualModel>>(
-          stream: IndividualsDirectoryStore.instance.streamIndividuals(),
+          stream: _individualsStream,
           builder: (context, snapshot) {
             final storeUsers = snapshot.data ?? IndividualsDirectoryStore.instance.users;
 
@@ -211,7 +215,6 @@ class _MasterAdminIndividualsScreenState
                             setState(() {
                               _searchQuery = val;
                             });
-                            _loadData();
                           },
                           onFilterTap: () {
                             setState(() {
@@ -234,7 +237,6 @@ class _MasterAdminIndividualsScreenState
                                       setState(() {
                                         _selectedFilter = filter;
                                       });
-                                      _loadData();
                                     },
                                     onDeletionRequestsTap: () =>
                                         _showDeletionRequestsBottomSheet(context, displayUsers: displayUsers),

@@ -50,20 +50,37 @@ class WalletSyncService {
         // Google: https://pay.google.com/gp/v/save/...
         // Samsung: https://a.swallet.link/atw/v3/...
         final String? targetUrl = data['saveUrl'] ?? data['addToWalletUrl'] ?? data['deepLink'];
-        if (targetUrl == null || targetUrl.isEmpty) {
-          return {'success': false, 'error': 'No wallet link returned by server'};
+        final String? vcfUrl = data['vcfUrl'];
+        final String cardSlug = cardData['cardSlug'] ?? cardData['slug'] ?? '';
+
+        // ⚡ Step 3: CRITICAL - Launch native wallet or contact intent
+        if (targetUrl != null && targetUrl.isNotEmpty) {
+          try {
+            final uri = Uri.parse(targetUrl);
+            final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+            if (launched) return {'success': true, 'url': targetUrl};
+          } catch (_) {}
+
+          try {
+            final uri = Uri.parse(targetUrl);
+            final launched = await launchUrl(uri, mode: LaunchMode.platformDefault);
+            if (launched) return {'success': true, 'url': targetUrl};
+          } catch (_) {}
         }
 
-        // ⚡ Step 3: CRITICAL - MUST LAUNCH EXTERNALLY!
-        // InAppWebView me Google/Samsung fail ho jaate hain.
-        // ExternalApplication mode phone ke native Google Wallet / Samsung Wallet app ko trigger karta hai!
-        final uri = Uri.parse(targetUrl);
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-          return {'success': true, 'url': targetUrl};
-        } else {
-          return {'success': false, 'error': 'Could not open wallet URL on this device'};
+        // ⚡ Step 4: Fallback to direct Device & Google/Samsung Account Contact Pass (.vcf)
+        if (vcfUrl != null && vcfUrl.isNotEmpty) {
+          try {
+            final uri = Uri.parse(vcfUrl);
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+            return {'success': true, 'url': vcfUrl};
+          } catch (_) {}
+        } else if (cardSlug.isNotEmpty) {
+          await saveContactToDevice(cardSlug: cardSlug);
+          return {'success': true, 'url': 'contact_saved'};
         }
+
+        return {'success': false, 'error': 'Could not open wallet URL on this device'};
       } else {
         return {
           'success': false,

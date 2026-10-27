@@ -1,3 +1,4 @@
+import '../../../../core/validators/contact_validator.dart';
 import 'package:flutter/material.dart';
 import '../../../../backend/individual/lead/active_lead.dart';
 import '../../../../backend/individual/previews/user_leads.dart';
@@ -99,17 +100,27 @@ class _EditLeadSheetState extends State<EditLeadSheet> {
   }
 
   Future<void> _handleSave() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please enter a valid phone number (min 10 digits) and email."),
+          backgroundColor: Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
 
     setState(() => _isSaving = true);
 
+    final formattedPhone = ContactValidator.formatPhoneNumber(_phoneController.text.trim());
     final updatedLead = widget.lead.copyWith(
       name: _nameController.text.trim(),
       company: _companyController.text.trim().isNotEmpty
           ? _companyController.text.trim()
           : 'Independent',
       email: _emailController.text.trim(),
-      phone: _phoneController.text.trim(),
+      phone: formattedPhone,
       website: _websiteController.text.trim(),
       location: _locationController.text.trim(),
       notes: _notesController.text.trim(),
@@ -286,6 +297,7 @@ class _EditLeadSheetState extends State<EditLeadSheet> {
                       label: "Phone Number",
                       icon: Icons.phone_outlined,
                       keyboardType: TextInputType.phone,
+                      validator: (v) => ContactValidator.validatePhone(v, required: false),
                     ),
 
                     const SizedBox(height: 14),
@@ -295,6 +307,7 @@ class _EditLeadSheetState extends State<EditLeadSheet> {
                       label: "Email Address",
                       icon: Icons.email_outlined,
                       keyboardType: TextInputType.emailAddress,
+                      validator: (v) => ContactValidator.validateEmail(v, required: false),
                     ),
 
                     const SizedBox(height: 14),
@@ -402,9 +415,11 @@ class _EditLeadSheetState extends State<EditLeadSheet> {
           controller: controller,
           keyboardType: keyboardType,
           maxLines: maxLines,
+          maxLength: keyboardType == TextInputType.phone ? 15 : null,
           validator: validator,
           style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
           decoration: InputDecoration(
+            counterText: "",
             filled: true,
             fillColor: Colors.white,
             prefixIcon: Icon(icon, color: const Color(0xFF64748B), size: 18),
@@ -420,6 +435,14 @@ class _EditLeadSheetState extends State<EditLeadSheet> {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: Color(0xFF0052FF), width: 1.5),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFEF4444)),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
             ),
           ),
         ),

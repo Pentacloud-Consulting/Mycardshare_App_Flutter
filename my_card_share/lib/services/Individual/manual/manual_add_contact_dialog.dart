@@ -1,3 +1,4 @@
+import '../../../core/validators/contact_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -35,11 +36,22 @@ class _ManualAddContactDialogState extends ConsumerState<ManualAddContactDialog>
 
   void _saveContact() async {
     if (_isSaving) return;
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please enter a valid phone number (min 10 digits) and email."),
+          backgroundColor: Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     if (_formKey.currentState!.validate()) {
       final name = _nameController.text.trim();
       final title = _titleController.text.trim();
       final company = _companyController.text.trim();
-      final phone = _phoneController.text.trim();
+      final phone = ContactValidator.formatPhoneNumber(_phoneController.text.trim());
       final email = _emailController.text.trim();
 
       // 🛡️ Find existing contact with matching details in the Vault
@@ -170,6 +182,7 @@ class _ManualAddContactDialogState extends ConsumerState<ManualAddContactDialog>
         child: SingleChildScrollView(
           child: Form(
             key: _formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -195,15 +208,38 @@ class _ManualAddContactDialogState extends ConsumerState<ManualAddContactDialog>
                 ),
                 const SizedBox(height: 16),
 
-                _buildTextField(_nameController, "Full Name", Icons.person_outline_rounded, required: true),
+                _buildTextField(
+                  _nameController,
+                  "Full Name",
+                  Icons.person_outline_rounded,
+                  required: true,
+                  validator: (v) => (v == null || v.trim().isEmpty) ? "Name is required" : null,
+                ),
                 const SizedBox(height: 12),
                 _buildTextField(_titleController, "Job Title / Role", Icons.badge_outlined),
                 const SizedBox(height: 12),
                 _buildTextField(_companyController, "Company", Icons.apartment_rounded),
                 const SizedBox(height: 12),
-                _buildTextField(_phoneController, "Phone Number", Icons.phone_outlined, keyboardType: TextInputType.phone),
+                _buildTextField(
+                  _phoneController,
+                  "Phone Number",
+                  Icons.phone_outlined,
+                  keyboardType: TextInputType.phone,
+                  hintText: "+91 98765 43210",
+                  maxLength: 20,
+                  required: true,
+                  validator: (v) => ContactValidator.validatePhone(v, required: true),
+                ),
                 const SizedBox(height: 12),
-                _buildTextField(_emailController, "Email Address", Icons.mail_outline_rounded, keyboardType: TextInputType.emailAddress),
+                _buildTextField(
+                  _emailController,
+                  "Email Address",
+                  Icons.mail_outline_rounded,
+                  keyboardType: TextInputType.emailAddress,
+                  hintText: "example@mail.com",
+                  required: true,
+                  validator: (v) => ContactValidator.validateEmail(v, required: true),
+                ),
                 const SizedBox(height: 20),
 
                 SizedBox(
@@ -243,19 +279,26 @@ class _ManualAddContactDialogState extends ConsumerState<ManualAddContactDialog>
     IconData icon, {
     bool required = false,
     TextInputType keyboardType = TextInputType.text,
+    String? hintText,
+    int? maxLength,
+    String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
-      validator: (val) {
-        if (required && (val == null || val.trim().isEmpty)) {
-          return "Please enter $label";
-        }
-        return null;
-      },
+      maxLength: maxLength,
+      validator: validator ??
+          (val) {
+            if (required && (val == null || val.trim().isEmpty)) {
+              return "Please enter $label";
+            }
+            return null;
+          },
       style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A)),
       decoration: InputDecoration(
         labelText: label,
+        hintText: hintText,
+        counterText: "",
         labelStyle: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
         prefixIcon: Icon(icon, size: 18, color: const Color(0xFF94A3B8)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -270,6 +313,14 @@ class _ManualAddContactDialogState extends ConsumerState<ManualAddContactDialog>
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFF0066FF), width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFEF4444)),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
         ),
       ),
     );

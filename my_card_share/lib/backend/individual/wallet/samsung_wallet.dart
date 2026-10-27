@@ -186,7 +186,7 @@ class SamsungWalletService {
       debugPrint('[SamsungWalletService] WalletException: ${e.title}: ${e.message}');
       if (context.mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        await _showWalletErrorDialog(context, error: e, cardUrl: e.cardUrl);
+        await _showWalletErrorDialog(context, error: e, cardUrl: e.cardUrl, cardSlug: cardSlug);
       }
       return false;
     } catch (e) {
@@ -586,6 +586,7 @@ class SamsungWalletService {
     BuildContext context, {
     required WalletException error,
     required String cardUrl,
+    String? cardSlug,
   }) {
     return showDialog<void>(
       context: context,
@@ -626,6 +627,30 @@ class SamsungWalletService {
               ),
             ),
             const SizedBox(height: 20),
+            // Save Contact directly to Samsung Contacts button
+            if (cardSlug != null && cardSlug.isNotEmpty) ...[
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    Navigator.of(ctx).pop();
+                    final vcfUri = Uri.parse(
+                      'https://digitalbusinesscloudcard.com/api/sync/save-contact?cardSlug=$cardSlug&download=true',
+                    );
+                    await launchUrl(vcfUri, mode: LaunchMode.externalApplication);
+                  },
+                  icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
+                  label: const Text('Save to Device Contacts'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1428A0),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -637,7 +662,7 @@ class SamsungWalletService {
                 icon: const Icon(Icons.open_in_browser_rounded, size: 18),
                 label: const Text('Open Card in Browser'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1428A0),
+                  backgroundColor: const Color(0xFF0F172A),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 13),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

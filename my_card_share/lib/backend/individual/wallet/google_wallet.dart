@@ -187,7 +187,7 @@ class GoogleWalletService {
       debugPrint('[GoogleWalletService] WalletException: ${e.title}: ${e.message}');
       if (context.mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        await _showWalletErrorDialog(context, error: e, cardUrl: e.cardUrl);
+        await _showWalletErrorDialog(context, error: e, cardUrl: e.cardUrl, cardSlug: cardSlug);
       }
       return false;
     } catch (e) {
@@ -584,11 +584,12 @@ class GoogleWalletService {
   }
 
   /// Shows a user-friendly dialog when wallet opening fails,
-  /// with options to open the card in browser or dismiss.
+  /// with options to save contact directly, open the card in browser, or dismiss.
   Future<void> _showWalletErrorDialog(
     BuildContext context, {
     required WalletException error,
     required String cardUrl,
+    String? cardSlug,
   }) {
     return showDialog<void>(
       context: context,
@@ -603,11 +604,11 @@ class GoogleWalletService {
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF3CD),
+                color: const Color(0xFFEFF6FF),
                 borderRadius: BorderRadius.circular(18),
               ),
               child: const Icon(Icons.account_balance_wallet_rounded,
-                  color: Color(0xFFB45309), size: 30),
+                  color: Color(0xFF0052FF), size: 30),
             ),
             const SizedBox(height: 16),
             Text(
@@ -630,6 +631,30 @@ class GoogleWalletService {
               ),
             ),
             const SizedBox(height: 20),
+            // Save Contact to Google Account button
+            if (cardSlug != null && cardSlug.isNotEmpty) ...[
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    Navigator.of(ctx).pop();
+                    final vcfUri = Uri.parse(
+                      'https://digitalbusinesscloudcard.com/api/sync/save-contact?cardSlug=$cardSlug&download=true',
+                    );
+                    await launchUrl(vcfUri, mode: LaunchMode.externalApplication);
+                  },
+                  icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
+                  label: const Text('Save to Google Contacts'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF34A853),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
             // Open card in browser button
             SizedBox(
               width: double.infinity,

@@ -22,11 +22,37 @@ class _LeadsScreenState extends State<LeadsScreen> {
   String _searchQuery = '';
   LeadDateFilterResult _dateFilter = const LeadDateFilterResult(preset: LeadDatePreset.allTime);
 
+  static const List<String> _months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+
+  String _formatLeadDate(DateTime dt) {
+    final localDt = dt.toLocal();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final leadDate = DateTime(localDt.year, localDt.month, localDt.day);
+
+    if (leadDate == today) {
+      return 'Today';
+    }
+    if (leadDate == today.subtract(const Duration(days: 1))) {
+      return 'Yesterday';
+    }
+
+    final monthStr = _months[(localDt.month - 1).clamp(0, 11)];
+    if (localDt.year != now.year) {
+      return '$monthStr ${localDt.day}, ${localDt.year}';
+    }
+    return '$monthStr ${localDt.day}';
+  }
+
   @override
   void initState() {
     super.initState();
     final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
     UserLeadsService.instance.fetchUserLeads(uid);
+    UserLeadsService.instance.listenToUserLeads(uid);
   }
 
   @override
@@ -82,9 +108,15 @@ class _LeadsScreenState extends State<LeadsScreen> {
           floatingActionButton: _AddLeadFab(onTap: _openAddLeadSheet),
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
           body: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
-              child: Column(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+                await UserLeadsService.instance.fetchUserLeads(uid);
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Metrics Row (Total, New, This Week)
@@ -218,7 +250,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                             name: item.name,
                             company: item.company,
                             source: item.source,
-                            date: 'Sept ${item.createdAt.day}',
+                            date: _formatLeadDate(item.createdAt),
                             status: item.status,
                             phone: item.phone,
                             email: item.email,
@@ -234,6 +266,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
               ),
             ),
           ),
+        ),
         );
       },
     );

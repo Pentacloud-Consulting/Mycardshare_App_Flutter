@@ -52,14 +52,13 @@ class IndividualsDirectoryStore extends ChangeNotifier {
         _users = backendModels;
       }
 
-      _isLoading = false;
-      notifyListeners();
       return res;
     } catch (e) {
       debugPrint('[IndividualsDirectoryStore] Backend fetch error: $e');
+      return null;
+    } finally {
       _isLoading = false;
       notifyListeners();
-      return null;
     }
   }
 
@@ -117,4 +116,15 @@ class IndividualsDirectoryStore extends ChangeNotifier {
       return false;
     }
   }
+
+  /// Remove user permanently from local state
+  void removeUserLocally(String idOrEmail) {
+    final lower = idOrEmail.toLowerCase().trim();
+    _users.removeWhere((u) =>
+        u.id == idOrEmail ||
+        u.email.toLowerCase() == lower ||
+        u.name.toLowerCase() == lower);
+    notifyListeners();
+  }
 }
+

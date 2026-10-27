@@ -93,20 +93,39 @@ class LeadData {
 
   factory LeadData.fromJson(Map<String, dynamic> json) {
     return LeadData(
-      id: json['id'] ?? '',
-      targetUid: json['targetUid'] ?? '',
-      name: json['name'] ?? '',
-      email: json['email'] ?? '',
-      phone: json['phone'] ?? '',
-      company: json['company'] ?? '',
-      notes: json['notes'] ?? '',
-      status: json['status'] ?? 'New',
-      source: json['source'] ?? 'via QR Scan',
-      website: json['website'] ?? '',
-      location: json['location'] ?? '',
-      createdAt: json['createdAt'] != null
-          ? DateTime.tryParse(json['createdAt'] as String) ?? DateTime.now()
-          : DateTime.now(),
+      id: (json['id'] ?? json['_id'] ?? '').toString(),
+      targetUid: (json['targetUid'] ?? json['cardId'] ?? json['userId'] ?? '').toString(),
+      name: (json['name'] ?? json['fullName'] ?? '').toString(),
+      email: (json['email'] ?? '').toString(),
+      phone: (json['phone'] ?? json['mobile'] ?? json['phoneNumber'] ?? '').toString(),
+      company: (json['company'] ?? json['organization'] ?? '').toString(),
+      notes: (json['notes'] ?? json['note'] ?? '').toString(),
+      status: (json['status'] ?? 'New').toString(),
+      source: (json['source'] ?? json['capturedVia'] ?? 'via Manual').toString(),
+      website: (json['website'] ?? '').toString(),
+      location: (json['location'] ?? '').toString(),
+      createdAt: () {
+        final raw = json['createdAt'] ?? json['timestamp'] ?? json['date'];
+        if (raw == null) return DateTime.now();
+        if (raw is Timestamp) return raw.toDate().toLocal();
+        if (raw is DateTime) return raw.toLocal();
+        if (raw is int) return DateTime.fromMillisecondsSinceEpoch(raw).toLocal();
+        if (raw is String) {
+          final parsed = DateTime.tryParse(raw);
+          if (parsed != null) return parsed.toLocal();
+          final parts = raw.split(RegExp(r'[/.-]'));
+          if (parts.length == 3) {
+            final p0 = int.tryParse(parts[0]);
+            final p1 = int.tryParse(parts[1]);
+            final p2 = int.tryParse(parts[2]);
+            if (p0 != null && p1 != null && p2 != null) {
+              if (p2 > 1000) return DateTime(p2, p1, p0);
+              if (p0 > 1000) return DateTime(p0, p1, p2);
+            }
+          }
+        }
+        return DateTime.now();
+      }(),
     );
   }
 }

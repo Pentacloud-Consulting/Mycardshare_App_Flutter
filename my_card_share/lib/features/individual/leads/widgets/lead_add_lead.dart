@@ -1,3 +1,4 @@
+import '../../../../core/validators/contact_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../backend/individual/lead/add_lead.dart';
@@ -115,7 +116,16 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
   }
 
   Future<void> _handleSubmit() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please enter a valid phone number (min 10 digits) and email."),
+          backgroundColor: Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
 
     if (_isMultiUserMode && _selectedMultiUids.isEmpty) {
       if (_availableUsers.isNotEmpty) {
@@ -138,11 +148,12 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
 
     try {
       if (_isMultiUserMode) {
+        final formattedPhone = ContactValidator.formatPhoneNumber(_phoneController.text.trim());
         final leads = await AddLeadService.instance.addLeadForMultipleUsers(
           targetUids: _selectedMultiUids.toList(),
           name: _nameController.text.trim(),
           email: _emailController.text.trim(),
-          phone: _phoneController.text.trim(),
+          phone: formattedPhone,
           company: _companyController.text.trim(),
           notes: _notesController.text.trim(),
           status: _selectedStatus,
@@ -164,11 +175,12 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
           ),
         );
       } else {
+        final formattedPhone = ContactValidator.formatPhoneNumber(_phoneController.text.trim());
         final lead = await AddLeadService.instance.addLead(
           targetUid: _selectedSingleUid,
           name: _nameController.text.trim(),
           email: _emailController.text.trim(),
-          phone: _phoneController.text.trim(),
+          phone: formattedPhone,
           company: _companyController.text.trim(),
           notes: _notesController.text.trim(),
           status: _selectedStatus,
@@ -817,6 +829,7 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
     bool required = false,
     TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
+    String? Function(String?)? validator,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -844,19 +857,22 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
           keyboardType: keyboardType,
           maxLines: maxLines,
           style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A)),
-          validator: (val) {
-            if (required && (val == null || val.trim().isEmpty)) {
-              return "Please enter $label";
-            }
-            if (keyboardType == TextInputType.emailAddress &&
-                val != null &&
-                val.trim().isNotEmpty &&
-                !val.contains('@')) {
-              return "Please enter a valid email address";
-            }
-            return null;
-          },
+          maxLength: keyboardType == TextInputType.phone ? 20 : null,
+          validator: validator ??
+              (val) {
+                if (required && (val == null || val.trim().isEmpty)) {
+                  return "Please enter $label";
+                }
+                if (keyboardType == TextInputType.emailAddress) {
+                  return ContactValidator.validateEmail(val, required: required);
+                }
+                if (keyboardType == TextInputType.phone) {
+                  return ContactValidator.validatePhone(val, required: required);
+                }
+                return null;
+              },
           decoration: InputDecoration(
+            counterText: "",
             hintText: hint,
             hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
             prefixIcon: Icon(icon, color: const Color(0xFF94A3B8), size: 18),

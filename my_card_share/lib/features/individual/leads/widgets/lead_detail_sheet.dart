@@ -282,7 +282,7 @@ class _LeadDetailSheetState extends State<LeadDetailSheet> {
                 const Icon(Icons.calendar_today_rounded, size: 14, color: Color(0xFF94A3B8)),
                 const SizedBox(width: 6),
                 Text(
-                  "Added to leads ${lead.createdAt.day} ${_getMonthName(lead.createdAt.month)}",
+                  _formatDetailDate(lead.createdAt),
                   style: const TextStyle(
                     fontSize: 12.5,
                     color: Color(0xFF94A3B8),
@@ -379,8 +379,23 @@ class _LeadDetailSheetState extends State<LeadDetailSheet> {
     );
   }
 
+  String _formatDetailDate(DateTime dt) {
+    final localDt = dt.toLocal();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final leadDate = DateTime(localDt.year, localDt.month, localDt.day);
+
+    if (leadDate == today) {
+      return "Added to leads Today";
+    }
+    if (leadDate == today.subtract(const Duration(days: 1))) {
+      return "Added to leads Yesterday";
+    }
+    return "Added to leads ${localDt.day} ${_getMonthName(localDt.month)}";
+  }
+
   String _getMonthName(int month) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return months[(month - 1).clamp(0, 11)];
   }
 }

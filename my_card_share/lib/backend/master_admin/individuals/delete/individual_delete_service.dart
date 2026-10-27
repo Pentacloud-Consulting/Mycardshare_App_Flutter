@@ -177,32 +177,33 @@ class IndividualDeleteService {
       debugPrint("[IndividualDeleteService] Firestore get error: $e");
     }
 
-    if (requestsMap.isEmpty) {
-      final apiList = await _fetchFromApi();
-      for (final req in apiList) {
-        final id = (req["userId"] ?? req["requestId"] ?? req["id"] ?? "").toString();
-        if (id.isNotEmpty) requestsMap[id] = req;
-      }
+    final apiList = await fetchDeletionRequestsFromApi();
+    for (final req in apiList) {
+      final id = (req["userId"] ?? req["requestId"] ?? req["id"] ?? "").toString();
+      if (id.isNotEmpty) requestsMap[id] = req;
     }
 
     return requestsMap.values.toList();
   }
 
-  static Future<List<Map<String, dynamic>>> _fetchFromApi() async {
+  /// 3.1 Direct Backend API Fetch with fail-safe timeout
+  static Future<List<Map<String, dynamic>>> fetchDeletionRequestsFromApi() async {
     for (final host in [primaryUrl, fallbackUrl]) {
       try {
         final headers = await _getHeaders();
         final res = await http.get(
           Uri.parse("$host/api/sync/individual-deletion"),
           headers: headers,
-        ).timeout(const Duration(seconds: 4));
+        ).timeout(const Duration(seconds: 5));
 
         if (res.statusCode == 200) {
           final json = jsonDecode(res.body);
           final list = json["data"]?["requests"] ?? json["requests"] ?? [];
           return List<Map<String, dynamic>>.from(list);
         }
-      } catch (_) {}
+      } catch (e) {
+        debugPrint("[IndividualDeleteService] fetchDeletionRequestsFromApi error: $e");
+      }
     }
     return [];
   }
@@ -213,47 +214,70 @@ class IndividualDeleteService {
     required String targetUserId,
   }) async {
     try {
-      // 1. Mark request as confirmed/deleted in Firestore
-      await _firestore.collection("account_deletion_requests").doc(requestId).set({
-        "status": "confirmed",
-        "processedAt": FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      final idToPurge = targetUserId.isNotEmpty ? targetUserId : requestId;
 
-      // 2. Mark user as deactivated/deleted in Firestore 'users'
-      await _firestore.collection("users").doc(targetUserId).set({
-        "status": "Deleted",
-        "isDeactivated": true,
-        "deletedAt": FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-
-      // 3. Mark corresponding notification as read/resolved
-      final notifSnap = await _firestore
-          .collection("notifications")
-          .where("userId", isEqualTo: targetUserId)
-          .where("type", isEqualTo: "account_deletion")
-          .get();
-      for (final doc in notifSnap.docs) {
-        await doc.reference.update({"isRead": true, "resolved": true});
+      // 1. Delete request completely from Firestore 'account_deletion_requests'
+      try {
+        await _firestore.collection("account_deletion_requests").doc(requestId).delete();
+      } catch (_) {}
+      if (targetUserId.isNotEmpty && targetUserId != requestId) {
+        try {
+          await _firestore.collection("account_deletion_requests").doc(targetUserId).delete();
+        } catch (_) {}
       }
 
-      // 4. Trigger backend sync endpoint to delete from MongoDB/Auth
+      // Query and purge any docs in account_deletion_requests matching userId or requestId
+      try {
+        final querySnap = await _firestore.collection("account_deletion_requests")
+            .where("userId", isEqualTo: idToPurge).get();
+        for (final doc in querySnap.docs) {
+          await doc.reference.delete();
+        }
+      } catch (_) {}
+
+      // 2. Mark user as completely Deleted in Firestore 'users'
+      try {
+        await _firestore.collection("users").doc(idToPurge).set({
+          "status": "Deleted",
+          "isDeactivated": true,
+          "deletion_pending": false,
+          "deletionRequest": FieldValue.delete(),
+          "deletionRequestedAt": FieldValue.delete(),
+          "deletedAt": FieldValue.serverTimestamp(),
+          "updatedAt": FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      } catch (_) {}
+
+      // 3. Mark corresponding notification as read/resolved
+      try {
+        final notifSnap = await _firestore
+            .collection("notifications")
+            .where("userId", isEqualTo: idToPurge)
+            .get();
+        for (final doc in notifSnap.docs) {
+          await doc.reference.delete();
+        }
+      } catch (_) {}
+
+      // 4. Trigger backend sync endpoint across supported routes
+      final payload = jsonEncode({
+        "action": "confirm_delete",
+        "requestId": requestId,
+        "id": requestId,
+        "targetUserId": idToPurge,
+        "userId": idToPurge,
+      });
+
       for (final host in [primaryUrl, fallbackUrl]) {
-        try {
-          final headers = await _getHeaders();
-          final res = await http.post(
-            Uri.parse("$host/api/sync/individual-deletion"),
-            headers: headers,
-            body: jsonEncode({
-              "action": "confirm_delete",
-              "requestId": requestId,
-              "id": requestId,
-              "targetUserId": targetUserId.isNotEmpty ? targetUserId : requestId,
-              "userId": targetUserId.isNotEmpty ? targetUserId : requestId,
-            }),
-          ).timeout(const Duration(seconds: 4));
-          if (res.statusCode == 200) break;
-        } catch (apiErr) {
-          debugPrint("[IndividualDeleteService] Backend API confirm delete note: $apiErr");
+        for (final endpoint in ["/api/sync/individual-deletion", "/api/sync/master-admin-individuals"]) {
+          try {
+            final headers = await _getHeaders();
+            await http.post(
+              Uri.parse("$host$endpoint"),
+              headers: headers,
+              body: payload,
+            ).timeout(const Duration(seconds: 4));
+          } catch (_) {}
         }
       }
 
@@ -271,50 +295,69 @@ class IndividualDeleteService {
     String? reason,
   }) async {
     try {
-      // 1. Mark request as rejected in Firestore
-      await _firestore.collection("account_deletion_requests").doc(requestId).set({
-        "status": "rejected",
-        "rejectReason": reason ?? "Declined by admin",
-        "processedAt": FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      final idToRestore = targetUserId.isNotEmpty ? targetUserId : requestId;
 
-      // 2. Restore user status to Active in Firestore 'users'
-      await _firestore.collection("users").doc(targetUserId).set({
-        "status": "Active",
-        "deletion_pending": false,
-        "isDeactivated": false,
-        "updatedAt": FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-
-      // 3. Mark notification as read
-      final notifSnap = await _firestore
-          .collection("notifications")
-          .where("userId", isEqualTo: targetUserId)
-          .where("type", isEqualTo: "account_deletion")
-          .get();
-      for (final doc in notifSnap.docs) {
-        await doc.reference.update({"isRead": true, "resolved": true});
+      // 1. Remove request from Firestore 'account_deletion_requests'
+      try {
+        await _firestore.collection("account_deletion_requests").doc(requestId).delete();
+      } catch (_) {}
+      if (targetUserId.isNotEmpty && targetUserId != requestId) {
+        try {
+          await _firestore.collection("account_deletion_requests").doc(targetUserId).delete();
+        } catch (_) {}
       }
 
-      // 4. Trigger backend sync endpoint
+      try {
+        final querySnap = await _firestore.collection("account_deletion_requests")
+            .where("userId", isEqualTo: idToRestore).get();
+        for (final doc in querySnap.docs) {
+          await doc.reference.delete();
+        }
+      } catch (_) {}
+
+      // 2. Restore user status to Active in Firestore 'users'
+      try {
+        await _firestore.collection("users").doc(idToRestore).set({
+          "status": "Active",
+          "deletion_pending": false,
+          "isDeactivated": false,
+          "deletionRequest": FieldValue.delete(),
+          "deletionRequestedAt": FieldValue.delete(),
+          "updatedAt": FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      } catch (_) {}
+
+      // 3. Mark notification as read
+      try {
+        final notifSnap = await _firestore
+            .collection("notifications")
+            .where("userId", isEqualTo: idToRestore)
+            .get();
+        for (final doc in notifSnap.docs) {
+          await doc.reference.delete();
+        }
+      } catch (_) {}
+
+      // 4. Trigger backend sync endpoint across supported routes
+      final payload = jsonEncode({
+        "action": "reject_deletion",
+        "requestId": requestId,
+        "id": requestId,
+        "targetUserId": idToRestore,
+        "userId": idToRestore,
+        "rejectReason": reason ?? "Declined by admin",
+      });
+
       for (final host in [primaryUrl, fallbackUrl]) {
-        try {
-          final headers = await _getHeaders();
-          final res = await http.post(
-            Uri.parse("$host/api/sync/individual-deletion"),
-            headers: headers,
-            body: jsonEncode({
-              "action": "reject_deletion",
-              "requestId": requestId,
-              "id": requestId,
-              "targetUserId": targetUserId.isNotEmpty ? targetUserId : requestId,
-              "userId": targetUserId.isNotEmpty ? targetUserId : requestId,
-              "rejectReason": reason ?? "Declined by admin",
-            }),
-          ).timeout(const Duration(seconds: 4));
-          if (res.statusCode == 200) break;
-        } catch (apiErr) {
-          debugPrint("[IndividualDeleteService] Backend API reject delete note: $apiErr");
+        for (final endpoint in ["/api/sync/individual-deletion", "/api/sync/master-admin-individuals"]) {
+          try {
+            final headers = await _getHeaders();
+            await http.post(
+              Uri.parse("$host$endpoint"),
+              headers: headers,
+              body: payload,
+            ).timeout(const Duration(seconds: 4));
+          } catch (_) {}
         }
       }
 

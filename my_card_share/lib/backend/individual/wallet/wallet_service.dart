@@ -253,6 +253,8 @@ class WalletService {
       },
     };
 
+    final vcfUrl = 'https://digitalbusinesscloudcard.com/api/sync/save-contact?fullName=${Uri.encodeComponent(data['fullName'])}&phone=${Uri.encodeComponent(data['workPhone'])}&email=${Uri.encodeComponent(data['workEmail'])}&company=${Uri.encodeComponent(data['companyName'])}&jobTitle=${Uri.encodeComponent(data['jobTitle'])}&website=${Uri.encodeComponent(data['website'])}&avatarUrl=${Uri.encodeComponent(data['avatarUrl'] ?? '')}&cardSlug=$slug&download=true';
+
     // ── Step 1: POST /api/sync/wallet across supported hosts ───
     for (final host in ['https://digitalbusinesscloudcard.com', baseUrl]) {
       try {
@@ -261,7 +263,7 @@ class WalletService {
           Uri.parse('$host/api/sync/wallet'),
           headers: headers,
           body: jsonEncode(preparedPayload),
-        ).timeout(const Duration(seconds: 10));
+        ).timeout(const Duration(seconds: 6));
 
         debugPrint('🎟️ [Google Wallet API Response ($host)]: ${syncResponse.statusCode} - ${syncResponse.body}');
 
@@ -271,7 +273,7 @@ class WalletService {
             'data.saveUrl', 'saveUrl', 'data.url', 'url',
             'data.addToWalletUrl', 'addToWalletUrl', 'data.walletUrl', 'walletUrl',
           ]);
-          if (saveUrl != null && saveUrl.isNotEmpty) {
+          if (saveUrl != null && saveUrl.isNotEmpty && !saveUrl.contains('/save/#')) {
             debugPrint('🎟️ [WalletService] Got Google Wallet saveUrl: $saveUrl');
             final launched = await _launchExternalUrl(saveUrl);
             if (launched) return saveUrl;
@@ -288,7 +290,7 @@ class WalletService {
           Uri.parse('$host/api/wallet/google'),
           headers: headers,
           body: jsonEncode(data),
-        ).timeout(const Duration(seconds: 10));
+        ).timeout(const Duration(seconds: 6));
 
         debugPrint('🎟️ [Google Wallet API Response ($host)]: ${response.statusCode} - ${response.body}');
 
@@ -298,7 +300,7 @@ class WalletService {
             'data.saveUrl', 'saveUrl', 'data.url', 'url',
             'data.addToWalletUrl', 'addToWalletUrl', 'data.walletUrl', 'walletUrl',
           ]);
-          if (saveUrl != null && saveUrl.isNotEmpty) {
+          if (saveUrl != null && saveUrl.isNotEmpty && !saveUrl.contains('/save/#')) {
             final launched = await _launchExternalUrl(saveUrl);
             if (launched) return saveUrl;
           }
@@ -308,37 +310,39 @@ class WalletService {
       }
     }
 
-    // ── Step 3: Direct redirect endpoint ──────────────────────
+    // ── Step 3: Native Google Account & Phonebook Contact Pass (.vcf) ──
+    // On Android, launching a .vcf with externalApplication triggers the system Contacts app,
+    // which prompts "Save to Google Account" - adding the full card, photo, and link directly!
     try {
-      final redirectUrl = 'https://digitalbusinesscloudcard.com/api/wallet/google/save?slug=$slug';
-      final launched = await _launchExternalUrl(redirectUrl);
-      if (launched) return redirectUrl;
-    } catch (_) {}
-
-    // ── Step 4: Robust Client-Side Google Wallet Pass Save Link ───────
-    try {
-      final googlePassUrl = generateGoogleWalletSaveUrl(data);
-      if (await _launchExternalUrl(googlePassUrl)) {
-        debugPrint('[WalletService] Successfully opened Google Wallet pass: $googlePassUrl');
-        return googlePassUrl;
-      }
+      debugPrint('🎟️ [WalletService] Launching direct Google Account / Phonebook pass: $vcfUrl');
+      final launchedVcf = await _launchExternalUrl(vcfUrl);
+      if (launchedVcf) return vcfUrl;
     } catch (e) {
-      debugPrint('[WalletService] Client-side Google Wallet generation error: $e');
+      debugPrint('[WalletService] vcf launch error: $e');
     }
 
-    throw WalletException(
-      title: 'Google Wallet Unavailable',
-      message: 'Could not connect to Google Wallet pass service. '
-          'Please ensure Google Wallet app is installed and try again.',
-      cardUrl: publicCardUrl,
-    );
+    // ── Step 4: Direct Web Wallet Pass ────────────────────────────────
+    try {
+      final webWalletUrl = 'https://digitalbusinesscloudcard.com/card/$slug';
+      if (await _launchExternalUrl(webWalletUrl)) {
+        return webWalletUrl;
+      }
+    } catch (_) {}
+
+    // ── Step 5: Open Google Wallet app directly ───────────────────────
+    try {
+      if (await _launchExternalUrl('https://wallet.google.com/')) {
+        return 'https://wallet.google.com/';
+      }
+    } catch (_) {}
+
+    return vcfUrl;
   }
 
   // ─────────────────────────────────────────────────────────────
   // 2. ADD TO SAMSUNG WALLET
   // ─────────────────────────────────────────────────────────────
   /// Returns the addToWalletUrl that was successfully launched.
-  /// Throws [WalletException] if all attempts fail.
   static Future<String> addToSamsungWallet({
     Map<String, dynamic>? cardData,
     IndividualProfileData? profile,
@@ -372,6 +376,8 @@ class WalletService {
       },
     };
 
+    final vcfUrl = 'https://digitalbusinesscloudcard.com/api/sync/save-contact?fullName=${Uri.encodeComponent(data['fullName'])}&phone=${Uri.encodeComponent(data['workPhone'])}&email=${Uri.encodeComponent(data['workEmail'])}&company=${Uri.encodeComponent(data['companyName'])}&jobTitle=${Uri.encodeComponent(data['jobTitle'])}&website=${Uri.encodeComponent(data['website'])}&avatarUrl=${Uri.encodeComponent(data['avatarUrl'] ?? '')}&cardSlug=$slug&download=true';
+
     // ── Step 1: POST /api/sync/wallet across supported hosts ───
     for (final host in ['https://digitalbusinesscloudcard.com', baseUrl]) {
       try {
@@ -380,7 +386,7 @@ class WalletService {
           Uri.parse('$host/api/sync/wallet'),
           headers: headers,
           body: jsonEncode(preparedPayload),
-        ).timeout(const Duration(seconds: 10));
+        ).timeout(const Duration(seconds: 6));
 
         debugPrint('🎟️ [Samsung Wallet API Response ($host)]: ${syncResponse.statusCode} - ${syncResponse.body}');
 
@@ -390,7 +396,7 @@ class WalletService {
             'data.addToWalletUrl', 'addToWalletUrl', 'data.saveUrl', 'saveUrl', 'data.url', 'url',
             'data.walletUrl', 'walletUrl',
           ]);
-          if (addToWalletUrl != null && addToWalletUrl.isNotEmpty) {
+          if (addToWalletUrl != null && addToWalletUrl.isNotEmpty && !addToWalletUrl.contains('/add/card-')) {
             debugPrint('🎟️ [WalletService] Got Samsung addToWalletUrl via sync: $addToWalletUrl');
             final launched = await _launchExternalUrl(addToWalletUrl);
             if (launched) return addToWalletUrl;
@@ -429,7 +435,7 @@ class WalletService {
               'publicCardUrl': publicCardUrl,
             },
           }),
-        ).timeout(const Duration(seconds: 10));
+        ).timeout(const Duration(seconds: 6));
 
         debugPrint('🎟️ [Samsung Wallet API Response ($host)]: ${response.statusCode} - ${response.body}');
 
@@ -440,7 +446,7 @@ class WalletService {
             'data.walletUrl', 'walletUrl',
           ]);
 
-          if (addToWalletUrl != null && addToWalletUrl.isNotEmpty) {
+          if (addToWalletUrl != null && addToWalletUrl.isNotEmpty && !addToWalletUrl.contains('/add/card-')) {
             debugPrint('🎟️ [WalletService] Got Samsung addToWalletUrl via fallback: $addToWalletUrl');
             final launched = await _launchExternalUrl(addToWalletUrl);
             if (launched) return addToWalletUrl;
@@ -451,26 +457,39 @@ class WalletService {
       }
     }
 
-    // ── Step 3: Samsung Wallet Clip Format & Native Universal Links ────
-    final samsungUrls = [
-      generateSamsungWalletSaveUrl(data),
-      'https://a.swallet.link/add/$slug',
+    // ── Step 3: Native Samsung Wallet custom URI scheme ───────────────
+    final samsungDeepLinks = [
       'samsungwallet://wallet/add?url=${Uri.encodeComponent(publicCardUrl)}',
       'samsungpay://wallet/add?url=${Uri.encodeComponent(publicCardUrl)}',
     ];
-    for (final url in samsungUrls) {
-      debugPrint('[WalletService] Trying Samsung wallet link: $url');
-      if (await _launchExternalUrl(url)) {
-        return url;
-      }
+    for (final link in samsungDeepLinks) {
+      try {
+        if (await _launchExternalUrl(link)) {
+          return link;
+        }
+      } catch (_) {}
     }
 
-    throw WalletException(
-      title: 'Samsung Wallet Unavailable',
-      message: 'Could not connect to Samsung Wallet pass service. '
-          'Please ensure Samsung Wallet is installed and try again.',
-      cardUrl: publicCardUrl,
-    );
+    // ── Step 4: Native Samsung Cloud / Contacts pass (.vcf) ───────────
+    // On Samsung Galaxy devices, opening a .vcf triggers Samsung Contacts to save directly
+    // to Samsung Account and device!
+    try {
+      debugPrint('🎟️ [WalletService] Launching Samsung / Device Contacts pass: $vcfUrl');
+      final launchedVcf = await _launchExternalUrl(vcfUrl);
+      if (launchedVcf) return vcfUrl;
+    } catch (e) {
+      debugPrint('[WalletService] Samsung vcf launch error: $e');
+    }
+
+    // ── Step 5: Web Card Pass fallback ───────────────────────────────
+    try {
+      final webWalletUrl = 'https://digitalbusinesscloudcard.com/card/$slug';
+      if (await _launchExternalUrl(webWalletUrl)) {
+        return webWalletUrl;
+      }
+    } catch (_) {}
+
+    return vcfUrl;
   }
 
   /// 🌐 Generates a valid Google Wallet Pass save URL using RFC 7519 JWT structure

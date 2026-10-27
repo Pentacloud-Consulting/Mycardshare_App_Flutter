@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../providers/auth_provider.dart';
+import '../../../../backend/app view/app_view_auth_gate.dart';
 
-class RegistrationPendingScreen extends StatefulWidget {
+class RegistrationPendingScreen extends ConsumerStatefulWidget {
   const RegistrationPendingScreen({super.key});
 
   @override
-  State<RegistrationPendingScreen> createState() => _RegistrationPendingScreenState();
+  ConsumerState<RegistrationPendingScreen> createState() => _RegistrationPendingScreenState();
 }
 
-class _RegistrationPendingScreenState extends State<RegistrationPendingScreen>
+class _RegistrationPendingScreenState extends ConsumerState<RegistrationPendingScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
@@ -34,6 +40,47 @@ class _RegistrationPendingScreenState extends State<RegistrationPendingScreen>
   void dispose() {
     _pulseController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleBackToLogin() async {
+    try {
+      // ⚡ STEP 1: Sign out of Firebase Auth
+      await FirebaseAuth.instance.signOut();
+
+      // ⚡ STEP 2: Clear Google Sign-In SDK session (Crucial!)
+      // This prevents Android from automatically reusing the same account!
+      try {
+        final GoogleSignIn googleSignIn = GoogleSignIn();
+        await googleSignIn.signOut();
+        await googleSignIn.disconnect();
+      } catch (e) {
+        debugPrint("[RegistrationPendingScreen] Google signOut notice: $e");
+      }
+
+      // ⚡ STEP 3: Clear Riverpod Auth Provider State
+      ref.read(authProvider.notifier).logout();
+
+      // ⚡ STEP 4: Clear Persistent Session & Local Storage
+      await AppViewAuthGate.instance.clearPersistentSession();
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('is_logged_in');
+        await prefs.remove('user_id');
+        await prefs.remove('user_email');
+        await prefs.remove('user_name');
+        await prefs.remove('user_role');
+      } catch (_) {}
+
+      // ⚡ STEP 5: Navigate to Login cleanly
+      if (mounted) {
+        context.go('/login');
+      }
+    } catch (e) {
+      debugPrint("[RegistrationPendingScreen] Back to login error: $e");
+      if (mounted) {
+        context.go('/login');
+      }
+    }
   }
 
   void _handleResendEmail() async {
@@ -74,8 +121,13 @@ class _RegistrationPendingScreenState extends State<RegistrationPendingScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFD),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _handleBackToLogin();
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFD),
       body: Stack(
         children: [
           // Background Top-Right Soft Ambient Blue Circle Glow (matching Signup)
@@ -355,7 +407,7 @@ class _RegistrationPendingScreenState extends State<RegistrationPendingScreen>
 
                   // Bottom Link: Back to Login
                   GestureDetector(
-                    onTap: () => context.go('/login'),
+                    onTap: _handleBackToLogin,
                     child: const Padding(
                       padding: EdgeInsets.symmetric(vertical: 6.0, horizontal: 16.0),
                       child: Text(
@@ -394,6 +446,7 @@ class _RegistrationPendingScreenState extends State<RegistrationPendingScreen>
           ),
         ],
       ),
+    ),
     );
   }
 

@@ -1,5 +1,6 @@
 // lib/backend/master_admin/master_individuals_service.dart
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -31,17 +32,24 @@ class IndividualUserModel {
   });
 
   factory IndividualUserModel.fromJson(Map<String, dynamic> json) {
+    final rawStatus = (json['status'] ?? 'ACTIVE').toString().trim();
+    final normalizedStatus = rawStatus.toLowerCase() == 'active'
+        ? 'ACTIVE'
+        : (rawStatus.toLowerCase() == 'deactivated'
+            ? 'DEACTIVATED'
+            : rawStatus.toUpperCase());
+
     return IndividualUserModel(
-      userId: json['userId'] ?? json['id'] ?? json['_id'] ?? '',
-      fullName: json['fullName'] ?? json['name'] ?? 'Individual User',
-      email: json['email'] ?? '',
-      phone: json['phone'] ?? json['phoneNumber'] ?? '',
-      cardSlug: json['cardSlug'] ?? json['slug'] ?? '',
-      avatarUrl: json['avatarUrl'] ?? json['profilePhoto'],
-      plan: json['plan'] ?? 'Free',
-      isPro: json['isPro'] ?? false,
-      status: json['status'] ?? 'ACTIVE',
-      deletionRequest: json['deletionRequest'],
+      userId: (json['userId'] ?? json['id'] ?? json['_id'] ?? '').toString(),
+      fullName: (json['fullName'] ?? json['name'] ?? json['displayName'] ?? 'Individual User').toString(),
+      email: (json['email'] ?? '').toString(),
+      phone: (json['phone'] ?? json['phoneNumber'] ?? '').toString(),
+      cardSlug: (json['cardSlug'] ?? json['slug'] ?? '').toString(),
+      avatarUrl: json['avatarUrl'] ?? json['profilePhoto'] ?? json['photoURL'],
+      plan: (json['plan'] ?? (json['isPro'] == true ? 'Pro' : 'Free')).toString(),
+      isPro: json['isPro'] == true || (json['plan']?.toString().toLowerCase() == 'pro'),
+      status: normalizedStatus,
+      deletionRequest: json['deletionRequest'] is Map<String, dynamic> ? json['deletionRequest'] : null,
       createdAt: json['createdAt']?.toString() ?? '',
     );
   }
@@ -60,22 +68,47 @@ class MasterIndividualsResponse {
     required this.individuals,
   });
 
-  factory MasterIndividualsResponse.fromJson(Map<String, dynamic> json) {
-    final metrics = json['metrics'] ?? {};
-    final list = (json['individuals'] as List? ?? [])
-        .map((e) => IndividualUserModel.fromJson(e))
+  factory MasterIndividualsResponse.fromJson(dynamic input) {
+    Map<String, dynamic> dataMap = {};
+    if (input is Map<String, dynamic>) {
+      if (input['data'] is Map<String, dynamic>) {
+        dataMap = input['data'] as Map<String, dynamic>;
+      } else {
+        dataMap = input;
+      }
+    }
+
+    final metrics = (dataMap['metrics'] is Map) ? dataMap['metrics'] as Map : {};
+
+    List rawList = [];
+    if (dataMap['individuals'] is List) {
+      rawList = dataMap['individuals'] as List;
+    } else if (input is Map && input['data'] is List) {
+      rawList = input['data'] as List;
+    } else if (dataMap['users'] is List) {
+      rawList = dataMap['users'] as List;
+    }
+
+    final list = rawList
+        .map((e) => IndividualUserModel.fromJson(Map<String, dynamic>.from(e as Map)))
         .toList();
+
+    final computedActive = list.where((u) => u.status.toUpperCase() == 'ACTIVE').length;
+    final computedDeactivated = list.where((u) => u.status.toUpperCase() != 'ACTIVE').length;
+
     return MasterIndividualsResponse(
-      total: metrics['total'] ?? list.length,
-      active: metrics['active'] ?? list.where((u) => u.status == 'ACTIVE').length,
-      deactivated: metrics['deactivated'] ?? list.where((u) => u.status != 'ACTIVE').length,
+      total: (metrics['total'] is num) ? (metrics['total'] as num).toInt() : list.length,
+      active: (metrics['active'] is num) ? (metrics['active'] as num).toInt() : computedActive,
+      deactivated: (metrics['deactivated'] is num) ? (metrics['deactivated'] as num).toInt() : computedDeactivated,
       individuals: list,
     );
   }
 }
 
 class MasterIndividualsService {
-  static const String baseUrl = 'https://digitalbusinesscloudcard.com/api/sync/master-admin-individuals';
+  static const String primaryUrl = 'https://digitalbusinesscloudcard.com/api/platform/individuals';
+  static const String fallbackUrl = 'https://digitalbusinesscloudcard.com/api/sync/master-admin-individuals';
+  static const String baseUrl = primaryUrl;
 
   /// Helper to get current Firebase token
   static Future<String> getAuthToken() async {
@@ -94,22 +127,38 @@ class MasterIndividualsService {
       'filter': filter.toLowerCase(),
       if (search.isNotEmpty) 'search': search,
     };
-    final uri = Uri.parse(baseUrl).replace(queryParameters: queryParams);
-    final response = await http.get(
-      uri,
-      headers: {
-        'Content-Type': 'application/json',
-        if (actualToken.isNotEmpty) 'Authorization': 'Bearer $actualToken',
-      },
-    );
 
-    if (response.statusCode == 200) {
-      final decoded = json.decode(response.body);
-      if (decoded['success'] == true) {
-        return MasterIndividualsResponse.fromJson(decoded['data']);
+    final endpoints = [
+      Uri.parse(primaryUrl).replace(queryParameters: queryParams),
+      Uri.parse(fallbackUrl).replace(queryParameters: queryParams),
+    ];
+
+    http.Response? lastResponse;
+
+    for (final uri in endpoints) {
+      try {
+        final response = await http.get(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            if (actualToken.isNotEmpty) 'Authorization': 'Bearer $actualToken',
+          },
+        ).timeout(const Duration(seconds: 6));
+
+        lastResponse = response;
+
+        if (response.statusCode == 200) {
+          final decoded = json.decode(response.body);
+          if (decoded['success'] == true || decoded['data'] != null) {
+            return MasterIndividualsResponse.fromJson(decoded);
+          }
+        }
+      } catch (e) {
+        debugPrint('[MasterIndividualsService] Endpoint $uri error: $e');
       }
     }
-    throw Exception('Failed to load individuals from server (Status: ${response.statusCode})');
+
+    throw Exception('Failed to load individuals from server (Status: ${lastResponse?.statusCode ?? "no response"})');
   }
 
   /// Master Admin Permanent Delete Action

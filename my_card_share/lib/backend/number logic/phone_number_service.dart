@@ -19,8 +19,33 @@ class PhoneValidationModel {
     this.errorMessage,
   });
 
-  factory PhoneValidationModel.validateLocal(String input, {String defaultCountryCode = "+91"}) {
-    final cleanDigits = input.replaceAll(RegExp(r'\D'), '');
+  factory PhoneValidationModel.validateLocal(
+    String input, {
+    String defaultCountryCode = "+91",
+    bool required = false,
+  }) {
+    final trimmed = input.trim();
+    if (trimmed.isEmpty) {
+      if (required) {
+        return PhoneValidationModel(
+          isValid: false,
+          cleanDigits: '',
+          digitCount: 0,
+          formattedNumber: '',
+          errorMessage: 'Phone number is required',
+        );
+      }
+      return PhoneValidationModel(
+        isValid: true,
+        cleanDigits: '',
+        digitCount: 0,
+        countryCode: defaultCountryCode,
+        formattedNumber: '',
+        errorMessage: null,
+      );
+    }
+
+    final cleanDigits = trimmed.replaceAll(RegExp(r'\D'), '');
 
     // 1. Less than 10 digits check (Fixes 9729041 bug)
     if (cleanDigits.length < 10) {
@@ -28,7 +53,7 @@ class PhoneValidationModel {
         isValid: false,
         cleanDigits: cleanDigits,
         digitCount: cleanDigits.length,
-        formattedNumber: input,
+        formattedNumber: trimmed,
         errorMessage: 'Mobile number must be at least 10 digits (Entered: ${cleanDigits.length})',
       );
     }
@@ -39,7 +64,7 @@ class PhoneValidationModel {
         isValid: false,
         cleanDigits: cleanDigits,
         digitCount: cleanDigits.length,
-        formattedNumber: input,
+        formattedNumber: trimmed,
         errorMessage: 'Mobile number cannot exceed 15 digits',
       );
     }
@@ -49,15 +74,27 @@ class PhoneValidationModel {
 
     if (cleanDigits.length == 10) {
       nationalNumber = cleanDigits;
+    } else if (cleanDigits.length == 11 && cleanDigits.startsWith('0')) {
+      countryCode = defaultCountryCode;
+      nationalNumber = cleanDigits.substring(1);
     } else if (cleanDigits.length == 12 && cleanDigits.startsWith('91')) {
       countryCode = '+91';
       nationalNumber = cleanDigits.substring(2);
+    } else if (trimmed.startsWith('+')) {
+      return PhoneValidationModel(
+        isValid: true,
+        cleanDigits: cleanDigits,
+        digitCount: cleanDigits.length,
+        countryCode: '+',
+        formattedNumber: trimmed,
+        errorMessage: null,
+      );
     }
 
     // Format clean display: e.g. +91 97290 41234
-    final formatted = nationalNumber.length >= 5
+    final formatted = nationalNumber.length == 10
         ? '$countryCode ${nationalNumber.substring(0, 5)} ${nationalNumber.substring(5)}'
-        : '$countryCode $nationalNumber';
+        : (trimmed.startsWith('+') ? trimmed : '$countryCode $nationalNumber');
 
     return PhoneValidationModel(
       isValid: true,

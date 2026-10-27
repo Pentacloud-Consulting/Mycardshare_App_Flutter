@@ -81,12 +81,18 @@ class ApprovalsQueueStore extends ChangeNotifier {
 
       // 1. Pending Enterprises
       for (final doc in companySnap.docs) {
+        if (_locallyResolvedIds.contains(doc.id)) continue;
+
         final data = doc.data();
         final status = (data['status'] as String? ?? '').toLowerCase();
         final approvalStatus = (data['approvalStatus'] as String? ?? '').toLowerCase();
-        final isSuspended = data['isSuspended'] == true;
 
-        if (status == 'pending' || approvalStatus == 'pending' || (isSuspended && approvalStatus != 'rejected')) {
+        // If explicitly approved or active, it is NOT pending
+        if (approvalStatus == 'approved' || status == 'active') {
+          continue;
+        }
+
+        if (status == 'pending' || approvalStatus == 'pending') {
           DateTime created = DateTime.now();
           if (data['createdAt'] is Timestamp) {
             created = (data['createdAt'] as Timestamp).toDate();

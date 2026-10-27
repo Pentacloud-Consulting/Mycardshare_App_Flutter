@@ -137,15 +137,18 @@ export async function POST(req: NextRequest) {
       }
 
       // Safe Fallback when private key is not configured: Native Google Wallet Web & App Pass URL
-      const saveUrl = `https://pay.google.com/gp/v/save/#${encodeURIComponent(JSON.stringify(genericObject))}`;
+      const cardUrl = card.publicCardUrl || `https://digitalbusinesscloudcard.com/card/${slug}`;
+      const vcfUrl = `https://digitalbusinesscloudcard.com/api/sync/save-contact?fullName=${encodeURIComponent(card.fullName)}&phone=${encodeURIComponent(card.workPhone)}&email=${encodeURIComponent(card.workEmail)}&company=${encodeURIComponent(card.companyName)}&jobTitle=${encodeURIComponent(card.jobTitle)}&website=${encodeURIComponent(card.website)}&avatarUrl=${encodeURIComponent(card.avatarUrl)}&cardSlug=${encodeURIComponent(slug)}&download=true`;
+
       return NextResponse.json({
         success: true,
         data: {
           walletType: "google",
-          saveUrl,
+          saveUrl: cardUrl,
           walletUrl: `https://wallet.google.com/`,
-          addToWalletUrl: saveUrl,
-          deepLink: saveUrl,
+          addToWalletUrl: cardUrl,
+          vcfUrl,
+          deepLink: cardUrl,
         },
       });
     }
@@ -154,15 +157,18 @@ export async function POST(req: NextRequest) {
     // 2. SAMSUNG WALLET PASS GENERATION
     // ─────────────────────────────────────────────────────────────
     if (walletType === "samsung") {
+      const cardUrl = card.publicCardUrl || `https://digitalbusinesscloudcard.com/card/${slug}`;
       const samsungUniversalLink = `https://a.swallet.link/add/${slug}`;
-      const samsungDeepLink = `samsungwallet://wallet/add?url=${encodeURIComponent(card.publicCardUrl || "")}`;
+      const samsungDeepLink = `samsungwallet://wallet/add?url=${encodeURIComponent(cardUrl)}`;
+      const vcfUrl = `https://digitalbusinesscloudcard.com/api/sync/save-contact?fullName=${encodeURIComponent(card.fullName)}&phone=${encodeURIComponent(card.workPhone)}&email=${encodeURIComponent(card.workEmail)}&company=${encodeURIComponent(card.companyName)}&jobTitle=${encodeURIComponent(card.jobTitle)}&website=${encodeURIComponent(card.website)}&avatarUrl=${encodeURIComponent(card.avatarUrl)}&cardSlug=${encodeURIComponent(slug)}&download=true`;
 
       return NextResponse.json({
         success: true,
         data: {
           walletType: "samsung",
-          addToWalletUrl: samsungUniversalLink,
-          saveUrl: samsungUniversalLink,
+          addToWalletUrl: cardUrl,
+          saveUrl: cardUrl,
+          vcfUrl,
           deepLink: samsungDeepLink,
         },
       });

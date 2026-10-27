@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -11,6 +12,8 @@ class UserLeadsService extends ChangeNotifier {
   static final UserLeadsService instance = UserLeadsService._internal();
 
   List<LeadData> _leads = [];
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _leadsSub;
+  String _listeningUid = '';
 
   List<LeadData> get leads => List.unmodifiable(_leads);
 
@@ -23,6 +26,7 @@ class UserLeadsService extends ChangeNotifier {
     // Avoid duplicate lead IDs
     _leads.removeWhere((l) => l.id == lead.id);
     _leads.insert(0, lead);
+    _leads.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     notifyListeners();
 
     final currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
@@ -40,6 +44,7 @@ class UserLeadsService extends ChangeNotifier {
     } else {
       _leads.insert(0, updatedLead);
     }
+    _leads.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     notifyListeners();
 
     final currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
@@ -94,6 +99,57 @@ class UserLeadsService extends ChangeNotifier {
     }
   }
 
+  /// Starts real-time listening to Firestore changes for live lead synchronization.
+  void listenToUserLeads([String? uid]) {
+    final curUser = FirebaseAuth.instance.currentUser;
+    final indProfile = IndividualProfileStore.instance.currentProfile;
+    final effectiveUid = (uid != null && uid.trim().isNotEmpty)
+        ? uid.trim()
+        : (curUser?.uid ?? indProfile?.uid ?? '');
+
+    if (effectiveUid.isEmpty || _listeningUid == effectiveUid) return;
+    _listeningUid = effectiveUid;
+    _leadsSub?.cancel();
+
+    _leadsSub = FirebaseFirestore.instance
+        .collection('users')
+        .doc(effectiveUid)
+        .collection('leads')
+        .snapshots()
+        .listen((snapshot) {
+      final List<LeadData> liveList = [];
+      for (final doc in snapshot.docs) {
+        final data = Map<String, dynamic>.from(doc.data());
+        if (data['id'] == null || (data['id'] as String).isEmpty) {
+          data['id'] = doc.id;
+        }
+        try {
+          liveList.add(LeadData.fromJson(data));
+        } catch (e) {
+          debugPrint('[UserLeadsService] Error parsing live lead ${doc.id}: $e');
+        }
+      }
+
+      final Map<String, LeadData> map = {};
+      for (final l in liveList) {
+        map[l.id] = l;
+      }
+      for (final l in _leads) {
+        if (!map.containsKey(l.id)) {
+          map[l.id] = l;
+        }
+      }
+
+      _leads = map.values.toList();
+      _leads.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      notifyListeners();
+
+      IndividualMetricsStore.instance.updateLeadsCount(effectiveUid, _leads.length);
+    }, onError: (err) {
+      debugPrint('[UserLeadsService] Real-time leads listener error: $err');
+    });
+  }
+
   /// Fetches real leads from Firestore for a given user.
   Future<List<LeadData>> fetchUserLeads([String? uid]) async {
     final curUser = FirebaseAuth.instance.currentUser;
@@ -108,15 +164,32 @@ class UserLeadsService extends ChangeNotifier {
       // 1. Check user personal leads subcollection
       if (effectiveUid.isNotEmpty) {
         try {
-          final snapshot = await FirebaseFirestore.instance
-              .collection('users')
-              .doc(effectiveUid)
-              .collection('leads')
-              .orderBy('createdAt', descending: true)
-              .get();
+          QuerySnapshot<Map<String, dynamic>> snapshot;
+          try {
+            snapshot = await FirebaseFirestore.instance
+                .collection('users')
+                .doc(effectiveUid)
+                .collection('leads')
+                .orderBy('createdAt', descending: true)
+                .get();
+          } catch (_) {
+            snapshot = await FirebaseFirestore.instance
+                .collection('users')
+                .doc(effectiveUid)
+                .collection('leads')
+                .get();
+          }
 
           for (final doc in snapshot.docs) {
-            fetched.add(LeadData.fromJson(doc.data()));
+            final data = Map<String, dynamic>.from(doc.data());
+            if (data['id'] == null || (data['id'] as String).isEmpty) {
+              data['id'] = doc.id;
+            }
+            try {
+              fetched.add(LeadData.fromJson(data));
+            } catch (err) {
+              debugPrint('[UserLeadsService] Error parsing doc lead ${doc.id}: $err');
+            }
           }
         } catch (e) {
           debugPrint('[UserLeadsService] users subcollection fetch notice: $e');
@@ -134,7 +207,13 @@ class UserLeadsService extends ChangeNotifier {
 
           for (final doc in globalSnap.docs) {
             if (!fetched.any((l) => l.id == doc.id)) {
-              fetched.add(LeadData.fromJson(doc.data()));
+              final data = Map<String, dynamic>.from(doc.data());
+              if (data['id'] == null || (data['id'] as String).isEmpty) {
+                data['id'] = doc.id;
+              }
+              try {
+                fetched.add(LeadData.fromJson(data));
+              } catch (_) {}
             }
           }
         } catch (_) {}

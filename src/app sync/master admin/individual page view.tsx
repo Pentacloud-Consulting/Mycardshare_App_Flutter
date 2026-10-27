@@ -181,14 +181,13 @@ export async function POST(req: NextRequest) {
 
     if (action === "confirm_delete") {
       if (userIndex >= 0) {
-        individualsRegistry[userIndex].status = "DEACTIVATED";
-        delete individualsRegistry[userIndex].deletionRequest;
+        individualsRegistry.splice(userIndex, 1);
       }
 
       return NextResponse.json({
         success: true,
-        message: "Account permanently deleted and removed from pending requests",
-        data: { userId: resolvedId, status: "DEACTIVATED" },
+        message: "Account permanently deleted and purged from registry",
+        data: { userId: resolvedId, status: "DELETED" },
       });
     }
 

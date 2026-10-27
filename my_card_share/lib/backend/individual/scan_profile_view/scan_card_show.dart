@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../contact/save_contact_service.dart';
+import '../wallet/add_to_wallet.dart';
 import 'scan_profile_view.dart';
 import '../lead/active_lead.dart';
 
@@ -342,7 +343,10 @@ class _ScanCardShowScreenState extends State<ScanCardShowScreen> {
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () => _onShareContact(profile),
+                          onPressed: () => AddToWalletService.instance.showSelectWalletModal(
+                            context,
+                            publicProfile: profile,
+                          ),
                           icon: const Icon(Icons.wallet_outlined, size: 18, color: Color(0xFF0052FF)),
                           label: const Text(
                             "Add to Wallet",

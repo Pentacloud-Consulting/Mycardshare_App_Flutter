@@ -1,3 +1,4 @@
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -435,6 +436,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         : _selectedTab == 2
             ? 'employee'
             : 'individual';
+
+    // ⚡ ALWAYS call signOut first so Android shows 'Choose an account' dialog!
+    try {
+      final googleSignIn = GoogleSignIn();
+      await googleSignIn.signOut();
+    } catch (e) {
+      debugPrint('[LoginScreen] Pre-Google login signout notice: $e');
+    }
 
     if (_selectedTab != 0) {
       // ── Enterprise: REAL Firebase Google Sign-In ──

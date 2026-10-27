@@ -244,6 +244,8 @@ class _ScannedProfileViewScreenState extends State<ScannedProfileViewScreen>
                             jobTitle: profile.jobTitle,
                             website: profile.website,
                             bio: profile.bio,
+                            avatarUrl: profile.avatarUrl,
+                            cardSlug: widget.cardSlug,
                           );
                         },
                         onShareTap: () => ShareCardService.instance.shareCard(

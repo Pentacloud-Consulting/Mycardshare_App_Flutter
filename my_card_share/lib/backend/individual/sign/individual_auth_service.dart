@@ -149,7 +149,13 @@ class IndividualAuthService {
 
   Future<IndividualAuthResult> signInWithGoogle() async {
     try {
-      debugPrint('[IndividualAuthService] Starting Google Sign-In...');
+      // ⚡ FORCE ACCOUNT CHOOSER:
+      // Clear cached Google session first so Android ALWAYS shows the "Choose an account" popup!
+      try {
+        await _googleSignIn.signOut();
+      } catch (e) {
+        debugPrint('[IndividualAuthService] Pre-signin signout notice: $e');
+      }
 
       // Use the shared instance (has correct clientId + scopes)
       final googleUser = await _googleSignIn.signIn();

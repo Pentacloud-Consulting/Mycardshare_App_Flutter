@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../individual/profile/individual_profile_store.dart';
 import '../individual/multiple_store/individual_multi_store.dart';
 import '../enterprise/profile/enterprise_profile_store.dart';
@@ -210,6 +211,11 @@ class AppViewAuthGate {
     try {
       await EnterpriseEmployeesService.instance.markEmployeeInactive();
       await clearPersistentSession();
+      try {
+        await GoogleSignIn().signOut();
+      } catch (e) {
+        debugPrint('[AppViewAuthGate] GoogleSignIn signOut error: $e');
+      }
       await _auth.signOut();
       debugPrint('[AppViewAuthGate] User session signed out cleanly.');
     } catch (e) {

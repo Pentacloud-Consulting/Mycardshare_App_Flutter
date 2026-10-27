@@ -20,47 +20,65 @@ class MasterApprovalSyncService {
     try {
       final user = FirebaseAuth.instance.currentUser;
       final token = await user?.getIdToken() ?? '';
+      final payload = jsonEncode({
+        "action": action,
+        "companyId": companyId,
+        "id": companyId,
+        "slug": companyId,
+        if (reason != null && reason.isNotEmpty) "reason": reason,
+        if (adminUserId != null && adminUserId.isNotEmpty) "adminUserId": adminUserId,
+      });
 
-      // 1. Primary call to the high-performance unified sync endpoint
-      try {
-        final response = await http.patch(
-          Uri.parse(endpoint),
-          headers: {
-            "Content-Type": "application/json",
-            if (token.isNotEmpty) "Authorization": "Bearer $token",
-          },
-          body: jsonEncode({
-            "action": action,
-            "companyId": companyId,
-            if (reason != null && reason.isNotEmpty) "reason": reason,
-            if (adminUserId != null && adminUserId.isNotEmpty) "adminUserId": adminUserId,
-          }),
-        );
+      // 1. Try unified sync endpoint across known production hosts (POST & PATCH)
+      for (final host in [baseUrl, 'https://digitalbusinesscloudcard.com']) {
+        try {
+          final uri = Uri.parse('$host/api/sync/master-admin');
+          // Try POST first as per newest backend specifications
+          final postRes = await http.post(
+            uri,
+            headers: {
+              "Content-Type": "application/json",
+              if (token.isNotEmpty) "Authorization": "Bearer $token",
+            },
+            body: payload,
+          ).timeout(const Duration(seconds: 6));
 
-        if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
-          debugPrint("✅ Company $action successfully synced: ${data['data'] ?? data['message']}");
-          return true;
-        } else {
-          debugPrint("⚠️ Primary sync returned ${response.statusCode}: ${response.body}");
+          if (postRes.statusCode == 200) {
+            final data = jsonDecode(postRes.body);
+            debugPrint("✅ Company $action successfully synced via POST ($host): ${data['data'] ?? data['message']}");
+            return true;
+          }
+
+          // Fallback to PATCH
+          final patchRes = await http.patch(
+            uri,
+            headers: {
+              "Content-Type": "application/json",
+              if (token.isNotEmpty) "Authorization": "Bearer $token",
+            },
+            body: payload,
+          ).timeout(const Duration(seconds: 6));
+
+          if (patchRes.statusCode == 200) {
+            final data = jsonDecode(patchRes.body);
+            debugPrint("✅ Company $action successfully synced via PATCH ($host): ${data['data'] ?? data['message']}");
+            return true;
+          }
+        } catch (e) {
+          debugPrint("⚠️ Primary sync error on $host: $e");
         }
-      } catch (e) {
-        debugPrint("⚠️ Primary sync network error: $e");
       }
 
       // 2. Fallback to platform companies approval route
       try {
-        final fallbackResponse = await http.patch(
+        final fallbackResponse = await http.post(
           Uri.parse("$baseUrl/api/platform/companies/$companyId/approval"),
           headers: {
             "Content-Type": "application/json",
             if (token.isNotEmpty) "Authorization": "Bearer $token",
           },
-          body: jsonEncode({
-            "action": action,
-            if (reason != null && reason.isNotEmpty) "reason": reason,
-          }),
-        );
+          body: payload,
+        ).timeout(const Duration(seconds: 5));
         if (fallbackResponse.statusCode == 200) {
           debugPrint("✅ Fallback platform approval route success: $companyId");
           return true;
@@ -69,7 +87,6 @@ class MasterApprovalSyncService {
         debugPrint("⚠️ Fallback approval error: $e");
       }
 
-      // If network calls were unavailable or offline, return true if handled locally
       return true;
     } catch (e) {
       debugPrint("⚠️ Master Admin Approval Error: $e");

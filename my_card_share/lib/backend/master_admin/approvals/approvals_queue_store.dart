@@ -60,7 +60,17 @@ class ApprovalsQueueStore extends ChangeNotifier {
           .map((i) => i.rawJoinRequest!)
           .toList();
 
-  int get pendingCount => _pendingItems.length;
+  final Set<String> _locallyResolvedIds = {};
+
+  bool isResolved(String id) => _locallyResolvedIds.contains(id);
+
+  void markLocallyResolved(String id) {
+    _locallyResolvedIds.add(id);
+    _pendingItems.removeWhere((i) => i.id == id);
+    notifyListeners();
+  }
+
+  int get pendingCount => _pendingItems.where((i) => !_locallyResolvedIds.contains(i.id)).length;
   bool get isLoading => _isLoading;
 
   /// Combined real-time stream of pending companies + pending join requests
@@ -152,6 +162,7 @@ class ApprovalsQueueStore extends ChangeNotifier {
         debugPrint('[ApprovalsQueueStore] join_requests query error: $e');
       }
 
+      items.removeWhere((it) => _locallyResolvedIds.contains(it.id));
       items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       _pendingItems = items;
       notifyListeners();
@@ -161,6 +172,7 @@ class ApprovalsQueueStore extends ChangeNotifier {
 
   /// Approve an item (either Enterprise company or Join Request)
   Future<bool> approveItem(MasterApprovalItem item) async {
+    markLocallyResolved(item.id);
     try {
       if (item.type == 'company') {
         final now = DateTime.now();
@@ -292,6 +304,7 @@ class ApprovalsQueueStore extends ChangeNotifier {
 
   /// Reject an item (either Enterprise company or Join Request)
   Future<bool> rejectItem(MasterApprovalItem item, {String? reason}) async {
+    markLocallyResolved(item.id);
     try {
       if (item.type == 'company') {
         // Mark enterprise as rejected / suspended in Firestore

@@ -95,6 +95,8 @@ class CardFooterActions extends StatelessWidget {
                       jobTitle: activeProfile?.jobTitle,
                       website: activeProfile?.websiteUrl,
                       bio: activeProfile?.shortBio,
+                      avatarUrl: activeProfile?.profilePhoto,
+                      cardSlug: activeProfile?.cardSlug,
                     );
                   },
               style: ElevatedButton.styleFrom(

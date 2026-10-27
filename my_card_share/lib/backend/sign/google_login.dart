@@ -52,6 +52,14 @@ class GoogleLoginService {
     try {
       debugPrint('[GoogleLoginService] Starting Google Login...');
 
+      // ⚡ FORCE ACCOUNT CHOOSER:
+      // Clear cached Google session first so Android ALWAYS shows the "Choose an account" popup!
+      try {
+        await _googleSignIn.signOut();
+      } catch (e) {
+        debugPrint('[GoogleLoginService] Pre-signin signout notice: $e');
+      }
+
       // Trigger OS native Google Sign-In picker
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 

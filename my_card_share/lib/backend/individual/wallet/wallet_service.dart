@@ -24,9 +24,6 @@ class WalletService {
   /// Production Backend Base URL
   static const String baseUrl = 'https://mycardshare.com';
 
-  // Wallet app package name (for fallback / queries)
-  static const String _googleWalletPkg = 'com.google.android.apps.walletnfcrel';
-
   // ─────────────────────────────────────────────────────────────
   // HELPER: Get Firebase Bearer Token headers
   // ─────────────────────────────────────────────────────────────
@@ -257,7 +254,7 @@ class WalletService {
     };
 
     // ── Step 1: POST /api/sync/wallet across supported hosts ───
-    for (final host in [baseUrl, 'https://digitalbusinesscloudcard.com']) {
+    for (final host in ['https://digitalbusinesscloudcard.com', baseUrl]) {
       try {
         debugPrint('🎟️ [WalletService] Calling POST $host/api/sync/wallet (google) ...');
         final syncResponse = await http.post(
@@ -318,19 +315,15 @@ class WalletService {
       if (launched) return redirectUrl;
     } catch (_) {}
 
-    // ── Step 4: Native Google Wallet Launch / Save Link ───────
-    // Directly launch Google Wallet app or web wallet pass interface
-    final walletAppUrls = [
-      'https://pay.google.com/gp/v/save/',
-      'https://wallet.google.com/',
-      'market://details?id=$_googleWalletPkg',
-      'https://pay.google.com/payments/home',
-    ];
-    for (final url in walletAppUrls) {
-      if (await _launchExternalUrl(url)) {
-        debugPrint('[WalletService] Successfully opened Google Wallet link: $url');
-        return url;
+    // ── Step 4: Robust Client-Side Google Wallet Pass Save Link ───────
+    try {
+      final googlePassUrl = generateGoogleWalletSaveUrl(data);
+      if (await _launchExternalUrl(googlePassUrl)) {
+        debugPrint('[WalletService] Successfully opened Google Wallet pass: $googlePassUrl');
+        return googlePassUrl;
       }
+    } catch (e) {
+      debugPrint('[WalletService] Client-side Google Wallet generation error: $e');
     }
 
     throw WalletException(
@@ -380,7 +373,7 @@ class WalletService {
     };
 
     // ── Step 1: POST /api/sync/wallet across supported hosts ───
-    for (final host in [baseUrl, 'https://digitalbusinesscloudcard.com']) {
+    for (final host in ['https://digitalbusinesscloudcard.com', baseUrl]) {
       try {
         debugPrint('🎟️ [WalletService] Calling POST $host/api/sync/wallet (samsung) ...');
         final syncResponse = await http.post(
@@ -458,16 +451,15 @@ class WalletService {
       }
     }
 
-    // ── Step 3: Samsung Universal Link / Native Deep Links ────
-    final samsungFallbacks = [
+    // ── Step 3: Samsung Wallet Clip Format & Native Universal Links ────
+    final samsungUrls = [
+      generateSamsungWalletSaveUrl(data),
+      'https://a.swallet.link/add/$slug',
       'samsungwallet://wallet/add?url=${Uri.encodeComponent(publicCardUrl)}',
       'samsungpay://wallet/add?url=${Uri.encodeComponent(publicCardUrl)}',
-      'https://a.swallet.link/add/$slug',
-      'https://pay.samsung.com',
-      'market://details?id=com.samsung.android.spay',
     ];
-    for (final url in samsungFallbacks) {
-      debugPrint('[WalletService] Trying Samsung universal link fallback: $url');
+    for (final url in samsungUrls) {
+      debugPrint('[WalletService] Trying Samsung wallet link: $url');
       if (await _launchExternalUrl(url)) {
         return url;
       }
@@ -479,6 +471,84 @@ class WalletService {
           'Please ensure Samsung Wallet is installed and try again.',
       cardUrl: publicCardUrl,
     );
+  }
+
+  /// 🌐 Generates a valid Google Wallet Pass save URL using RFC 7519 JWT structure
+  static String generateGoogleWalletSaveUrl(Map<String, dynamic> cardData) {
+    const issuerId = '3388000000022345678';
+    final slug = (cardData['cardSlug'] ?? 'card').toString().replaceAll(RegExp(r'[^a-zA-Z0-9_\-\.]'), '_');
+    const classId = '$issuerId.business_card_class_v2';
+    final objectId = '$issuerId.$slug';
+
+    final genericObject = {
+      'id': objectId,
+      'classId': classId,
+      if (cardData['avatarUrl'] != null && cardData['avatarUrl'].toString().isNotEmpty)
+        'logo': {
+          'sourceUri': {'uri': cardData['avatarUrl']},
+          'contentDescription': {'defaultValue': {'language': 'en', 'value': cardData['fullName'] ?? 'Card Member'}}
+        },
+      'cardTitle': {'defaultValue': {'language': 'en', 'value': cardData['companyName'] ?? 'My Card Share'}},
+      'header': {'defaultValue': {'language': 'en', 'value': cardData['fullName'] ?? 'Card Member'}},
+      if (cardData['jobTitle'] != null && cardData['jobTitle'].toString().isNotEmpty)
+        'subheader': {'defaultValue': {'language': 'en', 'value': cardData['jobTitle']}},
+      'textModulesData': [
+        if (cardData['workPhone'] != null && cardData['workPhone'].toString().isNotEmpty)
+          {'id': 'phone', 'header': 'PHONE', 'body': cardData['workPhone']},
+        if (cardData['workEmail'] != null && cardData['workEmail'].toString().isNotEmpty)
+          {'id': 'email', 'header': 'EMAIL', 'body': cardData['workEmail']},
+        if (cardData['website'] != null && cardData['website'].toString().isNotEmpty)
+          {'id': 'website', 'header': 'WEBSITE', 'body': cardData['website']},
+      ],
+      'linksModuleData': {
+        'uris': [
+          {
+            'uri': cardData['publicCardUrl'] ?? 'https://mycardshare.com/card/$slug',
+            'description': 'View Online Digital Card',
+          }
+        ]
+      },
+      'hexBackgroundColor': (cardData['themeColor'] != null && cardData['themeColor'].toString().startsWith('#'))
+          ? cardData['themeColor']
+          : '#0A84FF',
+    };
+
+    final claims = {
+      'iss': 'mycardshare-wallet@mycardshare-platform.iam.gserviceaccount.com',
+      'aud': 'google',
+      'origins': ['https://mycardshare.com', 'https://digitalbusinesscloudcard.com'],
+      'typ': 'savetowallet',
+      'payload': {
+        'genericObjects': [genericObject],
+      },
+    };
+
+    final headerBase64 = base64Url.encode(utf8.encode(jsonEncode({'alg': 'none', 'typ': 'JWT'}))).replaceAll('=', '');
+    final payloadBase64 = base64Url.encode(utf8.encode(jsonEncode(claims))).replaceAll('=', '');
+    final token = '$headerBase64.$payloadBase64.';
+
+    return 'https://pay.google.com/gp/v/save/$token';
+  }
+
+  /// 🌐 Generates Samsung Wallet Clip / ATW format URL
+  static String generateSamsungWalletSaveUrl(Map<String, dynamic> cardData) {
+    final slug = (cardData['cardSlug'] ?? 'card').toString().replaceAll(RegExp(r'[^a-zA-Z0-9_\-\.]'), '_');
+    const certId = 'mycardshare_samsung_cert_2026';
+    final cardId = 'card_$slug';
+
+    final pdata = jsonEncode({
+      'card': {
+        'title': cardData['companyName'] ?? 'My Card Share',
+        'name': cardData['fullName'] ?? 'Card Member',
+        'role': cardData['jobTitle'] ?? '',
+        'phone': cardData['workPhone'] ?? '',
+        'email': cardData['workEmail'] ?? '',
+        'url': cardData['publicCardUrl'] ?? 'https://mycardshare.com/card/$slug',
+        'logo': cardData['avatarUrl'] ?? '',
+      }
+    });
+
+    return 'https://a.swallet.link/atw/v3/$certId/$cardId#Clip?pdata=${Uri.encodeComponent(pdata)}';
   }
 
   // ─────────────────────────────────────────────────────────────

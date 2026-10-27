@@ -5,6 +5,9 @@ class ApprovalCardList extends StatelessWidget {
   const ApprovalCardList({super.key});
 
   Future<void> _handleApprove(BuildContext context, MasterApprovalItem item) async {
+    // ⚡ CRITICAL: Optimistically remove from local pending list immediately!
+    ApprovalsQueueStore.instance.markLocallyResolved(item.id);
+
     final messenger = ScaffoldMessenger.of(context);
     final ok = await ApprovalsQueueStore.instance.approveItem(item);
 
@@ -30,6 +33,9 @@ class ApprovalCardList extends StatelessWidget {
   }
 
   Future<void> _handleReject(BuildContext context, MasterApprovalItem item) async {
+    // ⚡ CRITICAL: Optimistically remove from local pending list immediately!
+    ApprovalsQueueStore.instance.markLocallyResolved(item.id);
+
     final messenger = ScaffoldMessenger.of(context);
     final ok = await ApprovalsQueueStore.instance.rejectItem(item);
 
@@ -56,10 +62,14 @@ class ApprovalCardList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<MasterApprovalItem>>(
-      stream: ApprovalsQueueStore.instance.streamPendingQueue(),
-      builder: (context, snapshot) {
-        final requests = snapshot.data ?? ApprovalsQueueStore.instance.pendingItems;
+    return ListenableBuilder(
+      listenable: ApprovalsQueueStore.instance,
+      builder: (context, _) {
+        return StreamBuilder<List<MasterApprovalItem>>(
+          stream: ApprovalsQueueStore.instance.streamPendingQueue(),
+          builder: (context, snapshot) {
+            final allRequests = snapshot.data ?? ApprovalsQueueStore.instance.pendingItems;
+            final requests = allRequests.where((i) => !ApprovalsQueueStore.instance.isResolved(i.id)).toList();
 
         if (snapshot.connectionState == ConnectionState.waiting && requests.isEmpty) {
           return Container(
@@ -356,10 +366,12 @@ class ApprovalCardList extends StatelessWidget {
               ),
             );
           }).toList(),
-        );
-      },
-    );
-  }
+          );
+        },
+      );
+    },
+  );
+}
 }
 
 

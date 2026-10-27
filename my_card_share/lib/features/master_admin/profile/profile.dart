@@ -12,6 +12,7 @@ import 'widgets/profile_activity_section.dart';
 import 'widgets/profile_logout_button.dart';
 import '../../individual/settings/widgets/change_password_dialog.dart';
 import '../../../backend/Cloud Image Upload/cloud_upload_service.dart';
+import '../../../backend/app view/app_view_auth_gate.dart';
 
 class MasterAdminProfileScreen extends StatefulWidget {
   const MasterAdminProfileScreen({super.key});
@@ -126,7 +127,7 @@ class _MasterAdminProfileScreenState extends State<MasterAdminProfileScreen> {
   }
 
   void _handleLogout() async {
-    await FirebaseAuth.instance.signOut();
+    await AppViewAuthGate.instance.signOut();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

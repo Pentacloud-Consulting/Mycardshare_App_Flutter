@@ -15,11 +15,18 @@ class EnterpriseGoogleAuthSyncService {
   static final EnterpriseGoogleAuthSyncService instance =
       EnterpriseGoogleAuthSyncService._internal();
 
-  static const String baseUrl = "https://mycardshare.com";
+  // ⚡ Live production domain
+  static const String baseUrl = "https://digitalbusinesscloudcard.com";
+  static const String fallbackUrl = "https://mycardshare.com";
+
+  static const String _webClientId =
+      '943022881240-igar8cpibfem295tuua1lhlkh24n4k4j.apps.googleusercontent.com';
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn(
+    serverClientId: _webClientId,
+    clientId: kIsWeb ? _webClientId : null,
     scopes: ['email', 'profile'],
   );
 
@@ -33,7 +40,15 @@ class EnterpriseGoogleAuthSyncService {
     try {
       debugPrint('[EnterpriseGoogleAuthSyncService] Starting Enterprise Google Sign-In...');
 
-      // 1. Google Sign-In Trigger
+      // ⚡ FORCE ACCOUNT CHOOSER:
+      // Clear cached Google session first so Android ALWAYS shows the "Choose an account" popup!
+      try {
+        await _googleSignIn.signOut();
+      } catch (e) {
+        debugPrint('[EnterpriseGoogleAuthSyncService] Pre-signin signout notice: $e');
+      }
+
+      // 1. Google Sign-In Trigger (opens fresh account picker)
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
         return EnterpriseAuthResult.error('Google sign-in was cancelled.');
@@ -171,29 +186,82 @@ class EnterpriseGoogleAuthSyncService {
   }) async {
     try {
       final idToken = await user.getIdToken();
-      final response = await http.post(
-        Uri.parse("$baseUrl/api/sync/enterprise-google-signup"),
-        headers: {
-          "Content-Type": "application/json",
-          if (idToken != null) "Authorization": "Bearer $idToken",
-        },
-        body: jsonEncode({
-          "companyName": companyName,
-          "adminTitle": adminTitle,
-          "phone": phone,
-          "email": user.email,
-          "fullName": user.displayName,
-          "avatarUrl": user.photoURL,
-        }),
-      );
+      final payload = jsonEncode({
+        "companyName": companyName,
+        "adminTitle": adminTitle,
+        "phone": phone,
+        "email": user.email,
+        "fullName": user.displayName,
+        "avatarUrl": user.photoURL,
+      });
+      final headers = {
+        "Content-Type": "application/json",
+        if (idToken != null) "Authorization": "Bearer $idToken",
+      };
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        debugPrint('[EnterpriseGoogleAuthSyncService] Backend sync success: ${response.body}');
-      } else {
-        debugPrint('[EnterpriseGoogleAuthSyncService] Backend sync notice: ${response.statusCode} - ${response.body}');
+      // Try primary live production domain first
+      try {
+        final response = await http.post(
+          Uri.parse("$baseUrl/api/sync/enterprise-google-signup"),
+          headers: headers,
+          body: payload,
+        );
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          debugPrint('[EnterpriseGoogleAuthSyncService] Primary backend sync success: ${response.body}');
+          return;
+        }
+      } catch (e) {
+        debugPrint('[EnterpriseGoogleAuthSyncService] Primary backend sync error: $e');
+      }
+
+      // Fallback to secondary domain if primary had an issue
+      try {
+        final fallbackResponse = await http.post(
+          Uri.parse("$fallbackUrl/api/sync/enterprise-google-signup"),
+          headers: headers,
+          body: payload,
+        );
+        debugPrint('[EnterpriseGoogleAuthSyncService] Fallback backend sync status: ${fallbackResponse.statusCode}');
+      } catch (e) {
+        debugPrint('[EnterpriseGoogleAuthSyncService] Fallback backend sync error: $e');
       }
     } catch (e) {
       debugPrint('[EnterpriseGoogleAuthSyncService] Backend sync background notice: $e');
     }
   }
+
+  /// Signs in with Google, forcing the account chooser dialog,
+  /// then provisions the Enterprise workspace in the sync backend.
+  static Future<Map<String, dynamic>> signInAndSyncEnterprise({
+    String? companyName,
+    String? adminTitle,
+  }) async {
+    final result = await instance.signUpEnterpriseWithGoogle(
+      companyName: companyName,
+      adminTitle: adminTitle,
+    );
+    if (result.isSuccess) {
+      return {
+        'success': true,
+        'user': result.firebaseUser,
+        'enterprise': result.profileData?.toFirestore(),
+      };
+    } else {
+      return {
+        'success': false,
+        'error': result.message,
+      };
+    }
+  }
+
+  /// Completely signs out from Google Play Services SDK cache
+  Future<void> signOut() async {
+    try {
+      await _googleSignIn.signOut();
+      debugPrint('[EnterpriseGoogleAuthSyncService] Google session signed out cleanly.');
+    } catch (e) {
+      debugPrint('[EnterpriseGoogleAuthSyncService] Google signOut error: $e');
+    }
+  }
 }
+

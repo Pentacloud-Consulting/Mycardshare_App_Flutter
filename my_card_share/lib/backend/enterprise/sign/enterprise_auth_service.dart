@@ -295,7 +295,12 @@ class EnterpriseAuthService {
   // ─── Sign-Out ─────────────────────────────────────────────────────────────
 
   Future<void> signOut() async {
-    await _googleSignIn.signOut();
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {}
+    try {
+      await EnterpriseGoogleAuthSyncService.instance.signOut();
+    } catch (_) {}
     await _auth.signOut();
     EnterpriseProfileStore.instance.clearProfile();
     debugPrint('[EnterpriseAuthService] Enterprise user signed out');

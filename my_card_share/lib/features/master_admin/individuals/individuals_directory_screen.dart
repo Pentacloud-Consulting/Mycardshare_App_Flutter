@@ -18,6 +18,7 @@ class MasterAdminIndividualsScreen extends StatefulWidget {
 
 class _MasterAdminIndividualsScreenState
     extends State<MasterAdminIndividualsScreen> {
+  final Set<String> _locallyDeletedIds = {};
   String _searchQuery = '';
   String _selectedFilter = 'All';
   bool _showFilterChips = true;
@@ -62,7 +63,12 @@ class _MasterAdminIndividualsScreenState
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: _deletionsStream,
       builder: (context, deletionSnap) {
-        final pendingDeletions = deletionSnap.data ?? [];
+        final rawDeletions = deletionSnap.data ?? [];
+        final pendingDeletions = rawDeletions.where((d) {
+          final reqId = (d['requestId'] ?? d['id'] ?? '').toString();
+          final uId = (d['userId'] ?? '').toString();
+          return !_locallyDeletedIds.contains(reqId) && !_locallyDeletedIds.contains(uId);
+        }).toList();
 
         return StreamBuilder<List<MasterIndividualModel>>(
           stream: _individualsStream,
@@ -72,10 +78,13 @@ class _MasterAdminIndividualsScreenState
             // Merge storeUsers (Firestore real-time & merged deletions) with backendData
             final Map<String, MasterIndividualModel> mergedUsersMap = {};
             for (final u in storeUsers) {
-              mergedUsersMap[u.id] = u;
+              if (!_locallyDeletedIds.contains(u.id)) {
+                mergedUsersMap[u.id] = u;
+              }
             }
             if (_backendData != null && _backendData!.individuals.isNotEmpty) {
               for (final u in _backendData!.individuals) {
+                if (_locallyDeletedIds.contains(u.userId)) continue;
                 final model = MasterIndividualModel.fromIndividualUserModel(u);
                 if (mergedUsersMap.containsKey(model.id) && mergedUsersMap[model.id]!.isDeactivated) {
                   continue; // Preserve deactivated & deletion pending state
@@ -83,7 +92,9 @@ class _MasterAdminIndividualsScreenState
                 mergedUsersMap[model.id] = model;
               }
             }
-            List<MasterIndividualModel> displayUsers = mergedUsersMap.values.toList();
+            List<MasterIndividualModel> displayUsers = mergedUsersMap.values
+                .where((u) => !_locallyDeletedIds.contains(u.id))
+                .toList();
 
             // Ensure any users in pending deletions are marked as Deactivated / Deletion Pending
             final pendingIds = pendingDeletions.map((d) => (d['userId'] ?? d['id'] ?? '').toString()).toSet();
@@ -405,271 +416,301 @@ class _MasterAdminIndividualsScreenState
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
-        return StreamBuilder<List<Map<String, dynamic>>>(
-          stream: IndividualDeleteService.streamPendingDeletions(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const SizedBox(
-                height: 250,
-                child: Center(child: CircularProgressIndicator()),
-              );
-            }
-
-            final requests = List<Map<String, dynamic>>.from(snapshot.data ?? []);
-
-            // Fallback: If stream returned empty, check displayUsers for any accounts marked deletion_pending or deactivated
-            if (requests.isEmpty && displayUsers != null && displayUsers.isNotEmpty) {
-              for (final u in displayUsers) {
-                if (u.isDeactivated || u.status == 'DELETION_PENDING' || u.deletionRequest != null) {
-                  requests.add({
-                    "requestId": u.id,
-                    "userId": u.id,
-                    "userName": u.name,
-                    "userEmail": u.email,
-                    "reason": u.deletionReason ?? "User requested account deletion",
-                    "feedback": "",
-                    "status": "pending",
-                    "createdAt": u.createdAt ?? DateTime.now(),
-                  });
+        return StatefulBuilder(
+          builder: (sheetContext, setModalState) {
+            return StreamBuilder<List<Map<String, dynamic>>>(
+              stream: _deletionsStream,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox(
+                    height: 250,
+                    child: Center(child: CircularProgressIndicator()),
+                  );
                 }
-              }
-            }
 
-            if (requests.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFDCFCE7),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.check_circle_outline_rounded,
-                        color: Color(0xFF16A34A),
-                        size: 40,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    const Text(
-                      "No Pending Deletions! 🎉",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 17,
-                        color: Color(0xFF0F172A),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      "All individual user accounts are in good standing.",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
-                    ),
-                    const SizedBox(height: 16),
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: const Text("Close"),
-                    ),
-                  ],
-                ),
-              );
-            }
+                final rawList = List<Map<String, dynamic>>.from(snapshot.data ?? []);
+                final requests = rawList.where((r) {
+                  final reqId = (r["requestId"] ?? r["id"] ?? "").toString();
+                  final uId = (r["userId"] ?? "").toString();
+                  return !_locallyDeletedIds.contains(reqId) && !_locallyDeletedIds.contains(uId);
+                }).toList();
 
-            return Container(
-              padding: const EdgeInsets.all(20),
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.75,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                // Fallback: If stream returned empty, check displayUsers for any accounts marked deletion_pending or deactivated
+                if (requests.isEmpty && displayUsers != null && displayUsers.isNotEmpty) {
+                  for (final u in displayUsers) {
+                    if (!_locallyDeletedIds.contains(u.id) &&
+                        (u.isDeactivated || u.status == 'DELETION_PENDING' || u.deletionRequest != null)) {
+                      requests.add({
+                        "requestId": u.id,
+                        "userId": u.id,
+                        "userName": u.name,
+                        "userEmail": u.email,
+                        "reason": u.deletionReason ?? "User requested account deletion",
+                        "feedback": "",
+                        "status": "pending",
+                        "createdAt": u.createdAt ?? DateTime.now(),
+                      });
+                    }
+                  }
+                }
+
+                if (requests.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFDCFCE7),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.check_circle_outline_rounded,
+                            color: Color(0xFF16A34A),
+                            size: 40,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        const Text(
+                          "No Pending Deletions! 🎉",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 17,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          "All individual user accounts are in good standing.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                        ),
+                        const SizedBox(height: 16),
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text("Close"),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return Container(
+                  padding: const EdgeInsets.all(20),
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.75,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Icon(Icons.warning_amber_rounded, color: Color(0xFFEF4444)),
-                          const SizedBox(width: 8),
-                          Text(
-                            "Deletion Requests (${requests.length})",
-                            style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF0F172A),
-                            ),
-                          ),
-                        ],
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close_rounded, color: Color(0xFF64748B)),
-                        onPressed: () => Navigator.pop(ctx),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: requests.length,
-                      itemBuilder: (context, index) {
-                        final item = requests[index];
-                        final requestId = (item["requestId"] ?? item["id"] ?? "").toString();
-                        final targetUserId = (item["userId"] ?? "").toString();
-                        final name = (item["userName"] ?? "User").toString();
-                        final email = (item["userEmail"] ?? "").toString();
-                        final reason = (item["reason"] ?? "No reason specified").toString();
-
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          Row(
                             children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      name,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 15,
-                                        color: Color(0xFF0F172A),
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFFEE2E2),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: const Text(
-                                      "Pending",
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFFEF4444),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              if (email.isNotEmpty) ...[
-                                const SizedBox(height: 2),
-                                Text(
-                                  email,
-                                  style: const TextStyle(
-                                    color: Color(0xFF64748B),
-                                    fontSize: 13,
-                                  ),
+                              const Icon(Icons.warning_amber_rounded, color: Color(0xFFEF4444)),
+                              const SizedBox(width: 8),
+                              Text(
+                                "Deletion Requests (${requests.length})",
+                                style: const TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF0F172A),
                                 ),
-                              ],
-                              const SizedBox(height: 8),
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFFFBEB),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: const Color(0xFFFDE68A)),
-                                ),
-                                child: Text(
-                                  "Reason: \"$reason\"",
-                                  style: const TextStyle(
-                                    color: Color(0xFFB45309),
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  TextButton(
-                                    onPressed: () async {
-                                      await IndividualDeleteService.rejectDeletion(
-                                        requestId: requestId,
-                                        targetUserId: targetUserId,
-                                      );
-                                      _loadData();
-                                      if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text("Deletion request for $name rejected"),
-                                            behavior: SnackBarBehavior.floating,
-                                            duration: const Duration(milliseconds: 1500),
-                                          ),
-                                        );
-                                      }
-                                    },
-                                    child: const Text(
-                                      "Reject",
-                                      style: TextStyle(
-                                        color: Color(0xFF64748B),
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFFEF4444),
-                                      foregroundColor: Colors.white,
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 14,
-                                        vertical: 8,
-                                      ),
-                                    ),
-                                    onPressed: () async {
-                                      try {
-                                        await MasterIndividualsService.confirmDeleteIndividual(
-                                          userId: targetUserId,
-                                        );
-                                      } catch (_) {}
-                                      await IndividualDeleteService.confirmDeleteUser(
-                                        requestId: requestId,
-                                        targetUserId: targetUserId,
-                                      );
-                                      _loadData();
-                                      if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text("User $name permanently deleted"),
-                                            backgroundColor: const Color(0xFFEF4444),
-                                            behavior: SnackBarBehavior.floating,
-                                            duration: const Duration(milliseconds: 1500),
-                                          ),
-                                        );
-                                      }
-                                    },
-                                    child: const Text(
-                                      "Permanently Delete",
-                                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                ],
                               ),
                             ],
                           ),
-                        );
-                      },
-                    ),
+                          IconButton(
+                            icon: const Icon(Icons.close_rounded, color: Color(0xFF64748B)),
+                            onPressed: () => Navigator.pop(ctx),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: requests.length,
+                          itemBuilder: (context, index) {
+                            final item = requests[index];
+                            final requestId = (item["requestId"] ?? item["id"] ?? "").toString();
+                            final targetUserId = (item["userId"] ?? "").toString();
+                            final name = (item["userName"] ?? "User").toString();
+                            final email = (item["userEmail"] ?? "").toString();
+                            final reason = (item["reason"] ?? "No reason specified").toString();
+
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          name,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15,
+                                            color: Color(0xFF0F172A),
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFEE2E2),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: const Text(
+                                          "Pending",
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFFEF4444),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (email.isNotEmpty) ...[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      email,
+                                      style: const TextStyle(
+                                        color: Color(0xFF64748B),
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFFFBEB),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: const Color(0xFFFDE68A)),
+                                    ),
+                                    child: Text(
+                                      "Reason: \"$reason\"",
+                                      style: const TextStyle(
+                                        color: Color(0xFFB45309),
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      TextButton(
+                                        onPressed: () async {
+                                          // ⚡ CRITICAL: Optimistically remove card immediately!
+                                          setModalState(() {
+                                            _locallyDeletedIds.add(requestId);
+                                            if (targetUserId.isNotEmpty) _locallyDeletedIds.add(targetUserId);
+                                            requests.removeWhere((r) =>
+                                              r['requestId'] == requestId || r['id'] == requestId || r['userId'] == targetUserId
+                                            );
+                                          });
+                                          setState(() {});
+
+                                          final messenger = ScaffoldMessenger.of(context);
+                                          IndividualDeleteService.rejectDeletion(
+                                            requestId: requestId,
+                                            targetUserId: targetUserId,
+                                          );
+                                          _loadData();
+
+                                          messenger.showSnackBar(
+                                            SnackBar(
+                                              content: Text("Deletion request for $name rejected"),
+                                              behavior: SnackBarBehavior.floating,
+                                              duration: const Duration(milliseconds: 1500),
+                                            ),
+                                          );
+                                        },
+                                        child: const Text(
+                                          "Reject",
+                                          style: TextStyle(
+                                            color: Color(0xFF64748B),
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFFEF4444),
+                                          foregroundColor: Colors.white,
+                                          elevation: 0,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 14,
+                                            vertical: 8,
+                                          ),
+                                        ),
+                                        onPressed: () async {
+                                          // ⚡ CRITICAL: Optimistically remove card immediately!
+                                          setModalState(() {
+                                            _locallyDeletedIds.add(requestId);
+                                            if (targetUserId.isNotEmpty) _locallyDeletedIds.add(targetUserId);
+                                            requests.removeWhere((r) =>
+                                              r['requestId'] == requestId || r['id'] == requestId || r['userId'] == targetUserId
+                                            );
+                                          });
+                                          setState(() {});
+
+                                          final messenger = ScaffoldMessenger.of(context);
+                                          try {
+                                            MasterIndividualsService.confirmDeleteIndividual(
+                                              userId: targetUserId.isNotEmpty ? targetUserId : requestId,
+                                            );
+                                          } catch (_) {}
+                                          IndividualDeleteService.confirmDeleteUser(
+                                            requestId: requestId,
+                                            targetUserId: targetUserId.isNotEmpty ? targetUserId : requestId,
+                                          );
+                                          _loadData();
+
+                                          messenger.showSnackBar(
+                                            SnackBar(
+                                              content: Text("User $name permanently deleted"),
+                                              backgroundColor: const Color(0xFFEF4444),
+                                              behavior: SnackBarBehavior.floating,
+                                              duration: const Duration(milliseconds: 1500),
+                                            ),
+                                          );
+                                        },
+                                        child: const Text(
+                                          "Permanently Delete",
+                                          style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
             );
           },
         );

@@ -8,10 +8,15 @@ class MasterAdminApprovalScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<int>(
-      stream: ApprovalsQueueStore.instance.streamPendingQueue().map((l) => l.length),
-      builder: (context, snapshot) {
-        final count = snapshot.data ?? ApprovalsQueueStore.instance.pendingCount;
+    return ListenableBuilder(
+      listenable: ApprovalsQueueStore.instance,
+      builder: (context, _) {
+        return StreamBuilder<int>(
+          stream: ApprovalsQueueStore.instance.streamPendingQueue().map((l) => l.length),
+          builder: (context, snapshot) {
+            final count = snapshot.hasData
+                ? snapshot.data!
+                : ApprovalsQueueStore.instance.pendingCount;
 
         return Stack(
           children: [
@@ -57,10 +62,12 @@ class MasterAdminApprovalScreen extends StatelessWidget {
               ),
             ),
           ],
-        );
-      },
-    );
-  }
+          );
+        },
+      );
+    },
+  );
+}
 }
 
 

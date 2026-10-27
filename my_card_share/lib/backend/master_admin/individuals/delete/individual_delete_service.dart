@@ -246,7 +246,9 @@ class IndividualDeleteService {
             body: jsonEncode({
               "action": "confirm_delete",
               "requestId": requestId,
-              "targetUserId": targetUserId,
+              "id": requestId,
+              "targetUserId": targetUserId.isNotEmpty ? targetUserId : requestId,
+              "userId": targetUserId.isNotEmpty ? targetUserId : requestId,
             }),
           ).timeout(const Duration(seconds: 4));
           if (res.statusCode == 200) break;
@@ -304,7 +306,9 @@ class IndividualDeleteService {
             body: jsonEncode({
               "action": "reject_deletion",
               "requestId": requestId,
-              "targetUserId": targetUserId,
+              "id": requestId,
+              "targetUserId": targetUserId.isNotEmpty ? targetUserId : requestId,
+              "userId": targetUserId.isNotEmpty ? targetUserId : requestId,
               "rejectReason": reason ?? "Declined by admin",
             }),
           ).timeout(const Duration(seconds: 4));

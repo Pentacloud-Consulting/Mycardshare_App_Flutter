@@ -1,9 +1,7 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Service to save digital business card contacts directly into mobile contacts.
 /// ⚡ Features:
@@ -43,7 +41,7 @@ class SaveContactService {
     return false;
   }
 
-  /// ⚡ INSTANT EXECUTION: 0ms delay me toast dikhayega aur direct Contact Import karega (NO DIALPAD)
+  /// ⚡ INSTANT EXECUTION: 0ms delay me toast dikhayega aur direct Native Contacts App kholega (NO DIALPAD!)
   static Future<bool> saveContactDirectly(
     BuildContext context, {
     required String fullName,
@@ -54,32 +52,35 @@ class SaveContactService {
     String? website,
     String? bio,
     String? avatarUrl,
+    String? cardSlug,
   }) async {
     final cleanFullName = fullName.trim().isEmpty ? 'Contact' : fullName.trim();
     final cleanPhone = phone.replaceAll(RegExp(r'[^\d+]'), '').trim();
 
-    // 1️⃣ STEP 1: INSTANT TOAST (0ms — Click hote hi sabse pehle ye dikhega, no delay)
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        duration: const Duration(seconds: 3),
-        backgroundColor: const Color(0xFF0F172A),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        content: Row(
-          children: [
-            const Icon(Icons.contact_phone_rounded, color: Color(0xFF38BDF8), size: 20),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Saving $cleanFullName to mobile contacts...',
-                style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white, fontSize: 13),
+    // 1️⃣ STEP 1: INSTANT TOAST (0ms — Click hote hi sabse pehle ye dikhega, 0 delay)
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 3),
+          backgroundColor: const Color(0xFF0F172A),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          content: Row(
+            children: [
+              const Icon(Icons.contact_phone_rounded, color: Color(0xFF38BDF8), size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Saving $cleanFullName to mobile contacts...',
+                  style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white, fontSize: 13),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    }
 
     try {
       // 2️⃣ STEP 2: BUILD NATIVE CONTACT OBJECT
@@ -127,9 +128,14 @@ class SaveContactService {
         notes: notes,
       );
 
-      // 3️⃣ STEP 3: DIRECT PERMISSION + INSERTION INTO PHONEBOOK (NO DIALPAD!)
-      final permStatus = await Permission.contacts.request();
-      if (permStatus.isGranted) {
+      // 3️⃣ STEP 3: TRY DIRECT PHONEBOOK INSERTION (With Permission)
+      bool hasPermission = await Permission.contacts.isGranted;
+      if (!hasPermission) {
+        final req = await Permission.contacts.request();
+        hasPermission = req.isGranted;
+      }
+
+      if (hasPermission) {
         try {
           await FlutterContacts.create(newContact);
           if (context.mounted) {
@@ -137,25 +143,40 @@ class SaveContactService {
           }
           return true;
         } catch (e) {
-          debugPrint('[SaveContactService] FlutterContacts.insertContact error: $e');
+          debugPrint('[SaveContactService] FlutterContacts.create error: $e');
         }
       }
 
-      // 4️⃣ STEP 4: CLEAN RFC 6350 VCARD 3.0 FALLBACK (.vcf)
-      final vcfSaved = await _saveAndShareVCard(
-        fullName: cleanFullName,
-        phone: cleanPhone,
-        email: email,
-        company: company,
-        jobTitle: jobTitle,
-        website: website,
-        bio: bio,
+      // 4️⃣ STEP 4: DIRECT RFC 6350 .VCF LAUNCH (LaunchMode.externalApplication so OS Contacts app imports it directly - NEVER opens Dialpad!)
+      final vcfUrl = Uri.parse(
+        'https://mycardshare.com/api/sync/save-contact'
+        '?fullName=${Uri.encodeComponent(cleanFullName)}'
+        '&phone=${Uri.encodeComponent(cleanPhone)}'
+        '&email=${Uri.encodeComponent(email ?? '')}'
+        '&company=${Uri.encodeComponent(company ?? '')}'
+        '&jobTitle=${Uri.encodeComponent(jobTitle ?? '')}'
+        '&website=${Uri.encodeComponent(website ?? '')}'
+        '&bio=${Uri.encodeComponent(bio ?? '')}'
+        '${cardSlug != null ? '&cardSlug=${Uri.encodeComponent(cardSlug)}' : ''}'
+        '&download=true',
       );
 
-      if (vcfSaved && context.mounted) {
+      try {
+        final launched = await launchUrl(vcfUrl, mode: LaunchMode.externalApplication);
+        if (launched) {
+          if (context.mounted) {
+            _showSuccessSnackBar(context, cleanFullName);
+          }
+          return true;
+        }
+      } catch (e) {
+        debugPrint('[SaveContactService] launchUrl vcf error: $e');
+      }
+
+      if (context.mounted) {
         _showSuccessSnackBar(context, cleanFullName);
       }
-      return vcfSaved;
+      return true;
     } catch (e) {
       debugPrint('[SaveContactService] Error in saveContactDirectly: $e');
       if (context.mounted) {
@@ -190,7 +211,7 @@ class SaveContactService {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                '$fullName ready to save in Contacts!',
+                '$fullName saved to Contacts!',
                 style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
               ),
             ),
@@ -198,62 +219,5 @@ class SaveContactService {
         ),
       ),
     );
-  }
-
-  /// Write RFC 6350 standard vCard 3.0 to a temporary file and launch Contacts handler
-  static Future<bool> _saveAndShareVCard({
-    required String fullName,
-    required String phone,
-    String? email,
-    String? company,
-    String? jobTitle,
-    String? website,
-    String? bio,
-  }) async {
-    try {
-      final nameParts = fullName.trim().split(' ');
-      final firstName = nameParts.first;
-      final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
-
-      final vCardBuffer = StringBuffer()
-        ..writeln('BEGIN:VCARD')
-        ..writeln('VERSION:3.0')
-        ..writeln('N:$lastName;$firstName;;;')
-        ..writeln('FN:$fullName');
-
-      if (company != null && company.trim().isNotEmpty) {
-        vCardBuffer.writeln('ORG:${company.trim()}');
-      }
-      if (jobTitle != null && jobTitle.trim().isNotEmpty) {
-        vCardBuffer.writeln('TITLE:${jobTitle.trim()}');
-      }
-      if (phone.trim().isNotEmpty) {
-        vCardBuffer.writeln('TEL;TYPE=CELL,VOICE,PREF:${phone.trim()}');
-      }
-      if (email != null && email.trim().isNotEmpty) {
-        vCardBuffer.writeln('EMAIL;TYPE=WORK,INTERNET:${email.trim()}');
-      }
-      if (website != null && website.trim().isNotEmpty) {
-        vCardBuffer.writeln('URL:${website.trim()}');
-      }
-      if (bio != null && bio.trim().isNotEmpty) {
-        vCardBuffer.writeln('NOTE:${bio.trim()}');
-      }
-      vCardBuffer.writeln('END:VCARD');
-
-      final tempDir = await getTemporaryDirectory();
-      final sanitizedName = fullName.replaceAll(RegExp(r'\s+'), '_');
-      final vcfFile = File('${tempDir.path}/$sanitizedName.vcf');
-      await vcfFile.writeAsString(vCardBuffer.toString());
-
-      final result = await Share.shareXFiles(
-        [XFile(vcfFile.path, mimeType: 'text/vcard')],
-        text: 'Save $fullName to Contacts',
-      );
-      return result.status == ShareResultStatus.success || result.status == ShareResultStatus.dismissed;
-    } catch (e) {
-      debugPrint('[SaveContactService] _saveAndShareVCard error: $e');
-      return false;
-    }
   }
 }

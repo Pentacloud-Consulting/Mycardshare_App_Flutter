@@ -9,6 +9,7 @@ class TeammateModel {
   final String avatarText;
   final Color avatarBg;
   final String slug;
+  final String? avatarUrl;
 
   const TeammateModel({
     required this.id,
@@ -19,6 +20,7 @@ class TeammateModel {
     required this.avatarText,
     required this.avatarBg,
     required this.slug,
+    this.avatarUrl,
   });
 }
 
@@ -169,16 +171,32 @@ class WorkforceTeammatesListSection extends StatelessWidget {
                             width: 1,
                           ),
                         ),
-                        child: Center(
-                          child: Text(
-                            member.avatarText,
-                            style: TextStyle(
-                              fontSize: 14.5,
-                              fontWeight: FontWeight.w900,
-                              color: member.avatarBg,
-                            ),
-                          ),
-                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: (member.avatarUrl != null && member.avatarUrl!.trim().isNotEmpty)
+                            ? Image.network(
+                                member.avatarUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Center(
+                                  child: Text(
+                                    member.avatarText,
+                                    style: TextStyle(
+                                      fontSize: 14.5,
+                                      fontWeight: FontWeight.w900,
+                                      color: member.avatarBg,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : Center(
+                                child: Text(
+                                  member.avatarText,
+                                  style: TextStyle(
+                                    fontSize: 14.5,
+                                    fontWeight: FontWeight.w900,
+                                    color: member.avatarBg,
+                                  ),
+                                ),
+                              ),
                       ),
                       const SizedBox(width: 12),
 

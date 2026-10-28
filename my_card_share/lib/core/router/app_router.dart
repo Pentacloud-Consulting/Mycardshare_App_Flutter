@@ -97,11 +97,17 @@ class RouterNotifier extends ChangeNotifier {
 
     final authState = _ref.read(authProvider);
     final loggedIn = authState.isLoggedIn;
-    final role = authState.role; // individual, enterprise, employee, master-admin
+    final cleanRole = authState.role.toLowerCase().replaceAll('_', '-'); // individual, enterprise, employee, master-admin
+
+    // When splash animation has completed, automatically redirect root / splash to the logged-in dashboard
+    if (path == '/splash' || path == '/') {
+      if (!loggedIn) return '/onboarding';
+      if (cleanRole == 'master-admin') return '/master-admin/dashboard';
+      if (cleanRole == 'enterprise') return '/enterprise/dashboard';
+      return '/portal'; // employee or individual
+    }
 
     final publicPaths = [
-      '/',
-      '/splash',
       '/about',
       '/features',
       '/pricing',
@@ -124,7 +130,7 @@ class RouterNotifier extends ChangeNotifier {
       '/master-admin/login'
     ];
 
-    final isPublicCard = path.startsWith('/card/');
+    final isPublicCard = path.startsWith('/card/') || path.startsWith('/profile/');
 
     // If logged in, redirect away from auth paths (except enterprise onboarding, individual form & registration pending)
     if (loggedIn && authPaths.contains(path)) {
@@ -132,17 +138,16 @@ class RouterNotifier extends ChangeNotifier {
         return null; // allow viewing pending screen
       }
       // Only allow enterprise onboarding for enterprise users who haven't finished it yet.
-      // (The screen itself handles the completed case; the router just guards role mismatches.)
-      if (path == '/enterprise-onboarding' && (role == 'enterprise' || role == 'employee')) {
+      if (path == '/enterprise-onboarding' && (cleanRole == 'enterprise' || cleanRole == 'employee')) {
         return null;
       }
-      if (path == '/individual/form' && role == 'individual') {
+      if (path == '/individual/form' && cleanRole == 'individual') {
         return null; // allow individual onboarding form
       }
-      if (role == 'master-admin') {
+      if (cleanRole == 'master-admin') {
         return '/master-admin/dashboard';
       }
-      if (role == 'enterprise') {
+      if (cleanRole == 'enterprise') {
         return '/enterprise/dashboard';
       }
       return '/portal'; // employee or individual
@@ -154,13 +159,13 @@ class RouterNotifier extends ChangeNotifier {
 
     if (!loggedIn) return '/onboarding'; // unauthenticated users should see onboarding first
 
-    if (path.startsWith('/master-admin') && role != 'master-admin') {
+    if (path.startsWith('/master-admin') && cleanRole != 'master-admin') {
       return '/portal';
     }
-    if (path.startsWith('/enterprise') && role != 'enterprise' && role != 'employee') {
+    if (path.startsWith('/enterprise') && cleanRole != 'enterprise' && cleanRole != 'employee') {
       return '/portal';
     }
-    if (path.startsWith('/portal') && role == 'master-admin') {
+    if (path.startsWith('/portal') && cleanRole == 'master-admin') {
       return '/master-admin/dashboard';
     }
 
@@ -244,6 +249,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       // Public Card
       GoRoute(
         path: '/card/:slug',
+        builder: (c, s) => PublicCardScreen(slug: s.pathParameters['slug']),
+      ),
+      GoRoute(
+        path: '/profile/:slug',
         builder: (c, s) => PublicCardScreen(slug: s.pathParameters['slug']),
       ),
 

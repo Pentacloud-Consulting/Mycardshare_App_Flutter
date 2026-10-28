@@ -9,11 +9,13 @@ import 'apple_wallet.dart';
 class SelectWalletModal extends StatelessWidget {
   final IndividualProfileData? profile;
   final PublicProfileData? publicProfile;
+  final BuildContext? parentContext;
 
   const SelectWalletModal({
     super.key,
     this.profile,
     this.publicProfile,
+    this.parentContext,
   });
 
   /// Displays interactive wallet selection modal popup
@@ -29,6 +31,7 @@ class SelectWalletModal extends StatelessWidget {
       builder: (ctx) => SelectWalletModal(
         profile: profile,
         publicProfile: publicProfile,
+        parentContext: context,
       ),
     );
   }
@@ -119,12 +122,16 @@ class SelectWalletModal extends StatelessWidget {
             badgeText: 'RECOMMENDED',
             badgeColor: const Color(0xFF4285F4),
             onTap: () async {
+              final activeCtx = (parentContext != null && parentContext!.mounted) ? parentContext! : context;
               Navigator.of(context).pop();
-              await GoogleWalletService.instance.saveToGoogleWallet(
-                context,
-                profile: profile,
-                publicProfile: publicProfile,
-              );
+              await Future.delayed(const Duration(milliseconds: 150));
+              if (activeCtx.mounted) {
+                await GoogleWalletService.instance.saveToGoogleWallet(
+                  activeCtx,
+                  profile: profile,
+                  publicProfile: publicProfile,
+                );
+              }
             },
           ),
 
@@ -139,12 +146,16 @@ class SelectWalletModal extends StatelessWidget {
             badgeText: 'POPULAR',
             badgeColor: const Color(0xFF1428A0),
             onTap: () async {
+              final activeCtx = (parentContext != null && parentContext!.mounted) ? parentContext! : context;
               Navigator.of(context).pop();
-              await SamsungWalletService.instance.saveToSamsungWallet(
-                context,
-                profile: profile,
-                publicProfile: publicProfile,
-              );
+              await Future.delayed(const Duration(milliseconds: 150));
+              if (activeCtx.mounted) {
+                await SamsungWalletService.instance.saveToSamsungWallet(
+                  activeCtx,
+                  profile: profile,
+                  publicProfile: publicProfile,
+                );
+              }
             },
           ),
 

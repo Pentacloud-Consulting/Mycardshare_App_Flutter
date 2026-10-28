@@ -10,11 +10,11 @@ class CompanyDetailHeader extends StatelessWidget {
 
   const CompanyDetailHeader({
     super.key,
-    this.companyName = "Acme Realty Group",
+    this.companyName = "Enterprise",
     this.planName = "Enterprise Pro",
     this.statusText = "Active",
-    this.sinceText = "Since Jan 2026",
-    this.logoInitials = "AR",
+    this.sinceText = "Active Member",
+    this.logoInitials = "EP",
     this.logoUrl,
   });
 
@@ -124,21 +124,37 @@ class CompanyDetailHeader extends StatelessWidget {
                     ),
 
                     // Status Pill
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFECFDF5),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFA7F3D0)),
-                      ),
-                      child: Text(
-                        statusText,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF10B981),
-                        ),
-                      ),
+                    Builder(
+                      builder: (context) {
+                        final isPending = statusText.toLowerCase() == 'pending';
+                        final isSuspended = statusText.toLowerCase() == 'suspended';
+                        final bgColor = isSuspended
+                            ? const Color(0xFFFEF2F2)
+                            : (isPending ? const Color(0xFFFFFBEB) : const Color(0xFFECFDF5));
+                        final borderColor = isSuspended
+                            ? const Color(0xFFFECACA)
+                            : (isPending ? const Color(0xFFFDE68A) : const Color(0xFFA7F3D0));
+                        final textColor = isSuspended
+                            ? const Color(0xFFEF4444)
+                            : (isPending ? const Color(0xFFD97706) : const Color(0xFF10B981));
+
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: bgColor,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: borderColor),
+                          ),
+                          child: Text(
+                            statusText,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: textColor,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),

@@ -1,7 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../auth/back/smart_back_handler.dart';
 import '../../../auth/font style/font_style.dart';
+import '../../../../backend/employee_join/home/employee_home_backend.dart';
 import 'approvals/approvals_stat_chips_section.dart';
 import 'approvals/approvals_list_section.dart';
 import 'approvals/approvals_new_request_button.dart';
@@ -14,34 +17,99 @@ class EmployeeApprovalsScreen extends StatefulWidget {
 }
 
 class _EmployeeApprovalsScreenState extends State<EmployeeApprovalsScreen> {
-  final List<ApprovalRequestItem> _requests = [
-    const ApprovalRequestItem(
-      id: 'req-1',
-      type: 'Job Title Change',
-      submittedTime: '2 days ago',
-      fromValue: 'Sales Associate',
-      toValue: 'Senior Sales Associate',
+  List<ApprovalRequestItem> _requests = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadApprovals();
+  }
+
+  Future<void> _loadApprovals() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('approval_requests')
+          .get();
+
+      if (mounted) {
+        setState(() {
+          _requests = snap.docs.map((d) {
+            final data = d.data();
+            return ApprovalRequestItem(
+              id: d.id,
+              type: data['type'] as String? ?? 'Change Request',
+              submittedTime: data['submittedTime'] as String? ?? 'Recently',
+              fromValue: data['fromValue'] as String? ?? '-',
+              toValue: data['toValue'] as String? ?? '-',
+              status: data['status'] as String? ?? 'Pending',
+              adminNote: data['adminNote'] as String?,
+            );
+          }).toList();
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _submitRequest(String type, String fromVal, String toVal) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final entUid = EmployeeHomeBackendService.instance.enterpriseUid;
+    final newReq = ApprovalRequestItem(
+      id: 'req-${DateTime.now().millisecondsSinceEpoch}',
+      type: type,
+      submittedTime: 'Just now',
+      fromValue: fromVal.isNotEmpty ? fromVal : 'Current Field Value',
+      toValue: toVal,
       status: 'Pending',
-    ),
-    const ApprovalRequestItem(
-      id: 'req-2',
-      type: 'Corporate Voucher Claim',
-      submittedTime: '5 days ago',
-      fromValue: 'Standard Free Member',
-      toValue: 'Enterprise Pro (PROMO2026)',
-      status: 'Approved',
-      adminNote: 'Approved by Priya Sharma (VP Operations)',
-    ),
-    const ApprovalRequestItem(
-      id: 'req-3',
-      type: 'Custom Theme Color',
-      submittedTime: '1 week ago',
-      fromValue: 'Navy #0F172A',
-      toValue: 'Crimson #DC2626',
-      status: 'Rejected',
-      adminNote: 'Conflicts with Acme Realty corporate brand guide',
-    ),
-  ];
+    );
+
+    setState(() {
+      _requests.insert(0, newReq);
+    });
+
+    if (uid != null) {
+      final reqMap = {
+        'id': newReq.id,
+        'userId': uid,
+        'enterpriseUid': entUid,
+        'type': type,
+        'fromValue': newReq.fromValue,
+        'toValue': toVal,
+        'status': 'Pending',
+        'submittedTime': 'Just now',
+        'createdAt': FieldValue.serverTimestamp(),
+      };
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('approval_requests')
+            .doc(newReq.id)
+            .set(reqMap);
+
+        if (entUid != null && entUid.isNotEmpty) {
+          await FirebaseFirestore.instance
+              .collection('enterprises')
+              .doc(entUid)
+              .collection('approvals')
+              .doc(newReq.id)
+              .set(reqMap);
+        }
+      } catch (e) {
+        debugPrint('[EmployeeApprovals] Error saving request: $e');
+      }
+    }
+  }
 
   void _showNewRequestDialog() {
     final typeController = TextEditingController(text: "Job Title Change");
@@ -128,21 +196,11 @@ class _EmployeeApprovalsScreenState extends State<EmployeeApprovalsScreen> {
                 onTap: () {
                   if (typeController.text.trim().isNotEmpty &&
                       toController.text.trim().isNotEmpty) {
-                    setState(() {
-                      _requests.insert(
-                        0,
-                        ApprovalRequestItem(
-                          id: 'req-${DateTime.now().millisecondsSinceEpoch}',
-                          type: typeController.text.trim(),
-                          submittedTime: 'Just now',
-                          fromValue: fromController.text.trim().isNotEmpty
-                              ? fromController.text.trim()
-                              : 'Current Field Value',
-                          toValue: toController.text.trim(),
-                          status: 'Pending',
-                        ),
-                      );
-                    });
+                    _submitRequest(
+                      typeController.text.trim(),
+                      fromController.text.trim(),
+                      toController.text.trim(),
+                    );
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(

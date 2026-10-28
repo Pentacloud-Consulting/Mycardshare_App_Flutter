@@ -8,10 +8,10 @@ class CompanyProfileCardSection extends StatelessWidget {
 
   const CompanyProfileCardSection({
     super.key,
-    this.companyName = "Acme Realty Group",
-    this.logoInitials = "AR",
+    this.companyName = "Enterprise Workspace",
+    this.logoInitials = "EW",
     this.planTag = "Enterprise Pro",
-    this.employeeCount = "34 employees",
+    this.employeeCount = "Verified Enterprise",
   });
 
   @override

@@ -20,11 +20,11 @@ class EmployeeCompaniesScreen extends StatelessWidget {
         final companyName = (empBackend.companyName.isNotEmpty &&
                 empBackend.companyName != "Enterprise Workspace")
             ? empBackend.companyName
-            : "Acme Realty Group";
+            : (empBackend.companyName.isNotEmpty ? empBackend.companyName : "Enterprise Workspace");
         final role = empBackend.role.isNotEmpty ? empBackend.role : "Employee";
         final initials = companyName.isNotEmpty
             ? companyName.trim().split(' ').map((w) => w.isNotEmpty ? w[0] : '').take(2).join().toUpperCase()
-            : "AR";
+            : "EW";
 
         return SmartPopScope(
           onBack: () {
@@ -96,8 +96,8 @@ class EmployeeCompaniesScreen extends StatelessWidget {
                     CompanyLinksCardSection(
                       onVisitWebsite: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Opening acmerealty.com..."),
+                          SnackBar(
+                            content: Text("Visiting $companyName portal..."),
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
@@ -105,7 +105,7 @@ class EmployeeCompaniesScreen extends StatelessWidget {
                       onContactAdmin: () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text("Contacting admin: Priya Sharma (priya@acmerealty.com)"),
+                            content: Text("Contacting Enterprise Administrator..."),
                             behavior: SnackBarBehavior.floating,
                           ),
                         );

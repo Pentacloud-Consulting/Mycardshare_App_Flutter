@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
+import '../../contact/save_contact_service.dart';
 import '../../employee_join/home/employee_home_backend.dart';
 import '../multiple_store/individual_multi_store.dart';
 import '../profile/individual_profile_store.dart';
@@ -219,9 +221,9 @@ class WalletService {
   // ─────────────────────────────────────────────────────────────
   // 1. ADD TO GOOGLE WALLET
   // ─────────────────────────────────────────────────────────────
-  /// Returns the saveUrl that was successfully launched.
-  /// Throws [WalletException] if all attempts fail.
+  /// Returns the saveUrl that was successfully launched into Google Wallet App.
   static Future<String> addToGoogleWallet({
+    BuildContext? context,
     Map<String, dynamic>? cardData,
     IndividualProfileData? profile,
     PublicProfileData? publicProfile,
@@ -233,117 +235,76 @@ class WalletService {
       publicProfile: publicProfile,
     );
     final slug = data['cardSlug'] as String;
-    final publicCardUrl = data['publicCardUrl'] as String;
+    final publicCardUrl = 'https://digitalbusinesscloudcard.com/card/$slug';
+    data['publicCardUrl'] = publicCardUrl;
 
-    final preparedPayload = {
-      'walletType': 'google',
-      'cardData': {
-        'userId': data['userId'],
-        'cardSlug': slug,
-        'fullName': data['fullName'],
-        'jobTitle': data['jobTitle'],
-        'companyName': data['companyName'],
-        'workEmail': data['workEmail'],
-        'workPhone': data['workPhone'],
-        'website': data['website'],
-        'themeColor': data['themeColor'] ?? '#0A84FF',
-        'avatarUrl': data['avatarUrl'],
-        'bannerUrl': data['bannerUrl'],
-        'publicCardUrl': publicCardUrl,
-      },
+    final cardPayload = {
+      'userId': data['userId'],
+      'cardSlug': slug,
+      'slug': slug,
+      'fullName': data['fullName'] ?? 'Card Member',
+      'name': data['fullName'] ?? 'Card Member',
+      'jobTitle': data['jobTitle'] ?? '',
+      'title': data['jobTitle'] ?? '',
+      'companyName': data['companyName'] ?? '',
+      'company': data['companyName'] ?? '',
+      'workEmail': data['workEmail'] ?? '',
+      'email': data['workEmail'] ?? '',
+      'workPhone': data['workPhone'] ?? '',
+      'phone': data['workPhone'] ?? '',
+      'website': data['website'] ?? '',
+      'themeColor': data['themeColor'] ?? '#0A84FF',
+      'avatarUrl': data['avatarUrl'] ?? '',
+      'bannerUrl': data['bannerUrl'] ?? '',
+      'bio': data['bio'] ?? '',
+      'publicCardUrl': publicCardUrl,
     };
 
-    final vcfUrl = 'https://digitalbusinesscloudcard.com/api/sync/save-contact?fullName=${Uri.encodeComponent(data['fullName'])}&phone=${Uri.encodeComponent(data['workPhone'])}&email=${Uri.encodeComponent(data['workEmail'])}&company=${Uri.encodeComponent(data['companyName'])}&jobTitle=${Uri.encodeComponent(data['jobTitle'])}&website=${Uri.encodeComponent(data['website'])}&avatarUrl=${Uri.encodeComponent(data['avatarUrl'] ?? '')}&cardSlug=$slug&download=true';
+    String? saveUrl;
 
-    // ── Step 1: POST /api/sync/wallet across supported hosts ───
-    for (final host in ['https://digitalbusinesscloudcard.com', baseUrl]) {
-      try {
-        debugPrint('🎟️ [WalletService] Calling POST $host/api/sync/wallet (google) ...');
-        final syncResponse = await http.post(
-          Uri.parse('$host/api/sync/wallet'),
-          headers: headers,
-          body: jsonEncode(preparedPayload),
-        ).timeout(const Duration(seconds: 6));
-
-        debugPrint('🎟️ [Google Wallet API Response ($host)]: ${syncResponse.statusCode} - ${syncResponse.body}');
-
-        if (syncResponse.statusCode == 200) {
-          final resJson = jsonDecode(syncResponse.body) as Map<String, dynamic>;
-          final saveUrl = _extractString(resJson, [
-            'data.saveUrl', 'saveUrl', 'data.url', 'url',
-            'data.addToWalletUrl', 'addToWalletUrl', 'data.walletUrl', 'walletUrl',
-          ]);
-          if (saveUrl != null && saveUrl.isNotEmpty && !saveUrl.contains('/save/#')) {
-            debugPrint('🎟️ [WalletService] Got Google Wallet saveUrl: $saveUrl');
-            final launched = await _launchExternalUrl(saveUrl);
-            if (launched) return saveUrl;
-          }
-        }
-      } catch (e) {
-        debugPrint('❌ [Google Wallet Sync Error ($host)]: $e');
-      }
-
-      // ── Step 2: Fallback POST $host/api/wallet/google ─────────
-      try {
-        debugPrint('🎟️ [WalletService] Calling POST $host/api/wallet/google ...');
-        final response = await http.post(
-          Uri.parse('$host/api/wallet/google'),
-          headers: headers,
-          body: jsonEncode(data),
-        ).timeout(const Duration(seconds: 6));
-
-        debugPrint('🎟️ [Google Wallet API Response ($host)]: ${response.statusCode} - ${response.body}');
-
-        if (response.statusCode == 200) {
-          final resJson = jsonDecode(response.body) as Map<String, dynamic>;
-          final saveUrl = _extractString(resJson, [
-            'data.saveUrl', 'saveUrl', 'data.url', 'url',
-            'data.addToWalletUrl', 'addToWalletUrl', 'data.walletUrl', 'walletUrl',
-          ]);
-          if (saveUrl != null && saveUrl.isNotEmpty && !saveUrl.contains('/save/#')) {
-            final launched = await _launchExternalUrl(saveUrl);
-            if (launched) return saveUrl;
-          }
-        }
-      } catch (e) {
-        debugPrint('❌ [Google Wallet Host Error ($host)]: $e');
-      }
-    }
-
-    // ── Step 3: Native Google Account & Phonebook Contact Pass (.vcf) ──
-    // On Android, launching a .vcf with externalApplication triggers the system Contacts app,
-    // which prompts "Save to Google Account" - adding the full card, photo, and link directly!
+    // ── 1. Backend se Google Wallet save link lo ──
     try {
-      debugPrint('🎟️ [WalletService] Launching direct Google Account / Phonebook pass: $vcfUrl');
-      final launchedVcf = await _launchExternalUrl(vcfUrl);
-      if (launchedVcf) return vcfUrl;
+      debugPrint('🎟️ [WalletService] Requesting Google Wallet saveUrl from backend...');
+      final response = await http.post(
+        Uri.parse('https://digitalbusinesscloudcard.com/api/wallet/google'),
+        headers: headers,
+        body: jsonEncode(cardPayload),
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final resJson = jsonDecode(response.body) as Map<String, dynamic>;
+        saveUrl = _extractString(resJson, [
+          'data.saveUrl', 'saveUrl', 'data.url', 'url',
+          'data.addToWalletUrl', 'addToWalletUrl', 'data.walletUrl', 'walletUrl',
+        ]);
+        debugPrint('🎟️ [WalletService] Backend returned Google Wallet saveUrl: $saveUrl');
+      }
     } catch (e) {
-      debugPrint('[WalletService] vcf launch error: $e');
+      debugPrint('ℹ️ [WalletService] Google Wallet backend call note: $e');
     }
 
-    // ── Step 4: Direct Web Wallet Pass ────────────────────────────────
-    try {
-      final webWalletUrl = 'https://digitalbusinesscloudcard.com/card/$slug';
-      if (await _launchExternalUrl(webWalletUrl)) {
-        return webWalletUrl;
-      }
-    } catch (_) {}
+    // ── 2. Fallback: If backend is offline or slow, generate Google Wallet Pass link directly ──
+    if (saveUrl == null || saveUrl.isEmpty || saveUrl.contains('/save/#')) {
+      saveUrl = generateGoogleWalletSaveUrl(cardPayload);
+      debugPrint('🎟️ [WalletService] Generated offline Google Wallet pass link: $saveUrl');
+    }
 
-    // ── Step 5: Open Google Wallet app directly ───────────────────────
-    try {
-      if (await _launchExternalUrl('https://wallet.google.com/')) {
-        return 'https://wallet.google.com/';
-      }
-    } catch (_) {}
+    // ── 3. Exact Web ki tarah system intent me open karo (LaunchMode.externalApplication) ──
+    // ⚡ Android OS intercepts https://pay.google.com/gp/v/save/ and opens native Google Wallet app popup!
+    final launched = await _launchExternalUrl(saveUrl);
+    if (!launched) {
+      await launchUrl(Uri.parse(saveUrl), mode: LaunchMode.externalApplication);
+    }
 
-    return vcfUrl;
+    return saveUrl;
   }
 
   // ─────────────────────────────────────────────────────────────
   // 2. ADD TO SAMSUNG WALLET
   // ─────────────────────────────────────────────────────────────
-  /// Returns the addToWalletUrl that was successfully launched.
+  /// Returns the addToWalletUrl that was successfully launched into Samsung Wallet App.
   static Future<String> addToSamsungWallet({
+    BuildContext? context,
     Map<String, dynamic>? cardData,
     IndividualProfileData? profile,
     PublicProfileData? publicProfile,
@@ -355,141 +316,91 @@ class WalletService {
       publicProfile: publicProfile,
     );
     final slug = data['cardSlug'] as String;
-    final publicCardUrl = data['publicCardUrl'] as String;
+    final publicCardUrl = 'https://digitalbusinesscloudcard.com/card/$slug';
+    data['publicCardUrl'] = publicCardUrl;
     final refId = 'ref-${data['userId']}-${DateTime.now().millisecondsSinceEpoch}';
 
-    final preparedPayload = {
-      'walletType': 'samsung',
-      'cardData': {
-        'userId': data['userId'],
-        'cardSlug': slug,
-        'fullName': data['fullName'],
-        'jobTitle': data['jobTitle'],
-        'companyName': data['companyName'],
-        'workEmail': data['workEmail'],
-        'workPhone': data['workPhone'],
-        'website': data['website'],
-        'themeColor': data['themeColor'] ?? '#1428A0',
-        'avatarUrl': data['avatarUrl'],
-        'bannerUrl': data['bannerUrl'],
-        'publicCardUrl': publicCardUrl,
-      },
+    final cardPayload = {
+      'uid': data['userId'],
+      'userId': data['userId'],
+      'cardSlug': slug,
+      'slug': slug,
+      'fullName': data['fullName'] ?? 'Card Member',
+      'name': data['fullName'] ?? 'Card Member',
+      'jobTitle': data['jobTitle'] ?? '',
+      'title': data['jobTitle'] ?? '',
+      'companyName': data['companyName'] ?? '',
+      'company': data['companyName'] ?? '',
+      'workEmail': data['workEmail'] ?? '',
+      'email': data['workEmail'] ?? '',
+      'workPhone': data['workPhone'] ?? '',
+      'phone': data['workPhone'] ?? '',
+      'website': data['website'] ?? '',
+      'address': data['location'] ?? '',
+      'city': '',
+      'country': '',
+      'tagline': data['bio'] ?? '',
+      'avatarUrl': data['avatarUrl'] ?? '',
+      'bannerUrl': data['bannerUrl'] ?? '',
+      'socialLinks': data['socialLinks'] ?? [],
+      'themeColor': data['themeColor'] ?? '#1428A0',
+      'publicCardUrl': publicCardUrl,
     };
 
-    final vcfUrl = 'https://digitalbusinesscloudcard.com/api/sync/save-contact?fullName=${Uri.encodeComponent(data['fullName'])}&phone=${Uri.encodeComponent(data['workPhone'])}&email=${Uri.encodeComponent(data['workEmail'])}&company=${Uri.encodeComponent(data['companyName'])}&jobTitle=${Uri.encodeComponent(data['jobTitle'])}&website=${Uri.encodeComponent(data['website'])}&avatarUrl=${Uri.encodeComponent(data['avatarUrl'] ?? '')}&cardSlug=$slug&download=true';
+    String? addToWalletUrl;
 
-    // ── Step 1: POST /api/sync/wallet across supported hosts ───
-    for (final host in ['https://digitalbusinesscloudcard.com', baseUrl]) {
-      try {
-        debugPrint('🎟️ [WalletService] Calling POST $host/api/sync/wallet (samsung) ...');
-        final syncResponse = await http.post(
-          Uri.parse('$host/api/sync/wallet'),
-          headers: headers,
-          body: jsonEncode(preparedPayload),
-        ).timeout(const Duration(seconds: 6));
+    // ── 1. Backend se Samsung Wallet link lo ──
+    try {
+      debugPrint('🎟️ [WalletService] Requesting Samsung Wallet pass from backend...');
+      var response = await http.post(
+        Uri.parse('https://digitalbusinesscloudcard.com/api/wallet/samsung'),
+        headers: headers,
+        body: jsonEncode({
+          'refId': refId,
+          'formData': cardPayload,
+        }),
+      ).timeout(const Duration(seconds: 4));
 
-        debugPrint('🎟️ [Samsung Wallet API Response ($host)]: ${syncResponse.statusCode} - ${syncResponse.body}');
-
-        if (syncResponse.statusCode == 200) {
-          final resJson = jsonDecode(syncResponse.body) as Map<String, dynamic>;
-          final addToWalletUrl = _extractString(resJson, [
-            'data.addToWalletUrl', 'addToWalletUrl', 'data.saveUrl', 'saveUrl', 'data.url', 'url',
-            'data.walletUrl', 'walletUrl',
-          ]);
-          if (addToWalletUrl != null && addToWalletUrl.isNotEmpty && !addToWalletUrl.contains('/add/card-')) {
-            debugPrint('🎟️ [WalletService] Got Samsung addToWalletUrl via sync: $addToWalletUrl');
-            final launched = await _launchExternalUrl(addToWalletUrl);
-            if (launched) return addToWalletUrl;
-          }
-        }
-      } catch (e) {
-        debugPrint('❌ [Samsung Wallet Sync Error ($host)]: $e');
-      }
-
-      // ── Step 2: Fallback POST $host/api/wallet/samsung ────────
-      try {
-        debugPrint('🎟️ [WalletService] Calling POST $host/api/wallet/samsung ...');
-        final response = await http.post(
-          Uri.parse('$host/api/wallet/samsung'),
+      if (response.statusCode != 200) {
+        response = await http.post(
+          Uri.parse('https://digitalbusinesscloudcard.com/api/sync/wallet'),
           headers: headers,
           body: jsonEncode({
-            'refId': refId,
-            'formData': {
-              'uid': data['userId'],
-              'cardSlug': slug,
-              'fullName': data['fullName'],
-              'jobTitle': data['jobTitle'],
-              'companyName': data['companyName'],
-              'workEmail': data['workEmail'],
-              'workPhone': data['workPhone'],
-              'website': data['website'],
-              'address': data['location'],
-              'city': '',
-              'country': '',
-              'tagline': data['bio'],
-              'avatarUrl': data['avatarUrl'],
-              'bannerUrl': data['bannerUrl'],
-              'socialLinks': data['socialLinks'],
-              'companyLogo': null,
-              'themeColor': data['themeColor'] ?? '#1428A0',
-              'publicCardUrl': publicCardUrl,
-            },
+            'walletType': 'samsung',
+            'cardData': cardPayload,
           }),
-        ).timeout(const Duration(seconds: 6));
-
-        debugPrint('🎟️ [Samsung Wallet API Response ($host)]: ${response.statusCode} - ${response.body}');
-
-        if (response.statusCode == 200) {
-          final resJson = jsonDecode(response.body) as Map<String, dynamic>;
-          final addToWalletUrl = _extractString(resJson, [
-            'data.addToWalletUrl', 'addToWalletUrl', 'data.saveUrl', 'saveUrl', 'data.url', 'url',
-            'data.walletUrl', 'walletUrl',
-          ]);
-
-          if (addToWalletUrl != null && addToWalletUrl.isNotEmpty && !addToWalletUrl.contains('/add/card-')) {
-            debugPrint('🎟️ [WalletService] Got Samsung addToWalletUrl via fallback: $addToWalletUrl');
-            final launched = await _launchExternalUrl(addToWalletUrl);
-            if (launched) return addToWalletUrl;
-          }
-        }
-      } catch (e) {
-        debugPrint('❌ [Samsung Wallet Host Error ($host)]: $e');
+        ).timeout(const Duration(seconds: 4));
       }
-    }
 
-    // ── Step 3: Native Samsung Wallet custom URI scheme ───────────────
-    final samsungDeepLinks = [
-      'samsungwallet://wallet/add?url=${Uri.encodeComponent(publicCardUrl)}',
-      'samsungpay://wallet/add?url=${Uri.encodeComponent(publicCardUrl)}',
-    ];
-    for (final link in samsungDeepLinks) {
-      try {
-        if (await _launchExternalUrl(link)) {
-          return link;
-        }
-      } catch (_) {}
-    }
-
-    // ── Step 4: Native Samsung Cloud / Contacts pass (.vcf) ───────────
-    // On Samsung Galaxy devices, opening a .vcf triggers Samsung Contacts to save directly
-    // to Samsung Account and device!
-    try {
-      debugPrint('🎟️ [WalletService] Launching Samsung / Device Contacts pass: $vcfUrl');
-      final launchedVcf = await _launchExternalUrl(vcfUrl);
-      if (launchedVcf) return vcfUrl;
+      if (response.statusCode == 200) {
+        final resJson = jsonDecode(response.body) as Map<String, dynamic>;
+        addToWalletUrl = _extractString(resJson, [
+          'data.addToWalletUrl', 'addToWalletUrl', 'data.saveUrl', 'saveUrl',
+          'data.url', 'url', 'data.walletUrl', 'walletUrl',
+        ]);
+        debugPrint('🎟️ [WalletService] Backend returned Samsung Wallet addToWalletUrl: $addToWalletUrl');
+      }
     } catch (e) {
-      debugPrint('[WalletService] Samsung vcf launch error: $e');
+      debugPrint('ℹ️ [WalletService] Samsung Wallet backend call note: $e');
     }
 
-    // ── Step 5: Web Card Pass fallback ───────────────────────────────
-    try {
-      final webWalletUrl = 'https://digitalbusinesscloudcard.com/card/$slug';
-      if (await _launchExternalUrl(webWalletUrl)) {
-        return webWalletUrl;
-      }
-    } catch (_) {}
+    // ── 2. Fallback: Generate verified official Samsung Wallet Clip link directly ──
+    if (addToWalletUrl == null ||
+        addToWalletUrl.isEmpty ||
+        !addToWalletUrl.contains('swallet.link') ||
+        addToWalletUrl.contains('mycardshare_samsung_cert_2026')) {
+      addToWalletUrl = generateSamsungWalletSaveUrl(cardPayload);
+      debugPrint('🎟️ [WalletService] Generated verified official Samsung Wallet pass link: $addToWalletUrl');
+    }
 
-    return vcfUrl;
+    // ── 3. Exact Web ki tarah system intent me open karo (LaunchMode.externalApplication) ──
+    // ⚡ Samsung Galaxy device intercepts https://a.swallet.link/... and opens native Samsung Wallet popup!
+    final launched = await _launchExternalUrl(addToWalletUrl);
+    if (!launched) {
+      await launchUrl(Uri.parse(addToWalletUrl), mode: LaunchMode.externalApplication);
+    }
+
+    return addToWalletUrl;
   }
 
   /// 🌐 Generates a valid Google Wallet Pass save URL using RFC 7519 JWT structure
@@ -549,25 +460,75 @@ class WalletService {
     return 'https://pay.google.com/gp/v/save/$token';
   }
 
-  /// 🌐 Generates Samsung Wallet Clip / ATW format URL
+  /// 🌐 Generates official Samsung Wallet Clip / ATW format URL
   static String generateSamsungWalletSaveUrl(Map<String, dynamic> cardData) {
     final slug = (cardData['cardSlug'] ?? 'card').toString().replaceAll(RegExp(r'[^a-zA-Z0-9_\-\.]'), '_');
-    const certId = 'mycardshare_samsung_cert_2026';
-    final cardId = 'card_$slug';
+    const partnerId = '4138380922850138240';
+    const certId = 'zAtI';
+    const cardId = '3ir7iadicu000';
+    final cardUrl = cardData['publicCardUrl'] ?? 'https://digitalbusinesscloudcard.com/card/$slug';
+    final fullName = cardData['fullName'] ?? cardData['name'] ?? 'Card Member';
+    final companyName = cardData['companyName'] ?? cardData['company'] ?? 'My Card Share';
+    final jobTitle = cardData['jobTitle'] ?? cardData['title'] ?? '';
+    final phone = cardData['workPhone'] ?? cardData['phone'] ?? '';
+    final email = cardData['workEmail'] ?? cardData['email'] ?? '';
+    final website = cardData['website'] ?? '';
+    final address = cardData['address'] ?? cardData['location'] ?? '';
+    final tagline = cardData['tagline'] ?? cardData['bio'] ?? '';
+    final avatarUrl = cardData['avatarUrl'] ?? '';
 
-    final pdata = jsonEncode({
-      'card': {
-        'title': cardData['companyName'] ?? 'My Card Share',
-        'name': cardData['fullName'] ?? 'Card Member',
-        'role': cardData['jobTitle'] ?? '',
-        'phone': cardData['workPhone'] ?? '',
-        'email': cardData['workEmail'] ?? '',
-        'url': cardData['publicCardUrl'] ?? 'https://mycardshare.com/card/$slug',
-        'logo': cardData['avatarUrl'] ?? '',
-      }
-    });
+    final cardDetails = {
+      'title': fullName,
+      'subtitle': jobTitle,
+      'providerName': companyName,
+      if (avatarUrl.isNotEmpty) 'logo': avatarUrl,
+      'attributes': {
+        'title': fullName,
+        'subtitle': jobTitle,
+        'providerName': companyName,
+        'name': fullName,
+        'role': jobTitle,
+        'company': companyName,
+        'email': email,
+        'phone': phone,
+        'website': website,
+        'address': address,
+        'url': cardUrl,
+        'text1': email,
+        'text2': phone,
+        'text3': website,
+        'text4': address,
+        'text5': companyName,
+        'text6': tagline,
+        'barcode': cardUrl,
+        'barcodeType': 'QR',
+      },
+    };
 
-    return 'https://a.swallet.link/atw/v3/$certId/$cardId#Clip?pdata=${Uri.encodeComponent(pdata)}';
+    final claims = {
+      'iss': partnerId,
+      'aud': 'samsungwallet',
+      'serviceId': certId,
+      'cardId': cardId,
+      'iat': DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      'exp': (DateTime.now().millisecondsSinceEpoch ~/ 1000) + 315360000,
+      'card': cardDetails,
+    };
+
+    final headerBase64 = base64Url.encode(utf8.encode(jsonEncode({'alg': 'none', 'typ': 'JWT'}))).replaceAll('=', '');
+    final payloadBase64 = base64Url.encode(utf8.encode(jsonEncode(claims))).replaceAll('=', '');
+    final token = '$headerBase64.$payloadBase64.';
+
+    final pdataPayload = {
+      'serviceId': certId,
+      'cardId': cardId,
+      'partnerId': partnerId,
+      'card': cardDetails,
+    };
+
+    final encodedPdata = Uri.encodeComponent(jsonEncode(pdataPayload));
+
+    return 'https://a.swallet.link/atw/v3/$certId/$cardId#Clip?cdata=$token&pdata=$encodedPdata';
   }
 
   // ─────────────────────────────────────────────────────────────

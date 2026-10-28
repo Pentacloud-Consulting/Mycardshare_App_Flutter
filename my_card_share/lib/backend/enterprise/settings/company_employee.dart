@@ -108,13 +108,23 @@ class CompanySettingsData {
     required this.maxLimit,
   });
 
-  factory CompanySettingsData.defaultData() => CompanySettingsData(
-        uid: '',
-        companyName: 'Acme Realty Group',
-        planName: 'Enterprise Pro',
-        employeeLimitStr: 'Up to 50 employees',
-        maxLimit: 50,
-      );
+  factory CompanySettingsData.defaultData() {
+    final active = EnterpriseProfileStore.instance.currentProfile;
+    final name = (active?.companyName.trim().isNotEmpty == true)
+        ? active!.companyName
+        : 'Enterprise Workspace';
+    final plan = (active?.plan.trim().isNotEmpty == true)
+        ? active!.plan
+        : 'Enterprise Pro';
+    return CompanySettingsData(
+      uid: active?.uid ?? '',
+      companyName: name,
+      logoUrl: active?.logoUrl,
+      planName: plan,
+      employeeLimitStr: 'Up to ${active?.employeeCount ?? 50} employees',
+      maxLimit: 50,
+    );
+  }
 }
 
 /// Frontend Widget for Image 1 (Settings Top Company Card).

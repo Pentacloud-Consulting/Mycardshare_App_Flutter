@@ -14,6 +14,7 @@ class IndividualUserModel {
   final String plan; // 'Free' or 'Pro'
   final bool isPro;
   final String status; // 'ACTIVE', 'DEACTIVATED', 'DELETION_PENDING'
+  final int views;
   final Map<String, dynamic>? deletionRequest;
   final String createdAt;
 
@@ -27,6 +28,7 @@ class IndividualUserModel {
     required this.plan,
     required this.isPro,
     required this.status,
+    this.views = 0,
     this.deletionRequest,
     required this.createdAt,
   });
@@ -39,6 +41,21 @@ class IndividualUserModel {
             ? 'DEACTIVATED'
             : rawStatus.toUpperCase());
 
+    final rawPlan = (json['plan'] ?? json['subscriptionPlan'] ?? json['tier'] ?? '').toString().trim();
+    final isUserPro = json['isPro'] == true ||
+        json['isPremium'] == true ||
+        rawPlan.toLowerCase() == 'pro' ||
+        rawPlan.toLowerCase() == 'premium';
+
+    final String resolvedPlan = isUserPro
+        ? 'Pro'
+        : (rawPlan.isNotEmpty && rawPlan.toLowerCase() != 'pro' ? rawPlan : 'Free');
+
+    final parsedViews = (json['views'] as num?)?.toInt() ??
+        (json['cardViews'] as num?)?.toInt() ??
+        (json['impressions'] as num?)?.toInt() ??
+        0;
+
     return IndividualUserModel(
       userId: (json['userId'] ?? json['id'] ?? json['_id'] ?? '').toString(),
       fullName: (json['fullName'] ?? json['name'] ?? json['displayName'] ?? 'Individual User').toString(),
@@ -46,9 +63,10 @@ class IndividualUserModel {
       phone: (json['phone'] ?? json['phoneNumber'] ?? '').toString(),
       cardSlug: (json['cardSlug'] ?? json['slug'] ?? '').toString(),
       avatarUrl: json['avatarUrl'] ?? json['profilePhoto'] ?? json['photoURL'],
-      plan: (json['plan'] ?? (json['isPro'] == true ? 'Pro' : 'Free')).toString(),
-      isPro: json['isPro'] == true || (json['plan']?.toString().toLowerCase() == 'pro'),
+      plan: resolvedPlan,
+      isPro: isUserPro,
       status: normalizedStatus,
+      views: parsedViews,
       deletionRequest: json['deletionRequest'] is Map<String, dynamic> ? json['deletionRequest'] : null,
       createdAt: json['createdAt']?.toString() ?? '',
     );

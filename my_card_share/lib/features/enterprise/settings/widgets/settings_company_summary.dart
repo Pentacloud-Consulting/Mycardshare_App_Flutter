@@ -8,8 +8,8 @@ class SettingsCompanySummary extends StatelessWidget {
 
   const SettingsCompanySummary({
     super.key,
-    this.companyName = "Acme Realty Group",
-    this.employeesText = "34 employees · Enterprise Pro",
+    this.companyName = "Enterprise Workspace",
+    this.employeesText = "Enterprise Member",
     this.onEditTap,
   });
 

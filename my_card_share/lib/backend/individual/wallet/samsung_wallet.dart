@@ -127,33 +127,37 @@ class SamsungWalletService {
       socialLinks: socialLinks,
     );
 
-    if (proceed != true || !context.mounted) return false;
+    if (proceed != true) return false;
 
     // Show loading snackbar
     if (context.mounted) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Row(
+          content: Row(
             children: [
-              SizedBox(
+              const SizedBox(
                 width: 18,
                 height: 18,
                 child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
               ),
-              SizedBox(width: 12),
-              Text('Generating Samsung Wallet pass...'),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text('Opening Samsung Wallet for $name...'),
+              ),
             ],
           ),
           backgroundColor: const Color(0xFF1428A0),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          duration: const Duration(seconds: 10),
+          duration: const Duration(seconds: 4),
         ),
       );
     }
 
     try {
       final addToWalletUrl = await WalletService.addToSamsungWallet(
+        context: context.mounted ? context : null,
         profile: profile,
         publicProfile: publicProfile,
       );
@@ -168,7 +172,7 @@ class SamsungWalletService {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Opening Samsung Wallet to save card for $name...',
+                    'Card pass opened for $name!',
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),

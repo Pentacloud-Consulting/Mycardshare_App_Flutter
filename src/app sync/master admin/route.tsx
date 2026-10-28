@@ -19,6 +19,10 @@ interface CompanyApprovalPayload {
   adminUserId?: string;
 }
 
+export async function POST(request: NextRequest) {
+  return PATCH(request);
+}
+
 export async function PATCH(request: NextRequest) {
   try {
     const authHeader = request.headers.get("authorization");

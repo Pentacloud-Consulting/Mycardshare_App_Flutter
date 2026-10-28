@@ -21,71 +21,8 @@ class _MasterAdminNotificationsScreenState
   String _selectedFilter = "All";
   StreamSubscription? _deletionSub;
 
-  List<NotificationModel> _todayList = [
-    const NotificationModel(
-      id: "1",
-      title: "New approval request",
-      subtext: "Skyline Brokers submitted an enterprise registration",
-      timestamp: "18m ago",
-      category: NotificationCategory.approvals,
-      isUnread: true,
-      icon: Icons.access_time_rounded,
-      iconColor: Color(0xFFD97706),
-      iconBgColor: Color(0xFFFEF3C7),
-      route: "/master-admin/approval",
-    ),
-    const NotificationModel(
-      id: "2",
-      title: "System alert",
-      subtext: "Storage usage crossed 75% of quota",
-      timestamp: "1h ago",
-      category: NotificationCategory.system,
-      isUnread: true,
-      icon: Icons.warning_amber_rounded,
-      iconColor: Color(0xFFDC2626),
-      iconBgColor: Color(0xFFFEE2E2),
-      route: "/master-admin/analytics",
-    ),
-    const NotificationModel(
-      id: "3",
-      title: "Company approved",
-      subtext: "Acme Realty Group was auto-approved via valid voucher",
-      timestamp: "3h ago",
-      category: NotificationCategory.approvals,
-      isUnread: true,
-      icon: Icons.check_circle_outline_rounded,
-      iconColor: Color(0xFF16A34A),
-      iconBgColor: Color(0xFFDCFCE7),
-      route: "/master-admin/company",
-    ),
-  ];
-
-  List<NotificationModel> _yesterdayList = [
-    const NotificationModel(
-      id: "4",
-      title: "New super admin added",
-      subtext: "Fatima Al-Zahrawi was granted platform admin access",
-      timestamp: "Yesterday, 6:40 PM",
-      category: NotificationCategory.security,
-      isUnread: false,
-      icon: Icons.shield_outlined,
-      iconColor: Color(0xFF7E22CE),
-      iconBgColor: Color(0xFFF3E8FF),
-      route: "/master-admin/settings",
-    ),
-    const NotificationModel(
-      id: "5",
-      title: "Subscription payment failed",
-      subtext: "TechNexus Inc's billing charge did not go through",
-      timestamp: "Yesterday, 2:10 PM",
-      category: NotificationCategory.billing,
-      isUnread: false,
-      icon: Icons.credit_card_rounded,
-      iconColor: Color(0xFF2563EB),
-      iconBgColor: Color(0xFFEFF6FF),
-      route: "/master-admin/company",
-    ),
-  ];
+  List<NotificationModel> _todayList = [];
+  List<NotificationModel> _yesterdayList = [];
 
   @override
   void initState() {

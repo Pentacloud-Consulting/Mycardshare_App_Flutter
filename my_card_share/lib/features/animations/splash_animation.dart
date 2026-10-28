@@ -145,22 +145,18 @@ class _SplashAnimationScreenState extends ConsumerState<SplashAnimationScreen>
     // Mark splash as completed so router allows navigation to main screens
     ref.read(splashCompletedProvider.notifier).state = true;
 
+    final cleanRole = authState.role.toLowerCase().replaceAll('_', '-');
     if (authState.isLoggedIn) {
-      final role = authState.role.toLowerCase();
-      debugPrint('[SplashAnimation] User is logged in as role: $role. Directing to home screen.');
-      if (role == 'master-admin' || role == 'master_admin') {
+      debugPrint('[SplashAnimation] User is logged in as role: $cleanRole. Directing to home screen.');
+      if (cleanRole == 'master-admin') {
         context.go('/master-admin/dashboard');
-      } else if (role == 'enterprise') {
+      } else if (cleanRole == 'enterprise') {
         context.go('/enterprise/dashboard');
-      } else if (role == 'employee') {
-        context.go('/portal');
       } else {
-        // Individual Portal Home Page
         context.go('/portal');
       }
     } else {
       debugPrint('[SplashAnimation] User is not logged in. Directing to Onboarding (Image 1).');
-      // Onboarding Screen (Image 1)
       context.go('/onboarding');
     }
   }

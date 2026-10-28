@@ -5,6 +5,7 @@ import '../../enterprise/request/request_fetch.dart';
 import '../core/master_admin_api_client.dart';
 import '../core/master_admin_endpoints.dart';
 import '../master_approval_service.dart';
+import '../companies/company_management_store.dart';
 
 /// Data model representing any pending approval item in Master Admin
 class MasterApprovalItem {
@@ -73,6 +74,11 @@ class ApprovalsQueueStore extends ChangeNotifier {
   int get pendingCount => _pendingItems.where((i) => !_locallyResolvedIds.contains(i.id)).length;
   bool get isLoading => _isLoading;
 
+  Future<void> refreshQueue() async {
+    await CompanyManagementStore.instance.loadGlobalCompanies();
+    notifyListeners();
+  }
+
   /// Combined real-time stream of pending companies + pending join requests
   Stream<List<MasterApprovalItem>> streamPendingQueue() {
     // Listen to enterprises collection for pending / approvalStatus == pending / isSuspended
@@ -113,34 +119,69 @@ class ApprovalsQueueStore extends ChangeNotifier {
         }
       }
 
-      // 1b. Check companies collection if any pending items exist
+      // 1b. Check companies collection across all documents for pending status
       try {
-        final compPendingSnap = await _firestore
-            .collection('companies')
-            .where('approvalStatus', isEqualTo: 'pending')
-            .get();
+        final compPendingSnap = await _firestore.collection('companies').get();
         for (final doc in compPendingSnap.docs) {
-          if (!items.any((it) => it.id == doc.id)) {
-            final data = doc.data();
-            DateTime created = DateTime.now();
-            if (data['createdAt'] is Timestamp) {
-              created = (data['createdAt'] as Timestamp).toDate();
+          final data = doc.data();
+          final status = (data['status'] as String? ?? '').toLowerCase();
+          final approvalStatus = (data['approvalStatus'] as String? ?? '').toLowerCase();
+          if (approvalStatus == 'approved' || status == 'active') continue;
+
+          if (status == 'pending' || approvalStatus == 'pending') {
+            if (!items.any((it) => it.id == doc.id || it.title.toLowerCase() == (data['companyName'] ?? '').toString().toLowerCase())) {
+              DateTime created = DateTime.now();
+              if (data['createdAt'] is Timestamp) {
+                created = (data['createdAt'] as Timestamp).toDate();
+              }
+              items.add(
+                MasterApprovalItem(
+                  id: doc.id,
+                  title: data['companyName'] ?? data['name'] ?? 'Pending Enterprise',
+                  email: data['email'] ?? data['adminEmail'] ?? '',
+                  type: 'company',
+                  domain: data['domain'] ?? data['customDomain'] ?? '${doc.id.toLowerCase()}.mycardshare.com',
+                  logoUrl: data['logoUrl'],
+                  status: 'pending',
+                  createdAt: created,
+                ),
+              );
             }
-            items.add(
-              MasterApprovalItem(
-                id: doc.id,
-                title: data['companyName'] ?? data['name'] ?? 'Pending Enterprise',
-                email: data['email'] ?? '',
-                type: 'company',
-                domain: data['domain'] ?? data['customDomain'] ?? '${doc.id.toLowerCase()}.mycardshare.com',
-                logoUrl: data['logoUrl'],
-                status: 'pending',
-                createdAt: created,
-              ),
-            );
           }
         }
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[ApprovalsQueueStore] companies collection scan note: $e');
+      }
+
+      // 1c. Cross-reference CompanyManagementStore.instance.companies (Global Sync)
+      try {
+        if (CompanyManagementStore.instance.companies.isEmpty) {
+          await CompanyManagementStore.instance.loadGlobalCompanies();
+        }
+        for (final comp in CompanyManagementStore.instance.companies) {
+          if (_locallyResolvedIds.contains(comp.id)) continue;
+          if (comp.status.toLowerCase() == 'pending') {
+            if (!items.any((it) => it.id == comp.id || it.title.toLowerCase() == comp.name.toLowerCase())) {
+              items.add(
+                MasterApprovalItem(
+                  id: comp.id,
+                  title: comp.name,
+                  email: comp.email,
+                  type: 'company',
+                  domain: comp.domain != null && comp.domain!.isNotEmpty
+                      ? comp.domain!
+                      : '${comp.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '')}.com',
+                  logoUrl: comp.logoUrl,
+                  status: 'pending',
+                  createdAt: comp.createdAt ?? DateTime.now(),
+                ),
+              );
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('[ApprovalsQueueStore] CompanyManagementStore scan note: $e');
+      }
 
       // 2. Pending Join Requests
       try {
@@ -171,7 +212,6 @@ class ApprovalsQueueStore extends ChangeNotifier {
       items.removeWhere((it) => _locallyResolvedIds.contains(it.id));
       items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       _pendingItems = items;
-      notifyListeners();
       return items;
     });
   }
@@ -183,6 +223,14 @@ class ApprovalsQueueStore extends ChangeNotifier {
       if (item.type == 'company') {
         final now = DateTime.now();
         final renewal = now.add(const Duration(days: 365));
+
+        DocumentSnapshot<Map<String, dynamic>>? entDoc;
+        try {
+          entDoc = await _firestore.collection('enterprises').doc(item.id).get();
+        } catch (_) {}
+        final entData = entDoc?.data() ?? {};
+        final adminUid = (entData['adminUid'] ?? entData['uid'] ?? entData['userId'] ?? item.id).toString();
+        final adminEmail = (entData['adminEmail'] ?? entData['email'] ?? item.email).toString().trim().toLowerCase();
 
         // 1. Unlock enterprise in Firestore enterprises collection
         try {
@@ -198,6 +246,19 @@ class ApprovalsQueueStore extends ChangeNotifier {
         } catch (e) {
           debugPrint('[ApprovalsQueueStore] enterprises doc update note: $e');
         }
+
+        // 1b. Also update enterprises by companyName to ensure 100% cascade
+        try {
+          final entByName = await _firestore.collection('enterprises').where('companyName', isEqualTo: item.title).get();
+          for (final doc in entByName.docs) {
+            await doc.reference.set({
+              'approvalStatus': 'approved',
+              'status': 'Active',
+              'isSuspended': false,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          }
+        } catch (_) {}
 
         // 2. Unlock in companies collection (handles Doc ID, companyId, and slug)
         try {
@@ -222,22 +283,35 @@ class ApprovalsQueueStore extends ChangeNotifier {
               'updatedAt': FieldValue.serverTimestamp(),
             }, SetOptions(merge: true));
           }
+
+          final compByName = await _firestore.collection('companies').where('companyName', isEqualTo: item.title).get();
+          for (final doc in compByName.docs) {
+            await doc.reference.set({
+              'approvalStatus': 'approved',
+              'status': 'active',
+              'isSuspended': false,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          }
         } catch (e) {
           debugPrint('[ApprovalsQueueStore] companies doc update note: $e');
         }
 
         // 3. Promote Admin User in users collection
         try {
-          await _firestore.collection('users').doc(item.id).set({
-            'approvalStatus': 'approved',
-            'status': 'active',
-            'role': 'enterprise',
-            'isSuspended': false,
-            'updatedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
+          final targetUserUids = {item.id, if (adminUid.isNotEmpty) adminUid};
+          for (final uid in targetUserUids) {
+            await _firestore.collection('users').doc(uid).set({
+              'approvalStatus': 'approved',
+              'status': 'active',
+              'role': 'enterprise',
+              'isSuspended': false,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          }
 
-          if (item.email.trim().isNotEmpty) {
-            final emailDocId = item.email.trim().toLowerCase().replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+          if (adminEmail.isNotEmpty) {
+            final emailDocId = adminEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
             await _firestore.collection('users').doc(emailDocId).set({
               'approvalStatus': 'approved',
               'status': 'active',
@@ -248,7 +322,7 @@ class ApprovalsQueueStore extends ChangeNotifier {
 
             final usersByEmail = await _firestore
                 .collection('users')
-                .where('email', isEqualTo: item.email.trim().toLowerCase())
+                .where('email', isEqualTo: adminEmail)
                 .get();
             for (final doc in usersByEmail.docs) {
               await doc.reference.set({
@@ -273,6 +347,20 @@ class ApprovalsQueueStore extends ChangeNotifier {
               'updatedAt': FieldValue.serverTimestamp(),
             }, SetOptions(merge: true));
           }
+
+          final usersByCompName = await _firestore
+              .collection('users')
+              .where('companyName', isEqualTo: item.title)
+              .get();
+          for (final doc in usersByCompName.docs) {
+            await doc.reference.set({
+              'approvalStatus': 'approved',
+              'status': 'active',
+              'role': 'enterprise',
+              'isSuspended': false,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          }
         } catch (e) {
           debugPrint('[ApprovalsQueueStore] users doc update note: $e');
         }
@@ -293,6 +381,11 @@ class ApprovalsQueueStore extends ChangeNotifier {
             MasterAdminEndpoints.companyApproval(item.id),
             {'action': 'approve', 'status': 'approved'},
           );
+        } catch (_) {}
+
+        // 6. Refresh CompanyManagementStore
+        try {
+          CompanyManagementStore.instance.loadGlobalCompanies();
         } catch (_) {}
 
         _pendingItems.removeWhere((i) => i.id == item.id);

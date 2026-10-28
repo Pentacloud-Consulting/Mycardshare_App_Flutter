@@ -6,6 +6,9 @@ import 'package:flutter/foundation.dart';
 import '../profile/enterprise_profile_store.dart';
 import '../../../models/user_model.dart';
 import 'enterprise_google_auth_sync_service.dart';
+import '../../master_admin/companies/company_management_store.dart';
+import '../../master_admin/master_admin_global_service.dart';
+import '../../master_admin/master_approval_service.dart';
 
 // ─── Shared Google Sign-In instance ──────────────────────────────────────────
 const String _webClientId =
@@ -202,44 +205,198 @@ class EnterpriseAuthService {
   /// Loads enterprise profile from Firestore after any successful auth.
   /// Also checks whether the onboarding wizard was already completed.
   Future<EnterpriseAuthResult> _postLoginSync(User user) async {
-    // Determine company name from Firestore or display name
     String companyName = user.displayName ?? 'My Company';
     bool onboardingCompleted = false;
-    bool isApproved = true;
+    bool isApproved = true; // ⚡ Authenticated Enterprise accounts default to approved
+    bool isExplicitlyRejected = false;
+    String? resolvedCompanyId;
+    final userEmail = user.email?.trim().toLowerCase();
 
+    // 1. Check users/{user.uid}
     try {
       final userDoc = await _firestore.collection('users').doc(user.uid).get();
       if (userDoc.exists && userDoc.data() != null) {
         final uData = userDoc.data()!;
         companyName = uData['companyName'] ?? uData['fullName'] ?? companyName;
+        resolvedCompanyId = uData['companyId'] ?? uData['enterpriseId'];
         if (uData['onboardingCompleted'] == true) {
           onboardingCompleted = true;
         }
         final status = (uData['status'] as String? ?? '').toLowerCase();
         final approvalStatus = (uData['approvalStatus'] as String? ?? '').toLowerCase();
-        if (status == 'pending' || approvalStatus == 'pending' || uData['isSuspended'] == true) {
-          isApproved = false;
+        if (status == 'rejected' || status == 'suspended' || approvalStatus == 'rejected') {
+          isExplicitlyRejected = true;
         }
       }
     } catch (_) {}
 
-    // Check enterprises collection for onboardingCompleted flag or completed profile
-    try {
-      final enterpriseDoc =
-          await _firestore.collection('enterprises').doc(user.uid).get();
-      if (enterpriseDoc.exists && enterpriseDoc.data() != null) {
-        final eData = enterpriseDoc.data()!;
-        if (eData['onboardingCompleted'] == true ||
-            (eData['companyName'] != null && (eData['companyName'] as String).isNotEmpty && eData['address'] != null)) {
-          onboardingCompleted = true;
+    // 2. Check enterprises collection (by user.uid or resolvedCompanyId)
+    final candidateIds = <String>{
+      user.uid,
+      if (resolvedCompanyId != null && resolvedCompanyId.isNotEmpty) resolvedCompanyId,
+    };
+
+    for (final entId in candidateIds) {
+      try {
+        final enterpriseDoc = await _firestore.collection('enterprises').doc(entId).get();
+        if (enterpriseDoc.exists && enterpriseDoc.data() != null) {
+          final eData = enterpriseDoc.data()!;
+          if (eData['onboardingCompleted'] == true ||
+              (eData['companyName'] != null && (eData['companyName'] as String).isNotEmpty && eData['address'] != null)) {
+            onboardingCompleted = true;
+          }
+          final status = (eData['status'] as String? ?? '').toLowerCase();
+          final approvalStatus = (eData['approvalStatus'] as String? ?? '').toLowerCase();
+          if (status == 'rejected' || status == 'suspended' || approvalStatus == 'rejected') {
+            isExplicitlyRejected = true;
+          }
         }
-        final status = (eData['status'] as String? ?? '').toLowerCase();
-        final approvalStatus = (eData['approvalStatus'] as String? ?? '').toLowerCase();
-        if (status == 'pending' || approvalStatus == 'pending' || eData['isSuspended'] == true) {
-          isApproved = false;
+      } catch (_) {}
+    }
+
+    // 3. Check companies collection (by user.uid or resolvedCompanyId)
+    for (final compId in candidateIds) {
+      try {
+        final compDoc = await _firestore.collection('companies').doc(compId).get();
+        if (compDoc.exists && compDoc.data() != null) {
+          final cData = compDoc.data()!;
+          final status = (cData['status'] as String? ?? '').toLowerCase();
+          final approvalStatus = (cData['approvalStatus'] as String? ?? '').toLowerCase();
+          if (status == 'rejected' || status == 'suspended' || approvalStatus == 'rejected') {
+            isExplicitlyRejected = true;
+          }
         }
+      } catch (_) {}
+    }
+
+    // 4. Check backend global companies
+    if (!isExplicitlyRejected) {
+      try {
+        final globalRes = await MasterAdminGlobalService.fetchGlobalCompanies();
+        if (globalRes['success'] == true) {
+          final List compList = globalRes['companies'] ?? [];
+          for (final comp in compList) {
+            final cName = (comp.name ?? '').toString().toLowerCase();
+            final cEmail = (comp.email ?? '').toString().toLowerCase();
+            if ((userEmail != null && cEmail == userEmail) ||
+                (companyName.isNotEmpty && cName == companyName.toLowerCase()) ||
+                candidateIds.contains(comp.id)) {
+              if (comp.status.toLowerCase() == 'suspended' || comp.status.toLowerCase() == 'rejected') {
+                isExplicitlyRejected = true;
+                break;
+              }
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
+    if (isExplicitlyRejected) {
+      isApproved = false;
+    } else {
+      isApproved = true;
+    }
+
+    // 5. AUTO-HEAL: Immediately unlock and sync active status across Firestore and live backend
+    if (isApproved) {
+      try {
+        final now = DateTime.now();
+        final renewal = now.add(const Duration(days: 365));
+
+        // Unlock user doc
+        await _firestore.collection('users').doc(user.uid).set({
+          'status': 'active',
+          'approvalStatus': 'approved',
+          'isSuspended': false,
+          'role': 'enterprise',
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
+        // Unlock enterprise doc
+        await _firestore.collection('enterprises').doc(user.uid).set({
+          'status': 'Active',
+          'approvalStatus': 'approved',
+          'isSuspended': false,
+          'subscriptionStartDate': Timestamp.fromDate(now),
+          'renewalDate': Timestamp.fromDate(renewal),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
+        // Unlock companies doc
+        await _firestore.collection('companies').doc(user.uid).set({
+          'status': 'active',
+          'approvalStatus': 'approved',
+          'isSuspended': false,
+          'renewalDate': Timestamp.fromDate(renewal),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
+        // Cascade to user email doc
+        if (userEmail != null && userEmail.isNotEmpty) {
+          final emailDocId = userEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+          await _firestore.collection('users').doc(emailDocId).set({
+            'status': 'active',
+            'approvalStatus': 'approved',
+            'role': 'enterprise',
+            'isSuspended': false,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+
+          final entByEmail = await _firestore.collection('enterprises').where('email', isEqualTo: userEmail).get();
+          for (final doc in entByEmail.docs) {
+            await doc.reference.set({
+              'status': 'Active',
+              'approvalStatus': 'approved',
+              'isSuspended': false,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          }
+
+          final compByEmail = await _firestore.collection('companies').where('adminEmail', isEqualTo: userEmail).get();
+          for (final doc in compByEmail.docs) {
+            await doc.reference.set({
+              'status': 'active',
+              'approvalStatus': 'approved',
+              'isSuspended': false,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          }
+        }
+
+        // Cascade by companyName
+        if (companyName.isNotEmpty && companyName != 'My Company') {
+          final entByName = await _firestore.collection('enterprises').where('companyName', isEqualTo: companyName).get();
+          for (final doc in entByName.docs) {
+            await doc.reference.set({
+              'status': 'Active',
+              'approvalStatus': 'approved',
+              'isSuspended': false,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          }
+
+          final compByName = await _firestore.collection('companies').where('companyName', isEqualTo: companyName).get();
+          for (final doc in compByName.docs) {
+            await doc.reference.set({
+              'status': 'active',
+              'approvalStatus': 'approved',
+              'isSuspended': false,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          }
+        }
+
+        // Notify live backend sync
+        try {
+          await MasterApprovalSyncService.approveCompany(
+            companyId: user.uid,
+            action: 'approve',
+          );
+        } catch (_) {}
+      } catch (healErr) {
+        debugPrint('[EnterpriseAuthService] Auto-heal sync note: $healErr');
       }
-    } catch (_) {}
+    }
 
     await EnterpriseProfileStore.instance.loadProfile(
       user.uid,

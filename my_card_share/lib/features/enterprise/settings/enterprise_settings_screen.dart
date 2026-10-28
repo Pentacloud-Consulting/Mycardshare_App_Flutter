@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../backend/enterprise/profile/enterprise_profile_store.dart';
 import '../../../backend/enterprise/settings/company_employee.dart';
 import '../../../backend/enterprise/settings/employee_popup.dart';
 import 'subscription/subscription_screen.dart';
@@ -36,13 +37,16 @@ class _EnterpriseSettingsScreenState extends State<EnterpriseSettingsScreen> {
   }
 
   void _confirmDeactivateWorkspace() {
+    final compName = EnterpriseProfileStore.instance.currentProfile?.companyName.trim().isNotEmpty == true
+        ? EnterpriseProfileStore.instance.currentProfile!.companyName
+        : "this";
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text("Deactivate Workspace?"),
-        content: const Text(
-          "Are you sure you want to deactivate Acme Realty Group workspace? All 34 employee cards and team access will be paused.",
+        content: Text(
+          "Are you sure you want to deactivate $compName workspace? All employee cards and team access will be paused.",
         ),
         actions: [
           TextButton(

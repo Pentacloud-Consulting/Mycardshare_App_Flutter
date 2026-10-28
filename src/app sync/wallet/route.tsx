@@ -157,17 +157,70 @@ export async function POST(req: NextRequest) {
     // 2. SAMSUNG WALLET PASS GENERATION
     // ─────────────────────────────────────────────────────────────
     if (walletType === "samsung") {
+      const partnerId = process.env.SAMSUNG_PARTNER_ID || "4138380922850138240";
+      const cardId = process.env.SAMSUNG_CARD_ID || "3ir7iadicu000";
+      const certId = process.env.SAMSUNG_CERTIFICATE_ID || "zAtI";
       const cardUrl = card.publicCardUrl || `https://digitalbusinesscloudcard.com/card/${slug}`;
-      const samsungUniversalLink = `https://a.swallet.link/add/${slug}`;
-      const samsungDeepLink = `samsungwallet://wallet/add?url=${encodeURIComponent(cardUrl)}`;
+
+      const cardDetails = {
+        title: card.fullName || "Card Member",
+        subtitle: card.jobTitle || "",
+        providerName: card.companyName || "My Card Share",
+        logo: card.avatarUrl || "",
+        attributes: {
+          title: card.fullName || "Card Member",
+          subtitle: card.jobTitle || "",
+          providerName: card.companyName || "My Card Share",
+          name: card.fullName || "Card Member",
+          role: card.jobTitle || "",
+          company: card.companyName || "My Card Share",
+          email: card.workEmail || "",
+          phone: card.workPhone || "",
+          website: card.website || "",
+          address: card.address || "",
+          url: cardUrl,
+          text1: card.workEmail || "",
+          text2: card.workPhone || "",
+          text3: card.website || "",
+          text4: card.address || "",
+          text5: card.companyName || "My Card Share",
+          text6: card.tagline || "",
+          barcode: cardUrl,
+          barcodeType: "QR",
+        },
+      };
+
+      const claims = {
+        iss: partnerId,
+        aud: "samsungwallet",
+        serviceId: certId,
+        cardId: cardId,
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + 315360000,
+        card: cardDetails,
+      };
+
+      const jwtHeader = Buffer.from(JSON.stringify({ alg: "none", typ: "JWT" })).toString("base64url");
+      const jwtPayload = Buffer.from(JSON.stringify(claims)).toString("base64url");
+      const token = `${jwtHeader}.${jwtPayload}.`;
+
+      const pdataPayload = {
+        serviceId: certId,
+        cardId: cardId,
+        partnerId: partnerId,
+        card: cardDetails,
+      };
+
+      const addToWalletUrl = `https://a.swallet.link/atw/v3/${certId}/${cardId}#Clip?cdata=${token}&pdata=${encodeURIComponent(JSON.stringify(pdataPayload))}`;
+      const samsungDeepLink = `samsungwallet://wallet/add?url=${encodeURIComponent(addToWalletUrl)}`;
       const vcfUrl = `https://digitalbusinesscloudcard.com/api/sync/save-contact?fullName=${encodeURIComponent(card.fullName)}&phone=${encodeURIComponent(card.workPhone)}&email=${encodeURIComponent(card.workEmail)}&company=${encodeURIComponent(card.companyName)}&jobTitle=${encodeURIComponent(card.jobTitle)}&website=${encodeURIComponent(card.website)}&avatarUrl=${encodeURIComponent(card.avatarUrl)}&cardSlug=${encodeURIComponent(slug)}&download=true`;
 
       return NextResponse.json({
         success: true,
         data: {
           walletType: "samsung",
-          addToWalletUrl: cardUrl,
-          saveUrl: cardUrl,
+          addToWalletUrl,
+          saveUrl: addToWalletUrl,
           vcfUrl,
           deepLink: samsungDeepLink,
         },

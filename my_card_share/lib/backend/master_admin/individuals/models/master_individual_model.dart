@@ -48,7 +48,18 @@ class MasterIndividualModel {
         rawStatus == 'SUSPENDED' ||
         rawStatus == 'DEACTIVATED' ||
         isDeletionPending;
-    final p = data['plan'] as String? ?? 'Pro';
+
+    final rawPlan = (data['plan'] ?? data['subscriptionPlan'] ?? data['tier'] ?? '').toString().trim();
+    final isUserPro = data['isPro'] == true ||
+        data['isPremium'] == true ||
+        rawPlan.toLowerCase() == 'pro' ||
+        rawPlan.toLowerCase() == 'premium';
+
+    final resolvedPlan = isDeact
+        ? 'Deactivated'
+        : (isUserPro
+            ? 'Pro'
+            : (rawPlan.isNotEmpty && rawPlan.toLowerCase() != 'pro' ? rawPlan : 'Free'));
 
     return MasterIndividualModel(
       id: id,
@@ -56,10 +67,10 @@ class MasterIndividualModel {
       email: data['email'] ?? '',
       phone: data['phoneNumber'] ?? data['phone'] ?? '',
       avatarUrl: data['profilePhoto'] ?? data['avatarUrl'],
-      plan: isDeact ? 'Deactivated' : (p.isEmpty ? 'Pro' : p),
+      plan: resolvedPlan,
       status: isDeletionPending ? 'DELETION_PENDING' : (isDeact ? 'DEACTIVATED' : 'ACTIVE'),
       cardSlug: data['cardSlug'] ?? data['slug'] ?? id,
-      views: (data['views'] as num?)?.toInt() ?? 0,
+      views: (data['views'] as num?)?.toInt() ?? (data['cardViews'] as num?)?.toInt() ?? 0,
       isDeactivated: isDeact,
       deletionReason: data['deletionReason'] ?? data['reason'],
       deletionRequest: data['deletionRequest'],
@@ -69,6 +80,9 @@ class MasterIndividualModel {
   factory MasterIndividualModel.fromIndividualUserModel(IndividualUserModel u) {
     final isDeact = u.status == 'DEACTIVATED' || u.status == 'DELETION_PENDING';
     final reason = u.deletionRequest != null ? u.deletionRequest!['reason']?.toString() : null;
+    final resolvedPlan = isDeact
+        ? 'Deactivated'
+        : (u.isPro ? 'Pro' : (u.plan.toLowerCase() == 'pro' ? 'Pro' : 'Free'));
 
     return MasterIndividualModel(
       id: u.userId,
@@ -76,10 +90,10 @@ class MasterIndividualModel {
       email: u.email,
       phone: u.phone,
       avatarUrl: u.avatarUrl,
-      plan: isDeact ? 'Deactivated' : u.plan,
+      plan: resolvedPlan,
       status: u.status,
       cardSlug: u.cardSlug,
-      views: 0,
+      views: u.views,
       isDeactivated: isDeact,
       deletionReason: reason,
       deletionRequest: u.deletionRequest,

@@ -7,7 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 /// Approves or rejects enterprise registrations across both unified sync
 /// (/api/sync/master-admin) and platform routes (/api/platform/companies/{id}/approval).
 class MasterApprovalSyncService {
-  static const String baseUrl = 'https://mycardshare.com';
+  static const String baseUrl = 'https://digitalbusinesscloudcard.com';
   static const String endpoint = '$baseUrl/api/sync/master-admin';
 
   /// Primary approval method with automatic Bearer token resolution and fallback
@@ -30,7 +30,7 @@ class MasterApprovalSyncService {
       });
 
       // 1. Try unified sync endpoint across known production hosts (POST & PATCH)
-      for (final host in [baseUrl, 'https://digitalbusinesscloudcard.com']) {
+      for (final host in ['https://digitalbusinesscloudcard.com', 'https://mycardshare.com']) {
         try {
           final uri = Uri.parse('$host/api/sync/master-admin');
           // Try POST first as per newest backend specifications

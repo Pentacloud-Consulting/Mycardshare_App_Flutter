@@ -98,7 +98,10 @@ class AppViewAuthGate {
           if (doc != null && doc.data() != null) {
             final data = doc.data() as Map<String, dynamic>;
             if (data['role'] != null && (data['role'] as String).isNotEmpty) {
-              role = (data['role'] as String).toLowerCase();
+              role = (data['role'] as String).toLowerCase().replaceAll('_', '-');
+            }
+            if (data['isMasterAdmin'] == true) {
+              role = 'master-admin';
             }
             if (data['companyName'] != null) companyName = data['companyName'];
             if (data['fullName'] != null) name = data['fullName'];
@@ -109,15 +112,24 @@ class AppViewAuthGate {
       }
 
       // 2. Only if role is still unresolved, check EnterpriseMultiStore
-      if (role != 'individual') {
+      if (role != 'individual' && role != 'master-admin') {
         final storeUser = EnterpriseMultiStore.instance.getUser(email);
         if (storeUser != null) {
-          if (storeUser.role.isNotEmpty && role.isEmpty) role = storeUser.role.toLowerCase();
+          if (storeUser.role.isNotEmpty && role.isEmpty) role = storeUser.role.toLowerCase().replaceAll('_', '-');
           if (storeUser.companyName.isNotEmpty) companyName = storeUser.companyName;
         }
       }
 
-      if (role == 'enterprise') {
+      if (role == 'master-admin') {
+        final userModel = UserModel(
+          id: uid,
+          name: name.isNotEmpty ? name : 'Master Admin',
+          email: email,
+          role: 'master-admin',
+        );
+        await savePersistentSession(userModel);
+        return userModel;
+      } else if (role == 'enterprise') {
         await EnterpriseProfileStore.instance.loadProfile(uid, email, companyName);
         final userModel = UserModel(
           id: uid,

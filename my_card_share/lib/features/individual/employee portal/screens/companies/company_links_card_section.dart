@@ -106,7 +106,7 @@ class CompanyLinksCardSection extends StatelessWidget {
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text("Contacting admin: Priya Sharma (priya@acmerealty.com)"),
+                        content: Text("Contacting Enterprise Administrator..."),
                         behavior: SnackBarBehavior.floating,
                       ),
                     );

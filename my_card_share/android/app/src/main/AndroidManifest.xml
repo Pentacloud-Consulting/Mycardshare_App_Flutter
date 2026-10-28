@@ -42,6 +42,26 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="https"
+                    android:host="digitalbusinesscloudcard.com"
+                    android:pathPrefix="/card/" />
+                <data
+                    android:scheme="https"
+                    android:host="digitalbusinesscloudcard.com"
+                    android:pathPrefix="/profile/" />
+                <data
+                    android:scheme="https"
+                    android:host="www.digitalbusinesscloudcard.com"
+                    android:pathPrefix="/card/" />
+                <data
+                    android:scheme="https"
+                    android:host="www.digitalbusinesscloudcard.com"
+                    android:pathPrefix="/profile/" />
+                <data
+                    android:scheme="http"
+                    android:host="digitalbusinesscloudcard.com"
+                    android:pathPrefix="/card/" />
+                <data
+                    android:scheme="https"
                     android:host="mycardshare.com"
                     android:pathPrefix="/card/" />
                 <data
@@ -52,6 +72,9 @@
                     android:scheme="https"
                     android:host="mycardshare.vercel.app"
                     android:pathPrefix="/card/" />
+                <data
+                    android:scheme="mycardshare"
+                    android:host="card" />
             </intent-filter>
         </activity>
 

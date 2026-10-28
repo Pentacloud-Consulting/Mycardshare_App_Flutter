@@ -16,6 +16,32 @@ class _MasterAdminCompanyScreenState extends State<MasterAdminCompanyScreen> {
   String _selectedFilter = "All";
 
   @override
+  void initState() {
+    super.initState();
+    CompanyManagementStore.instance.loadGlobalCompanies();
+  }
+
+  void _onFilterChanged(String filter) {
+    setState(() {
+      _selectedFilter = filter;
+    });
+    CompanyManagementStore.instance.loadGlobalCompanies(
+      filter: filter.toLowerCase(),
+      search: _searchQuery,
+    );
+  }
+
+  void _onSearchChanged(String query) {
+    setState(() {
+      _searchQuery = query;
+    });
+    CompanyManagementStore.instance.loadGlobalCompanies(
+      filter: _selectedFilter.toLowerCase(),
+      search: query,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: CompanyManagementStore.instance,
@@ -45,51 +71,47 @@ class _MasterAdminCompanyScreenState extends State<MasterAdminCompanyScreen> {
             ),
 
             // Main Company Management Content
-            SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 1. Stat Chips Row (Total, Active, Suspended) with real live counts
-                  CompanyStatsRow(
-                    totalCount: store.totalCount,
-                    activeCount: store.activeCount,
-                    suspendedCount: store.suspendedCount,
-                    selectedFilter: _selectedFilter,
-                    onFilterSelected: (filter) {
-                      setState(() {
-                        _selectedFilter = filter;
-                      });
-                    },
-                  ),
+            RefreshIndicator(
+              onRefresh: () => CompanyManagementStore.instance.loadGlobalCompanies(
+                filter: _selectedFilter.toLowerCase(),
+                search: _searchQuery,
+              ),
+              color: const Color(0xFF0052FF),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 1. Stat Chips Row (Total, Active, Suspended) with real live counts
+                    CompanyStatsRow(
+                      totalCount: store.totalCount,
+                      activeCount: store.activeCount,
+                      suspendedCount: store.suspendedCount,
+                      selectedFilter: _selectedFilter,
+                      onFilterSelected: _onFilterChanged,
+                    ),
 
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // 2. Search Bar & Filter Chips (All, Active, Pending, Suspended)
-                  CompanySearchFilterBar(
-                    selectedFilter: _selectedFilter,
-                    onSearchChanged: (query) {
-                      setState(() {
-                        _searchQuery = query;
-                      });
-                    },
-                    onFilterSelected: (filter) {
-                      setState(() {
-                        _selectedFilter = filter;
-                      });
-                    },
-                  ),
+                    // 2. Search Bar & Filter Chips (All, Active, Pending, Suspended)
+                    CompanySearchFilterBar(
+                      selectedFilter: _selectedFilter,
+                      onSearchChanged: _onSearchChanged,
+                      onFilterSelected: _onFilterChanged,
+                    ),
 
-                  const SizedBox(height: 18),
+                    const SizedBox(height: 18),
 
-                  // 3. Vertical Company List Card (filtered in real-time)
-                  CompanyListCard(
-                    searchQuery: _searchQuery,
-                    selectedFilter: _selectedFilter,
-                  ),
+                    // 3. Vertical Company List Card (filtered in real-time)
+                    CompanyListCard(
+                      searchQuery: _searchQuery,
+                      selectedFilter: _selectedFilter,
+                    ),
 
-                  const SizedBox(height: 24),
-                ],
+                    const SizedBox(height: 24),
+                  ],
+                ),
               ),
             ),
           ],

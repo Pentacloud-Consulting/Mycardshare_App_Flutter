@@ -127,33 +127,37 @@ class GoogleWalletService {
       socialLinks: socialLinks,
     );
 
-    if (proceed != true || !context.mounted) return false;
+    if (proceed != true) return false;
 
     // Show loading indicator
     if (context.mounted) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Row(
+          content: Row(
             children: [
-              SizedBox(
+              const SizedBox(
                 width: 18,
                 height: 18,
                 child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
               ),
-              SizedBox(width: 12),
-              Text('Generating Google Wallet pass...'),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text('Opening Google Wallet for $name...'),
+              ),
             ],
           ),
           backgroundColor: const Color(0xFF4285F4),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          duration: const Duration(seconds: 10),
+          duration: const Duration(seconds: 4),
         ),
       );
     }
 
     try {
       final saveUrl = await WalletService.addToGoogleWallet(
+        context: context.mounted ? context : null,
         profile: profile,
         publicProfile: publicProfile,
       );
@@ -168,7 +172,7 @@ class GoogleWalletService {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Opening Google Wallet to save card for $name...',
+                    'Card pass opened for $name!',
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),

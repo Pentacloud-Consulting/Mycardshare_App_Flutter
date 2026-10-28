@@ -7,9 +7,9 @@ class WorkforceSummaryCardSection extends StatelessWidget {
 
   const WorkforceSummaryCardSection({
     super.key,
-    this.companyName = "Acme Realty Group",
-    this.logoText = "AR",
-    this.memberCountText = "34 members",
+    this.companyName = "Enterprise Workspace",
+    this.logoText = "EW",
+    this.memberCountText = "Verified Team",
   });
 
   @override

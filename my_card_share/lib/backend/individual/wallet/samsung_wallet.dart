@@ -172,7 +172,7 @@ class SamsungWalletService {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Card pass opened for $name!',
+                    'Opening Samsung Wallet for $name...',
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -181,6 +181,17 @@ class SamsungWalletService {
             backgroundColor: const Color(0xFF1428A0),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            duration: const Duration(seconds: 7),
+            action: SnackBarAction(
+              label: 'Save VCF',
+              textColor: Colors.amberAccent,
+              onPressed: () {
+                final vcfUri = Uri.parse(
+                  'https://digitalbusinesscloudcard.com/api/sync/save-contact?cardSlug=$cardSlug&download=true',
+                );
+                launchUrl(vcfUri, mode: LaunchMode.externalApplication);
+              },
+            ),
           ),
         );
       }
@@ -516,7 +527,37 @@ class SamsungWalletService {
                   ),
                 ),
 
-                const SizedBox(height: 18),
+                const SizedBox(height: 14),
+
+                // Option: Save Contact Pass directly to Samsung Phone Contacts
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      Navigator.of(ctx).pop(false);
+                      final vcfUri = Uri.parse(
+                        'https://digitalbusinesscloudcard.com/api/sync/save-contact?cardSlug=$cardSlug&download=true',
+                      );
+                      await launchUrl(vcfUri, mode: LaunchMode.externalApplication);
+                    },
+                    icon: const Icon(Icons.person_add_alt_1_rounded, size: 16, color: Color(0xFF1428A0)),
+                    label: const Text(
+                      'Save to Samsung Contacts (.vcf)',
+                      style: TextStyle(
+                        color: Color(0xFF1428A0),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      side: const BorderSide(color: Color(0xFF1428A0), width: 1.2),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 10),
 
                 // Action Buttons: Fixed single-line layout & proper button styling
                 Row(

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../employee_join/email_send_request.dart';
 import '../../enterprise/request/request_fetch.dart';
 import '../core/master_admin_api_client.dart';
@@ -46,7 +47,6 @@ class MasterApprovalItem {
 
 /// State store managing platform-wide approval queue for Master Admin
 class ApprovalsQueueStore extends ChangeNotifier {
-  ApprovalsQueueStore._internal();
   static final ApprovalsQueueStore instance = ApprovalsQueueStore._internal();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -62,16 +62,54 @@ class ApprovalsQueueStore extends ChangeNotifier {
           .toList();
 
   final Set<String> _locallyResolvedIds = {};
+  final Set<String> _locallyResolvedTitles = {};
+  bool _initializedPrefs = false;
 
-  bool isResolved(String id) => _locallyResolvedIds.contains(id);
-
-  void markLocallyResolved(String id) {
-    _locallyResolvedIds.add(id);
-    _pendingItems.removeWhere((i) => i.id == id);
-    notifyListeners();
+  ApprovalsQueueStore._internal() {
+    _loadPersistedResolved();
   }
 
-  int get pendingCount => _pendingItems.where((i) => !_locallyResolvedIds.contains(i.id)).length;
+  Future<void> _loadPersistedResolved() async {
+    if (_initializedPrefs) return;
+    _initializedPrefs = true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final ids = prefs.getStringList('master_admin_resolved_ids') ?? [];
+      final titles = prefs.getStringList('master_admin_resolved_titles') ?? [];
+      _locallyResolvedIds.addAll(ids);
+      _locallyResolvedTitles.addAll(titles.map((t) => t.toLowerCase().trim()));
+      notifyListeners();
+    } catch (e) {
+      debugPrint('[ApprovalsQueueStore] Error loading resolved prefs: $e');
+    }
+  }
+
+  bool isResolved(String id, [String? title]) {
+    if (_locallyResolvedIds.contains(id)) return true;
+    if (title != null && _locallyResolvedTitles.contains(title.toLowerCase().trim())) {
+      return true;
+    }
+    return false;
+  }
+
+  void markLocallyResolved(String id, {String? title}) async {
+    _locallyResolvedIds.add(id);
+    if (title != null && title.trim().isNotEmpty) {
+      _locallyResolvedTitles.add(title.toLowerCase().trim());
+    }
+    _pendingItems.removeWhere((i) =>
+        i.id == id ||
+        (title != null && i.title.toLowerCase().trim() == title.toLowerCase().trim()));
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList('master_admin_resolved_ids', _locallyResolvedIds.toList());
+      await prefs.setStringList('master_admin_resolved_titles', _locallyResolvedTitles.toList());
+    } catch (_) {}
+  }
+
+  int get pendingCount => _pendingItems.where((i) => !isResolved(i.id, i.title)).length;
   bool get isLoading => _isLoading;
 
   Future<void> refreshQueue() async {
@@ -83,6 +121,7 @@ class ApprovalsQueueStore extends ChangeNotifier {
   Stream<List<MasterApprovalItem>> streamPendingQueue() {
     // Listen to enterprises collection for pending / approvalStatus == pending / isSuspended
     return _firestore.collection('enterprises').snapshots().asyncMap((companySnap) async {
+      await _loadPersistedResolved();
       final List<MasterApprovalItem> items = [];
 
       // 1. Pending Enterprises
@@ -90,11 +129,20 @@ class ApprovalsQueueStore extends ChangeNotifier {
         if (_locallyResolvedIds.contains(doc.id)) continue;
 
         final data = doc.data();
-        final status = (data['status'] as String? ?? '').toLowerCase();
-        final approvalStatus = (data['approvalStatus'] as String? ?? '').toLowerCase();
+        final status = (data['status'] as String? ?? '').toLowerCase().trim();
+        final approvalStatus = (data['approvalStatus'] as String? ?? '').toLowerCase().trim();
+        final isSuspended = data['isSuspended'] == true;
+        final title = (data['companyName'] ?? data['name'] ?? '').toString().trim();
 
-        // If explicitly approved or active, it is NOT pending
-        if (approvalStatus == 'approved' || status == 'active') {
+        if (_locallyResolvedTitles.contains(title.toLowerCase())) continue;
+
+        // If explicitly approved, active, rejected, or suspended, it is NOT pending!
+        if (approvalStatus == 'approved' ||
+            status == 'active' ||
+            approvalStatus == 'rejected' ||
+            status == 'rejected' ||
+            status == 'suspended' ||
+            isSuspended) {
           continue;
         }
 
@@ -107,7 +155,7 @@ class ApprovalsQueueStore extends ChangeNotifier {
           items.add(
             MasterApprovalItem(
               id: doc.id,
-              title: data['companyName'] ?? data['name'] ?? 'Pending Enterprise',
+              title: title.isNotEmpty ? title : 'Pending Enterprise',
               email: data['email'] ?? '',
               type: 'company',
               domain: data['domain'] ?? data['customDomain'] ?? '${doc.id.toLowerCase()}.mycardshare.com',
@@ -123,13 +171,27 @@ class ApprovalsQueueStore extends ChangeNotifier {
       try {
         final compPendingSnap = await _firestore.collection('companies').get();
         for (final doc in compPendingSnap.docs) {
+          if (_locallyResolvedIds.contains(doc.id)) continue;
+
           final data = doc.data();
-          final status = (data['status'] as String? ?? '').toLowerCase();
-          final approvalStatus = (data['approvalStatus'] as String? ?? '').toLowerCase();
-          if (approvalStatus == 'approved' || status == 'active') continue;
+          final status = (data['status'] as String? ?? '').toLowerCase().trim();
+          final approvalStatus = (data['approvalStatus'] as String? ?? '').toLowerCase().trim();
+          final isSuspended = data['isSuspended'] == true;
+          final title = (data['companyName'] ?? data['name'] ?? '').toString().trim();
+
+          if (_locallyResolvedTitles.contains(title.toLowerCase())) continue;
+
+          if (approvalStatus == 'approved' ||
+              status == 'active' ||
+              approvalStatus == 'rejected' ||
+              status == 'rejected' ||
+              status == 'suspended' ||
+              isSuspended) {
+            continue;
+          }
 
           if (status == 'pending' || approvalStatus == 'pending') {
-            if (!items.any((it) => it.id == doc.id || it.title.toLowerCase() == (data['companyName'] ?? '').toString().toLowerCase())) {
+            if (!items.any((it) => it.id == doc.id || it.title.toLowerCase() == title.toLowerCase())) {
               DateTime created = DateTime.now();
               if (data['createdAt'] is Timestamp) {
                 created = (data['createdAt'] as Timestamp).toDate();
@@ -137,7 +199,7 @@ class ApprovalsQueueStore extends ChangeNotifier {
               items.add(
                 MasterApprovalItem(
                   id: doc.id,
-                  title: data['companyName'] ?? data['name'] ?? 'Pending Enterprise',
+                  title: title.isNotEmpty ? title : 'Pending Enterprise',
                   email: data['email'] ?? data['adminEmail'] ?? '',
                   type: 'company',
                   domain: data['domain'] ?? data['customDomain'] ?? '${doc.id.toLowerCase()}.mycardshare.com',
@@ -160,8 +222,14 @@ class ApprovalsQueueStore extends ChangeNotifier {
         }
         for (final comp in CompanyManagementStore.instance.companies) {
           if (_locallyResolvedIds.contains(comp.id)) continue;
-          if (comp.status.toLowerCase() == 'pending') {
-            if (!items.any((it) => it.id == comp.id || it.title.toLowerCase() == comp.name.toLowerCase())) {
+          final compTitle = comp.name.toLowerCase().trim();
+          if (_locallyResolvedTitles.contains(compTitle)) continue;
+
+          final cStatus = comp.status.toLowerCase().trim();
+          if (cStatus == 'active' || cStatus == 'suspended' || cStatus == 'rejected') continue;
+
+          if (cStatus == 'pending') {
+            if (!items.any((it) => it.id == comp.id || it.title.toLowerCase().trim() == compTitle)) {
               items.add(
                 MasterApprovalItem(
                   id: comp.id,
@@ -218,7 +286,7 @@ class ApprovalsQueueStore extends ChangeNotifier {
 
   /// Approve an item (either Enterprise company or Join Request)
   Future<bool> approveItem(MasterApprovalItem item) async {
-    markLocallyResolved(item.id);
+    markLocallyResolved(item.id, title: item.title);
     try {
       if (item.type == 'company') {
         final now = DateTime.now();
@@ -383,8 +451,12 @@ class ApprovalsQueueStore extends ChangeNotifier {
           );
         } catch (_) {}
 
-        // 6. Refresh CompanyManagementStore
+        // 6. Refresh CompanyManagementStore immediately in-memory
         try {
+          CompanyManagementStore.instance.updateCompanyStatusLocally(item.id, 'Active');
+          if (item.title.isNotEmpty) {
+            CompanyManagementStore.instance.updateCompanyStatusLocally(item.title, 'Active');
+          }
           CompanyManagementStore.instance.loadGlobalCompanies();
         } catch (_) {}
 
@@ -403,7 +475,7 @@ class ApprovalsQueueStore extends ChangeNotifier {
 
   /// Reject an item (either Enterprise company or Join Request)
   Future<bool> rejectItem(MasterApprovalItem item, {String? reason}) async {
-    markLocallyResolved(item.id);
+    markLocallyResolved(item.id, title: item.title);
     try {
       if (item.type == 'company') {
         // Mark enterprise as rejected / suspended in Firestore
@@ -418,12 +490,37 @@ class ApprovalsQueueStore extends ChangeNotifier {
         } catch (_) {}
 
         try {
+          final entByName = await _firestore.collection('enterprises').where('companyName', isEqualTo: item.title).get();
+          for (final doc in entByName.docs) {
+            await doc.reference.set({
+              'approvalStatus': 'rejected',
+              'status': 'Suspended',
+              'isSuspended': true,
+              'rejectionReason': reason ?? 'Declined by Master Admin.',
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          }
+        } catch (_) {}
+
+        try {
           await _firestore.collection('companies').doc(item.id).set({
             'approvalStatus': 'rejected',
             'status': 'suspended',
             'isSuspended': true,
             'updatedAt': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
+        } catch (_) {}
+
+        try {
+          final compByName = await _firestore.collection('companies').where('companyName', isEqualTo: item.title).get();
+          for (final doc in compByName.docs) {
+            await doc.reference.set({
+              'approvalStatus': 'rejected',
+              'status': 'suspended',
+              'isSuspended': true,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          }
         } catch (_) {}
 
         try {
@@ -449,8 +546,27 @@ class ApprovalsQueueStore extends ChangeNotifier {
               'updatedAt': FieldValue.serverTimestamp(),
             }, SetOptions(merge: true));
           }
+
+          final usersByTitle = await _firestore
+              .collection('users')
+              .where('companyName', isEqualTo: item.title)
+              .get();
+          for (final doc in usersByTitle.docs) {
+            await doc.reference.set({
+              'approvalStatus': 'rejected',
+              'status': 'suspended',
+              'isSuspended': true,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          }
         } catch (e) {
           debugPrint('[ApprovalsQueueStore] Error cascading user rejection: $e');
+        }
+
+        // Immediately update CompanyManagementStore in memory
+        CompanyManagementStore.instance.updateCompanyStatusLocally(item.id, 'Suspended');
+        if (item.title.isNotEmpty) {
+          CompanyManagementStore.instance.updateCompanyStatusLocally(item.title, 'Suspended');
         }
 
         // Notify Next.js live backend sync API
@@ -471,7 +587,7 @@ class ApprovalsQueueStore extends ChangeNotifier {
           );
         } catch (_) {}
 
-        _pendingItems.removeWhere((i) => i.id == item.id);
+        _pendingItems.removeWhere((i) => i.id == item.id || i.title.toLowerCase().trim() == item.title.toLowerCase().trim());
         notifyListeners();
         return true;
       } else if (item.rawJoinRequest != null) {

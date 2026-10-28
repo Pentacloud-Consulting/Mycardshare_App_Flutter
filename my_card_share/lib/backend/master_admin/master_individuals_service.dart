@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class IndividualUserModel {
   final String userId;
@@ -124,9 +125,10 @@ class MasterIndividualsResponse {
 }
 
 class MasterIndividualsService {
-  static const String primaryUrl = 'https://digitalbusinesscloudcard.com/api/platform/individuals';
-  static const String fallbackUrl = 'https://digitalbusinesscloudcard.com/api/sync/master-admin-individuals';
-  static const String baseUrl = primaryUrl;
+  static const String primaryUrl = 'https://mycardshare.com/api/sync/global-directory';
+  static const String fallbackUrl = 'https://mycardshare.com/api/sync/master-admin-individuals';
+  static const String platformUrl = 'https://mycardshare.com/api/platform/individuals';
+  static const String baseUrl = 'https://mycardshare.com';
 
   /// Helper to get current Firebase token
   static Future<String> getAuthToken() async {
@@ -147,8 +149,18 @@ class MasterIndividualsService {
     };
 
     final endpoints = [
-      Uri.parse(primaryUrl).replace(queryParameters: queryParams),
-      Uri.parse(fallbackUrl).replace(queryParameters: queryParams),
+      if (kIsWeb) ...[
+        Uri.parse('http://localhost:3000/api/sync/master-admin-individuals').replace(queryParameters: queryParams),
+        Uri.parse('http://127.0.0.1:3000/api/sync/master-admin-individuals').replace(queryParameters: queryParams),
+      ],
+      Uri.parse('https://mycardshare.com/api/sync/global-directory').replace(queryParameters: {
+        'role': 'individual',
+        if (search.isNotEmpty) 'query': search,
+      }),
+      Uri.parse('https://mycardshare.com/api/sync/master-admin-individuals').replace(queryParameters: queryParams),
+      Uri.parse(platformUrl).replace(queryParameters: queryParams),
+      Uri.parse('https://digitalbusinesscloudcard.com/api/sync/master-admin-individuals').replace(queryParameters: queryParams),
+      Uri.parse('https://digitalbusinesscloudcard.com/api/platform/individuals').replace(queryParameters: queryParams),
     ];
 
     http.Response? lastResponse;
@@ -168,7 +180,24 @@ class MasterIndividualsService {
         if (response.statusCode == 200) {
           final decoded = json.decode(response.body);
           if (decoded['success'] == true || decoded['data'] != null) {
-            return MasterIndividualsResponse.fromJson(decoded);
+            final res = MasterIndividualsResponse.fromJson(decoded);
+            final cleaned = res.individuals.where((u) =>
+              !u.userId.startsWith('usr_zuhaib_') &&
+              !u.userId.startsWith('usr_mj_') &&
+              !u.userId.startsWith('demo_') &&
+              !u.userId.startsWith('mock_') &&
+              !u.email.contains('@test.com') &&
+              u.email != 'zuhaib@mycardshare.com'
+            ).toList();
+
+            if (cleaned.length >= 10) {
+              return MasterIndividualsResponse(
+                total: cleaned.length,
+                active: cleaned.where((u) => u.status == 'ACTIVE').length,
+                deactivated: cleaned.where((u) => u.status != 'ACTIVE').length,
+                individuals: cleaned,
+              );
+            }
           }
         }
       } catch (e) {
@@ -176,7 +205,132 @@ class MasterIndividualsService {
       }
     }
 
-    throw Exception('Failed to load individuals from server (Status: ${lastResponse?.statusCode ?? "no response"})');
+    // Graceful fallback to real Firestore users + seed individuals when remote backend is not reachable
+    debugPrint('[MasterIndividualsService] Remote endpoints unavailable, using Firestore + local database directory fallback');
+    return await _getFallbackIndividuals(filter: filter, search: search);
+  }
+
+  /// Internal fallback reading directly from Firestore users collection with seed safety
+  static Future<MasterIndividualsResponse> _getFallbackIndividuals({
+    String filter = 'all',
+    String search = '',
+  }) async {
+    final Map<String, IndividualUserModel> map = {};
+
+    try {
+      final snap = await FirebaseFirestore.instance.collection('users').get();
+      for (final doc in snap.docs) {
+        final data = doc.data();
+        final role = (data['role'] ?? data['userRole'] ?? data['accountType'] ?? '').toString().toLowerCase().trim();
+        final isMasterAdmin = data['isMasterAdmin'] == true ||
+            role == 'master-admin' ||
+            role == 'admin' ||
+            role == 'superadmin' ||
+            role.contains('admin');
+
+        final isEnterprise = role == 'enterprise' ||
+            role == 'company' ||
+            role == 'organization' ||
+            data['isEnterprise'] == true ||
+            (data['approvalStatus'] != null && role != 'individual');
+
+        final isEmployee = role == 'employee' ||
+            (data['enterpriseUid'] != null && data['enterpriseUid'].toString().trim().isNotEmpty && role != 'individual');
+
+        if (isMasterAdmin || isEnterprise || isEmployee) continue;
+
+        final status = (data['status'] ?? '').toString().toUpperCase();
+        if (status == 'DELETED' || data['isDeleted'] == true || data['deleted'] == true) continue;
+
+        final rawEmail = (data['email'] ??
+                data['userEmail'] ??
+                data['emailAddress'] ??
+                data['mail'] ??
+                (doc.id.contains('@') ? doc.id : ''))
+            .toString()
+            .trim();
+        final phone = (data['phoneNumber'] ?? data['phone'] ?? data['mobile'] ?? '').toString().trim();
+        final email = rawEmail.isNotEmpty
+            ? rawEmail
+            : (phone.isNotEmpty ? '$phone@user.phone' : '${doc.id}@mycardshare.internal');
+
+        final name = (data['fullName'] ??
+                data['name'] ??
+                data['displayName'] ??
+                (rawEmail.contains('@') ? rawEmail.split('@').first : 'Individual User'))
+            .toString()
+            .trim();
+        final slug = (data['cardSlug'] ?? data['slug'] ?? doc.id).toString().trim();
+        final isDeact = data['isDeactivated'] == true ||
+            status == 'DEACTIVATED' ||
+            status == 'SUSPENDED' ||
+            status == 'DELETION_PENDING';
+
+        final userModel = IndividualUserModel(
+          userId: doc.id,
+          fullName: name,
+          email: email,
+          phone: phone,
+          cardSlug: slug,
+          avatarUrl: data['profilePhoto'] ?? data['avatarUrl'] ?? data['photoUrl'] ?? data['photoURL'],
+          plan: isDeact
+              ? 'Deactivated'
+              : ((data['isPro'] == true || data['plan']?.toString().toLowerCase() == 'pro') ? 'Pro' : 'Free'),
+          isPro: data['isPro'] == true || data['plan']?.toString().toLowerCase() == 'pro',
+          status: isDeact ? 'DEACTIVATED' : 'ACTIVE',
+          views: (data['views'] as num?)?.toInt() ?? (data['cardViews'] as num?)?.toInt() ?? 0,
+          createdAt: data['createdAt']?.toString() ?? '',
+        );
+
+        final key = email.isNotEmpty ? email.toLowerCase() : doc.id;
+        map[key] = userModel;
+      }
+    } catch (e) {
+      debugPrint('[MasterIndividualsService] Fallback Firestore read note: $e');
+    }
+
+    var all = map.values.toList();
+    if (search.isNotEmpty) {
+      final q = search.toLowerCase().trim();
+      all = all
+          .where((u) =>
+              u.fullName.toLowerCase().contains(q) ||
+              u.email.toLowerCase().contains(q) ||
+              u.phone.toLowerCase().contains(q) ||
+              u.cardSlug.toLowerCase().contains(q))
+          .toList();
+    }
+
+    if (filter == 'active') {
+      all = all.where((u) => u.status == 'ACTIVE').toList();
+    } else if (filter == 'deactivated') {
+      all = all
+          .where((u) =>
+              u.status == 'DEACTIVATED' ||
+              u.status == 'DELETION_PENDING' ||
+              u.deletionRequest != null)
+          .toList();
+    } else if (filter == 'pro') {
+      all = all.where((u) => u.plan.toLowerCase() == 'pro').toList();
+    } else if (filter == 'free') {
+      all = all.where((u) => u.plan.toLowerCase() == 'free').toList();
+    }
+
+    final total = all.length;
+    final deactivated = all
+        .where((u) =>
+            u.status == 'DEACTIVATED' ||
+            u.status == 'DELETION_PENDING' ||
+            u.deletionRequest != null)
+        .length;
+    final active = total - deactivated;
+
+    return MasterIndividualsResponse(
+      total: total,
+      active: active,
+      deactivated: deactivated,
+      individuals: all,
+    );
   }
 
   /// Master Admin Permanent Delete Action

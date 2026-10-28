@@ -32,16 +32,49 @@ class MasterCompanyModel {
   }
 
   factory MasterCompanyModel.fromMap(String id, Map<String, dynamic> data) {
+    final approvalStatus = (data['approvalStatus'] as String? ?? '').toLowerCase().trim();
+    final statusStr = (data['status'] as String? ?? '').toLowerCase().trim();
+    final isSuspended = data['isSuspended'] == true || statusStr == 'suspended' || approvalStatus == 'rejected';
+
+    String resolvedStatus = 'Active';
+    if (isSuspended) {
+      resolvedStatus = 'Suspended';
+    } else if (approvalStatus == 'approved' || statusStr == 'active') {
+      resolvedStatus = 'Active';
+    } else if (approvalStatus == 'pending' || statusStr == 'pending') {
+      resolvedStatus = 'Pending';
+    }
+
+    final rawDomain = (data['domain'] ??
+            data['customDomain'] ??
+            data['website'] ??
+            data['websiteUrl'] ??
+            '')
+        .toString()
+        .trim();
+    final rawLogo = data['logoUrl'] ??
+        data['companyLogo'] ??
+        data['logo'] ??
+        data['avatarUrl'] ??
+        data['profilePhoto'] ??
+        data['photoUrl'] ??
+        data['photoURL'] ??
+        data['brandLogo'] ??
+        data['imageUrl'] ??
+        data['image'] ??
+        data['icon'];
+    final resolvedLogo = (rawLogo is String && rawLogo.trim().isNotEmpty) ? rawLogo.trim() : null;
+
     return MasterCompanyModel(
       id: id,
       name: data['companyName'] ?? data['name'] ?? 'Enterprise Company',
-      email: data['email'] ?? '',
+      email: data['email'] ?? data['adminEmail'] ?? '',
       plan: data['planName'] ?? data['plan'] ?? 'Enterprise Pro',
       employeeCount: (data['employeeCount'] as num?)?.toInt() ?? 
                      (data['employeeLimit'] is int ? data['employeeLimit'] : 0),
-      status: (data['status'] as String?)?.capitalizeFirst() ?? 'Active',
-      domain: data['domain'] ?? data['customDomain'] ?? '${id.toLowerCase()}.mycardshare.com',
-      logoUrl: data['logoUrl'],
+      status: resolvedStatus,
+      domain: rawDomain.isNotEmpty ? rawDomain : '${id.toLowerCase()}.mycardshare.com',
+      logoUrl: resolvedLogo,
     );
   }
 }

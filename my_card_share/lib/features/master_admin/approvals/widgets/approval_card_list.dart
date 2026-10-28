@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../backend/master_admin/approvals/approvals_queue_store.dart';
+import '../../companies/widgets/company_logo_avatar.dart';
 
 class ApprovalCardList extends StatelessWidget {
   const ApprovalCardList({super.key});
@@ -152,46 +153,11 @@ class ApprovalCardList extends StatelessWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0052FF).withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: const Color(0xFF0052FF).withValues(alpha: 0.3),
-                            width: 1,
-                          ),
-                        ),
-                        child: ClipOval(
-                          child: req.logoUrl != null && req.logoUrl!.isNotEmpty
-                              ? Image.network(
-                                  req.logoUrl!,
-                                  width: 44,
-                                  height: 44,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, error, stackTrace) => Center(
-                                    child: Text(
-                                      initials,
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w900,
-                                        color: Color(0xFF0052FF),
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              : Center(
-                                  child: Text(
-                                    initials,
-                                    style: const TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w900,
-                                      color: Color(0xFF0052FF),
-                                    ),
-                                  ),
-                                ),
-                        ),
+                      CompanyLogoAvatar(
+                        logoUrl: req.logoUrl,
+                        companyName: req.title,
+                        domain: req.domain,
+                        size: 44,
                       ),
                       const SizedBox(width: 12),
 

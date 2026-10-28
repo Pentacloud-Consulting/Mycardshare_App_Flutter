@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'company_logo_avatar.dart';
 
 class CompanyDetailHeader extends StatelessWidget {
   final String companyName;
@@ -39,50 +40,10 @@ class CompanyDetailHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Large Company Logo Circle
-          Container(
-            width: 58,
-            height: 58,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF0052FF), Color(0xFF38BDF8)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF0052FF).withValues(alpha: 0.25),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: logoUrl != null && logoUrl!.trim().isNotEmpty
-                ? Image.network(
-                    logoUrl!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Center(
-                      child: Text(
-                        logoInitials,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  )
-                : Center(
-                    child: Text(
-                      logoInitials,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+          CompanyLogoAvatar(
+            logoUrl: logoUrl,
+            companyName: companyName,
+            size: 58,
           ),
           const SizedBox(width: 16),
 

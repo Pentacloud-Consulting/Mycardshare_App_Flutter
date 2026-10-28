@@ -61,12 +61,44 @@ class MasterIndividualModel {
             ? 'Pro'
             : (rawPlan.isNotEmpty && rawPlan.toLowerCase() != 'pro' ? rawPlan : 'Free'));
 
+    final rawEmail = (data['email'] ??
+            data['userEmail'] ??
+            data['emailAddress'] ??
+            data['mail'] ??
+            (id.contains('@') ? id : ''))
+        .toString()
+        .trim();
+    final resolvedPhone = (data['phoneNumber'] ??
+            data['phone'] ??
+            data['mobile'] ??
+            data['contactNumber'] ??
+            '')
+        .toString()
+        .trim();
+    final resolvedEmail = rawEmail.isNotEmpty
+        ? rawEmail
+        : (resolvedPhone.isNotEmpty ? '$resolvedPhone@user.phone' : '$id@mycardshare.internal');
+    final resolvedName = (data['fullName'] ??
+            data['name'] ??
+            data['displayName'] ??
+            data['userName'] ??
+            (rawEmail.contains('@')
+                ? rawEmail.split('@').first
+                : (resolvedPhone.isNotEmpty ? resolvedPhone : 'Individual User')))
+        .toString()
+        .trim();
+    final resolvedAvatar = data['profilePhoto'] ??
+        data['avatarUrl'] ??
+        data['photoUrl'] ??
+        data['photoURL'] ??
+        data['picture'];
+
     return MasterIndividualModel(
       id: id,
-      name: data['fullName'] ?? data['name'] ?? data['email']?.toString().split('@').first ?? 'Individual User',
-      email: data['email'] ?? '',
-      phone: data['phoneNumber'] ?? data['phone'] ?? '',
-      avatarUrl: data['profilePhoto'] ?? data['avatarUrl'],
+      name: resolvedName,
+      email: resolvedEmail,
+      phone: resolvedPhone,
+      avatarUrl: resolvedAvatar,
       plan: resolvedPlan,
       status: isDeletionPending ? 'DELETION_PENDING' : (isDeact ? 'DEACTIVATED' : 'ACTIVE'),
       cardSlug: data['cardSlug'] ?? data['slug'] ?? id,

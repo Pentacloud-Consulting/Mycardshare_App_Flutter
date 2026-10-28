@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'models/master_individual_model.dart';
 import '../master_individuals_service.dart';
+import '../../individual/multiple_store/individual_multi_store.dart';
+import '../../individual/profile/individual_profile_store.dart';
 
 /// State store managing real individual card users directory for Master Admin
 /// Seamlessly synchronizes across Firestore and Next.js /api/sync/master-admin-individuals
@@ -65,21 +67,89 @@ class IndividualsDirectoryStore extends ChangeNotifier {
   /// Stream real individual users from users collection with immediate local mapping
   Stream<List<MasterIndividualModel>> streamIndividuals() {
     return _firestore.collection('users').snapshots().map((snap) {
-      final List<MasterIndividualModel> list = [];
+      final Map<String, MasterIndividualModel> byKey = {};
 
       for (final doc in snap.docs) {
         final data = doc.data();
-        final role = (data['role'] ?? '').toString().toLowerCase();
-        final companyId = data['companyId'];
 
-        // Include individual users or users with no corporate company assigned
-        if (role == 'individual' || role == 'user' || companyId == null || role.isEmpty) {
-          final model = MasterIndividualModel.fromMap(doc.id, data);
-          list.add(model);
+        // 1. Resolve role
+        final role = (data['role'] ?? data['userRole'] ?? data['accountType'] ?? '').toString().toLowerCase().trim();
+        final isMasterAdmin = data['isMasterAdmin'] == true ||
+            role == 'master-admin' ||
+            role == 'admin' ||
+            role == 'superadmin' ||
+            role.contains('admin');
+
+        // Only explicitly registered enterprise/company accounts are enterprises!
+        // NOTE: An individual user entering their workplace 'companyName' on their card does NOT make them an enterprise!
+        final isEnterprise = role == 'enterprise' ||
+            role == 'company' ||
+            role == 'organization' ||
+            data['isEnterprise'] == true ||
+            (data['approvalStatus'] != null && role != 'individual');
+
+        // Employees are accounts specifically attached to an enterprise
+        final isEmployee = role == 'employee' ||
+            (data['enterpriseUid'] != null && data['enterpriseUid'].toString().trim().isNotEmpty && role != 'individual');
+
+        if (isMasterAdmin || isEnterprise || isEmployee) {
+          continue; // 🚫 Strict block: Never show Enterprise, Employee, or Master Admin here
+        }
+
+        // 2. Exclude permanently deleted accounts (keep deactivated/pending deletion)
+        final status = (data['status'] ?? '').toString().toUpperCase();
+        if (status == 'DELETED' || data['isDeleted'] == true || data['deleted'] == true) {
+          continue;
+        }
+
+        // 3. Resolve email or identifier
+        String email = (data['email'] ??
+                data['userEmail'] ??
+                data['emailAddress'] ??
+                data['mail'] ??
+                '')
+            .toString()
+            .trim()
+            .toLowerCase();
+
+        if (email.isEmpty && doc.id.contains('@')) {
+          email = doc.id.trim().toLowerCase();
+        }
+
+        final phone = (data['phoneNumber'] ?? data['phone'] ?? data['mobile'] ?? '').toString().trim();
+        final resolvedEmail = email.isNotEmpty
+            ? email
+            : (phone.isNotEmpty ? '$phone@user.phone' : '${doc.id}@mycardshare.internal');
+
+        final model = MasterIndividualModel.fromMap(doc.id, {
+          ...data,
+          if (email.isEmpty) 'email': resolvedEmail,
+        });
+
+        // 4. Deduplicate by email or doc.id
+        final key = email.isNotEmpty ? email : doc.id;
+        if (!byKey.containsKey(key)) {
+          byKey[key] = model;
+        } else {
+          final existing = byKey[key]!;
+          final isExistingSanitized = existing.id == key.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+          final isNewDocUid = doc.id != key.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+
+          if (isExistingSanitized && isNewDocUid) {
+            byKey[key] = model;
+          } else if (model.avatarUrl != null && existing.avatarUrl == null) {
+            byKey[key] = model;
+          }
         }
       }
 
+
+
+      final list = byKey.values.toList();
       _users = list;
+      _totalCount = list.length;
+      _activeCount = list.where((u) => !u.isDeactivated && u.status != 'DELETION_PENDING').length;
+      _deactivatedCount = list.where((u) => u.isDeactivated || u.status == 'DELETION_PENDING').length;
       return list;
     });
   }

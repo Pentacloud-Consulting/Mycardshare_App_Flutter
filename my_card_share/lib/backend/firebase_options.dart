@@ -44,7 +44,7 @@ class DefaultFirebaseOptions {
   // ── Web ─────────────────────────────────────────────────────────────────────
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyDdd6s5MsYSk-TRQyG-NbhVuvebSyIKbUk',
-    appId: '1:943022881240:web:YOUR_WEB_APP_ID',
+    appId: '1:943022881240:web:5a64941dbeec389b2e5aad',
     messagingSenderId: '943022881240',
     projectId: 'business-card-64459',
     storageBucket: 'business-card-64459.firebasestorage.app',

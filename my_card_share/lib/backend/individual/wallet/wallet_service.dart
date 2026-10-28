@@ -463,72 +463,14 @@ class WalletService {
   /// 🌐 Generates official Samsung Wallet Clip / ATW format URL
   static String generateSamsungWalletSaveUrl(Map<String, dynamic> cardData) {
     final slug = (cardData['cardSlug'] ?? 'card').toString().replaceAll(RegExp(r'[^a-zA-Z0-9_\-\.]'), '_');
-    const partnerId = '4138380922850138240';
     const certId = 'zAtI';
     const cardId = '3ir7iadicu000';
-    final cardUrl = cardData['publicCardUrl'] ?? 'https://digitalbusinesscloudcard.com/card/$slug';
-    final fullName = cardData['fullName'] ?? cardData['name'] ?? 'Card Member';
-    final companyName = cardData['companyName'] ?? cardData['company'] ?? 'My Card Share';
-    final jobTitle = cardData['jobTitle'] ?? cardData['title'] ?? '';
-    final phone = cardData['workPhone'] ?? cardData['phone'] ?? '';
-    final email = cardData['workEmail'] ?? cardData['email'] ?? '';
-    final website = cardData['website'] ?? '';
-    final address = cardData['address'] ?? cardData['location'] ?? '';
-    final tagline = cardData['tagline'] ?? cardData['bio'] ?? '';
-    final avatarUrl = cardData['avatarUrl'] ?? '';
+    final refId = (cardData['refId'] != null && cardData['refId'].toString().isNotEmpty)
+        ? cardData['refId'].toString()
+        : 'ref-$slug-${DateTime.now().millisecondsSinceEpoch}';
 
-    final cardDetails = {
-      'title': fullName,
-      'subtitle': jobTitle,
-      'providerName': companyName,
-      if (avatarUrl.isNotEmpty) 'logo': avatarUrl,
-      'attributes': {
-        'title': fullName,
-        'subtitle': jobTitle,
-        'providerName': companyName,
-        'name': fullName,
-        'role': jobTitle,
-        'company': companyName,
-        'email': email,
-        'phone': phone,
-        'website': website,
-        'address': address,
-        'url': cardUrl,
-        'text1': email,
-        'text2': phone,
-        'text3': website,
-        'text4': address,
-        'text5': companyName,
-        'text6': tagline,
-        'barcode': cardUrl,
-        'barcodeType': 'QR',
-      },
-    };
-
-    final claims = {
-      'iss': partnerId,
-      'aud': 'samsungwallet',
-      'serviceId': certId,
-      'cardId': cardId,
-      'iat': DateTime.now().millisecondsSinceEpoch ~/ 1000,
-      'exp': (DateTime.now().millisecondsSinceEpoch ~/ 1000) + 315360000,
-      'card': cardDetails,
-    };
-
-    final headerBase64 = base64Url.encode(utf8.encode(jsonEncode({'alg': 'none', 'typ': 'JWT'}))).replaceAll('=', '');
-    final payloadBase64 = base64Url.encode(utf8.encode(jsonEncode(claims))).replaceAll('=', '');
-    final token = '$headerBase64.$payloadBase64.';
-
-    final pdataPayload = {
-      'serviceId': certId,
-      'cardId': cardId,
-      'partnerId': partnerId,
-      'card': cardDetails,
-    };
-
-    final encodedPdata = Uri.encodeComponent(jsonEncode(pdataPayload));
-
-    return 'https://a.swallet.link/atw/v3/$certId/$cardId#Clip?cdata=$token&pdata=$encodedPdata';
+    // Official Samsung Wallet ATW Data Fetch universal link
+    return 'https://a.swallet.link/atw/v3/$certId/$cardId#Clip?pdata=${Uri.encodeComponent(refId)}';
   }
 
   // ─────────────────────────────────────────────────────────────

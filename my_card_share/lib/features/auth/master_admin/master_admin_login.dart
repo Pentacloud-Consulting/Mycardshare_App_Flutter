@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_style_widgets.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../backend/master_admin/login/master_admin_login.dart';
+import '../../../backend/app view/app_view_auth_gate.dart';
 
 class MasterAdminLoginScreen extends ConsumerStatefulWidget {
   const MasterAdminLoginScreen({super.key});
@@ -57,6 +58,7 @@ class _MasterAdminLoginScreenState extends ConsumerState<MasterAdminLoginScreen>
 
     if (response.userModel != null) {
       ref.read(authProvider.notifier).login(response.userModel!);
+      await AppViewAuthGate.instance.savePersistentSession(response.userModel!);
     }
 
     if (mounted) {

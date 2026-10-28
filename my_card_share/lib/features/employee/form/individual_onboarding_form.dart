@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -1087,10 +1088,14 @@ class _IndividualOnboardingFormScreenState
           _buildTextField(
             controller: _phoneController,
             label: 'Phone Number *',
-            hint: 'e.g. +91 98765 43210',
+            hint: 'e.g. 9876543210',
             icon: Icons.phone_outlined,
             keyboardType: TextInputType.phone,
-            maxLength: 15,
+            maxLength: 10,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(10),
+            ],
             errorText: _phoneError,
             onChanged: (val) {
               if (val.trim().isNotEmpty) {
@@ -1537,6 +1542,7 @@ class _IndividualOnboardingFormScreenState
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
     int? maxLength,
+    List<TextInputFormatter>? inputFormatters,
     String? errorText,
     ValueChanged<String>? onChanged,
   }) {
@@ -1552,6 +1558,7 @@ class _IndividualOnboardingFormScreenState
           controller: controller,
           keyboardType: keyboardType,
           maxLength: maxLength,
+          inputFormatters: inputFormatters,
           onChanged: onChanged,
           style: const TextStyle(fontSize: 14.5, color: Color(0xFF0F172A)),
           decoration: InputDecoration(

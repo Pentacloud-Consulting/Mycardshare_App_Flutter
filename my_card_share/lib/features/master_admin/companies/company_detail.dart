@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../backend/master_admin/companies/company_management_store.dart';
 import '../../../backend/master_admin/companies/models/master_company_model.dart';
@@ -26,6 +27,7 @@ class MasterAdminCompanyDetailScreen extends StatefulWidget {
 class _MasterAdminCompanyDetailScreenState extends State<MasterAdminCompanyDetailScreen> {
   bool _isApproving = false;
   bool _isRejecting = false;
+  bool _isDeleting = false;
 
   Future<void> _handleApprove({
     required String companyId,
@@ -45,6 +47,13 @@ class _MasterAdminCompanyDetailScreenState extends State<MasterAdminCompanyDetai
       );
 
       final ok = await ApprovalsQueueStore.instance.approveItem(item);
+
+      if (ok) {
+        CompanyManagementStore.instance.updateCompanyStatusLocally(companyId, 'Active');
+        if (companyName.isNotEmpty) {
+          CompanyManagementStore.instance.updateCompanyStatusLocally(companyName, 'Active');
+        }
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
@@ -119,6 +128,13 @@ class _MasterAdminCompanyDetailScreenState extends State<MasterAdminCompanyDetai
 
       final ok = await ApprovalsQueueStore.instance.rejectItem(item);
 
+      if (ok) {
+        CompanyManagementStore.instance.updateCompanyStatusLocally(companyId, 'Suspended');
+        if (companyName.isNotEmpty) {
+          CompanyManagementStore.instance.updateCompanyStatusLocally(companyName, 'Suspended');
+        }
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -137,6 +153,93 @@ class _MasterAdminCompanyDetailScreenState extends State<MasterAdminCompanyDetai
     } finally {
       if (mounted) {
         setState(() => _isRejecting = false);
+      }
+    }
+  }
+
+  Future<void> _handleDeleteCompany({
+    required String companyId,
+    required String companyName,
+    required String adminEmail,
+  }) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: const [
+            Icon(Icons.warning_rounded, color: Color(0xFFDC2626), size: 24),
+            SizedBox(width: 8),
+            Text("Delete Company?", style: TextStyle(fontWeight: FontWeight.w800)),
+          ],
+        ),
+        content: Text(
+          "Are you sure you want to permanently delete '$companyName'?\n\nAll company cards, workforce accounts, and employee login access will be permanently revoked. This action cannot be undone.",
+          style: const TextStyle(color: Color(0xFF475569), fontSize: 13.5, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text("Cancel", style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text("Delete Permanently", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _isDeleting = true);
+
+    try {
+      final ok = await CompanyManagementStore.instance.deleteCompanyPermanently(
+        companyId: companyId,
+        companyName: companyName,
+        adminEmail: adminEmail,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(ok ? Icons.check_circle_rounded : Icons.error_rounded, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    ok
+                        ? "Company '$companyName' has been permanently deleted."
+                        : "Failed to delete company. Please check connection.",
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: ok ? const Color(0xFF0F172A) : const Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+
+        if (ok) {
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go('/master-admin/companies');
+          }
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isDeleting = false);
       }
     }
   }
@@ -177,12 +280,33 @@ class _MasterAdminCompanyDetailScreenState extends State<MasterAdminCompanyDetai
 
         final planName = data['planName'] ?? data['plan'] ?? (cachedCompany?.plan.isNotEmpty == true ? cachedCompany!.plan : (activeProfile?.plan.isNotEmpty == true ? activeProfile!.plan : 'Enterprise Pro'));
         
-        final rawStatus = data['status'] ?? data['approvalStatus'] ?? cachedCompany?.status ?? 'Active';
-        final statusText = rawStatus.toString().capitalizeFirst();
-        
-        final isPending = statusText.toLowerCase() == 'pending' ||
-            (data['approvalStatus'] as String? ?? '').toLowerCase() == 'pending' ||
-            (cachedCompany?.status.toLowerCase() == 'pending');
+        final firestoreApproval = (data['approvalStatus'] as String? ?? '').toLowerCase().trim();
+        final firestoreStatus = (data['status'] as String? ?? '').toLowerCase().trim();
+        final cachedStatus = (cachedCompany?.status ?? '').toLowerCase().trim();
+
+        // If explicitly approved or active, it is NOT pending
+        final isApproved = firestoreApproval == 'approved' ||
+            firestoreStatus == 'active' ||
+            (firestoreApproval != 'pending' && firestoreStatus != 'pending' && cachedStatus == 'active');
+
+        final isSuspended = data['isSuspended'] == true ||
+            firestoreStatus == 'suspended' ||
+            firestoreApproval == 'rejected' ||
+            cachedStatus == 'suspended';
+
+        final isPending = !isApproved && !isSuspended && (
+          firestoreApproval == 'pending' ||
+          firestoreStatus == 'pending' ||
+          (cachedStatus == 'pending' && firestoreApproval.isEmpty && firestoreStatus.isEmpty)
+        );
+
+        final statusText = isSuspended
+            ? 'Suspended'
+            : (isApproved
+                ? 'Active'
+                : (isPending
+                    ? 'Pending'
+                    : (firestoreStatus.isNotEmpty ? firestoreStatus.capitalizeFirst() : 'Active')));
 
         final sinceText = data['createdAt'] != null
             ? "Since ${(data['createdAt'] is Timestamp ? (data['createdAt'] as Timestamp).toDate().year : '2026')}"
@@ -440,17 +564,65 @@ class _MasterAdminCompanyDetailScreenState extends State<MasterAdminCompanyDetai
 
                   // 5. Danger Zone (Suspend Company & Delete Company buttons with real actions)
                   CompanyDetailDangerZone(
+                    isSuspended: statusText.toLowerCase() == 'suspended',
                     onSuspend: () async {
-                      final isSuspended = statusText.toLowerCase() == 'suspended';
+                      final isCurrentlySuspended = statusText.toLowerCase() == 'suspended';
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          title: Row(
+                            children: [
+                              Icon(
+                                isCurrentlySuspended ? Icons.play_circle_fill_rounded : Icons.pause_circle_filled_rounded,
+                                color: isCurrentlySuspended ? const Color(0xFF10B981) : const Color(0xFFD97706),
+                                size: 24,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                isCurrentlySuspended ? "Reactivate Company?" : "Suspend Company?",
+                                style: const TextStyle(fontWeight: FontWeight.w800),
+                              ),
+                            ],
+                          ),
+                          content: Text(
+                            isCurrentlySuspended
+                                ? "Are you sure you want to reactivate '$companyName'? Team members will regain full workspace and digital card access."
+                                : "Are you sure you want to suspend '$companyName'? All team members will be temporarily locked out until reactivated.",
+                            style: const TextStyle(color: Color(0xFF475569), fontSize: 13.5, height: 1.4),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(ctx).pop(false),
+                              child: const Text("Cancel", style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
+                            ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: isCurrentlySuspended ? const Color(0xFF10B981) : const Color(0xFFD97706),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              onPressed: () => Navigator.of(ctx).pop(true),
+                              child: Text(
+                                isCurrentlySuspended ? "Reactivate Workspace" : "Suspend Workspace",
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirmed != true) return;
+
                       final ok = await CompanyManagementStore.instance.toggleSuspendCompany(
                         effectiveId,
-                        !isSuspended,
+                        !isCurrentlySuspended,
+                        companyName: companyName,
                       );
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(ok
-                                ? "Company ${isSuspended ? 'activated' : 'suspended'} successfully"
+                                ? "Company '$companyName' ${isCurrentlySuspended ? 'reactivated' : 'suspended'} successfully"
                                 : "Failed to update company status"),
                             backgroundColor: ok ? const Color(0xFF10B981) : Colors.redAccent,
                             behavior: SnackBarBehavior.floating,
@@ -458,6 +630,13 @@ class _MasterAdminCompanyDetailScreenState extends State<MasterAdminCompanyDetai
                         );
                       }
                     },
+                    onDelete: _isDeleting
+                        ? null
+                        : () => _handleDeleteCompany(
+                              companyId: effectiveId,
+                              companyName: companyName,
+                              adminEmail: adminEmail,
+                            ),
                   ),
 
                   const SizedBox(height: 30),

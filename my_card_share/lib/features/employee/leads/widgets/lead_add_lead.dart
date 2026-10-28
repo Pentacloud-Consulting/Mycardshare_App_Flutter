@@ -1,5 +1,6 @@
 import '../../../../core/validators/contact_validator.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../backend/employee_join/lead/add_lead.dart';
 
@@ -857,7 +858,13 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
           keyboardType: keyboardType,
           maxLines: maxLines,
           style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A)),
-          maxLength: keyboardType == TextInputType.phone ? 20 : null,
+          maxLength: keyboardType == TextInputType.phone ? 10 : null,
+          inputFormatters: keyboardType == TextInputType.phone
+              ? [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(10),
+                ]
+              : null,
           validator: validator ??
               (val) {
                 if (required && (val == null || val.trim().isEmpty)) {

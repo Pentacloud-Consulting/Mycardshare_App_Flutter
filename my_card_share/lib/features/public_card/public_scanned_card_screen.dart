@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../backend/individual/scan_profile_view/scan_profile_view.dart';
 import '../../backend/contact/save_contact_service.dart';
 import '../../backend/individual/wallet/wallet_service.dart';
+import '../../backend/individual/wallet/samsung_wallet.dart';
 import '../../backend/individual/lead/active_lead.dart';
 import '../../backend/individual/social_redirect/social_redirect_service.dart';
 
@@ -123,7 +124,7 @@ class _PublicScannedCardScreenState extends State<PublicScannedCardScreen> {
   }
 
   void _onAddToSamsungWallet(PublicProfileData profile) {
-    WalletService.addToSamsungWallet(publicProfile: profile, context: context);
+    SamsungWalletService.instance.saveToSamsungWallet(context, publicProfile: profile);
   }
 
   void _onExchangeContact(PublicProfileData profile) {

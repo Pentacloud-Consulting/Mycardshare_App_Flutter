@@ -101,7 +101,7 @@ class RouterNotifier extends ChangeNotifier {
 
     // When splash animation has completed, automatically redirect root / splash to the logged-in dashboard
     if (path == '/splash' || path == '/') {
-      if (!loggedIn) return '/onboarding';
+      if (!loggedIn) return '/login';
       if (cleanRole == 'master-admin') return '/master-admin/dashboard';
       if (cleanRole == 'enterprise') return '/enterprise/dashboard';
       return '/portal'; // employee or individual
@@ -157,7 +157,7 @@ class RouterNotifier extends ChangeNotifier {
       return null; // no guard needed
     }
 
-    if (!loggedIn) return '/onboarding'; // unauthenticated users should see onboarding first
+    if (!loggedIn) return '/login'; // unauthenticated users should see login screen
 
     if (path.startsWith('/master-admin') && cleanRole != 'master-admin') {
       return '/portal';

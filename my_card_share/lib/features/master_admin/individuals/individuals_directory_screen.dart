@@ -88,43 +88,52 @@ class _MasterAdminIndividualsScreenState
             final storeUsers = snapshot.data ?? IndividualsDirectoryStore.instance.users;
 
             // Merge storeUsers (Firestore real-time & merged deletions) with backendData
+            // ⚡ KEY BY NORMALIZED EMAIL OR ID TO GUARANTEE ZERO DUPLICATES!
             final Map<String, MasterIndividualModel> mergedUsersMap = {};
             for (final u in storeUsers) {
+              final cleanEmail = u.email.trim().toLowerCase();
+              final key = cleanEmail.isNotEmpty ? cleanEmail : u.id;
+              if (key.isEmpty) continue;
               if (!_locallyDeletedIds.contains(u.id) &&
-                  !_locallyDeletedIds.contains(u.email.toLowerCase()) &&
-                  !_locallyDeletedIds.contains(u.name.toLowerCase()) &&
+                  (cleanEmail.isEmpty || !_locallyDeletedIds.contains(cleanEmail)) &&
                   u.status.toUpperCase() != 'DELETED') {
-                mergedUsersMap[u.id] = u;
+                mergedUsersMap[key] = u;
               }
             }
             if (_backendData != null && _backendData!.individuals.isNotEmpty) {
               for (final u in _backendData!.individuals) {
+                final cleanEmail = u.email.trim().toLowerCase();
+                final key = cleanEmail.isNotEmpty ? cleanEmail : u.userId;
+                if (key.isEmpty) continue;
                 if (_locallyDeletedIds.contains(u.userId) ||
-                    _locallyDeletedIds.contains(u.email.toLowerCase()) ||
-                    _locallyDeletedIds.contains(u.fullName.toLowerCase())) {
+                    (cleanEmail.isNotEmpty && _locallyDeletedIds.contains(cleanEmail))) {
                   continue;
                 }
                 final model = MasterIndividualModel.fromIndividualUserModel(u);
-                if (mergedUsersMap.containsKey(model.id) && mergedUsersMap[model.id]!.isDeactivated) {
+                if (!mergedUsersMap.containsKey(key)) {
+                  mergedUsersMap[key] = model;
+                } else if (mergedUsersMap[key]!.isDeactivated) {
                   continue; // Preserve deactivated & deletion pending state
                 }
-                mergedUsersMap[model.id] = model;
               }
             }
+
+
             List<MasterIndividualModel> displayUsers = mergedUsersMap.values
-                .where((u) => !_locallyDeletedIds.contains(u.id) &&
-                    !_locallyDeletedIds.contains(u.email.toLowerCase()) &&
-                    !_locallyDeletedIds.contains(u.name.toLowerCase()) &&
+                .where((u) =>
+                    !_locallyDeletedIds.contains(u.id) &&
+                    (u.email.isEmpty || !_locallyDeletedIds.contains(u.email.toLowerCase())) &&
                     u.status.toUpperCase() != 'DELETED')
                 .toList();
 
             // Ensure any users in pending deletions are marked as Deactivated / Deletion Pending
             final pendingIds = pendingDeletions.map((d) => (d['userId'] ?? d['id'] ?? '').toString()).toSet();
+            final pendingEmails = pendingDeletions.map((d) => (d['userEmail'] ?? '').toString().toLowerCase()).toSet();
             for (int i = 0; i < displayUsers.length; i++) {
               final user = displayUsers[i];
-              if (pendingIds.contains(user.id)) {
+              if (pendingIds.contains(user.id) || pendingEmails.contains(user.email.toLowerCase())) {
                 final dData = pendingDeletions.firstWhere(
-                  (d) => (d['userId'] ?? d['id']) == user.id,
+                  (d) => (d['userId'] ?? d['id']) == user.id || (d['userEmail'] ?? '').toString().toLowerCase() == user.email.toLowerCase(),
                   orElse: () => <String, dynamic>{},
                 );
                 displayUsers[i] = MasterIndividualModel(
@@ -146,24 +155,26 @@ class _MasterAdminIndividualsScreenState
             }
 
             // Also append any pending deletions that might not be in the backend list
-            final existingIds = displayUsers.map((u) => u.id).toSet();
+            final existingEmails = displayUsers.map((u) => u.email.toLowerCase()).toSet();
             for (final d in pendingDeletions) {
+              final dEmail = (d['userEmail'] ?? '').toString().toLowerCase();
               final dId = (d['userId'] ?? d['id'] ?? '').toString();
-              if (dId.isNotEmpty && !existingIds.contains(dId)) {
+              if (dEmail.isNotEmpty && !existingEmails.contains(dEmail)) {
                 displayUsers.add(
                   MasterIndividualModel(
-                    id: dId,
+                    id: dId.isNotEmpty ? dId : dEmail,
                     name: (d['userName'] ?? 'User').toString(),
-                    email: (d['userEmail'] ?? '').toString(),
+                    email: dEmail,
                     plan: 'Deactivated',
                     status: 'DELETION_PENDING',
-                    cardSlug: dId,
+                    cardSlug: dId.isNotEmpty ? dId : dEmail,
                     views: 0,
                     isDeactivated: true,
                     deletionReason: d['reason'] ?? 'User requested account deletion',
                     deletionRequest: d,
                   ),
                 );
+                existingEmails.add(dEmail);
               }
             }
 

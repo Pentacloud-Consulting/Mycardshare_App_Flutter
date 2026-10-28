@@ -62,7 +62,7 @@ class CompanyManagementStore extends ChangeNotifier {
     }
   }
 
-  /// Real-time stream of all registered enterprises with global fallback
+  /// Real-time stream of all registered enterprises with global fallback and deduplication
   Stream<List<MasterCompanyModel>> streamCompanies() {
     return _firestore
         .collection('enterprises')
@@ -70,26 +70,40 @@ class CompanyManagementStore extends ChangeNotifier {
         .asyncMap((snap) async {
       final Map<String, MasterCompanyModel> map = {};
 
-      // 1. Add existing companies (e.g. from global API or in-memory)
-      for (final c in _companies) {
-        map[c.id] = c;
-      }
-
-      // 2. Add enterprises from Firestore
+      // 1. Add enterprises from Firestore first (source of truth)
       for (final doc in snap.docs) {
         final model = MasterCompanyModel.fromMap(doc.id, doc.data());
         map[doc.id] = model;
       }
 
-      // 3. Also check `companies` collection
+      // 2. Add from `companies` collection
       try {
         final compSnap = await _firestore.collection('companies').get();
         for (final doc in compSnap.docs) {
-          if (!map.containsKey(doc.id)) {
-            map[doc.id] = MasterCompanyModel.fromMap(doc.id, doc.data());
+          final model = MasterCompanyModel.fromMap(doc.id, doc.data());
+          final existingKey = map.keys.firstWhere(
+            (k) => map[k]!.name.trim().toLowerCase() == model.name.trim().toLowerCase(),
+            orElse: () => '',
+          );
+          if (existingKey.isNotEmpty) {
+            if (model.status.toLowerCase() == 'active' && map[existingKey]!.status.toLowerCase() != 'active') {
+              map[existingKey] = model;
+            }
+          } else if (!map.containsKey(doc.id)) {
+            map[doc.id] = model;
           }
         }
       } catch (_) {}
+
+      // 3. Fallback for remote/mock companies if not in Firestore
+      for (final c in _companies) {
+        final alreadyExists = map.values.any((m) =>
+            m.id == c.id ||
+            m.name.trim().toLowerCase() == c.name.trim().toLowerCase());
+        if (!alreadyExists) {
+          map[c.id] = c;
+        }
+      }
 
       final list = map.values.toList();
       _companies = list;
@@ -100,41 +114,244 @@ class CompanyManagementStore extends ChangeNotifier {
     });
   }
 
-  /// Suspend or Activate a company workspace
-  Future<bool> toggleSuspendCompany(String companyId, bool suspend) async {
+  /// Immediately update company status in memory for instantaneous UI response
+  void updateCompanyStatusLocally(String companyId, String newStatus) {
+    bool updated = false;
+    for (int i = 0; i < _companies.length; i++) {
+      final c = _companies[i];
+      if (c.id == companyId || c.name.trim().toLowerCase() == companyId.trim().toLowerCase()) {
+        _companies[i] = MasterCompanyModel(
+          id: c.id,
+          name: c.name,
+          email: c.email,
+          plan: c.plan,
+          employeeCount: c.employeeCount,
+          status: newStatus.capitalizeFirst(),
+          domain: c.domain,
+          logoUrl: c.logoUrl,
+          createdAt: c.createdAt,
+        );
+        updated = true;
+      }
+    }
+    if (updated) {
+      _activeCount = _companies.where((c) => c.status.toLowerCase() == 'active').length;
+      _suspendedCount = _companies.where((c) => c.status.toLowerCase() == 'suspended').length;
+      notifyListeners();
+    }
+  }
+
+  /// Permanently delete an entire enterprise company and its data across the platform
+  Future<bool> deleteCompanyPermanently({
+    required String companyId,
+    required String companyName,
+    String? adminEmail,
+  }) async {
+    try {
+      debugPrint('[CompanyManagementStore] Deleting company permanently: $companyName ($companyId)');
+
+      // 1. Remove from local list immediately
+      _companies.removeWhere((c) =>
+          c.id == companyId ||
+          c.name.trim().toLowerCase() == companyName.trim().toLowerCase());
+      _totalCount = _companies.length;
+      _activeCount = _companies.where((c) => c.status.toLowerCase() == 'active').length;
+      _suspendedCount = _companies.where((c) => c.status.toLowerCase() == 'suspended').length;
+      notifyListeners();
+
+      // 2. Delete enterprise document in Firestore
+      try {
+        await _firestore.collection('enterprises').doc(companyId).delete();
+      } catch (e) {
+        debugPrint('[CompanyManagementStore] Error deleting enterprises/$companyId: $e');
+      }
+
+      try {
+        final entByName = await _firestore
+            .collection('enterprises')
+            .where('companyName', isEqualTo: companyName)
+            .get();
+        for (final doc in entByName.docs) {
+          await doc.reference.delete();
+        }
+      } catch (_) {}
+
+      // 3. Delete company document in Firestore
+      try {
+        await _firestore.collection('companies').doc(companyId).delete();
+      } catch (e) {
+        debugPrint('[CompanyManagementStore] Error deleting companies/$companyId: $e');
+      }
+
+      try {
+        final compByName = await _firestore
+            .collection('companies')
+            .where('companyName', isEqualTo: companyName)
+            .get();
+        for (final doc in compByName.docs) {
+          await doc.reference.delete();
+        }
+      } catch (_) {}
+
+      try {
+        final compById = await _firestore
+            .collection('companies')
+            .where('companyId', isEqualTo: companyId)
+            .get();
+        for (final doc in compById.docs) {
+          await doc.reference.delete();
+        }
+      } catch (_) {}
+
+      // 4. Clean up / mark users associated with this company
+      try {
+        final userQueries = [
+          _firestore.collection('users').where('companyId', isEqualTo: companyId),
+          _firestore.collection('users').where('enterpriseUid', isEqualTo: companyId),
+          _firestore.collection('users').where('companyName', isEqualTo: companyName),
+          if (adminEmail != null && adminEmail.trim().isNotEmpty)
+            _firestore.collection('users').where('email', isEqualTo: adminEmail.trim().toLowerCase()),
+        ];
+
+        for (final q in userQueries) {
+          final snap = await q.get();
+          for (final doc in snap.docs) {
+            await doc.reference.set({
+              'status': 'Deleted',
+              'isDeactivated': true,
+              'isSuspended': true,
+              'deletedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          }
+        }
+      } catch (e) {
+        debugPrint('[CompanyManagementStore] User cleanup note: $e');
+      }
+
+      // 5. Clean up pending join requests
+      try {
+        final reqSnap = await _firestore
+            .collection('join_requests')
+            .where('enterpriseCompanyName', isEqualTo: companyName)
+            .get();
+        for (final doc in reqSnap.docs) {
+          await doc.reference.delete();
+        }
+      } catch (_) {}
+
+      // 6. Notify backend API
+      try {
+        await MasterAdminApiClient.post(
+          '/api/sync/master-admin-companies',
+          {
+            'action': 'delete',
+            'companyId': companyId,
+            'companyName': companyName,
+          },
+        );
+      } catch (_) {}
+
+      return true;
+    } catch (e) {
+      debugPrint('[CompanyManagementStore] deleteCompanyPermanently error: $e');
+      return false;
+    }
+  }
+
+  /// Suspend or Activate a company workspace with full Firestore and memory cascade
+  Future<bool> toggleSuspendCompany(String companyId, bool suspend, {String? companyName}) async {
     try {
       final newStatus = suspend ? 'Suspended' : 'Active';
-      await _firestore.collection('enterprises').doc(companyId).set({
-        'status': newStatus,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      final approvalStatus = suspend ? 'rejected' : 'approved';
 
-      await _firestore.collection('companies').doc(companyId).set({
-        'status': newStatus,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      // 1. Update enterprises
+      try {
+        await _firestore.collection('enterprises').doc(companyId).set({
+          'status': newStatus,
+          'approvalStatus': approvalStatus,
+          'isSuspended': suspend,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      } catch (_) {}
 
-      // Also notify Next.js backend
-      await MasterAdminApiClient.post(
-        MasterAdminEndpoints.companySuspend(companyId),
-        {'suspend': suspend},
-      );
-
-      final idx = _companies.indexWhere((c) => c.id == companyId);
-      if (idx != -1) {
-        final old = _companies[idx];
-        _companies[idx] = MasterCompanyModel(
-          id: old.id,
-          name: old.name,
-          email: old.email,
-          plan: old.plan,
-          employeeCount: old.employeeCount,
-          status: newStatus,
-          domain: old.domain,
-          logoUrl: old.logoUrl,
-        );
-        notifyListeners();
+      if (companyName != null && companyName.trim().isNotEmpty) {
+        try {
+          final entByName = await _firestore
+              .collection('enterprises')
+              .where('companyName', isEqualTo: companyName)
+              .get();
+          for (final doc in entByName.docs) {
+            await doc.reference.set({
+              'status': newStatus,
+              'approvalStatus': approvalStatus,
+              'isSuspended': suspend,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          }
+        } catch (_) {}
       }
+
+      // 2. Update companies
+      try {
+        await _firestore.collection('companies').doc(companyId).set({
+          'status': newStatus.toLowerCase(),
+          'approvalStatus': approvalStatus,
+          'isSuspended': suspend,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      } catch (_) {}
+
+      if (companyName != null && companyName.trim().isNotEmpty) {
+        try {
+          final compByName = await _firestore
+              .collection('companies')
+              .where('companyName', isEqualTo: companyName)
+              .get();
+          for (final doc in compByName.docs) {
+            await doc.reference.set({
+              'status': newStatus.toLowerCase(),
+              'approvalStatus': approvalStatus,
+              'isSuspended': suspend,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          }
+        } catch (_) {}
+      }
+
+      // 3. Cascade to associated users
+      try {
+        final userQueries = [
+          _firestore.collection('users').where('companyId', isEqualTo: companyId),
+          _firestore.collection('users').where('enterpriseUid', isEqualTo: companyId),
+          if (companyName != null && companyName.trim().isNotEmpty)
+            _firestore.collection('users').where('companyName', isEqualTo: companyName),
+        ];
+        for (final q in userQueries) {
+          final snap = await q.get();
+          for (final doc in snap.docs) {
+            await doc.reference.set({
+              'isSuspended': suspend,
+              'status': newStatus.toLowerCase(),
+              'updatedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          }
+        }
+      } catch (_) {}
+
+      // 4. Update memory store immediately
+      updateCompanyStatusLocally(companyId, newStatus);
+      if (companyName != null && companyName.trim().isNotEmpty) {
+        updateCompanyStatusLocally(companyName, newStatus);
+      }
+
+      // 5. Also notify Next.js backend
+      try {
+        await MasterAdminApiClient.post(
+          MasterAdminEndpoints.companySuspend(companyId),
+          {'suspend': suspend},
+        );
+      } catch (_) {}
+
       return true;
     } catch (e) {
       debugPrint('[CompanyManagementStore] toggleSuspendCompany error: $e');

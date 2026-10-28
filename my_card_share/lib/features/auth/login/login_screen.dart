@@ -55,6 +55,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<String?> _getRoleByEmail(String email) async {
     final cleanEmail = email.trim().toLowerCase();
     try {
+      // 1. If currently on Enterprise tab, check enterprises collection first!
+      if (_selectedTab == 1) {
+        final entSnap = await FirebaseFirestore.instance
+            .collection('enterprises')
+            .where('email', isEqualTo: cleanEmail)
+            .limit(1)
+            .get();
+        if (entSnap.docs.isNotEmpty) return 'enterprise';
+
+        final userEntSnap = await FirebaseFirestore.instance
+            .collection('users')
+            .where('email', isEqualTo: cleanEmail)
+            .where('role', isEqualTo: 'enterprise')
+            .limit(1)
+            .get();
+        if (userEntSnap.docs.isNotEmpty) return 'enterprise';
+      }
+
+      // 2. If currently on Employee tab, check employee enrollments first!
+      if (_selectedTab == 2) {
+        final empCheck = await EmployeeEmailFetchService.instance.verifyEmployeeEmail(cleanEmail);
+        if (empCheck.isEnrolled) return 'employee';
+      }
+
       final userSnap = await FirebaseFirestore.instance
           .collection('users')
           .where('email', isEqualTo: cleanEmail)
@@ -76,7 +100,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final empCheck = await EmployeeEmailFetchService.instance.verifyEmployeeEmail(cleanEmail);
       if (empCheck.isEnrolled) return 'employee';
     } catch (e) {
-      debugPrint('[LoginScreen] Error fetching role by email: $e');
+      debugPrint('[LoginScreen] Error fetching role by email: ');
     }
     return null;
   }
@@ -245,7 +269,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         if (mounted) context.go('/portal');
       } else {
         final msg = result.message;
-        if (msg.contains('No account') || msg.contains('not valid')) {
+        if (msg.toLowerCase().contains('delete') || msg.toLowerCase().contains('deactivated')) {
+        LoginPopupNotification.showAccountDeletedDialog(
+          context,
+          message: msg,
+        );
+      } else if (msg.contains('No account') || msg.contains('not valid')) {
           LoginPopupNotification.showEmailNotFoundDialog(
             context,
             onSignUpTap: () => context.go('/signup'),
@@ -363,7 +392,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!result.isSuccess) {
       // Map Firebase errors back to friendly dialogs
       final msg = result.message;
-      if (msg.contains('No account') || msg.contains('not valid')) {
+      if (msg.toLowerCase().contains('delete') || msg.toLowerCase().contains('deactivated')) {
+        LoginPopupNotification.showAccountDeletedDialog(
+          context,
+          message: msg,
+        );
+      } else if (msg.contains('No account') || msg.contains('not valid')) {
         LoginPopupNotification.showEmailNotFoundDialog(
           context,
           onSignUpTap: () => context.go('/signup'),
@@ -470,11 +504,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           }
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(result.message),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-        ));
+        if (result.message.toLowerCase().contains('delete') || result.message.toLowerCase().contains('deactivated')) {
+          LoginPopupNotification.showAccountDeletedDialog(
+            context,
+            message: result.message,
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(result.message),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ));
+        }
       }
       return;
     }
@@ -516,11 +557,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ref.read(authProvider.notifier).login(user);
       if (mounted) context.go('/portal');
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(result.message),
-        backgroundColor: Colors.redAccent,
-        behavior: SnackBarBehavior.floating,
-      ));
+      if (result.message.toLowerCase().contains('delete') || result.message.toLowerCase().contains('deactivated')) {
+        LoginPopupNotification.showAccountDeletedDialog(
+          context,
+          message: result.message,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(result.message),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
     }
   }
 

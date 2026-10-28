@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import '../../../../backend/enterprise/home_backend/leads_service.dart';
@@ -273,7 +274,11 @@ class _EnterpriseAddLeadSheetState extends State<EnterpriseAddLeadSheet> {
               TextFormField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
-                maxLength: 15,
+                maxLength: 10,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(10),
+                ],
                 validator: (val) {
                   if (val == null || val.trim().isEmpty) {
                     return "Mobile number is required";
@@ -285,7 +290,7 @@ class _EnterpriseAddLeadSheetState extends State<EnterpriseAddLeadSheet> {
                   return null;
                 },
                 decoration: _buildInputDecoration(
-                  hintText: "e.g. +91 98765 43210",
+                  hintText: "e.g. 9876543210",
                   prefixIcon: Icons.phone_outlined,
                 ).copyWith(counterText: ""),
               ),

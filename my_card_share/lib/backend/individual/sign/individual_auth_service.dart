@@ -48,6 +48,90 @@ class IndividualAuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  /// Checks whether an account has been permanently deleted or deactivated by admin.
+  Future<bool> isAccountDeleted(String uid, [String? email]) async {
+    try {
+      final cleanEmail = (email ?? '').trim().toLowerCase();
+
+      // 1. Check deleted_accounts collection by UID
+      if (uid.isNotEmpty) {
+        final tombstoneUid = await _firestore.collection('deleted_accounts').doc(uid).get();
+        if (tombstoneUid.exists) {
+          debugPrint('[IndividualAuthService] UID $uid found in deleted_accounts');
+          return true;
+        }
+      }
+
+      // 2. Check deleted_accounts by email
+      if (cleanEmail.isNotEmpty) {
+        final tombstoneEmail = await _firestore.collection('deleted_accounts').doc(cleanEmail).get();
+        if (tombstoneEmail.exists) {
+          debugPrint('[IndividualAuthService] Email $cleanEmail found in deleted_accounts');
+          return true;
+        }
+
+        final safeEmail = cleanEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+        final tombstoneSafe = await _firestore.collection('deleted_accounts').doc(safeEmail).get();
+        if (tombstoneSafe.exists) {
+          debugPrint('[IndividualAuthService] SafeEmail $safeEmail found in deleted_accounts');
+          return true;
+        }
+      }
+
+      // 3. Check users/{uid} document
+      if (uid.isNotEmpty) {
+        final userDoc = await _firestore.collection('users').doc(uid).get();
+        if (userDoc.exists) {
+          final data = userDoc.data();
+          if (data != null) {
+            final status = (data['status'] ?? '').toString().toLowerCase().trim();
+            final isDeactivated = data['isDeactivated'] == true;
+            final isDeleted = data['isDeleted'] == true || data['deleted'] == true;
+            if (status == 'deleted' || isDeactivated || isDeleted) {
+              debugPrint('[IndividualAuthService] users/$uid has deleted/deactivated status');
+              return true;
+            }
+          }
+        }
+      }
+
+      // 4. Check users by email doc ID or query
+      if (cleanEmail.isNotEmpty) {
+        final safeEmail = cleanEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+        final emailDoc = await _firestore.collection('users').doc(safeEmail).get();
+        if (emailDoc.exists) {
+          final data = emailDoc.data();
+          if (data != null) {
+            final status = (data['status'] ?? '').toString().toLowerCase().trim();
+            final isDeactivated = data['isDeactivated'] == true;
+            final isDeleted = data['isDeleted'] == true || data['deleted'] == true;
+            if (status == 'deleted' || isDeactivated || isDeleted) {
+              return true;
+            }
+          }
+        }
+
+        final query = await _firestore
+            .collection('users')
+            .where('email', isEqualTo: cleanEmail)
+            .limit(1)
+            .get();
+        if (query.docs.isNotEmpty) {
+          final data = query.docs.first.data();
+          final status = (data['status'] ?? '').toString().toLowerCase().trim();
+          final isDeactivated = data['isDeactivated'] == true;
+          final isDeleted = data['isDeleted'] == true || data['deleted'] == true;
+          if (status == 'deleted' || isDeactivated || isDeleted) {
+            return true;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[IndividualAuthService] isAccountDeleted check error: $e');
+    }
+    return false;
+  }
+
   // ─── Sign-Up ─────────────────────────────────────────────────────────────
 
   /// 1. Creates Firebase Auth user.
@@ -59,9 +143,18 @@ class IndividualAuthService {
     required String password,
   }) async {
     try {
+      final cleanEmail = email.trim().toLowerCase();
+
+      // Pre-check if email belongs to a deleted account
+      if (await isAccountDeleted('', cleanEmail)) {
+        return IndividualAuthResult.error(
+          'This account has been permanently deleted by administrator. Registration with this email is not permitted.',
+        );
+      }
+
       // Step 1 – Firebase Authentication
       final credential = await _auth.createUserWithEmailAndPassword(
-        email: email.trim(),
+        email: cleanEmail,
         password: password,
       );
       final user = credential.user!;
@@ -135,6 +228,14 @@ class IndividualAuthService {
       final user = credential.user!;
       debugPrint('[IndividualAuthService] Firebase login OK: ${user.uid}');
 
+      // ⚡ STRICT DELETED ACCOUNT CHECK:
+      if (await isAccountDeleted(user.uid, user.email ?? email)) {
+        debugPrint('[IndividualAuthService] Account ${user.uid} is marked Deleted. Aborting login.');
+        await _auth.signOut();
+        await AppViewAuthGate.instance.clearPersistentSession();
+        return IndividualAuthResult.error('This account has been permanently deleted by administrator. Login is not allowed.');
+      }
+
       return await _postLoginSync(user);
     } on FirebaseAuthException catch (e) {
       debugPrint('[IndividualAuthService] Login error: ${e.code}');
@@ -184,6 +285,17 @@ class IndividualAuthService {
 
       final resolvedPhotoUrl = user.photoURL ?? googleUser.photoUrl;
       final resolvedEmail = user.email ?? googleUser.email;
+
+      // ⚡ STRICT DELETED ACCOUNT CHECK:
+      if (await isAccountDeleted(uid, resolvedEmail)) {
+        debugPrint('[IndividualAuthService] Google account $uid ($resolvedEmail) is marked Deleted. Aborting sign-in.');
+        await _auth.signOut();
+        try {
+          await _googleSignIn.signOut();
+        } catch (_) {}
+        await AppViewAuthGate.instance.clearPersistentSession();
+        return IndividualAuthResult.error('This account has been permanently deleted by administrator. Login is not allowed.');
+      }
 
       // Update Firebase user profile if display name / photoURL are missing on credential
       try {

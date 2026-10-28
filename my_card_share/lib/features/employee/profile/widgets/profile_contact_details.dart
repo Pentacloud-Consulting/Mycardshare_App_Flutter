@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../backend/number logic/phone_number_service.dart';
 
 class ProfileContactDetails extends StatefulWidget {
@@ -129,7 +130,11 @@ class _ProfileContactDetailsState extends State<ProfileContactDetails> {
                   child: TextField(
                     controller: widget.phoneController,
                     keyboardType: TextInputType.phone,
-                    maxLength: 15,
+                    maxLength: 10,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
                     style: const TextStyle(
                       fontSize: 13,
                       color: Color(0xFF0F172A),

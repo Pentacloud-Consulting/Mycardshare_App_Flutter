@@ -80,6 +80,17 @@ class AppViewAuthGate {
 
     debugPrint('[AppViewAuthGate] Active session detected for $email ($uid, role: $role). Restoring session...');
 
+    // ⚡ INSTANT MASTER ADMIN SESSION RESTORATION
+    if (role == 'master-admin' || role == 'master_admin') {
+      debugPrint('[AppViewAuthGate] Restoring Master Admin persistent session: $email ($uid)');
+      return UserModel(
+        id: uid.isNotEmpty ? uid : 'admin_master_${email.hashCode}',
+        name: name.isNotEmpty ? name : 'System Master Admin',
+        email: email.isNotEmpty ? email : 'admin@mycardshare.com',
+        role: 'master-admin',
+      );
+    }
+
     try {
       // 1. Query Firestore users collection by UID & Email DocId (Authoritative source)
       if (user != null || email.isNotEmpty) {
@@ -95,8 +106,40 @@ class AppViewAuthGate {
             if (snap.exists) doc = snap;
           }
 
+          // Check tombstone in deleted_accounts
+          try {
+            final tombSnap = await _firestore.collection('deleted_accounts').doc(uid).get();
+            if (tombSnap.exists) {
+              debugPrint('[AppViewAuthGate] UID $uid in deleted_accounts. Wiping session.');
+              await clearPersistentSession();
+              await _auth.signOut();
+              return null;
+            }
+            if (email.isNotEmpty) {
+              final tombEmail = await _firestore.collection('deleted_accounts').doc(email).get();
+              if (tombEmail.exists) {
+                debugPrint('[AppViewAuthGate] Email $email in deleted_accounts. Wiping session.');
+                await clearPersistentSession();
+                await _auth.signOut();
+                return null;
+              }
+            }
+          } catch (_) {}
+
           if (doc != null && doc.data() != null) {
             final data = doc.data() as Map<String, dynamic>;
+
+            // ⚡ CHECK FOR DELETED / DEACTIVATED ACCOUNT STATUS:
+            final status = (data['status'] ?? '').toString().toLowerCase().trim();
+            final isDeactivated = data['isDeactivated'] == true;
+            final isDeleted = data['isDeleted'] == true || data['deleted'] == true;
+            if (status == 'deleted' || isDeactivated || isDeleted) {
+              debugPrint('[AppViewAuthGate] Account is marked Deleted ($email, $uid). Wiping session.');
+              await clearPersistentSession();
+              await _auth.signOut();
+              return null;
+            }
+
             if (data['role'] != null && (data['role'] as String).isNotEmpty) {
               role = (data['role'] as String).toLowerCase().replaceAll('_', '-');
             }

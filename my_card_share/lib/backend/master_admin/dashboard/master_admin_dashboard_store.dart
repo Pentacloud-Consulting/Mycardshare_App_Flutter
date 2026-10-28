@@ -71,12 +71,26 @@ class MasterAdminDashboardStore extends ChangeNotifier {
       final compSnap = await _firestore.collection('enterprises').count().get();
       if (_totalCompanies == 0) _totalCompanies = compSnap.count ?? _totalCompanies;
 
-      final userSnap = await _firestore
-          .collection('users')
-          .where('role', isEqualTo: 'individual')
-          .count()
-          .get();
-      if (_totalIndividuals == 0) _totalIndividuals = userSnap.count ?? _totalIndividuals;
+      if (_totalIndividuals == 0) {
+        try {
+          final userSnap = await _firestore
+              .collection('users')
+              .where('role', isEqualTo: 'individual')
+              .count()
+              .get();
+          int indCount = userSnap.count ?? 0;
+          if (indCount == 0) {
+            final allUsersSnap = await _firestore.collection('users').get();
+            indCount = allUsersSnap.docs.where((d) {
+              final r = (d.data()['role'] ?? '').toString().toLowerCase();
+              return r != 'enterprise' && r != 'company' && !r.contains('admin') && r != 'employee';
+            }).length;
+          }
+          if (indCount > 0) {
+            _totalIndividuals = indCount;
+          }
+        } catch (_) {}
+      }
 
       // Pending join requests & company approvals via ApprovalsQueueStore
       await ApprovalsQueueStore.instance.streamPendingQueue().first.then((items) {

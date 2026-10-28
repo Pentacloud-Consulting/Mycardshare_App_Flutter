@@ -216,7 +216,103 @@ class IndividualDeleteService {
     try {
       final idToPurge = targetUserId.isNotEmpty ? targetUserId : requestId;
 
-      // 1. Delete request completely from Firestore 'account_deletion_requests'
+      // Extract user info before deletion
+      String userEmail = "";
+      String userName = "";
+
+      try {
+        DocumentSnapshot reqDoc = await _firestore.collection("account_deletion_requests").doc(requestId).get();
+        if (!reqDoc.exists && targetUserId.isNotEmpty) {
+          reqDoc = await _firestore.collection("account_deletion_requests").doc(targetUserId).get();
+        }
+        if (reqDoc.exists) {
+          final data = reqDoc.data() as Map<String, dynamic>?;
+          userEmail = (data?["userEmail"] ?? "").toString().trim().toLowerCase();
+          userName = (data?["userName"] ?? "").toString().trim();
+        }
+      } catch (_) {}
+
+      if (userEmail.isEmpty) {
+        try {
+          final uDoc = await _firestore.collection("users").doc(idToPurge).get();
+          if (uDoc.exists) {
+            final uData = uDoc.data() as Map<String, dynamic>?;
+            userEmail = (uData?["email"] ?? "").toString().trim().toLowerCase();
+            if (userName.isEmpty) {
+              userName = (uData?["fullName"] ?? uData?["name"] ?? "").toString().trim();
+            }
+          }
+        } catch (_) {}
+      }
+
+      // 1. Create permanent tombstone in 'deleted_accounts' collection
+      final tombstoneData = {
+        "userId": idToPurge,
+        "email": userEmail,
+        "userName": userName,
+        "status": "Deleted",
+        "isDeleted": true,
+        "isDeactivated": true,
+        "deleted": true,
+        "deletedAt": FieldValue.serverTimestamp(),
+        "deletedBy": "master_admin",
+        "reason": "Account deletion approved by administrator",
+      };
+
+      try {
+        await _firestore.collection("deleted_accounts").doc(idToPurge).set(tombstoneData);
+        if (userEmail.isNotEmpty) {
+          await _firestore.collection("deleted_accounts").doc(userEmail).set(tombstoneData);
+          final safeEmailDoc = userEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+          await _firestore.collection("deleted_accounts").doc(safeEmailDoc).set(tombstoneData);
+        }
+      } catch (err) {
+        debugPrint("[IndividualDeleteService] deleted_accounts tombstone note: $err");
+      }
+
+      // 2. Mark user as completely Deleted in Firestore 'users'
+      try {
+        final updatePayload = {
+          "status": "Deleted",
+          "isDeactivated": true,
+          "isDeleted": true,
+          "deleted": true,
+          "deletion_pending": false,
+          "deletionRequest": FieldValue.delete(),
+          "deletionRequestedAt": FieldValue.delete(),
+          "deletedAt": FieldValue.serverTimestamp(),
+          "updatedAt": FieldValue.serverTimestamp(),
+        };
+
+        await _firestore.collection("users").doc(idToPurge).set(updatePayload, SetOptions(merge: true));
+
+        if (userEmail.isNotEmpty) {
+          final safeEmailDoc = userEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+          await _firestore.collection("users").doc(safeEmailDoc).set(updatePayload, SetOptions(merge: true));
+        }
+      } catch (_) {}
+
+      // 3. Archive user cards in Firestore 'cards'
+      try {
+        await _firestore.collection("cards").doc(idToPurge).set({
+          "status": "Deleted",
+          "cardStatus": "Archived",
+          "isDeactivated": true,
+          "updatedAt": FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
+        final cardQuery = await _firestore.collection("cards").where("userId", isEqualTo: idToPurge).get();
+        for (final doc in cardQuery.docs) {
+          await doc.reference.set({
+            "status": "Deleted",
+            "cardStatus": "Archived",
+            "isDeactivated": true,
+            "updatedAt": FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        }
+      } catch (_) {}
+
+      // 4. Delete request completely from Firestore 'account_deletion_requests'
       try {
         await _firestore.collection("account_deletion_requests").doc(requestId).delete();
       } catch (_) {}
@@ -235,20 +331,7 @@ class IndividualDeleteService {
         }
       } catch (_) {}
 
-      // 2. Mark user as completely Deleted in Firestore 'users'
-      try {
-        await _firestore.collection("users").doc(idToPurge).set({
-          "status": "Deleted",
-          "isDeactivated": true,
-          "deletion_pending": false,
-          "deletionRequest": FieldValue.delete(),
-          "deletionRequestedAt": FieldValue.delete(),
-          "deletedAt": FieldValue.serverTimestamp(),
-          "updatedAt": FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
-      } catch (_) {}
-
-      // 3. Mark corresponding notification as read/resolved
+      // 5. Mark corresponding notification as read/resolved
       try {
         final notifSnap = await _firestore
             .collection("notifications")
@@ -259,13 +342,14 @@ class IndividualDeleteService {
         }
       } catch (_) {}
 
-      // 4. Trigger backend sync endpoint across supported routes
+      // 6. Trigger backend sync endpoint across supported routes
       final payload = jsonEncode({
         "action": "confirm_delete",
         "requestId": requestId,
         "id": requestId,
         "targetUserId": idToPurge,
         "userId": idToPurge,
+        "userEmail": userEmail,
       });
 
       for (final host in [primaryUrl, fallbackUrl]) {

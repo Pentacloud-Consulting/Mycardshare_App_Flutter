@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
@@ -13,15 +15,16 @@ import 'widgets/profile_logout_button.dart';
 import '../../individual/settings/widgets/change_password_dialog.dart';
 import '../../../backend/Cloud Image Upload/cloud_upload_service.dart';
 import '../../../backend/app view/app_view_auth_gate.dart';
+import '../../../providers/auth_provider.dart';
 
-class MasterAdminProfileScreen extends StatefulWidget {
+class MasterAdminProfileScreen extends ConsumerStatefulWidget {
   const MasterAdminProfileScreen({super.key});
 
   @override
-  State<MasterAdminProfileScreen> createState() => _MasterAdminProfileScreenState();
+  ConsumerState<MasterAdminProfileScreen> createState() => _MasterAdminProfileScreenState();
 }
 
-class _MasterAdminProfileScreenState extends State<MasterAdminProfileScreen> {
+class _MasterAdminProfileScreenState extends ConsumerState<MasterAdminProfileScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
@@ -127,7 +130,8 @@ class _MasterAdminProfileScreenState extends State<MasterAdminProfileScreen> {
   }
 
   void _handleLogout() async {
-    await AppViewAuthGate.instance.signOut();
+    ref.read(authProvider.notifier).logout();
+    await AppViewAuthGate.instance.clearPersistentSession();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -136,7 +140,7 @@ class _MasterAdminProfileScreenState extends State<MasterAdminProfileScreen> {
           backgroundColor: Color(0xFF0F172A),
         ),
       );
-      Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil('/master-admin/login', (route) => false);
+      context.go('/login');
     }
   }
 

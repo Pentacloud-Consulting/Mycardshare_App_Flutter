@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../backend/master_admin/companies/company_management_store.dart';
 import '../../../../backend/master_admin/companies/models/master_company_model.dart';
+import 'company_logo_avatar.dart';
 
 class CompanyListCard extends StatelessWidget {
   final String searchQuery;
@@ -128,44 +129,12 @@ class CompanyListCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       child: Row(
                         children: [
-                          // Company Logo Circle (Image logo if available, else Initials)
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: logoBg.withValues(alpha: 0.12),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: logoBg.withValues(alpha: 0.25),
-                                width: 1,
-                              ),
-                            ),
-                            clipBehavior: Clip.antiAlias,
-                            child: company.logoUrl != null && company.logoUrl!.trim().isNotEmpty
-                                ? Image.network(
-                                    company.logoUrl!,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => Center(
-                                      child: Text(
-                                        company.initials,
-                                        style: const TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w900,
-                                          color: logoBg,
-                                        ),
-                                      ),
-                                    ),
-                                  )
-                                : Center(
-                                    child: Text(
-                                      company.initials,
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w900,
-                                        color: logoBg,
-                                      ),
-                                    ),
-                                  ),
+                          // Company Real Logo Circle (Custom Logo -> Real Web Logo -> Initials)
+                          CompanyLogoAvatar(
+                            logoUrl: company.logoUrl,
+                            companyName: company.name,
+                            domain: company.domain,
+                            size: 44,
                           ),
                           const SizedBox(width: 14),
 

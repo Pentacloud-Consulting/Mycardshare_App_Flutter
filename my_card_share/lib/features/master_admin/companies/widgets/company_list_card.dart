@@ -7,15 +7,21 @@ import 'company_logo_avatar.dart';
 class CompanyListCard extends StatelessWidget {
   final String searchQuery;
   final String selectedFilter;
+  final List<MasterCompanyModel>? companies;
 
   const CompanyListCard({
     super.key,
     this.searchQuery = "",
     this.selectedFilter = "All",
+    this.companies,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (companies != null) {
+      return _buildContent(context, companies!);
+    }
+
     return StreamBuilder<List<MasterCompanyModel>>(
       stream: CompanyManagementStore.instance.streamCompanies(),
       builder: (context, snapshot) {
@@ -35,6 +41,13 @@ class CompanyListCard extends StatelessWidget {
             ),
           );
         }
+
+        return _buildContent(context, allCompanies);
+      },
+    );
+  }
+
+  Widget _buildContent(BuildContext context, List<MasterCompanyModel> allCompanies) {
 
         final filteredCompanies = allCompanies.where((company) {
           final name = company.name.toLowerCase();
@@ -204,8 +217,6 @@ class CompanyListCard extends StatelessWidget {
             }).toList(),
           ),
         );
-      },
-    );
   }
 }
 

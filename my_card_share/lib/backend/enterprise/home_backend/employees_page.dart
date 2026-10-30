@@ -491,18 +491,91 @@ class EnterpriseEmployeesService {
     }
   }
 
-  /// Delete an employee.
+  /// Delete an employee — also writes tombstone so they cannot login again.
   Future<bool> deleteEmployee({
     required String enterpriseUid,
     required String employeeId,
   }) async {
     try {
+      // Fetch employee data before deleting so we can write the tombstone
+      String empEmail = '';
+      String empName = '';
+      String empUid = '';
+      try {
+        final empDoc = await _firestore
+            .collection('enterprises')
+            .doc(enterpriseUid)
+            .collection('employees')
+            .doc(employeeId)
+            .get();
+        if (empDoc.exists) {
+          final d = empDoc.data() ?? {};
+          empEmail = (d['email'] ?? '').toString().trim().toLowerCase();
+          empName = (d['name'] ?? d['fullName'] ?? '').toString().trim();
+          empUid = (d['uid'] ?? d['id'] ?? '').toString().trim();
+        }
+      } catch (_) {}
+
+      // Delete from enterprise employees subcollection
       await _firestore
           .collection('enterprises')
           .doc(enterpriseUid)
           .collection('employees')
           .doc(employeeId)
           .delete();
+
+      // Write tombstone to deleted_accounts so login is blocked
+      final tombstoneData = <String, dynamic>{
+        'userId': empUid.isNotEmpty ? empUid : employeeId,
+        'email': empEmail,
+        'userName': empName,
+        'status': 'Deleted',
+        'isDeleted': true,
+        'isDeactivated': true,
+        'deleted': true,
+        'deletedAt': FieldValue.serverTimestamp(),
+        'deletedBy': 'enterprise_admin',
+        'reason': 'Employee removed by workspace administrator',
+      };
+      try {
+        // Write by employee doc ID
+        await _firestore.collection('deleted_accounts').doc(employeeId).set(tombstoneData);
+        // Write by UID if different
+        if (empUid.isNotEmpty && empUid != employeeId) {
+          await _firestore.collection('deleted_accounts').doc(empUid).set(tombstoneData);
+        }
+        // Write by email and safe-email
+        if (empEmail.isNotEmpty) {
+          await _firestore.collection('deleted_accounts').doc(empEmail).set(tombstoneData);
+          final safeEmail = empEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+          await _firestore.collection('deleted_accounts').doc(safeEmail).set(tombstoneData);
+        }
+        debugPrint('[EnterpriseEmployeesService] Tombstone written for employee $employeeId ($empEmail)');
+      } catch (tombErr) {
+        debugPrint('[EnterpriseEmployeesService] Tombstone write note: $tombErr');
+      }
+
+      // Also mark user as deleted in users collection
+      try {
+        if (empUid.isNotEmpty) {
+          await _firestore.collection('users').doc(empUid).set({
+            'status': 'Deleted',
+            'isDeleted': true,
+            'isDeactivated': true,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        }
+        if (empEmail.isNotEmpty) {
+          final safeEmail = empEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+          await _firestore.collection('users').doc(safeEmail).set({
+            'status': 'Deleted',
+            'isDeleted': true,
+            'isDeactivated': true,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        }
+      } catch (_) {}
+
       return true;
     } catch (e) {
       debugPrint('[EnterpriseEmployeesService] deleteEmployee error: $e');
@@ -581,6 +654,37 @@ class EnterpriseEmployeesService {
             ? name.trim()
             : cleanEmail.split('@').first;
 
+        // Try to fetch existing avatar from global users collection
+        String? existingAvatarUrl;
+        String? existingBannerUrl;
+        String? existingCardSlug;
+        try {
+          if (authUid.isNotEmpty) {
+            final userDoc = await _firestore.collection('users').doc(authUid).get();
+            if (userDoc.exists) {
+              final uData = userDoc.data() ?? {};
+              existingAvatarUrl = (uData['avatarUrl'] ?? uData['profilePhoto'] ?? uData['photoURL'])?.toString()?.trim();
+              existingBannerUrl = (uData['bannerUrl'] ?? uData['bannerPhoto'] ?? uData['coverImage'])?.toString()?.trim();
+              existingCardSlug = (uData['cardSlug'] ?? uData['slug'])?.toString()?.trim();
+            }
+          }
+          // Also check email-based doc
+          if (existingAvatarUrl == null || existingAvatarUrl!.isEmpty) {
+            final emailDocId = cleanEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+            final emailDoc = await _firestore.collection('users').doc(emailDocId).get();
+            if (emailDoc.exists) {
+              final eData = emailDoc.data() ?? {};
+              existingAvatarUrl = (eData['avatarUrl'] ?? eData['profilePhoto'] ?? eData['photoURL'])?.toString()?.trim();
+              existingBannerUrl ??= (eData['bannerUrl'] ?? eData['bannerPhoto'])?.toString()?.trim();
+              existingCardSlug ??= (eData['cardSlug'] ?? eData['slug'])?.toString()?.trim();
+            }
+          }
+        } catch (_) {}
+
+        final generatedSlug = existingCardSlug?.isNotEmpty == true
+            ? existingCardSlug!
+            : '${newName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '-')}-${DateTime.now().millisecondsSinceEpoch % 10000}';
+
         final newEmp = <String, dynamic>{
           'id': empId,
           'uid': authUid,
@@ -594,6 +698,12 @@ class EnterpriseEmployeesService {
           'views': 0,
           'leads': 0,
           'isBannerLocked': false,
+          // Preserve any existing avatar/banner — these will be set after onboarding
+          if (existingAvatarUrl != null && existingAvatarUrl!.isNotEmpty)
+            'avatarUrl': existingAvatarUrl,
+          if (existingBannerUrl != null && existingBannerUrl!.isNotEmpty)
+            'bannerUrl': existingBannerUrl,
+          'cardSlug': generatedSlug,
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         };

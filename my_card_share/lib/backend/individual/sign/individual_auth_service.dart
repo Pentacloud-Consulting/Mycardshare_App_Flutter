@@ -434,6 +434,8 @@ class IndividualAuthService {
   // ─── Sign-Out ────────────────────────────────────────────────────────────
 
   Future<void> signOut() async {
+    IndividualProfileStore.instance.clearProfile();
+    await AppViewAuthGate.instance.clearPersistentSession();
     await _googleSignIn.signOut();
     await _auth.signOut();
     debugPrint('[IndividualAuthService] Signed out');

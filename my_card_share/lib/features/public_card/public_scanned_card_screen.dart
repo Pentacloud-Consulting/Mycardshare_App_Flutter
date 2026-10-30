@@ -12,6 +12,8 @@ import '../../backend/individual/wallet/wallet_service.dart';
 import '../../backend/individual/wallet/samsung_wallet.dart';
 import '../../backend/individual/lead/active_lead.dart';
 import '../../backend/individual/social_redirect/social_redirect_service.dart';
+import '../../backend/individual/profile/individual_profile_store.dart';
+import '../individual/home/View My card/card_social_row.dart';
 
 /// ────────────────────────────────────────────────────────────────────────────
 /// PublicScannedCardScreen
@@ -50,6 +52,38 @@ class _PublicScannedCardScreenState extends State<PublicScannedCardScreen> {
   void initState() {
     super.initState();
     _profileFuture = ScanProfileViewService.instance.fetchProfileBySlug(widget.cardSlug);
+  }
+
+  /// Resolves all available social and direct connect channels for display
+  List<SocialLinkItem> _resolveDisplaySocialLinks(PublicProfileData profile) {
+    final list = <SocialLinkItem>[];
+    final seen = <String>{};
+
+    void add(String platform, String url) {
+      final clean = url.trim();
+      if (clean.isEmpty) return;
+      final key = platform.trim().toLowerCase();
+      if (seen.contains(key)) return;
+      seen.add(key);
+      list.add(SocialLinkItem(platform: platform, url: clean));
+    }
+
+    // 1. Add all parsed social links from profile
+    for (final item in profile.socialLinks) {
+      add(item.platform, item.url);
+    }
+
+    // 2. If WhatsApp is not in socialLinks, but phone exists, provide WhatsApp
+    if (!seen.contains('whatsapp') && profile.phone.trim().isNotEmpty) {
+      add('WhatsApp', profile.phone.trim());
+    }
+
+    // 3. If Website is not in socialLinks, but website exists, provide Website
+    if (!seen.contains('website') && profile.website.trim().isNotEmpty) {
+      add('Website', profile.website.trim());
+    }
+
+    return list;
   }
 
   /// Resolves the user's logged-in role and navigates to their specific Home interface
@@ -499,64 +533,37 @@ class _PublicScannedCardScreenState extends State<PublicScannedCardScreen> {
                         ],
                       ),
 
-                      // Social Links Grid
-                      if (profile.socialLinks.isNotEmpty) ...[
-                        const SizedBox(height: 20),
-                        const Divider(color: Color(0xFFE2E8F0), height: 1),
-                        const SizedBox(height: 14),
-                        const Text(
-                          "SOCIAL & CONNECT",
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF94A3B8),
-                            letterSpacing: 1.1,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          alignment: WrapAlignment.center,
-                          children: profile.socialLinks.map((link) {
-                            return InkWell(
-                              onTap: () => SocialRedirectService.launchSocialPlatform(
-                                platform: link.platform,
-                                rawInput: link.url,
-                                context: context,
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF1F5F9),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                      // ── Social & Connect Section ──────────────────────────
+                      Builder(builder: (ctx) {
+                        final displaySocials = _resolveDisplaySocialLinks(profile);
+                        if (displaySocials.isEmpty) return const SizedBox.shrink();
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(height: 22),
+                            const Divider(color: Color(0xFFE2E8F0), height: 1),
+                            const SizedBox(height: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.share_rounded, size: 13, color: Color(0xFF94A3B8)),
+                                const SizedBox(width: 6),
+                                const Text(
+                                  "SOCIAL & CONNECT",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF94A3B8),
+                                    letterSpacing: 1.1,
+                                  ),
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      _getSocialIcon(link.platform),
-                                      size: 15,
-                                      color: const Color(0xFF0F172A),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      link.platform,
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        color: Color(0xFF0F172A),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ],
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+                            CardSocialRow(links: displaySocials),
+                          ],
+                        );
+                      }),
 
                       const SizedBox(height: 24),
                     ],

@@ -9,6 +9,8 @@ import 'enterprise_google_auth_sync_service.dart';
 import '../../master_admin/companies/company_management_store.dart';
 import '../../master_admin/master_admin_global_service.dart';
 import '../../master_admin/master_approval_service.dart';
+import '../../individual/profile/individual_profile_store.dart';
+import '../../app view/app_view_auth_gate.dart';
 
 // ─── Shared Google Sign-In instance ──────────────────────────────────────────
 const String _webClientId =
@@ -179,6 +181,23 @@ class EnterpriseAuthService {
       );
       final user = credential.user!;
       debugPrint('[EnterpriseAuthService] Firebase login OK: ${user.uid}');
+
+      // ⚡ STRICT DELETED ACCOUNT CHECK:
+      final cleanEmail = email.trim().toLowerCase();
+      bool isDeleted = false;
+      try {
+        final tombUid = await _firestore.collection('deleted_accounts').doc(user.uid).get();
+        if (tombUid.exists) isDeleted = true;
+        if (!isDeleted && cleanEmail.isNotEmpty) {
+          final tombEmail = await _firestore.collection('deleted_accounts').doc(cleanEmail).get();
+          if (tombEmail.exists) isDeleted = true;
+        }
+      } catch (_) {}
+
+      if (isDeleted) {
+        await _auth.signOut();
+        return EnterpriseAuthResult.error('This account has been permanently deleted by administrator. Login is not allowed.');
+      }
 
       return await _postLoginSync(user);
     } on FirebaseAuthException catch (e) {
@@ -460,6 +479,8 @@ class EnterpriseAuthService {
     } catch (_) {}
     await _auth.signOut();
     EnterpriseProfileStore.instance.clearProfile();
+    IndividualProfileStore.instance.clearProfile();
+    await AppViewAuthGate.instance.clearPersistentSession();
     debugPrint('[EnterpriseAuthService] Enterprise user signed out');
   }
 

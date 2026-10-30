@@ -100,6 +100,8 @@ class CardSocialRow extends StatelessWidget {
       return const FaIcon(FontAwesomeIcons.xTwitter, color: Color(0xFF000000), size: 20);
     } else if (p.contains('youtube')) {
       return const FaIcon(FontAwesomeIcons.youtube, color: Color(0xFFFF0000), size: 20);
+    } else if (p.contains('facebook')) {
+      return const FaIcon(FontAwesomeIcons.facebookF, color: Color(0xFF1877F2), size: 20);
     } else if (p.contains('pinterest')) {
       return const FaIcon(FontAwesomeIcons.pinterest, color: Color(0xFFBD081C), size: 20);
     } else if (p.contains('telegram')) {
@@ -138,5 +140,3 @@ class CardSocialRow extends StatelessWidget {
     );
   }
 }
-
-

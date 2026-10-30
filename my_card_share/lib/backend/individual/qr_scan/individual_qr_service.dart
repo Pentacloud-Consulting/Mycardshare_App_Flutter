@@ -30,11 +30,7 @@ class IndividualQRService {
       final card = (resp['data']?['card'] ?? resp['data']) as Map<String, dynamic>?;
       if (card != null) {
         debugPrint('[IndividualQRService] Fetched slug "$cleanSlug" via API');
-        final rawLinks = (card['socialLinks'] as List<dynamic>?) ?? [];
-        final socialLinks = rawLinks
-            .map((l) =>
-                SocialLinkItem.fromJson(Map<String, dynamic>.from(l as Map)))
-            .toList();
+        final socialLinks = SocialLinkItem.parseList(card['socialLinks'], card);
         return IndividualProfileData(
           uid: card['userId'] ?? '',
           fullName: card['fullName'] ?? 'User',
@@ -81,11 +77,7 @@ class IndividualQRService {
           debugPrint('[IndividualQRService] Error incrementing views: $e');
         });
 
-        final rawLinks = (data['socialLinks'] as List<dynamic>?) ?? [];
-        final socialLinks = rawLinks
-            .map((l) =>
-                SocialLinkItem.fromJson(Map<String, dynamic>.from(l as Map)))
-            .toList();
+        final socialLinks = SocialLinkItem.parseList(data['socialLinks'], data);
 
         debugPrint(
             '[IndividualQRService] Fetched slug "$cleanSlug" via Firestore (UID: $uid)');

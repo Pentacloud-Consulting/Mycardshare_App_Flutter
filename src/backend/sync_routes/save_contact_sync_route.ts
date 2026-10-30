@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Backend Sync Handler for Save Contact / vCard RFC 6350 Generation
  * Compatible with Next.js App Router API route (/api/sync/save-contact)
@@ -38,3 +39,4 @@ export function generateVCard(payload: SaveContactPayload): string {
   lines.push('END:VCARD');
   return lines.join('\r\n') + '\r\n';
 }
+

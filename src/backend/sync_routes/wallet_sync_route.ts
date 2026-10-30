@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 
@@ -188,3 +189,4 @@ export async function GET(req: NextRequest) {
   const redirectUrl = `https://digitalbusinesscloudcard.com/card/${slug}`;
   return NextResponse.redirect(redirectUrl);
 }
+

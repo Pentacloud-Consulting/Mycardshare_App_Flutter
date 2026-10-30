@@ -18,6 +18,126 @@ class SocialLinkItem {
         platform: json['platform'] ?? 'Website',
         url: json['url'] ?? '',
       );
+
+  static List<SocialLinkItem> parseList(dynamic rawData, [Map<String, dynamic>? parentMap]) {
+    final List<SocialLinkItem> result = [];
+    final Set<String> seen = {};
+
+    void addLink(String platform, String url) {
+      final cleanUrl = url.trim();
+      if (cleanUrl.isEmpty) return;
+
+      final normKey = platform.trim().toLowerCase();
+      if (seen.contains(normKey)) return;
+
+      final displayPlatform = formatPlatformName(platform);
+      seen.add(normKey);
+      result.add(SocialLinkItem(platform: displayPlatform, url: cleanUrl));
+    }
+
+    if (rawData is List) {
+      for (final item in rawData) {
+        if (item is SocialLinkItem) {
+          addLink(item.platform, item.url);
+        } else if (item is Map) {
+          final p = (item['platform'] ?? item['name'] ?? item['type'] ?? item['title'] ?? item['network'] ?? item['id'] ?? 'Website').toString();
+          final u = (item['url'] ?? item['link'] ?? item['value'] ?? item['handle'] ?? item['href'] ?? '').toString();
+          addLink(p, u);
+        } else if (item is String && item.trim().isNotEmpty) {
+          final p = detectPlatformFromUrl(item);
+          addLink(p, item);
+        }
+      }
+    }
+
+    if (rawData is Map) {
+      rawData.forEach((k, v) {
+        if (v is String && v.trim().isNotEmpty) {
+          addLink(k.toString(), v);
+        } else if (v is Map) {
+          final u = (v['url'] ?? v['link'] ?? v['value'] ?? v['handle'] ?? '').toString();
+          if (u.trim().isNotEmpty) {
+            addLink(k.toString(), u);
+          }
+        }
+      });
+    }
+
+    if (parentMap != null) {
+      final altKeys = ['socials', 'social_links', 'socialMedia', 'links', 'social_media'];
+      for (final alt in altKeys) {
+        if (parentMap[alt] != null && parentMap[alt] != rawData) {
+          final extra = parseList(parentMap[alt]);
+          for (final l in extra) {
+            addLink(l.platform, l.url);
+          }
+        }
+      }
+
+      final directPlatforms = {
+        'LinkedIn': ['linkedin', 'linkedIn', 'linkedinUrl', 'linkedInUrl'],
+        'Instagram': ['instagram', 'insta', 'instagramUrl', 'instagramHandle'],
+        'WhatsApp': ['whatsapp', 'whatsApp', 'whatsappNumber'],
+        'X (Twitter)': ['twitter', 'twitterUrl', 'x', 'xUrl'],
+        'GitHub': ['github', 'gitHub', 'githubUrl'],
+        'YouTube': ['youtube', 'youTube', 'youtubeUrl'],
+        'Facebook': ['facebook', 'facebookUrl'],
+        'Telegram': ['telegram', 'telegramUrl'],
+        'Pinterest': ['pinterest', 'pinterestUrl'],
+        'Portfolio': ['portfolio', 'portfolioUrl'],
+        'Website': ['website', 'websiteUrl', 'personalWebsite'],
+      };
+
+      directPlatforms.forEach((platform, aliases) {
+        final key = platform.toLowerCase();
+        final firstWord = platform.split(' ').first.toLowerCase();
+        if (!seen.contains(key) && !seen.contains(firstWord)) {
+          for (final alias in aliases) {
+            final val = parentMap[alias];
+            if (val != null && val is String && val.trim().isNotEmpty) {
+              addLink(platform, val.trim());
+              break;
+            }
+          }
+        }
+      });
+    }
+
+    return result;
+  }
+
+  static String formatPlatformName(String raw) {
+    final lower = raw.trim().toLowerCase();
+    if (lower.contains('linkedin')) return 'LinkedIn';
+    if (lower.contains('instagram') || lower.contains('insta')) return 'Instagram';
+    if (lower.contains('whatsapp')) return 'WhatsApp';
+    if (lower.contains('twitter') || lower == 'x') return 'X (Twitter)';
+    if (lower.contains('github')) return 'GitHub';
+    if (lower.contains('youtube')) return 'YouTube';
+    if (lower.contains('facebook')) return 'Facebook';
+    if (lower.contains('telegram')) return 'Telegram';
+    if (lower.contains('pinterest')) return 'Pinterest';
+    if (lower.contains('portfolio')) return 'Portfolio';
+    if (lower.contains('website') || lower.contains('web')) return 'Website';
+    if (raw.trim().isNotEmpty) {
+      return raw.trim()[0].toUpperCase() + raw.trim().substring(1);
+    }
+    return 'Website';
+  }
+
+  static String detectPlatformFromUrl(String url) {
+    final lower = url.toLowerCase();
+    if (lower.contains('linkedin.com')) return 'LinkedIn';
+    if (lower.contains('instagram.com')) return 'Instagram';
+    if (lower.contains('wa.me') || lower.contains('whatsapp.com')) return 'WhatsApp';
+    if (lower.contains('twitter.com') || lower.contains('x.com')) return 'X (Twitter)';
+    if (lower.contains('github.com')) return 'GitHub';
+    if (lower.contains('youtube.com') || lower.contains('youtu.be')) return 'YouTube';
+    if (lower.contains('facebook.com')) return 'Facebook';
+    if (lower.contains('t.me') || lower.contains('telegram.me')) return 'Telegram';
+    if (lower.contains('pinterest.com')) return 'Pinterest';
+    return 'Website';
+  }
 }
 
 class IndividualProfileData {
@@ -119,6 +239,12 @@ class IndividualProfileStore extends ChangeNotifier {
   IndividualProfileData? get activeProfile => _activeProfile;
   IndividualProfileData? get currentProfile => _activeProfile;
 
+  /// Completely clears active profile state upon user logout / switch account
+  void clearProfile() {
+    _activeProfile = null;
+    notifyListeners();
+  }
+
   bool get hasCompletedOnboarding => _activeProfile != null && _activeProfile!.jobTitle.isNotEmpty;
 
   /// Helper to generate card slug from Full Name
@@ -164,13 +290,19 @@ class IndividualProfileStore extends ChangeNotifier {
 
     final cleanSocialLinks = socialLinks.where((l) => l.url.trim().isNotEmpty).toList();
 
+    // Guard: only inherit existing photo/banner if active profile belongs to the SAME user!
+    final isSameUser = _activeProfile != null &&
+        (_activeProfile!.uid == uid || _activeProfile!.email.toLowerCase() == email.toLowerCase());
+    final existingPhoto = isSameUser ? _activeProfile?.profilePhoto : null;
+    final existingBanner = isSameUser ? _activeProfile?.bannerPhoto : null;
+
     _activeProfile = IndividualProfileData(
       uid: uid,
       fullName: fullName,
       email: email,
       cardSlug: slug,
-      profilePhoto: profilePhoto ?? _activeProfile?.profilePhoto,
-      bannerPhoto: bannerPhoto ?? _activeProfile?.bannerPhoto,
+      profilePhoto: profilePhoto ?? existingPhoto,
+      bannerPhoto: bannerPhoto ?? existingBanner,
       jobTitle: jobTitle,
       phoneNumber: phoneNumber,
       websiteUrl: websiteUrl,
@@ -191,8 +323,8 @@ class IndividualProfileStore extends ChangeNotifier {
         'fullName': fullName,
         'email': email,
         'cardSlug': slug,
-        'profilePhoto': profilePhoto ?? _activeProfile?.profilePhoto,
-        'bannerPhoto': bannerPhoto ?? _activeProfile?.bannerPhoto,
+        'profilePhoto': profilePhoto ?? existingPhoto,
+        'bannerPhoto': bannerPhoto ?? existingBanner,
         'jobTitle': jobTitle,
         'phoneNumber': phoneNumber,
         'websiteUrl': websiteUrl,
@@ -249,7 +381,7 @@ class IndividualProfileStore extends ChangeNotifier {
                 'jobTitle': jobTitle,
                 'roleTitle': jobTitle,
                 'phone': phoneNumber,
-                'avatarUrl': profilePhoto ?? _activeProfile?.profilePhoto,
+                'avatarUrl': profilePhoto ?? existingPhoto,
                 'updatedAt': FieldValue.serverTimestamp(),
               }, SetOptions(merge: true));
               debugPrint('[IndividualProfileStore] Synced employee details to enterprise ${ent.id} employee $empDocId');
@@ -270,8 +402,8 @@ class IndividualProfileStore extends ChangeNotifier {
       fullName: fullName,
       email: email,
       slug: slug,
-      profilePhoto: profilePhoto ?? _activeProfile?.profilePhoto,
-      bannerPhoto: bannerPhoto ?? _activeProfile?.bannerPhoto,
+      profilePhoto: profilePhoto ?? existingPhoto,
+      bannerPhoto: bannerPhoto ?? existingBanner,
       jobTitle: jobTitle,
       phoneNumber: phoneNumber,
       websiteUrl: websiteUrl,
@@ -337,9 +469,7 @@ class IndividualProfileStore extends ChangeNotifier {
               phoneNumber: card['phone'] ?? card['phoneNumber'] ?? '',
               websiteUrl: card['website'] ?? card['websiteUrl'] ?? '',
               templateStyle: card['templateStyle'] ?? card['themeColor'] ?? '0',
-              socialLinks: rawLinks
-                  .map((l) => SocialLinkItem.fromJson(Map<String, dynamic>.from(l)))
-                  .toList(),
+              socialLinks: SocialLinkItem.parseList(card['socialLinks'], card),
               companyName: card['companyName'] ?? card['company'] ?? '',
               shortBio: card['bio'] ?? card['shortBio'] ?? '',
               networkingStatus: card['userStatus'] ?? card['networkingStatus'] ?? 'Actively Networking',
@@ -406,9 +536,7 @@ class IndividualProfileStore extends ChangeNotifier {
           phoneNumber: data['phoneNumber'] ?? data['phone'] ?? '',
           websiteUrl: data['websiteUrl'] ?? data['website'] ?? '',
           templateStyle: data['templateStyle'] ?? '0',
-          socialLinks: rawLinks
-              .map((l) => SocialLinkItem.fromJson(Map<String, dynamic>.from(l)))
-              .toList(),
+          socialLinks: SocialLinkItem.parseList(data['socialLinks'], data),
           companyName: resolvedComp,
           shortBio: data['shortBio'] ?? data['bio'] ?? '',
           networkingStatus: data['networkingStatus'] ?? data['userStatus'] ?? 'Actively Networking',

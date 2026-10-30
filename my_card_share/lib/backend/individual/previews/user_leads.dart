@@ -99,6 +99,30 @@ class UserLeadsService extends ChangeNotifier {
     }
   }
 
+  static List<LeadData> _deduplicateLeads(List<LeadData> list) {
+    final List<LeadData> result = [];
+    final Set<String> seenEmails = {};
+    final Set<String> seenPhones = {};
+    final Set<String> seenIds = {};
+
+    final sorted = List<LeadData>.from(list)..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+    for (final l in sorted) {
+      if (seenIds.contains(l.id)) continue;
+      final em = l.email.trim().toLowerCase();
+      final ph = l.phone.replaceAll(RegExp(r'\D'), '');
+
+      if (em.isNotEmpty && seenEmails.contains(em)) continue;
+      if (ph.isNotEmpty && ph.length >= 7 && seenPhones.contains(ph)) continue;
+
+      seenIds.add(l.id);
+      if (em.isNotEmpty) seenEmails.add(em);
+      if (ph.isNotEmpty && ph.length >= 7) seenPhones.add(ph);
+      result.add(l);
+    }
+    return result;
+  }
+
   /// Starts real-time listening to Firestore changes for live lead synchronization.
   void listenToUserLeads([String? uid]) {
     final curUser = FirebaseAuth.instance.currentUser;
@@ -140,8 +164,7 @@ class UserLeadsService extends ChangeNotifier {
         }
       }
 
-      _leads = map.values.toList();
-      _leads.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      _leads = _deduplicateLeads(map.values.toList());
       notifyListeners();
 
       IndividualMetricsStore.instance.updateLeadsCount(effectiveUid, _leads.length);
@@ -230,8 +253,7 @@ class UserLeadsService extends ChangeNotifier {
         }
       }
 
-      _leads = mergedMap.values.toList();
-      _leads.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      _leads = _deduplicateLeads(mergedMap.values.toList());
       notifyListeners();
 
       if (effectiveUid.isNotEmpty) {

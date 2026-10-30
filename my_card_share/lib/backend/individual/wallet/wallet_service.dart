@@ -359,7 +359,7 @@ class WalletService {
           'refId': refId,
           'formData': cardPayload,
         }),
-      ).timeout(const Duration(seconds: 4));
+      ).timeout(const Duration(seconds: 8));
 
       if (response.statusCode != 200) {
         response = await http.post(
@@ -369,7 +369,7 @@ class WalletService {
             'walletType': 'samsung',
             'cardData': cardPayload,
           }),
-        ).timeout(const Duration(seconds: 4));
+        ).timeout(const Duration(seconds: 8));
       }
 
       if (response.statusCode == 200) {
@@ -384,17 +384,16 @@ class WalletService {
       debugPrint('ℹ️ [WalletService] Samsung Wallet backend call note: $e');
     }
 
-    // ── 2. Fallback: Generate verified official Samsung Wallet Clip link directly ──
-    if (addToWalletUrl == null ||
-        addToWalletUrl.isEmpty ||
-        !addToWalletUrl.contains('swallet.link') ||
-        addToWalletUrl.contains('mycardshare_samsung_cert_2026')) {
-      addToWalletUrl = generateSamsungWalletSaveUrl(cardPayload);
-      debugPrint('🎟️ [WalletService] Generated verified official Samsung Wallet pass link: $addToWalletUrl');
+    // ── 2. Fallback: Open card URL in browser if backend unavailable ──
+    // Samsung Wallet requires a real registered partner cert — without backend,
+    // we redirect user to the digital card page (best UX alternative).
+    if (addToWalletUrl == null || addToWalletUrl.isEmpty || !addToWalletUrl.startsWith('http')) {
+      final slug = data['cardSlug'] as String? ?? 'card';
+      addToWalletUrl = 'https://digitalbusinesscloudcard.com/card/$slug';
+      debugPrint('🎟️ [WalletService] Samsung Wallet backend unavailable — opening card URL as fallback: $addToWalletUrl');
     }
 
-    // ── 3. Exact Web ki tarah system intent me open karo (LaunchMode.externalApplication) ──
-    // ⚡ Samsung Galaxy device intercepts https://a.swallet.link/... and opens native Samsung Wallet popup!
+    // ── 3. Open the URL externally so Samsung Wallet / browser intercepts it ──
     final launched = await _launchExternalUrl(addToWalletUrl);
     if (!launched) {
       await launchUrl(Uri.parse(addToWalletUrl), mode: LaunchMode.externalApplication);
@@ -458,19 +457,6 @@ class WalletService {
     final token = '$headerBase64.$payloadBase64.';
 
     return 'https://pay.google.com/gp/v/save/$token';
-  }
-
-  /// 🌐 Generates official Samsung Wallet Clip / ATW format URL
-  static String generateSamsungWalletSaveUrl(Map<String, dynamic> cardData) {
-    final slug = (cardData['cardSlug'] ?? 'card').toString().replaceAll(RegExp(r'[^a-zA-Z0-9_\-\.]'), '_');
-    const certId = 'zAtI';
-    const cardId = '3ir7iadicu000';
-    final refId = (cardData['refId'] != null && cardData['refId'].toString().isNotEmpty)
-        ? cardData['refId'].toString()
-        : 'ref-$slug-${DateTime.now().millisecondsSinceEpoch}';
-
-    // Official Samsung Wallet ATW Data Fetch universal link
-    return 'https://a.swallet.link/atw/v3/$certId/$cardId#Clip?pdata=${Uri.encodeComponent(refId)}';
   }
 
   // ─────────────────────────────────────────────────────────────

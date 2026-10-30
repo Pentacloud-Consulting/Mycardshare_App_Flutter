@@ -332,7 +332,45 @@ class EnterpriseEmployeeSaveLeadsService extends ChangeNotifier {
         resolvedEmpUid = employeeId.trim();
       }
 
-      final leadId = 'lead_${DateTime.now().millisecondsSinceEpoch}';
+      String leadId = 'lead_${DateTime.now().millisecondsSinceEpoch}';
+      final cleanLeadEmail = leadEmail.trim().toLowerCase();
+      final cleanLeadPhone = leadPhone.replaceAll(RegExp(r'\D'), '');
+
+      // Deduplication check: check if a lead with same email or phone already exists
+      try {
+        if (cleanLeadEmail.isNotEmpty) {
+          final existing = await _firestore
+              .collection('enterprises')
+              .doc(entUid)
+              .collection('employees')
+              .doc(resolvedEmpDocId)
+              .collection('leads')
+              .where('email', isEqualTo: cleanLeadEmail)
+              .limit(1)
+              .get();
+          if (existing.docs.isNotEmpty) {
+            leadId = existing.docs.first.id;
+            debugPrint('[EnterpriseEmployeeSaveLeadsService] Found existing lead with email $cleanLeadEmail: $leadId. Updating.');
+          }
+        }
+        if (leadId.startsWith('lead_${DateTime.now().millisecondsSinceEpoch}'.substring(0, 10)) &&
+            cleanLeadPhone.isNotEmpty && cleanLeadPhone.length >= 7) {
+          final existingPhone = await _firestore
+              .collection('enterprises')
+              .doc(entUid)
+              .collection('employees')
+              .doc(resolvedEmpDocId)
+              .collection('leads')
+              .where('phone', isEqualTo: leadPhone.trim())
+              .limit(1)
+              .get();
+          if (existingPhone.docs.isNotEmpty) {
+            leadId = existingPhone.docs.first.id;
+            debugPrint('[EnterpriseEmployeeSaveLeadsService] Found existing lead with phone $cleanLeadPhone: $leadId. Updating.');
+          }
+        }
+      } catch (_) {}
+
       final leadItem = EmployeeSavedLeadItem(
         id: leadId,
         enterpriseUid: entUid,

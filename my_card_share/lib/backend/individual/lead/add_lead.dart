@@ -47,9 +47,43 @@ class AddLeadService {
       return null;
     }
 
-    final leadId = 'lead_${DateTime.now().millisecondsSinceEpoch}';
+    String effectiveLeadId = 'lead_${DateTime.now().millisecondsSinceEpoch}';
+    final cleanEmail = email.trim().toLowerCase();
+    final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
+
+    // Deduplication check: check if a lead with same email or phone already exists for target user
+    try {
+      if (cleanEmail.isNotEmpty) {
+        final existingByEmail = await _firestore
+            .collection('users')
+            .doc(effectiveUid)
+            .collection('leads')
+            .where('email', isEqualTo: cleanEmail)
+            .limit(1)
+            .get();
+        if (existingByEmail.docs.isNotEmpty) {
+          effectiveLeadId = existingByEmail.docs.first.id;
+          debugPrint('[AddLeadService] Found existing lead with email $cleanEmail: $effectiveLeadId. Updating.');
+        }
+      }
+      if (effectiveLeadId.startsWith('lead_${DateTime.now().millisecondsSinceEpoch}'.substring(0, 10)) &&
+          cleanPhone.isNotEmpty && cleanPhone.length >= 7) {
+        final existingByPhone = await _firestore
+            .collection('users')
+            .doc(effectiveUid)
+            .collection('leads')
+            .where('phone', isEqualTo: phone.trim())
+            .limit(1)
+            .get();
+        if (existingByPhone.docs.isNotEmpty) {
+          effectiveLeadId = existingByPhone.docs.first.id;
+          debugPrint('[AddLeadService] Found existing lead with phone $cleanPhone: $effectiveLeadId. Updating.');
+        }
+      }
+    } catch (_) {}
+
     final lead = LeadData(
-      id: leadId,
+      id: effectiveLeadId,
       targetUid: effectiveUid,
       name: name.trim(),
       email: email.trim(),
@@ -69,19 +103,19 @@ class AddLeadService {
           .collection('users')
           .doc(effectiveUid)
           .collection('leads')
-          .doc(leadId)
-          .set(lead.toJson());
-      debugPrint('[AddLeadService] Saved lead $leadId under users/$effectiveUid/leads');
+          .doc(effectiveLeadId)
+          .set(lead.toJson(), SetOptions(merge: true));
+      debugPrint('[AddLeadService] Saved lead $effectiveLeadId under users/$effectiveUid/leads');
 
       // 2. Also save to global leads collection for Master Admin audit logs & tracking
-      await _firestore.collection('leads').doc(leadId).set({
+      await _firestore.collection('leads').doc(effectiveLeadId).set({
         ...lead.toJson(),
         'assignedTo': effectiveUid,
         'assignedUsers': [effectiveUid],
         'createdByType': 'manual',
         'createdByUid': currentUid,
         'timestamp': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
     } catch (e) {
       debugPrint('[AddLeadService] Firestore save error/notice: $e');
     }

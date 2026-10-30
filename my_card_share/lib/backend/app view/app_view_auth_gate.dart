@@ -49,6 +49,8 @@ class AppViewAuthGate {
   /// Clears persistent SharedPreferences session on logout
   Future<void> clearPersistentSession() async {
     try {
+      IndividualProfileStore.instance.clearProfile();
+      EnterpriseProfileStore.instance.setCurrentProfile(null);
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('is_logged_in');
       await prefs.remove('user_id');

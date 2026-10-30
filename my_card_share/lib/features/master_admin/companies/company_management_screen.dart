@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../backend/master_admin/companies/company_management_store.dart';
+import '../../../backend/master_admin/companies/models/master_company_model.dart';
 import 'widgets/company_stats_row.dart';
 import 'widgets/company_search_filter_bar.dart';
 import 'widgets/company_list_card.dart';
@@ -14,10 +15,12 @@ class MasterAdminCompanyScreen extends StatefulWidget {
 class _MasterAdminCompanyScreenState extends State<MasterAdminCompanyScreen> {
   String _searchQuery = "";
   String _selectedFilter = "All";
+  late final Stream<List<MasterCompanyModel>> _companiesStream;
 
   @override
   void initState() {
     super.initState();
+    _companiesStream = CompanyManagementStore.instance.streamCompanies();
     CompanyManagementStore.instance.loadGlobalCompanies();
   }
 
@@ -43,10 +46,14 @@ class _MasterAdminCompanyScreenState extends State<MasterAdminCompanyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: CompanyManagementStore.instance,
-      builder: (context, _) {
+    return StreamBuilder<List<MasterCompanyModel>>(
+      stream: _companiesStream,
+      builder: (context, snapshot) {
         final store = CompanyManagementStore.instance;
+        final allCompanies = snapshot.data ?? store.companies;
+        final totalCount = allCompanies.isNotEmpty ? allCompanies.length : store.totalCount;
+        final activeCount = allCompanies.isNotEmpty ? allCompanies.where((c) => c.status.toLowerCase() == 'active').length : store.activeCount;
+        final suspendedCount = allCompanies.isNotEmpty ? allCompanies.where((c) => c.status.toLowerCase() == 'suspended').length : store.suspendedCount;
 
         return Stack(
           children: [
@@ -85,9 +92,9 @@ class _MasterAdminCompanyScreenState extends State<MasterAdminCompanyScreen> {
                   children: [
                     // 1. Stat Chips Row (Total, Active, Suspended) with real live counts
                     CompanyStatsRow(
-                      totalCount: store.totalCount,
-                      activeCount: store.activeCount,
-                      suspendedCount: store.suspendedCount,
+                      totalCount: totalCount,
+                      activeCount: activeCount,
+                      suspendedCount: suspendedCount,
                       selectedFilter: _selectedFilter,
                       onFilterSelected: _onFilterChanged,
                     ),
@@ -107,6 +114,7 @@ class _MasterAdminCompanyScreenState extends State<MasterAdminCompanyScreen> {
                     CompanyListCard(
                       searchQuery: _searchQuery,
                       selectedFilter: _selectedFilter,
+                      companies: allCompanies,
                     ),
 
                     const SizedBox(height: 24),

@@ -99,9 +99,51 @@ class GoogleLoginService {
           googleUser.displayName?.isNotEmpty == true ? googleUser.displayName! : (googleName ?? email);
       final String targetRole = (role ?? 'individual').toLowerCase().trim();
 
+      // ⚡ STRICT DELETED ACCOUNT CHECK:
+      bool isDeleted = false;
+      try {
+        final tombUid = await _firestore.collection('deleted_accounts').doc(uid).get();
+        if (tombUid.exists) isDeleted = true;
+        if (!isDeleted && email.isNotEmpty) {
+          final tombEmail = await _firestore.collection('deleted_accounts').doc(email).get();
+          if (tombEmail.exists) isDeleted = true;
+        }
+        if (!isDeleted && email.isNotEmpty) {
+          final safeEmail = email.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+          final tombSafe = await _firestore.collection('deleted_accounts').doc(safeEmail).get();
+          if (tombSafe.exists) isDeleted = true;
+        }
+      } catch (_) {}
+
+      if (isDeleted) {
+        await _auth.signOut();
+        try {
+          await _googleSignIn.signOut();
+        } catch (_) {}
+        return GoogleLoginResponse(
+          isSuccess: false,
+          message: 'This account has been permanently deleted by administrator. Login is not allowed.',
+        );
+      }
+
       // Fetch user profile from Firestore to verify account role
       final DocumentSnapshot doc =
           await _firestore.collection('users').doc(uid).get();
+
+      if (doc.exists && doc.data() != null) {
+        final d = doc.data() as Map<String, dynamic>;
+        final status = (d['status'] ?? '').toString().toLowerCase().trim();
+        if (status == 'deleted' || d['isDeleted'] == true || d['isDeactivated'] == true) {
+          await _auth.signOut();
+          try {
+            await _googleSignIn.signOut();
+          } catch (_) {}
+          return GoogleLoginResponse(
+            isSuccess: false,
+            message: 'This account has been permanently deleted by administrator. Login is not allowed.',
+          );
+        }
+      }
 
       Map<String, dynamic>? firestoreData;
       String userRole = targetRole;

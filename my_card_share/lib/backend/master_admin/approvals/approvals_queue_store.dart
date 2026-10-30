@@ -136,17 +136,23 @@ class ApprovalsQueueStore extends ChangeNotifier {
 
         if (_locallyResolvedTitles.contains(title.toLowerCase())) continue;
 
-        // If explicitly approved, active, rejected, or suspended, it is NOT pending!
+        // Check if explicitly pending
+        final bool isPending = status == 'pending' || approvalStatus == 'pending';
+
+        // If explicitly approved or rejected, it is NOT pending!
         if (approvalStatus == 'approved' ||
             status == 'active' ||
             approvalStatus == 'rejected' ||
-            status == 'rejected' ||
-            status == 'suspended' ||
-            isSuspended) {
+            status == 'rejected') {
           continue;
         }
 
-        if (status == 'pending' || approvalStatus == 'pending') {
+        // If suspended and not pending approval, skip
+        if (!isPending && (status == 'suspended' || isSuspended)) {
+          continue;
+        }
+
+        if (isPending) {
           DateTime created = DateTime.now();
           if (data['createdAt'] is Timestamp) {
             created = (data['createdAt'] as Timestamp).toDate();
@@ -181,16 +187,20 @@ class ApprovalsQueueStore extends ChangeNotifier {
 
           if (_locallyResolvedTitles.contains(title.toLowerCase())) continue;
 
+          final bool isPending = status == 'pending' || approvalStatus == 'pending';
+
           if (approvalStatus == 'approved' ||
               status == 'active' ||
               approvalStatus == 'rejected' ||
-              status == 'rejected' ||
-              status == 'suspended' ||
-              isSuspended) {
+              status == 'rejected') {
             continue;
           }
 
-          if (status == 'pending' || approvalStatus == 'pending') {
+          if (!isPending && (status == 'suspended' || isSuspended)) {
+            continue;
+          }
+
+          if (isPending) {
             if (!items.any((it) => it.id == doc.id || it.title.toLowerCase() == title.toLowerCase())) {
               DateTime created = DateTime.now();
               if (data['createdAt'] is Timestamp) {

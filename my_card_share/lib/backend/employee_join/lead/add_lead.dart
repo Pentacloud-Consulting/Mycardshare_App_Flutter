@@ -49,7 +49,42 @@ class AddLeadService {
       return null;
     }
 
-    final leadId = 'lead_${DateTime.now().millisecondsSinceEpoch}';
+    final cleanEmail = email.trim().toLowerCase();
+    final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
+
+    // ─── Deduplication check ───────────────────────────────────────────────────
+    String leadId = 'lead_${DateTime.now().millisecondsSinceEpoch}';
+    try {
+      if (cleanEmail.isNotEmpty) {
+        final existingByEmail = await _firestore
+            .collection('users')
+            .doc(effectiveUid)
+            .collection('leads')
+            .where('email', isEqualTo: cleanEmail)
+            .limit(1)
+            .get();
+        if (existingByEmail.docs.isNotEmpty) {
+          leadId = existingByEmail.docs.first.id;
+          debugPrint('[AddLeadService] Found existing lead by email. Updating $leadId instead of duplicate.');
+        }
+      }
+      if (leadId.startsWith('lead_') && cleanPhone.isNotEmpty && cleanPhone.length >= 7) {
+        final existingByPhone = await _firestore
+            .collection('users')
+            .doc(effectiveUid)
+            .collection('leads')
+            .where('phone', isEqualTo: phone.trim())
+            .limit(1)
+            .get();
+        if (existingByPhone.docs.isNotEmpty) {
+          leadId = existingByPhone.docs.first.id;
+          debugPrint('[AddLeadService] Found existing lead by phone. Updating $leadId instead of duplicate.');
+        }
+      }
+    } catch (dedupErr) {
+      debugPrint('[AddLeadService] Dedup check notice: $dedupErr');
+    }
+
     final lead = LeadData(
       id: leadId,
       targetUid: effectiveUid,
@@ -72,7 +107,7 @@ class AddLeadService {
           .doc(effectiveUid)
           .collection('leads')
           .doc(leadId)
-          .set(lead.toJson());
+          .set(lead.toJson(), SetOptions(merge: true));
       debugPrint('[AddLeadService] Saved lead $leadId under users/$effectiveUid/leads');
 
       // 2. Also save to global leads collection for Master Admin audit logs & tracking
@@ -83,7 +118,7 @@ class AddLeadService {
         'createdByType': 'manual',
         'createdByUid': currentUid,
         'timestamp': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
 
       // 3. Link to enterprise leads subcollection if user belongs to an enterprise
       final entUid = EmployeeHomeBackendService.instance.enterpriseUid;
@@ -108,7 +143,7 @@ class AddLeadService {
           'employeeEmail': empEmail,
           'capturedBy': empName,
           'createdAt': FieldValue.serverTimestamp(),
-        });
+        }, SetOptions(merge: true));
       }
     } catch (e) {
       debugPrint('[AddLeadService] Firestore save error/notice: $e');

@@ -540,6 +540,10 @@ class _MasterAdminCompanyDetailScreenState extends State<MasterAdminCompanyDetai
                   // 3. Team Members Section (Above Subscription - shows all employees with logos & roles)
                   CompanyDetailTeamSection(
                     companyId: effectiveId,
+                    companyName: companyName,
+                    domain: (data['domain'] ?? cachedCompany?.domain ?? '').toString(),
+                    adminEmail: adminEmail,
+                    employeeCount: employeeCount,
                   ),
 
                   const SizedBox(height: 22),

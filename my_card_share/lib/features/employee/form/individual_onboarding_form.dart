@@ -138,12 +138,16 @@ class _IndividualOnboardingFormScreenState
     _fullName = resolvedName;
     _email = resolvedEmail;
     _uid = resolvedUid;
-    _profileImageUrl = (active != null && active.profilePhoto != null && active.profilePhoto!.isNotEmpty)
+
+    final isSameUser = active != null &&
+        (active.uid == resolvedUid || (resolvedEmail.isNotEmpty && active.email.toLowerCase() == resolvedEmail.toLowerCase()));
+
+    _profileImageUrl = (isSameUser && active.profilePhoto != null && active.profilePhoto!.isNotEmpty)
         ? active.profilePhoto
         : firebaseUser?.photoURL;
 
-    // Load active profile data if available
-    if (active != null) {
+    // Load active profile data only if it belongs to this exact user
+    if (isSameUser && active != null) {
       _jobTitleController.text = active.jobTitle;
       _phoneController.text = active.phoneNumber;
       _websiteController.text = active.websiteUrl;

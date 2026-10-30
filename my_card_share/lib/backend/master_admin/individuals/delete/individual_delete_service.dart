@@ -289,6 +289,11 @@ class IndividualDeleteService {
         if (userEmail.isNotEmpty) {
           final safeEmailDoc = userEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
           await _firestore.collection("users").doc(safeEmailDoc).set(updatePayload, SetOptions(merge: true));
+
+          final usersByEmail = await _firestore.collection("users").where("email", isEqualTo: userEmail).get();
+          for (final doc in usersByEmail.docs) {
+            await doc.reference.set(updatePayload, SetOptions(merge: true));
+          }
         }
       } catch (_) {}
 

@@ -204,6 +204,25 @@ class EmployeeLoginBackendService {
       );
     }
 
+    // ⚡ STRICT DELETED ACCOUNT CHECK:
+    try {
+      final tombEmail = await _firestore.collection('deleted_accounts').doc(cleanEmail).get();
+      if (tombEmail.exists) {
+        return const EmployeeLoginResult(
+          success: false,
+          message: 'This account has been permanently deleted by administrator. Login is not allowed.',
+        );
+      }
+      final safeEmail = cleanEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+      final tombSafe = await _firestore.collection('deleted_accounts').doc(safeEmail).get();
+      if (tombSafe.exists) {
+        return const EmployeeLoginResult(
+          success: false,
+          message: 'This account has been permanently deleted by administrator. Login is not allowed.',
+        );
+      }
+    } catch (_) {}
+
     try {
       // 1. Safe Firebase Auth sign-in or account creation
       try {
@@ -226,6 +245,21 @@ class EmployeeLoginBackendService {
         }
       } catch (authErr) {
         debugPrint('[EmployeeLoginBackendService] Firebase Auth sign-in note: $authErr');
+      }
+
+      // Check UID in deleted accounts
+      final curUid = _auth.currentUser?.uid;
+      if (curUid != null) {
+        try {
+          final tombUid = await _firestore.collection('deleted_accounts').doc(curUid).get();
+          if (tombUid.exists) {
+            await _auth.signOut();
+            return const EmployeeLoginResult(
+              success: false,
+              message: 'This account has been permanently deleted by administrator. Login is not allowed.',
+            );
+          }
+        } catch (_) {}
       }
 
       // 2. Find enterprise linked to this employee email

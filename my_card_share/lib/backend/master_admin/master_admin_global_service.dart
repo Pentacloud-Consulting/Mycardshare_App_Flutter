@@ -12,7 +12,7 @@ class MasterAdminGlobalService {
   MasterAdminGlobalService._internal();
   static final MasterAdminGlobalService instance = MasterAdminGlobalService._internal();
 
-  static const String baseUrl = "https://digitalbusinesscloudcard.com";
+  static const String baseUrl = "https://mycardshare.com";
 
   /// ⚡ Fetches ALL companies globally across the entire platform
   static Future<Map<String, dynamic>> fetchGlobalCompanies({

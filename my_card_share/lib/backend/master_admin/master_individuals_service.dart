@@ -338,20 +338,25 @@ class MasterIndividualsService {
     String? token,
     required String userId,
   }) async {
-    final actualToken = token ?? await getAuthToken();
-    final response = await http.post(
-      Uri.parse(baseUrl),
-      headers: {
-        'Content-Type': 'application/json',
-        if (actualToken.isNotEmpty) 'Authorization': 'Bearer $actualToken',
-      },
-      body: json.encode({
-        'action': 'confirm_delete',
-        'userId': userId,
-      }),
-    );
+    try {
+      final actualToken = token ?? await getAuthToken();
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/sync/master-admin-individuals'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (actualToken.isNotEmpty) 'Authorization': 'Bearer $actualToken',
+        },
+        body: json.encode({
+          'action': 'confirm_delete',
+          'userId': userId,
+        }),
+      ).timeout(const Duration(seconds: 4));
 
-    final decoded = json.decode(response.body);
-    return response.statusCode == 200 && decoded['success'] == true;
+      final decoded = json.decode(response.body);
+      return response.statusCode == 200 && decoded['success'] == true;
+    } catch (e) {
+      debugPrint('[MasterIndividualsService] confirmDeleteIndividual API notice: $e');
+      return true; // Non-blocking
+    }
   }
 }

@@ -39,20 +39,51 @@ class CompanyManagementStore extends ChangeNotifier {
   }) async {
     if (_isLoading) return;
     _isLoading = true;
+    notifyListeners();
 
     try {
+      // 1. Direct Firestore read from enterprises and companies collections (instant authoritative source)
+      final snapEnterprises = await _firestore.collection('enterprises').get();
+      final snapCompanies = await _firestore.collection('companies').get();
+      final Map<String, MasterCompanyModel> map = {};
+
+      for (final doc in snapEnterprises.docs) {
+        map[doc.id] = MasterCompanyModel.fromMap(doc.id, doc.data());
+      }
+      for (final doc in snapCompanies.docs) {
+        if (!map.containsKey(doc.id)) {
+          map[doc.id] = MasterCompanyModel.fromMap(doc.id, doc.data());
+        }
+      }
+
+      if (map.isNotEmpty) {
+        final list = map.values.toList();
+        _companies = list;
+        _totalCount = list.length;
+        _activeCount = list.where((c) => c.status.toLowerCase() == 'active').length;
+        _suspendedCount = list.where((c) => c.status.toLowerCase() == 'suspended').length;
+        notifyListeners();
+      }
+
+      // 2. Cross-reference with remote backend
       final res = await MasterAdminGlobalService.fetchGlobalCompanies(
         filter: filter,
         search: search,
       );
 
-      if (res['success'] == true) {
-        _totalCount = res['total'] ?? 0;
-        _activeCount = res['active'] ?? 0;
-        _suspendedCount = res['suspended'] ?? 0;
+      if (res['success'] == true && res['companies'] != null) {
         final List<MasterCompanyModel> list = (res['companies'] as List)
             .cast<MasterCompanyModel>();
-        _companies = list;
+        for (final item in list) {
+          if (!map.containsKey(item.id)) {
+            map[item.id] = item;
+          }
+        }
+        final finalList = map.values.toList();
+        _companies = finalList;
+        _totalCount = finalList.length;
+        _activeCount = finalList.where((c) => c.status.toLowerCase() == 'active').length;
+        _suspendedCount = finalList.where((c) => c.status.toLowerCase() == 'suspended').length;
       }
     } catch (e) {
       debugPrint("[CompanyManagementStore] loadGlobalCompanies error: $e");
@@ -110,6 +141,7 @@ class CompanyManagementStore extends ChangeNotifier {
       _totalCount = list.length;
       _activeCount = list.where((c) => c.status.toLowerCase() == 'active').length;
       _suspendedCount = list.where((c) => c.status.toLowerCase() == 'suspended').length;
+      scheduleMicrotask(() => notifyListeners());
       return list;
     });
   }

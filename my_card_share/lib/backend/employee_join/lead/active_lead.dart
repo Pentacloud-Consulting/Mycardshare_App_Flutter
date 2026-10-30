@@ -20,17 +20,51 @@ class ActiveLeadService {
   /// Submits lead data to Firestore & Next.js API, updates real metric counters, and triggers notifications.
   Future<void> submitLead(LeadData lead) async {
     debugPrint('[ActiveLeadService] Submitting new lead for target UID: ${lead.targetUid}');
-    
+
+    String effectiveLeadId = lead.id;
+    final cleanEmail = lead.email.trim().toLowerCase();
+    final cleanPhone = lead.phone.replaceAll(RegExp(r'\D'), '');
+
     try {
+      // Deduplication check: check if a lead with same email or phone already exists for target user
+      if (cleanEmail.isNotEmpty) {
+        final existingByEmail = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(lead.targetUid)
+            .collection('leads')
+            .where('email', isEqualTo: cleanEmail)
+            .limit(1)
+            .get();
+        if (existingByEmail.docs.isNotEmpty) {
+          effectiveLeadId = existingByEmail.docs.first.id;
+          debugPrint('[ActiveLeadService] Found existing lead with email $cleanEmail: $effectiveLeadId. Updating instead of duplicate.');
+        }
+      }
+      if (effectiveLeadId == lead.id && cleanPhone.isNotEmpty && cleanPhone.length >= 7) {
+        final existingByPhone = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(lead.targetUid)
+            .collection('leads')
+            .where('phone', isEqualTo: lead.phone.trim())
+            .limit(1)
+            .get();
+        if (existingByPhone.docs.isNotEmpty) {
+          effectiveLeadId = existingByPhone.docs.first.id;
+          debugPrint('[ActiveLeadService] Found existing lead with phone $cleanPhone: $effectiveLeadId. Updating instead of duplicate.');
+        }
+      }
+
+      final leadToSave = lead.copyWith(id: effectiveLeadId);
+
       // 1. Save to Firestore under target user's leads collection
       await FirebaseFirestore.instance
           .collection('users')
           .doc(lead.targetUid)
           .collection('leads')
-          .doc(lead.id)
-          .set(lead.toJson());
+          .doc(effectiveLeadId)
+          .set(leadToSave.toJson(), SetOptions(merge: true));
 
-      debugPrint('[ActiveLeadService] Saved lead ${lead.id} to Firestore for ${lead.targetUid}');
+      debugPrint('[ActiveLeadService] Saved lead $effectiveLeadId to Firestore for ${lead.targetUid}');
     } catch (e) {
       debugPrint('[ActiveLeadService] Firestore save notice: $e');
     }

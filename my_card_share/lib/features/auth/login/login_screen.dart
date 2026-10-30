@@ -1,3 +1,5 @@
+﻿import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -155,7 +157,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _isLoading = true;
     });
 
-    // ── PRE-CHECK: Verify registered account role by email BEFORE signing into Firebase ──
+    // â”€â”€ PRE-CHECK: Verify registered account role by email BEFORE signing into Firebase â”€â”€
     final preCheckRole = await _getRoleByEmail(email);
 
     if (_selectedTab == 1 && preCheckRole == 'individual') {
@@ -225,7 +227,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
 
     if (_selectedTab == 2) {
-      // ── Check if employee work email is enrolled ──
+      // â”€â”€ Check if employee work email is enrolled â”€â”€
       final emailCheck = await EmployeeEmailFetchService.instance.verifyEmployeeEmail(email);
       if (!emailCheck.isEnrolled) {
         if (mounted) setState(() => _isLoading = false);
@@ -238,7 +240,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         return;
       }
 
-      // ── Employee: Dedicated Real Employee Login Backend Service ──
+      // â”€â”€ Employee: Dedicated Real Employee Login Backend Service â”€â”€
       final result = await EmployeeLoginBackendService.instance.loginEmployee(
         email: email,
         password: password,
@@ -298,7 +300,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
 
     if (_selectedTab == 1) {
-      // ── Enterprise: REAL Firebase Auth email/password login ──
+      // â”€â”€ Enterprise: REAL Firebase Auth email/password login â”€â”€
       final result = await EnterpriseAuthService.instance.login(
         email: email,
         password: password,
@@ -380,7 +382,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
 
-    // ── Individual: REAL Firebase Auth login ──
+    // â”€â”€ Individual: REAL Firebase Auth login â”€â”€
     final result = await IndividualAuthService.instance.login(
       email: email,
       password: password,
@@ -464,6 +466,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  // ── Apple Sign In (iOS only, Individual tab) ────────────────────────────
+  Future<void> _onAppleSignIn() async {
+    // sign_in_with_apple package is added to pubspec.yaml.
+    // Full implementation goes here once Apple Developer entitlement is configured.
+    // For now, show a coming-soon snack so iOS testers know it is registered.
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text('Sign In with Apple coming soon! Use Google or Email for now.'),
+      backgroundColor: Color(0xFF1C1C1E),
+      behavior: SnackBarBehavior.floating,
+    ));
+  }
+
   void _onGoogleLogin() async {
     final roleStr = _selectedTab == 1
         ? 'enterprise'
@@ -471,7 +486,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ? 'employee'
             : 'individual';
 
-    // ⚡ ALWAYS call signOut first so Android shows 'Choose an account' dialog!
+    // âš¡ ALWAYS call signOut first so Android shows 'Choose an account' dialog!
     try {
       final googleSignIn = GoogleSignIn();
       await googleSignIn.signOut();
@@ -480,7 +495,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
 
     if (_selectedTab != 0) {
-      // ── Enterprise: REAL Firebase Google Sign-In ──
+      // â”€â”€ Enterprise: REAL Firebase Google Sign-In â”€â”€
       final result = await EnterpriseAuthService.instance.signInWithGoogle(
         defaultCompanyName: '',
       );
@@ -520,7 +535,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
 
-    // ── Individual: REAL Firebase Google Sign-In ──
+    // â”€â”€ Individual: REAL Firebase Google Sign-In â”€â”€
     final result = await IndividualAuthService.instance.signInWithGoogle();
     if (!mounted) return;
 
@@ -1119,5 +1134,42 @@ class GoogleLogoPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+// ----------------------------------------------------------------------------
+// Apple Sign In Button Widget (iOS only)
+// ----------------------------------------------------------------------------
+class _AppleSignInButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _AppleSignInButton({required this.onTap});
 
-
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: OutlinedButton(
+        onPressed: onTap,
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: Color(0xFF1C1C1E), width: 1.5),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          backgroundColor: const Color(0xFF1C1C1E),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(Icons.apple_rounded, color: Colors.white, size: 24),
+            SizedBox(width: 10),
+            Text(
+              'Continue with Apple',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+                letterSpacing: 0.1,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

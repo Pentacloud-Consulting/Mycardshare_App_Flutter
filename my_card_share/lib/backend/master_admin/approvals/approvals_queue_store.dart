@@ -75,9 +75,11 @@ class ApprovalsQueueStore extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final ids = prefs.getStringList('master_admin_resolved_ids') ?? [];
-      final titles = prefs.getStringList('master_admin_resolved_titles') ?? [];
       _locallyResolvedIds.addAll(ids);
-      _locallyResolvedTitles.addAll(titles.map((t) => t.toLowerCase().trim()));
+      // Intentionally NOT loading persisted titles — title-based filtering
+      // causes false positives when different companies share similar names.
+      // Clear any stale title data from previous versions.
+      await prefs.remove('master_admin_resolved_titles');
       notifyListeners();
     } catch (e) {
       debugPrint('[ApprovalsQueueStore] Error loading resolved prefs: $e');
@@ -85,27 +87,24 @@ class ApprovalsQueueStore extends ChangeNotifier {
   }
 
   bool isResolved(String id, [String? title]) {
+    // Only check by ID — title-based filtering is unreliable and can hide
+    // legitimate new companies that happen to share a name with an old resolved one.
     if (_locallyResolvedIds.contains(id)) return true;
-    if (title != null && _locallyResolvedTitles.contains(title.toLowerCase().trim())) {
-      return true;
-    }
     return false;
   }
 
   void markLocallyResolved(String id, {String? title}) async {
     _locallyResolvedIds.add(id);
-    if (title != null && title.trim().isNotEmpty) {
-      _locallyResolvedTitles.add(title.toLowerCase().trim());
-    }
-    _pendingItems.removeWhere((i) =>
-        i.id == id ||
-        (title != null && i.title.toLowerCase().trim() == title.toLowerCase().trim()));
+    // NOTE: We intentionally do NOT persist titles — title matching across
+    // different companies with the same name causes false positives in the queue.
+    _pendingItems.removeWhere((i) => i.id == id);
     notifyListeners();
 
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setStringList('master_admin_resolved_ids', _locallyResolvedIds.toList());
-      await prefs.setStringList('master_admin_resolved_titles', _locallyResolvedTitles.toList());
+      // Clear any previously persisted titles that may cause false filtering
+      await prefs.remove('master_admin_resolved_titles');
     } catch (_) {}
   }
 
@@ -133,8 +132,6 @@ class ApprovalsQueueStore extends ChangeNotifier {
         final approvalStatus = (data['approvalStatus'] as String? ?? '').toLowerCase().trim();
         final isSuspended = data['isSuspended'] == true;
         final title = (data['companyName'] ?? data['name'] ?? '').toString().trim();
-
-        if (_locallyResolvedTitles.contains(title.toLowerCase())) continue;
 
         // Check if explicitly pending
         final bool isPending = status == 'pending' || approvalStatus == 'pending';
@@ -185,8 +182,6 @@ class ApprovalsQueueStore extends ChangeNotifier {
           final isSuspended = data['isSuspended'] == true;
           final title = (data['companyName'] ?? data['name'] ?? '').toString().trim();
 
-          if (_locallyResolvedTitles.contains(title.toLowerCase())) continue;
-
           final bool isPending = status == 'pending' || approvalStatus == 'pending';
 
           if (approvalStatus == 'approved' ||
@@ -201,7 +196,8 @@ class ApprovalsQueueStore extends ChangeNotifier {
           }
 
           if (isPending) {
-            if (!items.any((it) => it.id == doc.id || it.title.toLowerCase() == title.toLowerCase())) {
+            // Deduplicate by ID only — not by title
+            if (!items.any((it) => it.id == doc.id)) {
               DateTime created = DateTime.now();
               if (data['createdAt'] is Timestamp) {
                 created = (data['createdAt'] as Timestamp).toDate();
@@ -232,14 +228,13 @@ class ApprovalsQueueStore extends ChangeNotifier {
         }
         for (final comp in CompanyManagementStore.instance.companies) {
           if (_locallyResolvedIds.contains(comp.id)) continue;
-          final compTitle = comp.name.toLowerCase().trim();
-          if (_locallyResolvedTitles.contains(compTitle)) continue;
 
           final cStatus = comp.status.toLowerCase().trim();
           if (cStatus == 'active' || cStatus == 'suspended' || cStatus == 'rejected') continue;
 
           if (cStatus == 'pending') {
-            if (!items.any((it) => it.id == comp.id || it.title.toLowerCase().trim() == compTitle)) {
+            // Deduplicate by ID only
+            if (!items.any((it) => it.id == comp.id)) {
               items.add(
                 MasterApprovalItem(
                   id: comp.id,
@@ -597,7 +592,7 @@ class ApprovalsQueueStore extends ChangeNotifier {
           );
         } catch (_) {}
 
-        _pendingItems.removeWhere((i) => i.id == item.id || i.title.toLowerCase().trim() == item.title.toLowerCase().trim());
+        _pendingItems.removeWhere((i) => i.id == item.id);
         notifyListeners();
         return true;
       } else if (item.rawJoinRequest != null) {

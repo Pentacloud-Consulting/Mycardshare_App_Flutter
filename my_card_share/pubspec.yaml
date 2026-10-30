@@ -59,6 +59,8 @@ dependencies:
   nfc_manager: ^3.3.0
   flutter_contacts: ^2.6.0
   path_provider: ^2.1.6
+  # iOS: Sign In with Apple button & service
+  sign_in_with_apple: ^6.1.2
 
 dev_dependencies:
   flutter_test:

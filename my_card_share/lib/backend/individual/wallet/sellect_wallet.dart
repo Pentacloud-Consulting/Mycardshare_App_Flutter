@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import '../profile/individual_profile_store.dart';
 import '../scan_profile_view/scan_profile_view.dart';
@@ -36,8 +38,15 @@ class SelectWalletModal extends StatelessWidget {
     );
   }
 
+  /// Returns true if running on iOS (not web)
+  bool get _isIOS => !kIsWeb && Platform.isIOS;
+
   @override
   Widget build(BuildContext context) {
+    // On iOS: show only Apple Wallet (coming soon)
+    // On Android: show all three options (Google, Samsung, Apple)
+    final bool isIOS = _isIOS;
+
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -85,11 +94,11 @@ class SelectWalletModal extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 14),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Add to Mobile Wallet',
                       style: TextStyle(
                         fontSize: 19,
@@ -97,10 +106,12 @@ class SelectWalletModal extends StatelessWidget {
                         color: Color(0xFF0F172A),
                       ),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
-                      'Select your preferred wallet app to save your card',
-                      style: TextStyle(
+                      isIOS
+                          ? 'Save your card to Apple Wallet'
+                          : 'Select your preferred wallet app to save your card',
+                      style: const TextStyle(
                         fontSize: 12.5,
                         color: Color(0xFF64748B),
                       ),
@@ -113,67 +124,86 @@ class SelectWalletModal extends StatelessWidget {
 
           const SizedBox(height: 22),
 
-          // Option 1: Google Wallet
-          _WalletOptionTile(
-            title: 'Google Wallet',
-            subtitle: 'Save pass to Android Google Wallet app',
-            icon: Icons.account_balance_wallet_rounded,
-            brandColor: const Color(0xFF4285F4),
-            badgeText: 'RECOMMENDED',
-            badgeColor: const Color(0xFF4285F4),
-            onTap: () async {
-              final activeCtx = (parentContext != null && parentContext!.mounted) ? parentContext! : context;
-              Navigator.of(context).pop();
-              await Future.delayed(const Duration(milliseconds: 150));
-              if (activeCtx.mounted) {
-                await GoogleWalletService.instance.saveToGoogleWallet(
-                  activeCtx,
-                  profile: profile,
-                  publicProfile: publicProfile,
-                );
-              }
-            },
-          ),
+          // iOS: Only Apple Wallet option
+          if (isIOS) ...[
+            _WalletOptionTile(
+              title: 'Apple Wallet',
+              subtitle: 'Save PKPass to iOS Apple Wallet',
+              icon: Icons.apple_rounded,
+              brandColor: const Color(0xFF000000),
+              badgeText: 'COMING SOON',
+              badgeColor: const Color(0xFFFF9500),
+              onTap: () {
+                Navigator.of(context).pop();
+                AppleWalletService.instance.showAppleWalletComingSoon(context);
+              },
+            ),
+          ],
 
-          const SizedBox(height: 12),
+          // Android: Show all three wallet options
+          if (!isIOS) ...[
+            // Option 1: Google Wallet
+            _WalletOptionTile(
+              title: 'Google Wallet',
+              subtitle: 'Save pass to Android Google Wallet app',
+              icon: Icons.account_balance_wallet_rounded,
+              brandColor: const Color(0xFF4285F4),
+              badgeText: 'RECOMMENDED',
+              badgeColor: const Color(0xFF4285F4),
+              onTap: () async {
+                final activeCtx = (parentContext != null && parentContext!.mounted) ? parentContext! : context;
+                Navigator.of(context).pop();
+                await Future.delayed(const Duration(milliseconds: 150));
+                if (activeCtx.mounted) {
+                  await GoogleWalletService.instance.saveToGoogleWallet(
+                    activeCtx,
+                    profile: profile,
+                    publicProfile: publicProfile,
+                  );
+                }
+              },
+            ),
 
-          // Option 2: Samsung Wallet
-          _WalletOptionTile(
-            title: 'Samsung Wallet',
-            subtitle: 'Save pass to Samsung Pay & Wallet',
-            icon: Icons.wallet_rounded,
-            brandColor: const Color(0xFF1428A0),
-            badgeText: 'POPULAR',
-            badgeColor: const Color(0xFF1428A0),
-            onTap: () async {
-              final activeCtx = (parentContext != null && parentContext!.mounted) ? parentContext! : context;
-              Navigator.of(context).pop();
-              await Future.delayed(const Duration(milliseconds: 150));
-              if (activeCtx.mounted) {
-                await SamsungWalletService.instance.saveToSamsungWallet(
-                  activeCtx,
-                  profile: profile,
-                  publicProfile: publicProfile,
-                );
-              }
-            },
-          ),
+            const SizedBox(height: 12),
 
-          const SizedBox(height: 12),
+            // Option 2: Samsung Wallet
+            _WalletOptionTile(
+              title: 'Samsung Wallet',
+              subtitle: 'Save pass to Samsung Pay & Wallet',
+              icon: Icons.wallet_rounded,
+              brandColor: const Color(0xFF1428A0),
+              badgeText: 'POPULAR',
+              badgeColor: const Color(0xFF1428A0),
+              onTap: () async {
+                final activeCtx = (parentContext != null && parentContext!.mounted) ? parentContext! : context;
+                Navigator.of(context).pop();
+                await Future.delayed(const Duration(milliseconds: 150));
+                if (activeCtx.mounted) {
+                  await SamsungWalletService.instance.saveToSamsungWallet(
+                    activeCtx,
+                    profile: profile,
+                    publicProfile: publicProfile,
+                  );
+                }
+              },
+            ),
 
-          // Option 3: Apple Wallet
-          _WalletOptionTile(
-            title: 'Apple Wallet',
-            subtitle: 'Save PKPass to iOS Apple Wallet',
-            icon: Icons.apple_rounded,
-            brandColor: const Color(0xFF000000),
-            badgeText: 'COMING SOON',
-            badgeColor: const Color(0xFFFF9500),
-            onTap: () {
-              Navigator.of(context).pop();
-              AppleWalletService.instance.showAppleWalletComingSoon(context);
-            },
-          ),
+            const SizedBox(height: 12),
+
+            // Option 3: Apple Wallet
+            _WalletOptionTile(
+              title: 'Apple Wallet',
+              subtitle: 'Save PKPass to iOS Apple Wallet',
+              icon: Icons.apple_rounded,
+              brandColor: const Color(0xFF000000),
+              badgeText: 'COMING SOON',
+              badgeColor: const Color(0xFFFF9500),
+              onTap: () {
+                Navigator.of(context).pop();
+                AppleWalletService.instance.showAppleWalletComingSoon(context);
+              },
+            ),
+          ],
 
           const SizedBox(height: 20),
         ],

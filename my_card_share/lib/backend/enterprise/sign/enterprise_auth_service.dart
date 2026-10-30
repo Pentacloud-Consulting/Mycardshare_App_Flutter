@@ -226,8 +226,10 @@ class EnterpriseAuthService {
   Future<EnterpriseAuthResult> _postLoginSync(User user) async {
     String companyName = user.displayName ?? 'My Company';
     bool onboardingCompleted = false;
-    bool isApproved = true; // ⚡ Authenticated Enterprise accounts default to approved
+    bool isApproved = false; // Default to NOT approved — must be explicitly confirmed
+    bool isExplicitlyPending = false;
     bool isExplicitlyRejected = false;
+    bool isExplicitlyApproved = false;
     String? resolvedCompanyId;
     final userEmail = user.email?.trim().toLowerCase();
 
@@ -245,6 +247,12 @@ class EnterpriseAuthService {
         final approvalStatus = (uData['approvalStatus'] as String? ?? '').toLowerCase();
         if (status == 'rejected' || status == 'suspended' || approvalStatus == 'rejected') {
           isExplicitlyRejected = true;
+        }
+        if (status == 'pending' || approvalStatus == 'pending') {
+          isExplicitlyPending = true;
+        }
+        if (approvalStatus == 'approved' || status == 'active') {
+          isExplicitlyApproved = true;
         }
       }
     } catch (_) {}
@@ -269,6 +277,12 @@ class EnterpriseAuthService {
           if (status == 'rejected' || status == 'suspended' || approvalStatus == 'rejected') {
             isExplicitlyRejected = true;
           }
+          if (status == 'pending' || approvalStatus == 'pending') {
+            isExplicitlyPending = true;
+          }
+          if (approvalStatus == 'approved' || status == 'active') {
+            isExplicitlyApproved = true;
+          }
         }
       } catch (_) {}
     }
@@ -283,6 +297,12 @@ class EnterpriseAuthService {
           final approvalStatus = (cData['approvalStatus'] as String? ?? '').toLowerCase();
           if (status == 'rejected' || status == 'suspended' || approvalStatus == 'rejected') {
             isExplicitlyRejected = true;
+          }
+          if (status == 'pending' || approvalStatus == 'pending') {
+            isExplicitlyPending = true;
+          }
+          if (approvalStatus == 'approved' || status == 'active') {
+            isExplicitlyApproved = true;
           }
         }
       } catch (_) {}
@@ -310,14 +330,23 @@ class EnterpriseAuthService {
       } catch (_) {}
     }
 
+    // ─── Final approval resolution ────────────────────────────────────────────
+    // Priority: rejected > pending > explicitly approved
+    // IMPORTANT: pending companies must NOT be auto-approved here.
+    // Auto-heal only runs when Master Admin has already approved the company.
     if (isExplicitlyRejected) {
       isApproved = false;
+    } else if (isExplicitlyPending && !isExplicitlyApproved) {
+      // Still awaiting Master Admin approval — do NOT auto-heal
+      isApproved = false;
     } else {
+      // Either explicitly approved OR no status set (legacy accounts — default allow)
       isApproved = true;
     }
 
-    // 5. AUTO-HEAL: Immediately unlock and sync active status across Firestore and live backend
-    if (isApproved) {
+    // 5. AUTO-HEAL: Only runs when Master Admin has actually approved the company.
+    // NEVER runs for 'pending' companies — that would bypass the approval flow.
+    if (isApproved && !isExplicitlyPending) {
       try {
         final now = DateTime.now();
         final renewal = now.add(const Duration(days: 365));
@@ -433,11 +462,15 @@ class EnterpriseAuthService {
     );
 
     debugPrint(
-        '[EnterpriseAuthService] isApproved=$isApproved, onboardingCompleted=$onboardingCompleted for ${user.uid}');
+        '[EnterpriseAuthService] isApproved=$isApproved, isExplicitlyPending=$isExplicitlyPending, onboardingCompleted=$onboardingCompleted for ${user.uid}');
 
     return EnterpriseAuthResult(
       isSuccess: true,
-      message: 'Enterprise login successful!',
+      message: isApproved
+          ? 'Enterprise login successful!'
+          : (isExplicitlyPending
+              ? 'Your account is awaiting Master Admin approval.'
+              : 'Enterprise login successful!'),
       firebaseUser: user,
       userModel: userModel,
       profileData: profile,

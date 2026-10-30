@@ -4,8 +4,123 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+
+	<!-- ═══════════════════════════════════════════════════
+	     PRIVACY USAGE DESCRIPTIONS (NSUsageDescription keys)
+	     Required: App Store rejection if missing for used APIs
+	     ═══════════════════════════════════════════════════ -->
+
 	<key>NSCameraUsageDescription</key>
-	<string>This app requires access to the camera to scan business cards.</string>
+	<string>My Card Share uses the camera to scan business cards and QR codes for quick contact sharing.</string>
+
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>My Card Share uses your photo library to let you upload a profile photo and banner for your digital business card.</string>
+
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>My Card Share saves your generated QR codes and card images to your photo library.</string>
+
+	<key>NSContactsUsageDescription</key>
+	<string>My Card Share saves business contacts you receive directly to your iOS Contacts app.</string>
+
+	<key>NSMicrophoneUsageDescription</key>
+	<string>My Card Share uses the microphone for video features in card profiles.</string>
+
+	<key>NFCReaderUsageDescription</key>
+	<string>My Card Share reads NFC business cards to instantly view and save contact information.</string>
+
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>My Card Share sends notifications for new connection requests, messages, and card view alerts.</string>
+
+	<key>NSFaceIDUsageDescription</key>
+	<string>My Card Share uses Face ID for quick and secure account access.</string>
+
+	<!-- ═══════════════════════════════════════════════════
+	     NFC — CoreNFC (ISO 14443 / NDEF reading)
+	     ═══════════════════════════════════════════════════ -->
+	<key>com.apple.developer.nfc.readersession.formats</key>
+	<array>
+		<string>NDEF</string>
+		<string>TAG</string>
+	</array>
+
+	<!-- ═══════════════════════════════════════════════════
+	     URL SCHEMES — deep links (mycardshare://)
+	     ═══════════════════════════════════════════════════ -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.mycardshare.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>mycardshare</string>
+			</array>
+		</dict>
+		<!-- Google Sign-In reverse client ID (replace at build time via Xcode env) -->
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.google.reverseClientId</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>$(GOOGLE_REVERSED_CLIENT_ID)</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- ═══════════════════════════════════════════════════
+	     LSApplicationQueriesSchemes — external apps we open
+	     ═══════════════════════════════════════════════════ -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>tel</string>
+		<string>mailto</string>
+		<string>whatsapp</string>
+		<string>instagram</string>
+		<string>twitter</string>
+		<string>x</string>
+		<string>linkedin</string>
+		<string>fb</string>
+		<string>tiktok</string>
+		<string>snapchat</string>
+		<string>youtube</string>
+		<string>maps</string>
+		<string>comgooglemaps</string>
+		<string>googlegmail</string>
+	</array>
+
+	<!-- ═══════════════════════════════════════════════════
+	     App Transport Security — HTTPS only for backend
+	     ═══════════════════════════════════════════════════ -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>mycardshare.com</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<false/>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+			</dict>
+			<key>firebaseapp.com</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<false/>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+			</dict>
+		</dict>
+	</dict>
+
+	<!-- ═══════════════════════════════════════════════════
+	     BUNDLE METADATA
+	     ═══════════════════════════════════════════════════ -->
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

@@ -93,9 +93,11 @@ class AppTheme {
       highlightColor: Colors.transparent,
       // Global SnackBar theme: floating style with proper bottom margin
       // so snackbars appear above the bottom navigation bar (height ~64px)
+      // showDuration is intentionally short — always call clearSnackBars() first
       snackBarTheme: const SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         insetPadding: EdgeInsets.fromLTRB(16, 8, 16, 72),
+        showCloseIcon: false,
       ),
     );
   }

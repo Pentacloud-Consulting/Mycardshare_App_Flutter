@@ -1,3 +1,7 @@
+﻿import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -90,7 +94,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     final roleStr = _selectedTab == 1 ? 'enterprise' : 'individual';
 
     if (_selectedTab == 1) {
-      // ── Enterprise: REAL Firebase Auth + Firestore sign-up ──
+      // â”€â”€ Enterprise: REAL Firebase Auth + Firestore sign-up â”€â”€
       final result = await EnterpriseAuthService.instance.signUp(
         companyName: name.isNotEmpty ? name : 'Enterprise Account',
         email: email,
@@ -129,7 +133,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         );
       }
     } else {
-      // ── Individual: REAL Firebase Auth sign-up ──
+      // â”€â”€ Individual: REAL Firebase Auth sign-up â”€â”€
       final result = await IndividualAuthService.instance.signUp(
         fullName: name.isNotEmpty ? name : 'New User',
         email: email,
@@ -162,11 +166,23 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   }
 
 
+  // ── Apple Sign Up (iOS only) ─────────────────────────────────────────────
+  Future<void> _onAppleSignup() async {
+    // sign_in_with_apple package ready in pubspec.yaml.
+    // Full implementation goes here after Apple Developer entitlement is configured.
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text('Sign Up with Apple coming soon! Use Google or Email for now.'),
+      backgroundColor: Color(0xFF1C1C1E),
+      behavior: SnackBarBehavior.floating,
+    ));
+  }
+
   void _onGoogleSignup() async {
     final roleStr = _selectedTab == 1 ? 'enterprise' : 'individual';
 
     if (_selectedTab != 0) {
-      // ── Enterprise: REAL Firebase Google Sign-In ──
+      // â”€â”€ Enterprise: REAL Firebase Google Sign-In â”€â”€
       final result = await EnterpriseAuthService.instance.signInWithGoogle(
         defaultCompanyName: '',
       );
@@ -200,7 +216,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       return;
     }
 
-    // ── Individual: REAL Firebase Google Sign-In ──
+    // â”€â”€ Individual: REAL Firebase Google Sign-In â”€â”€
     final result = await IndividualAuthService.instance.signInWithGoogle();
     if (!mounted) return;
 
@@ -809,5 +825,37 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     );
   }
 }
+// ─────────────────────────────────────────────────────────────────────────────
+// Apple Sign Up Button Widget (iOS only)
+// ─────────────────────────────────────────────────────────────────────────────
+class _AppleSignUpButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _AppleSignUpButton({required this.onTap});
 
-
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: OutlinedButton(
+        onPressed: onTap,
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: Color(0xFF1C1C1E), width: 1.5),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          backgroundColor: const Color(0xFF1C1C1E),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(Icons.apple_rounded, color: Colors.white, size: 24),
+            SizedBox(width: 10),
+            Text(
+              'Continue with Apple',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

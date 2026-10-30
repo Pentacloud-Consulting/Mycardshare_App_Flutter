@@ -6,40 +6,61 @@ class ApprovalCardList extends StatelessWidget {
   const ApprovalCardList({super.key});
 
   Future<void> _handleApprove(BuildContext context, MasterApprovalItem item) async {
-    // ⚡ CRITICAL: Optimistically remove from local pending list immediately!
+    // ⚡ Step 1: Optimistically remove from UI immediately
     ApprovalsQueueStore.instance.markLocallyResolved(item.id);
 
+    // ⚡ Step 2: Show success snackbar INSTANTLY — don't wait for backend
+    if (!context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
-    final ok = await ApprovalsQueueStore.instance.approveItem(item);
-
     messenger.clearSnackBars();
     messenger.showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            Icon(ok ? Icons.check_circle_rounded : Icons.error_rounded, color: Colors.white, size: 20),
+            const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(ok
-                  ? "${item.title} (${item.email}) approved successfully!"
-                  : "Approval failed. Please check connection."),
+              child: Text("${item.title} approved!"),
             ),
           ],
         ),
-        backgroundColor: ok ? const Color(0xFF10B981) : const Color(0xFFDC2626),
+        backgroundColor: const Color(0xFF10B981),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 2),
       ),
     );
+
+    // ⚡ Step 3: Run Firestore + backend sync in background (no await in UI)
+    ApprovalsQueueStore.instance.approveItem(item).then((ok) {
+      if (!ok && context.mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.error_rounded, color: Colors.white, size: 20),
+                SizedBox(width: 10),
+                Expanded(child: Text("Approval synced locally. Backend sync pending.")),
+              ],
+            ),
+            backgroundColor: const Color(0xFFD97706),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    });
   }
 
   Future<void> _handleReject(BuildContext context, MasterApprovalItem item) async {
-    // ⚡ CRITICAL: Optimistically remove from local pending list immediately!
+    // ⚡ Step 1: Optimistically remove from UI immediately
     ApprovalsQueueStore.instance.markLocallyResolved(item.id);
 
+    // ⚡ Step 2: Show result snackbar INSTANTLY — don't wait for backend
+    if (!context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
-    final ok = await ApprovalsQueueStore.instance.rejectItem(item);
-
     messenger.clearSnackBars();
     messenger.showSnackBar(
       SnackBar(
@@ -48,17 +69,38 @@ class ApprovalCardList extends StatelessWidget {
             const Icon(Icons.cancel_rounded, color: Colors.white, size: 20),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(ok
-                  ? "Request for ${item.title} was declined."
-                  : "Failed to decline request."),
+              child: Text("Request for ${item.title} declined."),
             ),
           ],
         ),
         backgroundColor: const Color(0xFFEF4444),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 2),
       ),
     );
+
+    // ⚡ Step 3: Run Firestore + backend sync in background (no await in UI)
+    ApprovalsQueueStore.instance.rejectItem(item).then((ok) {
+      if (!ok && context.mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.error_rounded, color: Colors.white, size: 20),
+                SizedBox(width: 10),
+                Expanded(child: Text("Rejection synced locally. Backend sync pending.")),
+              ],
+            ),
+            backgroundColor: const Color(0xFFD97706),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    });
   }
 
   @override

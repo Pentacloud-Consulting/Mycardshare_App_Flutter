@@ -1,3 +1,6 @@
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,6 +13,7 @@ import '../../backend/individual/scan_profile_view/scan_profile_view.dart';
 import '../../backend/contact/save_contact_service.dart';
 import '../../backend/individual/wallet/wallet_service.dart';
 import '../../backend/individual/wallet/samsung_wallet.dart';
+import '../../backend/individual/wallet/apple_wallet.dart';
 import '../../backend/individual/lead/active_lead.dart';
 import '../../backend/individual/social_redirect/social_redirect_service.dart';
 import '../../backend/individual/profile/individual_profile_store.dart';
@@ -154,10 +158,14 @@ class _PublicScannedCardScreenState extends State<PublicScannedCardScreen> {
   }
 
   void _onAddToGoogleWallet(PublicProfileData profile) {
+    // iOS guard — Google Wallet is Android-only
+    if (!kIsWeb && Platform.isIOS) return;
     WalletService.addToGoogleWallet(publicProfile: profile, context: context);
   }
 
   void _onAddToSamsungWallet(PublicProfileData profile) {
+    // iOS guard — Samsung Wallet is Android-only
+    if (!kIsWeb && Platform.isIOS) return;
     SamsungWalletService.instance.saveToSamsungWallet(context, publicProfile: profile);
   }
 
@@ -644,69 +652,100 @@ class _PublicScannedCardScreenState extends State<PublicScannedCardScreen> {
                 ),
                 const SizedBox(height: 10),
 
-                Row(
-                  children: [
-                    // Google Wallet
-                    Expanded(
-                      child: InkWell(
-                        onTap: () => _onAddToGoogleWallet(profile),
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0F172A),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.wallet_rounded, color: Colors.white, size: 18),
-                              SizedBox(width: 8),
-                              Text(
-                                "Google Wallet",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 12.5,
-                                ),
-                              ),
-                            ],
-                          ),
+                // ── iOS: Apple Wallet (Coming Soon) ──────────────────────────
+                if (!kIsWeb && Platform.isIOS) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () =>
+                          AppleWalletService.instance.showAppleWalletComingSoon(context),
+                      icon: const Icon(Icons.apple_rounded,
+                          color: Colors.white, size: 20),
+                      label: const Text(
+                        'Add to Apple Wallet',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1C1C1E),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    // Samsung Wallet
-                    Expanded(
-                      child: InkWell(
-                        onTap: () => _onAddToSamsungWallet(profile),
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0C20D6),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.credit_card_rounded, color: Colors.white, size: 18),
-                              SizedBox(width: 8),
-                              Text(
-                                "Samsung Wallet",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 12.5,
+                  ),
+                ],
+
+                // ── Android: Google Wallet + Samsung Wallet ───────────────────
+                if (kIsWeb || !Platform.isIOS) ...[
+                  Row(
+                    children: [
+                      // Google Wallet
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => _onAddToGoogleWallet(profile),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0F172A),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.wallet_rounded, color: Colors.white, size: 18),
+                                SizedBox(width: 8),
+                                Text(
+                                  "Google Wallet",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12.5,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                      const SizedBox(width: 10),
+                      // Samsung Wallet
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => _onAddToSamsungWallet(profile),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0C20D6),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.credit_card_rounded, color: Colors.white, size: 18),
+                                SizedBox(width: 8),
+                                Text(
+                                  "Samsung Wallet",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
 
                 const SizedBox(height: 12),
 

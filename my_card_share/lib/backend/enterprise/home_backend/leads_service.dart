@@ -181,7 +181,41 @@ class EnterpriseLeadsService {
     String status = 'Synced',
   }) async {
     try {
-      final leadId = 'lead_${DateTime.now().millisecondsSinceEpoch}';
+      String leadId = 'lead_${DateTime.now().millisecondsSinceEpoch}';
+      final cleanEmail = email.trim().toLowerCase();
+      final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
+
+      // ── Deduplication: reuse existing doc ID if email or phone already exists ──
+      try {
+        if (cleanEmail.isNotEmpty) {
+          final existing = await _firestore
+              .collection('enterprises')
+              .doc(uid)
+              .collection('leads')
+              .where('email', isEqualTo: cleanEmail)
+              .limit(1)
+              .get();
+          if (existing.docs.isNotEmpty) {
+            leadId = existing.docs.first.id;
+            debugPrint('[EnterpriseLeadsService] Found existing lead by email. Updating $leadId.');
+          }
+        }
+        if (leadId.startsWith('lead_') && cleanPhone.isNotEmpty && cleanPhone.length >= 7) {
+          final existingPhone = await _firestore
+              .collection('enterprises')
+              .doc(uid)
+              .collection('leads')
+              .where('phone', isEqualTo: phone.trim())
+              .limit(1)
+              .get();
+          if (existingPhone.docs.isNotEmpty) {
+            leadId = existingPhone.docs.first.id;
+            debugPrint('[EnterpriseLeadsService] Found existing lead by phone. Updating $leadId.');
+          }
+        }
+      } catch (_) {}
+      // ──────────────────────────────────────────────────────────────────────────
+
       final lead = EnterpriseLeadModel(
         id: leadId,
         name: name,
@@ -199,7 +233,7 @@ class EnterpriseLeadsService {
           .doc(uid)
           .collection('leads')
           .doc(leadId)
-          .set(lead.toFirestore());
+          .set(lead.toFirestore(), SetOptions(merge: true));
 
       return true;
     } catch (e) {

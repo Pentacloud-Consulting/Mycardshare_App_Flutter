@@ -452,7 +452,41 @@ class EnterpriseEmployeeLeadsService {
     String source = 'via Manual',
   }) async {
     try {
-      final leadId = 'lead_${DateTime.now().millisecondsSinceEpoch}';
+      String leadId = 'lead_${DateTime.now().millisecondsSinceEpoch}';
+      final cleanLeadEmail = leadEmail.trim().toLowerCase();
+      final cleanLeadPhone = leadPhone.replaceAll(RegExp(r'\D'), '');
+
+      // ── Deduplication: reuse existing doc ID if email or phone already in enterprise leads ──
+      try {
+        if (cleanLeadEmail.isNotEmpty) {
+          final existing = await _firestore
+              .collection('enterprises')
+              .doc(enterpriseUid)
+              .collection('leads')
+              .where('email', isEqualTo: cleanLeadEmail)
+              .limit(1)
+              .get();
+          if (existing.docs.isNotEmpty) {
+            leadId = existing.docs.first.id;
+            debugPrint('[EnterpriseEmployeeLeadsService] Found existing lead by email. Updating $leadId.');
+          }
+        }
+        if (leadId.startsWith('lead_') && cleanLeadPhone.isNotEmpty && cleanLeadPhone.length >= 7) {
+          final existingPhone = await _firestore
+              .collection('enterprises')
+              .doc(enterpriseUid)
+              .collection('leads')
+              .where('phone', isEqualTo: leadPhone.trim())
+              .limit(1)
+              .get();
+          if (existingPhone.docs.isNotEmpty) {
+            leadId = existingPhone.docs.first.id;
+            debugPrint('[EnterpriseEmployeeLeadsService] Found existing lead by phone. Updating $leadId.');
+          }
+        }
+      } catch (_) {}
+      // ────────────────────────────────────────────────────────────────────────────────
+
       final lead = EmployeeLeadModel(
         id: leadId,
         enterpriseUid: enterpriseUid,
@@ -475,7 +509,7 @@ class EnterpriseEmployeeLeadsService {
           .doc(enterpriseUid)
           .collection('leads')
           .doc(leadId)
-          .set(lead.toFirestore());
+          .set(lead.toFirestore(), SetOptions(merge: true));
 
       // 2. Save in users/{employeeId}/leads
       final effectiveUid = employeeId.isNotEmpty ? employeeId : currentEnterpriseUid ?? '';
@@ -485,7 +519,7 @@ class EnterpriseEmployeeLeadsService {
             .doc(effectiveUid)
             .collection('leads')
             .doc(leadId)
-            .set(lead.toFirestore());
+            .set(lead.toFirestore(), SetOptions(merge: true));
       }
 
       // 3. Increment leads count on employee document

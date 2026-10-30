@@ -1,3 +1,6 @@
+﻿import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import '../../../../backend/individual/wallet/apple_wallet.dart';
 import 'package:flutter/material.dart';
 import '../../../../backend/individual/qr_scan/individual_generate_qr.dart';
 import '../../../../backend/individual/profile/individual_profile_store.dart';
@@ -37,10 +40,16 @@ class CardFooterActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // On iOS: wallet button shows Apple Wallet coming-soon dialog directly
+    final bool isIOS = !kIsWeb && Platform.isIOS;
+
     final String leftLabel = isOwnerView ? "Add to Wallet" : "Share Card";
     final IconData leftIcon = isOwnerView ? Icons.account_balance_wallet_rounded : Icons.ios_share_rounded;
     final VoidCallback leftAction = isOwnerView
-        ? (onAddToWalletTap ?? () => AddToWalletService.instance.showSelectWalletModal(context))
+        ? (onAddToWalletTap ??
+            () => isIOS
+                ? AppleWalletService.instance.showAppleWalletComingSoon(context)
+                : AddToWalletService.instance.showSelectWalletModal(context))
         : (onShareTap ?? () => ShareCardService.instance.shareCard(context: context));
 
     final String rightLabel = isOwnerView ? "QR Code" : "Exchange Contact";
@@ -243,7 +252,7 @@ class CardFooterActions extends StatelessWidget {
 
         const SizedBox(height: 28),
 
-        // Footer Branding: CONNECT • COLLABORATE • GROW
+        // Footer Branding: CONNECT â€¢ COLLABORATE â€¢ GROW
         if (showBranding)
           Align(
             alignment: Alignment.centerLeft,
@@ -251,7 +260,7 @@ class CardFooterActions extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  "CONNECT  •  COLLABORATE  •  GROW",
+                  "CONNECT  â€¢  COLLABORATE  â€¢  GROW",
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,

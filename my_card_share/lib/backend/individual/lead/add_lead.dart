@@ -66,7 +66,7 @@ class AddLeadService {
           debugPrint('[AddLeadService] Found existing lead with email $cleanEmail: $effectiveLeadId. Updating.');
         }
       }
-      if (effectiveLeadId.startsWith('lead_${DateTime.now().millisecondsSinceEpoch}'.substring(0, 10)) &&
+      if (effectiveLeadId.startsWith('lead_') &&
           cleanPhone.isNotEmpty && cleanPhone.length >= 7) {
         final existingByPhone = await _firestore
             .collection('users')
@@ -157,6 +157,7 @@ class AddLeadService {
         notes: lead.notes,
         status: lead.status,
         source: lead.source,
+        existingLeadId: effectiveLeadId, // Reuse already-deduped leadId — prevents duplicate doc
       ).catchError((_) => false);
     } catch (metricErr) {
       debugPrint('[AddLeadService] Metrics increment error: $metricErr');

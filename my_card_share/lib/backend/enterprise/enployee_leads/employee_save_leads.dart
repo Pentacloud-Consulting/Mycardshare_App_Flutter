@@ -296,6 +296,7 @@ class EnterpriseEmployeeSaveLeadsService extends ChangeNotifier {
     String status = 'New',
     String source = 'via Manual',
     String? avatarUrl,
+    String? existingLeadId, // If provided, skip dedup and use this ID directly
   }) async {
     try {
       final entUid = await resolveEnterpriseUid(enterpriseUid);
@@ -332,13 +333,17 @@ class EnterpriseEmployeeSaveLeadsService extends ChangeNotifier {
         resolvedEmpUid = employeeId.trim();
       }
 
-      String leadId = 'lead_${DateTime.now().millisecondsSinceEpoch}';
+      // If caller already resolved a deduped leadId, use it directly (skip dedup query)
+      String leadId = (existingLeadId != null && existingLeadId.isNotEmpty)
+          ? existingLeadId
+          : 'lead_${DateTime.now().millisecondsSinceEpoch}';
       final cleanLeadEmail = leadEmail.trim().toLowerCase();
       final cleanLeadPhone = leadPhone.replaceAll(RegExp(r'\D'), '');
 
       // Deduplication check: check if a lead with same email or phone already exists
+      // (only run if no existingLeadId was passed in)
       try {
-        if (cleanLeadEmail.isNotEmpty) {
+        if (existingLeadId == null && cleanLeadEmail.isNotEmpty) {
           final existing = await _firestore
               .collection('enterprises')
               .doc(entUid)
@@ -353,7 +358,8 @@ class EnterpriseEmployeeSaveLeadsService extends ChangeNotifier {
             debugPrint('[EnterpriseEmployeeSaveLeadsService] Found existing lead with email $cleanLeadEmail: $leadId. Updating.');
           }
         }
-        if (leadId.startsWith('lead_${DateTime.now().millisecondsSinceEpoch}'.substring(0, 10)) &&
+        if (leadId.startsWith('lead_') &&
+            existingLeadId == null &&
             cleanLeadPhone.isNotEmpty && cleanLeadPhone.length >= 7) {
           final existingPhone = await _firestore
               .collection('enterprises')
@@ -398,7 +404,7 @@ class EnterpriseEmployeeSaveLeadsService extends ChangeNotifier {
           .doc(resolvedEmpDocId)
           .collection('leads')
           .doc(leadId);
-      await empLeadsRef.set(leadDataMap);
+      await empLeadsRef.set(leadDataMap, SetOptions(merge: true));
 
       // 3. Save in enterprises/{entUid}/leads for enterprise-wide records
       final entLeadsRef = _firestore
@@ -406,7 +412,7 @@ class EnterpriseEmployeeSaveLeadsService extends ChangeNotifier {
           .doc(entUid)
           .collection('leads')
           .doc(leadId);
-      await entLeadsRef.set(leadDataMap);
+      await entLeadsRef.set(leadDataMap, SetOptions(merge: true));
 
       // 4. Save in users/{empUid}/leads if user UID is available
       final effectiveUserUid = resolvedEmpUid.isNotEmpty
@@ -421,7 +427,7 @@ class EnterpriseEmployeeSaveLeadsService extends ChangeNotifier {
               .doc(effectiveUserUid)
               .collection('leads')
               .doc(leadId)
-              .set(leadDataMap);
+              .set(leadDataMap, SetOptions(merge: true));
         } catch (_) {}
       }
 

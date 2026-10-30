@@ -192,6 +192,7 @@ class AddLeadService {
         notes: lead.notes,
         status: lead.status,
         source: lead.source,
+        existingLeadId: leadId, // Reuse already-deduped leadId — prevents duplicate doc
       ).catchError((_) => false);
     } catch (metricErr) {
       debugPrint('[AddLeadService] Metrics increment error: $metricErr');

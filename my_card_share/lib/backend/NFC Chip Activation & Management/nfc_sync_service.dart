@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
@@ -61,6 +62,17 @@ class NfcSyncService {
     bool isBrandLocked = false,
     Function(String status)? onProgress,
   }) async {
+    // iOS does not support NFC tag emulation (phone-to-phone write).
+    // NFC reading works on iOS 14+, but writing NdefRecord to physical chip
+    // requires background tag reading entitlement — show QR fallback instead.
+    if (!kIsWeb && Platform.isIOS) {
+      onProgress?.call(
+        'NFC card writing is not supported on iPhone via emulation. '
+        'Please use QR Code sharing instead to share your card.',
+      );
+      return false;
+    }
+
     final isAvailable = await NfcManager.instance.isAvailable();
     if (!isAvailable) {
       onProgress?.call("NFC is not supported or turned off on this device.");

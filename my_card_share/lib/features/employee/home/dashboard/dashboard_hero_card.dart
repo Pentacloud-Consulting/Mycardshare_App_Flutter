@@ -60,6 +60,8 @@ class DashboardHeroCard extends StatelessWidget {
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
+        gaplessPlayback: true,
+        cacheWidth: 600,
         errorBuilder: (ctx, err, st) => fallback,
       );
     }
@@ -95,6 +97,8 @@ class DashboardHeroCard extends StatelessWidget {
         return Image.network(
           p,
           fit: BoxFit.cover,
+          gaplessPlayback: true,
+          cacheWidth: 600,
           width: double.infinity,
           height: double.infinity,
           errorBuilder: (ctx, err, st) => fallback,

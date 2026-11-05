@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
 import '../../../backend/individual/profile/individual_profile_store.dart';
 import '../../../backend/resume/resume_service.dart';
 import '../../../backend/brochure/brochure_service.dart';
@@ -565,10 +564,10 @@ class _ProfileResumeCardState extends State<ProfileResumeCard> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
       ),
       child: Column(
@@ -577,14 +576,14 @@ class _ProfileResumeCardState extends State<ProfileResumeCard> {
           Row(
             children: [
               Container(
-                width: 36,
-                height: 36,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFEFF6FF),
-                  shape: BoxShape.circle,
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Center(
-                  child: Icon(icon, color: const Color(0xFF2563EB), size: 19),
+                  child: Icon(icon, color: const Color(0xFF2563EB), size: 20),
                 ),
               ),
               const SizedBox(width: 10),
@@ -726,32 +725,32 @@ class _ProfileResumeCardState extends State<ProfileResumeCard> {
             const SizedBox(height: 10),
             InkWell(
               onTap: onUpload,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
               child: CustomPaint(
                 painter: DashedRectPainter(
                   color: const Color(0xFF93C5FD),
                   strokeWidth: 1.2,
-                  dash: 5.0,
-                  gap: 3.5,
-                  radius: 10.0,
+                  dash: 6.0,
+                  gap: 4.0,
+                  radius: 12.0,
                 ),
                 child: Container(
-                  height: 38,
+                  height: 44,
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.upload_outlined,
-                          size: 16, color: Color(0xFF2563EB)),
-                      const SizedBox(width: 6),
+                      const Icon(Icons.file_upload_outlined,
+                          size: 18, color: Color(0xFF2563EB)),
+                      const SizedBox(width: 8),
                       Text(
                         uploadButtonText,
                         style: const TextStyle(
-                          fontSize: 12.5,
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF2563EB),
                         ),

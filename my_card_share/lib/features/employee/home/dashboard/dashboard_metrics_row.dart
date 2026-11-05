@@ -13,7 +13,7 @@ class _WaveCurvePainter extends CustomPainter {
     final strokePaint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.4
+      ..strokeWidth = 2.0
       ..strokeCap = StrokeCap.round;
 
     final fillPaint = Paint()
@@ -164,22 +164,24 @@ class DashboardMetricsRow extends StatelessWidget {
         .trim();
     final displayBadge = cleanBadge.isNotEmpty ? cleanBadge : "+0%";
 
+    final isTextValue = int.tryParse(value) == null;
+
     return Container(
-      height: 114,
+      height: 106,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFF1F5F9), width: 1.2),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF1F5F9), width: 1.0),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x06000000),
-            blurRadius: 10,
-            offset: Offset(0, 4),
+            color: Color(0x05000000),
+            blurRadius: 8,
+            offset: Offset(0, 3),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         child: Stack(
           children: [
             // Wave curve at bottom
@@ -187,14 +189,14 @@ class DashboardMetricsRow extends StatelessWidget {
               left: 0,
               right: 0,
               bottom: 0,
-              height: 28,
+              height: 16,
               child: CustomPaint(
                 painter: _WaveCurvePainter(color: waveColor),
               ),
             ),
             // Content
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -202,34 +204,34 @@ class DashboardMetricsRow extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
-                        width: 28,
-                        height: 28,
+                        width: 26,
+                        height: 26,
                         decoration: BoxDecoration(
                           color: iconBg,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(7),
                         ),
-                        child: Icon(icon, color: iconColor, size: 16),
+                        child: Icon(icon, color: iconColor, size: 15),
                       ),
                       const SizedBox(width: 4),
                       Flexible(
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                           decoration: BoxDecoration(
                             color: badgeBg,
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                           child: FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.north_east_rounded, size: 8.5, color: badgeColor),
+                                Icon(Icons.north_east_rounded, size: 8, color: badgeColor),
                                 const SizedBox(width: 2),
                                 Text(
                                   displayBadge,
                                   maxLines: 1,
                                   style: TextStyle(
-                                    fontSize: 9,
+                                    fontSize: 8.5,
                                     fontWeight: FontWeight.bold,
                                     color: badgeColor,
                                   ),
@@ -249,9 +251,10 @@ class DashboardMetricsRow extends StatelessWidget {
                       title,
                       maxLines: 1,
                       style: const TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w500,
                         color: Color(0xFF64748B),
+                        letterSpacing: 0.05,
                       ),
                     ),
                   ),
@@ -262,15 +265,15 @@ class DashboardMetricsRow extends StatelessWidget {
                     child: Text(
                       value,
                       maxLines: 1,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F172A),
-                        letterSpacing: -0.4,
+                      style: TextStyle(
+                        fontSize: isTextValue ? 12.5 : 15.5,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF0F172A),
+                        letterSpacing: -0.3,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 5),
                 ],
               ),
             ),

@@ -132,22 +132,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final adminDoc = await FirebaseFirestore.instance.collection('admins').doc(uid).get();
       if (adminDoc.exists) return 'master-admin';
 
-      // 1. Try unified backend sync bridge
-      final roleData = await GlobalAuthSyncService.resolveUserRoleOnLogin();
-      if (roleData != null && roleData['role'] != null) {
-        return roleData['role'].toString().toLowerCase().trim();
-      }
-
-      // 2. Fallback to Firestore user document
+      // 1. Primary fast check: Firestore users/{uid} document
       final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
       if (userDoc.exists && userDoc.data() != null) {
         final role = (userDoc.data()!['role'] as String?)?.toLowerCase().trim();
         if (role != null && role.isNotEmpty) return role;
       }
+
       final entDoc = await FirebaseFirestore.instance.collection('enterprises').doc(uid).get();
       if (entDoc.exists) return 'enterprise';
+
+      // 2. Fallback: Unified backend sync bridge
+      final roleData = await GlobalAuthSyncService.resolveUserRoleOnLogin();
+      if (roleData != null && roleData['role'] != null) {
+        return roleData['role'].toString().toLowerCase().trim();
+      }
     } catch (e) {
-      debugPrint('[LoginScreen] Error checking user role: $e');
+      debugPrint('[LoginScreen] Error checking user role: ');
     }
     return null;
   }
@@ -250,19 +251,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
 
     if (_selectedTab == 2) {
-      // â”€â”€ Check if employee work email is enrolled â”€â”€
-      final emailCheck = await EmployeeEmailFetchService.instance.verifyEmployeeEmail(email);
-      if (!emailCheck.isEnrolled) {
-        if (mounted) setState(() => _isLoading = false);
-        if (mounted) {
-          EmployeeEmailFetchService.showEmailNotEnrolledDialog(
-            context,
-            email: email,
-          );
-        }
-        return;
-      }
-
+      // Employee: Dedicated Real Employee Login Backend Service
       // â”€â”€ Employee: Dedicated Real Employee Login Backend Service â”€â”€
       final result = await EmployeeLoginBackendService.instance.loginEmployee(
         email: email,
@@ -576,16 +565,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
 
       if (_selectedTab == 0 && registeredRole == 'employee') {
-        await FirebaseAuth.instance.signOut();
-        ref.read(authProvider.notifier).logout();
-        if (mounted) {
-          EnterpriseCategoryMismatchDialog.show(
-            context,
-            registeredCategory: 'Employee',
-            currentTabCategory: 'Individual',
-            onSwitchTab: () => setState(() => _selectedTab = 2),
-          );
-        }
+        final user = UserModel(
+          id: fbUser.uid,
+          name: fbUser.displayName ?? email,
+          email: fbUser.email ?? email,
+          role: 'employee',
+        );
+        ref.read(authProvider.notifier).login(user);
+        await AppViewAuthGate.instance.savePersistentSession(user);
+        IndividualProfileStore.instance.loadProfile(fbUser.uid, email, user.name);
+        PublishUnpublishService.instance.loadPublishStatus(fbUser.uid);
+        EmployeeHomeBackendService.instance.loadEmployeeHomeData();
+        EmployeeStatsBackendService.instance.loadEmployeeStats();
+        if (mounted) context.go('/portal');
         return;
       }
 

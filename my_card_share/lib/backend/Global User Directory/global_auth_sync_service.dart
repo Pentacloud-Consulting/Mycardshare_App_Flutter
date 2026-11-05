@@ -23,7 +23,7 @@ class GlobalAuthSyncService {
         Uri.parse("$baseUrl/api/sync/global-directory"),
         headers: headers,
         body: jsonEncode({"action": "resolve_user_role"}),
-      );
+      ).timeout(const Duration(milliseconds: 2500));
       if (res.statusCode == 200) {
         final json = jsonDecode(res.body);
         final roleData = json["data"];
@@ -51,7 +51,7 @@ class GlobalAuthSyncService {
           "deviceModel": "Flutter Mobile",
           "platform": "android",
         }),
-      );
+      ).timeout(const Duration(milliseconds: 2000));
     } catch (e) {
       debugPrint("[GlobalAuthSyncService] Heartbeat failed: $e");
     }

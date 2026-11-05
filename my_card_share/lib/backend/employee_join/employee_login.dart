@@ -71,8 +71,7 @@ class EmployeeLoginBackendService {
     if (cleanEmail.isEmpty) return null;
 
     try {
-      // 1. Check global users collection for this specific employee first
-      // Try by Firebase Auth UID first (most reliable), then by email-based doc ID
+      // 1. Check global users collection for this specific employee
       final currentAuthUid = _auth.currentUser?.uid ?? '';
       Map<String, dynamic>? userData;
 
@@ -80,6 +79,17 @@ class EmployeeLoginBackendService {
         final uidSnap = await _firestore.collection('users').doc(currentAuthUid).get();
         if (uidSnap.exists && uidSnap.data() != null) {
           userData = uidSnap.data()!;
+        }
+      }
+
+      if (userData == null) {
+        final userEmailSnap = await _firestore
+            .collection('users')
+            .where('email', isEqualTo: cleanEmail)
+            .limit(1)
+            .get();
+        if (userEmailSnap.docs.isNotEmpty) {
+          userData = userEmailSnap.docs.first.data();
         }
       }
 
@@ -101,25 +111,8 @@ class EmployeeLoginBackendService {
             'companyName': companyName ?? 'Enterprise Workspace',
             'fullName': (fullName != null && fullName.isNotEmpty) ? fullName : cleanEmail.split('@').first,
             'role': role ?? 'Employee',
-          };
-        }
-      }
-
-      // legacy path kept for backward compat
-      final userDocId = cleanEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-      final userSnap = await _firestore.collection('users').doc(userDocId).get();
-      if (userSnap.exists && userSnap.data() != null) {
-        final data = userSnap.data()!;
-        final entId = data['enterpriseUid'] as String?;
-        final companyName = data['companyName'] as String?;
-        final fullName = (data['fullName'] as String?)?.trim() ?? (data['name'] as String?)?.trim();
-        final role = (data['roleTitle'] as String?)?.trim() ?? (data['jobTitle'] as String?)?.trim();
-        if (entId != null && entId.isNotEmpty) {
-          return {
-            'enterpriseUid': entId,
-            'companyName': companyName ?? 'Enterprise Workspace',
-            'fullName': (fullName != null && fullName.isNotEmpty) ? fullName : cleanEmail.split('@').first,
-            'role': role ?? 'Employee',
+            'companyBanner': data['bannerUrl'] ?? data['companyBanner'],
+            'avatarUrl': data['avatarUrl'] ?? data['profilePhoto'],
           };
         }
       }
@@ -128,8 +121,46 @@ class EmployeeLoginBackendService {
     }
 
     try {
-      // 2. Query enterprises for matching employee record in `employees` subcollection
-      final enterprisesSnap = await _firestore.collection('enterprises').limit(15).get();
+      // 2. Query collectionGroup('employees') across ALL enterprises in Firestore
+      final groupSnap = await _firestore
+          .collectionGroup('employees')
+          .where('email', isEqualTo: cleanEmail)
+          .limit(1)
+          .get();
+      if (groupSnap.docs.isNotEmpty) {
+        final empDoc = groupSnap.docs.first;
+        final empData = empDoc.data();
+        final entRef = empDoc.reference.parent.parent;
+        String compName = 'Enterprise Workspace';
+        String? compBanner;
+        if (entRef != null) {
+          try {
+            final entDoc = await entRef.get();
+            if (entDoc.exists && entDoc.data() != null) {
+              final d = entDoc.data()! as Map<String, dynamic>;
+              compName = d['companyName'] as String? ?? compName;
+              compBanner = d['bannerUrl'] as String? ?? d['companyBanner'] as String?;
+            }
+          } catch (_) {}
+        }
+        final empName = (empData['name'] as String?)?.trim() ?? (empData['fullName'] as String?)?.trim();
+        final empRole = (empData['roleTitle'] as String?)?.trim() ?? (empData['jobTitle'] as String?)?.trim();
+        return {
+          'enterpriseUid': entRef?.id ?? 'ent_workspace',
+          'companyName': compName,
+          'fullName': (empName != null && empName.isNotEmpty) ? empName : cleanEmail.split('@').first,
+          'role': empRole ?? 'Employee',
+          'companyBanner': compBanner,
+          'avatarUrl': empData['avatarUrl'] ?? empData['profilePhoto'],
+        };
+      }
+    } catch (e) {
+      debugPrint('[EmployeeLoginBackendService] collectionGroup employees lookup note: $e');
+    }
+
+    try {
+      // 3. Fallback: Query enterprises for matching employee record in `employees` subcollection
+      final enterprisesSnap = await _firestore.collection('enterprises').limit(50).get();
       for (final doc in enterprisesSnap.docs) {
         try {
           final empSnap = await _firestore
@@ -137,6 +168,7 @@ class EmployeeLoginBackendService {
               .doc(doc.id)
               .collection('employees')
               .where('email', isEqualTo: cleanEmail)
+              .limit(1)
               .get();
 
           if (empSnap.docs.isNotEmpty) {
@@ -144,11 +176,14 @@ class EmployeeLoginBackendService {
             final companyName = doc.data()['companyName'] as String? ?? 'Enterprise Workspace';
             final empName = (empData['name'] as String?)?.trim() ?? (empData['fullName'] as String?)?.trim();
             final empRole = (empData['roleTitle'] as String?)?.trim() ?? (empData['jobTitle'] as String?)?.trim();
+            final compBanner = doc.data()['bannerUrl'] as String? ?? doc.data()['companyBanner'] as String?;
             return {
               'enterpriseUid': doc.id,
               'companyName': companyName,
               'fullName': (empName != null && empName.isNotEmpty) ? empName : cleanEmail.split('@').first,
               'role': empRole ?? 'Employee',
+              'companyBanner': compBanner,
+              'avatarUrl': empData['avatarUrl'] ?? empData['profilePhoto'],
             };
           }
         } catch (_) {}
@@ -235,27 +270,48 @@ class EmployeeLoginBackendService {
     } catch (_) {}
 
     try {
-      // 1. Safe Firebase Auth sign-in or account creation
+      // 1. Strict Firebase Auth — only sign in existing accounts, NEVER auto-create
       try {
         if (_auth.currentUser == null || _auth.currentUser?.email?.toLowerCase() != cleanEmail) {
-          try {
-            await _auth.signInWithEmailAndPassword(
-              email: cleanEmail,
-              password: cleanPass,
-            );
-          } on FirebaseAuthException catch (fe) {
-            if (fe.code == 'user-not-found' || fe.code == 'invalid-credential') {
-              try {
-                await _auth.createUserWithEmailAndPassword(
-                  email: cleanEmail,
-                  password: cleanPass,
-                );
-              } catch (_) {}
-            }
-          }
+          await _auth.signInWithEmailAndPassword(
+            email: cleanEmail,
+            password: cleanPass,
+          );
+          debugPrint('[EmployeeLoginBackendService] Firebase Auth OK: ${_auth.currentUser?.uid}');
         }
+      } on FirebaseAuthException catch (fe) {
+        debugPrint('[EmployeeLoginBackendService] Firebase Auth failed: ${fe.code}');
+        final errCode = fe.code.toLowerCase();
+        if (errCode == 'wrong-password' ||
+            errCode == 'invalid-credential' ||
+            errCode == 'invalid-login-credentials') {
+          return const EmployeeLoginResult(
+            success: false,
+            message: 'Incorrect password. Please try again.',
+          );
+        }
+        if (errCode == 'user-not-found' || errCode == 'user-disabled') {
+          return const EmployeeLoginResult(
+            success: false,
+            message: 'No employee account found with this email. Please contact your administrator.',
+          );
+        }
+        if (errCode == 'too-many-requests') {
+          return const EmployeeLoginResult(
+            success: false,
+            message: 'Too many login attempts. Please wait a moment and try again.',
+          );
+        }
+        return EmployeeLoginResult(
+          success: false,
+          message: 'Authentication failed: ${fe.message ?? fe.code}',
+        );
       } catch (authErr) {
-        debugPrint('[EmployeeLoginBackendService] Firebase Auth sign-in note: $authErr');
+        debugPrint('[EmployeeLoginBackendService] Auth exception: $authErr');
+        return EmployeeLoginResult(
+          success: false,
+          message: 'Login failed. Please check your credentials and try again.',
+        );
       }
 
       // Check UID in deleted accounts
@@ -336,6 +392,19 @@ class EmployeeLoginBackendService {
             userMap['companyBanner'] = '/api/uploads/companyBanner/W3hDpYWqSgzFQJSb1ZcC_1786435248817_1786435248820.png';
             userMap['roleTitle'] = 'Web Developer';
             userMap['jobTitle'] = 'Web Developer';
+          } else {
+            if (entInfo?['avatarUrl'] != null && entInfo!['avatarUrl'].toString().isNotEmpty) {
+              userMap['avatarUrl'] = entInfo!['avatarUrl'];
+              userMap['profilePhoto'] = entInfo!['avatarUrl'];
+            }
+            if (entInfo?['companyBanner'] != null && entInfo!['companyBanner'].toString().isNotEmpty) {
+              userMap['bannerUrl'] = entInfo!['companyBanner'];
+              userMap['companyBanner'] = entInfo!['companyBanner'];
+            }
+            if (entInfo?['role'] != null && entInfo!['role'].toString().isNotEmpty) {
+              userMap['roleTitle'] = entInfo!['role'];
+              userMap['jobTitle'] = entInfo!['role'];
+            }
           }
           // Only set Active/Published if admin hasn't deactivated this employee
           if (!adminSetInactive) {
@@ -407,27 +476,10 @@ class EmployeeLoginBackendService {
         userModel: userModel,
       );
     } catch (e) {
-      debugPrint('[EmployeeLoginBackendService] login error note: $e');
-
-      // Return clean fallback login success so user can access dashboard seamlessly
-      final fallbackProfile = EnterpriseProfileStore.instance.currentProfile;
-      final companyName = fallbackProfile?.companyName ?? 'Islamic Web';
-      final targetUid = fallbackProfile?.uid ?? 'ent_islamic_web';
-      final name = cleanEmail.split('@').first;
-      final employeeUid = _auth.currentUser?.uid ??
-          cleanEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-
-      return EmployeeLoginResult(
-        success: true,
-        message: "Logged in successfully to $companyName!",
-        enterpriseUid: targetUid,
-        companyName: companyName,
-        userModel: UserModel(
-          id: employeeUid,
-          name: name,
-          email: cleanEmail,
-          role: 'employee',
-        ),
+      debugPrint('[EmployeeLoginBackendService] login error: $e');
+      return const EmployeeLoginResult(
+        success: false,
+        message: 'An unexpected error occurred. Please try again.',
       );
     }
   }

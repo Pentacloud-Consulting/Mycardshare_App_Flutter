@@ -25,7 +25,7 @@ class BrochureService {
   /// Picks a document file (PDF, DOC, DOCX, PNG, JPG) from the device
   Future<PlatformFile?> pickBrochureFile() async {
     try {
-      final result = await FilePicker.pickFiles(
+      final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'doc', 'docx', 'png', 'jpg', 'jpeg'],
         allowMultiple: false,
@@ -184,7 +184,7 @@ class BrochureService {
   }
 
   /// Opens the brochure URL in external browser / PDF viewer
-  static Future<bool> openBrochure(String url) async {
+  static Future<bool> openBrochure(String url, {String? fileName}) async {
     final clean = url.trim();
     if (clean.isEmpty) return false;
     try {

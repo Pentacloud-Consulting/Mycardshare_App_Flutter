@@ -41,21 +41,82 @@ class EmployeeEmailFetchService {
     }
 
     try {
-      // 1. Check local active profile
+      // 1. Query Firestore users collection by email (Finds ANY employee document)
+      try {
+        final userSnap = await _firestore
+            .collection('users')
+            .where('email', isEqualTo: cleanEmail)
+            .limit(1)
+            .get();
+        if (userSnap.docs.isNotEmpty) {
+          final data = userSnap.docs.first.data();
+          final entUid = data['enterpriseUid'] as String?;
+          final role = (data['role'] as String?)?.toLowerCase().trim();
+          final company = data['companyName'] as String? ?? 'Enterprise Workspace';
+          final name = data['fullName'] as String? ?? (data['name'] as String?) ?? cleanEmail.split('@').first;
+          if (role == 'employee' || (entUid != null && entUid.isNotEmpty)) {
+            return EmployeeEmailVerificationResult(
+              isEnrolled: true,
+              enterpriseUid: entUid ?? 'ent_workspace',
+              companyName: company,
+              employeeName: name,
+              message: "Email is enrolled with $company.",
+            );
+          }
+        }
+      } catch (e) {
+        debugPrint('[EmployeeEmailFetchService] users where email check note: $e');
+      }
+
+      // 2. Query collectionGroup('employees') across ALL enterprises instantly
+      try {
+        final groupSnap = await _firestore
+            .collectionGroup('employees')
+            .where('email', isEqualTo: cleanEmail)
+            .limit(1)
+            .get();
+        if (groupSnap.docs.isNotEmpty) {
+          final empDoc = groupSnap.docs.first;
+          final empData = empDoc.data();
+          final entRef = empDoc.reference.parent.parent;
+          String compName = 'Enterprise Workspace';
+          if (entRef != null) {
+            try {
+              final entDoc = await entRef.get();
+              if (entDoc.exists && entDoc.data() != null) {
+                final d = entDoc.data()! as Map<String, dynamic>;
+                compName = d['companyName'] as String? ?? compName;
+              }
+            } catch (_) {}
+          }
+          final name = (empData['name'] as String?) ?? (empData['fullName'] as String?) ?? cleanEmail.split('@').first;
+          return EmployeeEmailVerificationResult(
+            isEnrolled: true,
+            enterpriseUid: entRef?.id ?? 'ent_workspace',
+            companyName: compName,
+            employeeName: name,
+            message: "Email is enrolled with $compName.",
+          );
+        }
+      } catch (e) {
+        debugPrint('[EmployeeEmailFetchService] collectionGroup check note: $e');
+      }
+
+      // 3. Check local active profile
       final profile = EnterpriseProfileStore.instance.currentProfile;
       if (profile != null) {
         if (profile.email.toLowerCase() == cleanEmail) {
           return EmployeeEmailVerificationResult(
             isEnrolled: true,
             enterpriseUid: profile.uid,
-            companyName: profile.companyName.isNotEmpty ? profile.companyName : 'Islamic Web',
+            companyName: profile.companyName.isNotEmpty ? profile.companyName : 'Enterprise Workspace',
             employeeName: cleanEmail.split('@').first,
             message: "Email is enrolled with ${profile.companyName}.",
           );
         }
       }
 
-      // 2. Check local EnterpriseMultiStore
+      // 4. Check local EnterpriseMultiStore
       final storeUser = EnterpriseMultiStore.instance.getUser(cleanEmail);
       if (storeUser != null) {
         return EmployeeEmailVerificationResult(
@@ -67,32 +128,9 @@ class EmployeeEmailFetchService {
         );
       }
 
-      // 3. Query Firestore global users collection
+      // 5. Query enterprises collection subcollection
       try {
-        final docId = cleanEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-        final userSnap = await _firestore.collection('users').doc(docId).get();
-        if (userSnap.exists && userSnap.data() != null) {
-          final data = userSnap.data()!;
-          final entUid = data['enterpriseUid'] as String?;
-          final company = data['companyName'] as String? ?? 'Islamic Web';
-          final name = data['fullName'] as String? ?? cleanEmail.split('@').first;
-          if (entUid != null && entUid.isNotEmpty) {
-            return EmployeeEmailVerificationResult(
-              isEnrolled: true,
-              enterpriseUid: entUid,
-              companyName: company,
-              employeeName: name,
-              message: "Email is enrolled with $company.",
-            );
-          }
-        }
-      } catch (e) {
-        debugPrint('[EmployeeEmailFetchService] users doc check note: $e');
-      }
-
-      // 4. Query enterprises collection subcollection
-      try {
-        final entSnap = await _firestore.collection('enterprises').limit(20).get();
+        final entSnap = await _firestore.collection('enterprises').limit(50).get();
         for (final doc in entSnap.docs) {
           try {
             final empSnap = await _firestore
@@ -100,11 +138,12 @@ class EmployeeEmailFetchService {
                 .doc(doc.id)
                 .collection('employees')
                 .where('email', isEqualTo: cleanEmail)
+                .limit(1)
                 .get();
 
             if (empSnap.docs.isNotEmpty) {
               final empData = empSnap.docs.first.data();
-              final company = doc.data()['companyName'] as String? ?? 'Islamic Web';
+              final company = doc.data()['companyName'] as String? ?? 'Enterprise Workspace';
               final name = empData['name'] as String? ?? cleanEmail.split('@').first;
               return EmployeeEmailVerificationResult(
                 isEnrolled: true,
@@ -120,15 +159,38 @@ class EmployeeEmailFetchService {
         debugPrint('[EmployeeEmailFetchService] enterprises subcollection check note: $e');
       }
 
-      // 5. Default check for pre-seeded enrolled demo accounts (e.g. employee@islamicweb.com, zuhaib@pentacloudconsulting.com)
+      // 6. Check docId fallback in users
+      try {
+        final docId = cleanEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+        final userSnap = await _firestore.collection('users').doc(docId).get();
+        if (userSnap.exists && userSnap.data() != null) {
+          final data = userSnap.data()!;
+          final entUid = data['enterpriseUid'] as String?;
+          final company = data['companyName'] as String? ?? 'Enterprise Workspace';
+          final name = data['fullName'] as String? ?? cleanEmail.split('@').first;
+          if (entUid != null && entUid.isNotEmpty) {
+            return EmployeeEmailVerificationResult(
+              isEnrolled: true,
+              enterpriseUid: entUid,
+              companyName: company,
+              employeeName: name,
+              message: "Email is enrolled with $company.",
+            );
+          }
+        }
+      } catch (e) {
+        debugPrint('[EmployeeEmailFetchService] users doc check note: $e');
+      }
+
+      // 7. Seeded demo accounts & domain heuristics
       final seededEnrolled = ['employee@islamicweb.com', 'zuhaib@pentacloudconsulting.com', 'admin@islamicweb.com'];
-      if (seededEnrolled.contains(cleanEmail)) {
+      if (seededEnrolled.contains(cleanEmail) || cleanEmail.contains('pentacloud')) {
         return EmployeeEmailVerificationResult(
           isEnrolled: true,
-          enterpriseUid: 'ent_islamic_web',
-          companyName: 'Islamic Web',
-          employeeName: cleanEmail.split('@').first,
-          message: "Email is enrolled with Islamic Web.",
+          enterpriseUid: 'ent_pentacloud_consulting',
+          companyName: 'Pentacloud Consulting',
+          employeeName: cleanEmail == 'zuhaib@pentacloudconsulting.com' ? 'Zuhaib Ulla Shariff' : cleanEmail.split('@').first,
+          message: "Email is enrolled with Pentacloud Consulting.",
         );
       }
     } catch (e) {

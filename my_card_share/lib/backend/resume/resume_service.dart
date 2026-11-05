@@ -25,7 +25,7 @@ class ResumeService {
   /// Picks a document file (PDF, DOC, DOCX, PNG, JPG) from the device
   Future<PlatformFile?> pickResumeFile() async {
     try {
-      final result = await FilePicker.pickFiles(
+      final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'doc', 'docx', 'png', 'jpg', 'jpeg'],
         allowMultiple: false,
@@ -238,7 +238,7 @@ class ResumeService {
   }
 
   /// Opens the resume URL in external browser / PDF viewer
-  static Future<bool> openResume(String url) async {
+  static Future<bool> openResume(String url, {String? fileName}) async {
     final clean = url.trim();
     if (clean.isEmpty) return false;
     try {

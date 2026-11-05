@@ -127,10 +127,10 @@ class ProfileBasicInfo extends StatelessWidget {
   }) {
     if (maxLines == 1) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
         decoration: BoxDecoration(
           color: isReadOnly ? const Color(0xFFF8FAFC) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
         ),
         child: Row(
@@ -139,40 +139,35 @@ class ProfileBasicInfo extends StatelessWidget {
             Icon(
               icon,
               color: isReadOnly ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-              size: 17,
+              size: 18,
             ),
             const SizedBox(width: 10),
+            SizedBox(
+              width: 108,
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                  color: isReadOnly ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+                ),
+              ),
+            ),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w600,
-                      color: isReadOnly ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                      letterSpacing: 0.1,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  TextField(
-                    controller: controller,
-                    readOnly: isReadOnly,
-                    maxLines: 1,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isReadOnly ? const Color(0xFF64748B) : const Color(0xFF0F172A),
-                      fontWeight: FontWeight.w500,
-                    ),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      isDense: true,
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ),
-                ],
+              child: TextField(
+                controller: controller,
+                readOnly: isReadOnly,
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isReadOnly ? const Color(0xFF64748B) : const Color(0xFF0F172A),
+                  fontWeight: FontWeight.w500,
+                ),
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
               ),
             ),
             if (trailingBadge != null) ...[
@@ -187,7 +182,7 @@ class ProfileBasicInfo extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: isReadOnly ? const Color(0xFFF8FAFC) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: const Color(0xFFE2E8F0),
           width: 1.0,

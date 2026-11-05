@@ -76,6 +76,8 @@ class ProfileLiveCardPreview extends StatelessWidget {
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
+        gaplessPlayback: true,
+        cacheWidth: 600,
         errorBuilder: (ctx, err, st) => fallback,
       );
     }

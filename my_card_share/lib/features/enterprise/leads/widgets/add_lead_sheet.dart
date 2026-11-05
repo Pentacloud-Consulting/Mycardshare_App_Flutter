@@ -40,6 +40,8 @@ class _EnterpriseAddLeadSheetState extends State<EnterpriseAddLeadSheet> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _companyController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
+  final TextEditingController _nationalityController = TextEditingController();
+  final TextEditingController _budgetController = TextEditingController();
 
   bool _isSubmitting = false;
 
@@ -50,6 +52,8 @@ class _EnterpriseAddLeadSheetState extends State<EnterpriseAddLeadSheet> {
     _emailController.dispose();
     _companyController.dispose();
     _notesController.dispose();
+    _nationalityController.dispose();
+    _budgetController.dispose();
     super.dispose();
   }
 
@@ -77,8 +81,10 @@ class _EnterpriseAddLeadSheetState extends State<EnterpriseAddLeadSheet> {
           ? _companyController.text.trim()
           : "Independent";
       final notes = _notesController.text.trim();
+      final nationality = _nationalityController.text.trim();
+      final budgetRange = _budgetController.text.trim();
 
-      // 1. Direct real-time Firestore persistence
+      // 1. Direct real-time Firestore persistence + Web Next.js MongoDB Dual-Sync
       final success = await EnterpriseLeadsService.instance.addLead(
         uid: uid,
         name: name,
@@ -88,31 +94,10 @@ class _EnterpriseAddLeadSheetState extends State<EnterpriseAddLeadSheet> {
         notes: notes,
         capturedBy: capturedBy,
         status: 'Synced',
+        nationality: nationality,
+        budgetRange: budgetRange,
+        source: 'mobile',
       );
-
-      // 2. Optional Web API sync trigger
-      try {
-        final idToken = await user?.getIdToken();
-        if (idToken != null) {
-          http.post(
-            Uri.parse('https://your-domain.com/api/sync/enterprise-leads'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $idToken',
-            },
-            body: json.encode({
-              'companyId': uid,
-              'name': name,
-              'mobile': phone,
-              'email': email,
-              'company': company,
-              'notes': notes,
-            }),
-          ).timeout(const Duration(seconds: 4)).catchError((_) => http.Response('{}', 200));
-        }
-      } catch (_) {
-        // Fallback gracefully to Firestore live stream
-      }
 
       if (!mounted) return;
 
@@ -325,7 +310,49 @@ class _EnterpriseAddLeadSheetState extends State<EnterpriseAddLeadSheet> {
 
               const SizedBox(height: 14),
 
-              // 5. Notes / Requirements
+              // 5. Nationality & Budget Range (Optional)
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildFieldLabel("Nationality"),
+                        const SizedBox(height: 6),
+                        TextFormField(
+                          controller: _nationalityController,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: _buildInputDecoration(
+                            hintText: "e.g. UAE",
+                            prefixIcon: Icons.flag_outlined,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildFieldLabel("Budget / Deal Size"),
+                        const SizedBox(height: 6),
+                        TextFormField(
+                          controller: _budgetController,
+                          decoration: _buildInputDecoration(
+                            hintText: "e.g. AED 50k",
+                            prefixIcon: Icons.attach_money_rounded,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 14),
+
+              // 6. Notes / Requirements
               _buildFieldLabel("Notes / Discussion"),
               const SizedBox(height: 6),
               TextFormField(

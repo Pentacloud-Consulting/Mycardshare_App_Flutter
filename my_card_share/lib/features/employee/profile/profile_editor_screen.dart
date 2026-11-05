@@ -12,6 +12,8 @@ import 'widgets/profile_contact_details.dart';
 import 'widgets/profile_live_card_preview.dart';
 import 'widgets/profile_slug_section.dart';
 import 'widgets/profile_social_links.dart';
+import '../../profile/widgets/profile_resume_card.dart';
+
 import 'widgets/profile_template_selector.dart';
 import '../../../backend/employee_join/banner fetch/banner fetch.dart';
 import '../../../backend/employee_join/home/employee_home_backend.dart';
@@ -19,6 +21,8 @@ import '../../../backend/employee_join/email/fetching_emails.dart';
 import '../../../backend/enterprise/profile/enterprise_profile_store.dart';
 import '../../../core/utils/image_cropper_util.dart';
 import '../../../backend/number logic/phone_number_service.dart';
+import '../../../backend/employee_join/employee_sync_service.dart';
+import '../../../core/utils/image_url_formatter.dart';
 
 class ProfileEditorScreen extends StatefulWidget {
   const ProfileEditorScreen({super.key});
@@ -35,6 +39,8 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
   late TextEditingController _roleController;
   late TextEditingController _companyController;
   late TextEditingController _bioController;
+  late TextEditingController _experienceController;
+  late TextEditingController _cityController;
 
   late TextEditingController _phoneController;
   late TextEditingController _emailController;
@@ -91,6 +97,12 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
     );
     _bioController = TextEditingController(
       text: active?.shortBio ?? "",
+    );
+    _experienceController = TextEditingController(
+      text: active?.experience ?? "",
+    );
+    _cityController = TextEditingController(
+      text: active?.city ?? "",
     );
 
     _phoneController = TextEditingController(text: active?.phoneNumber ?? "");
@@ -156,6 +168,56 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
         setState(() {});
       }
     });
+
+    EmployeeSyncService.instance.fetchEmployeeSyncData().then((syncData) {
+      if (mounted && syncData != null) {
+        final card = syncData['card'] is Map<String, dynamic> ? syncData['card'] as Map<String, dynamic> : null;
+        final company = syncData['company'] is Map<String, dynamic> ? syncData['company'] as Map<String, dynamic> : null;
+
+        if (company != null) {
+          final compName = company['companyName']?.toString();
+          if (compName != null && compName.isNotEmpty) {
+            _companyController.text = compName;
+          }
+        }
+
+        if (card != null) {
+          final rawFullName = card['fullName']?.toString();
+          if (rawFullName != null && rawFullName.isNotEmpty &&
+              (_nameController.text.isEmpty || _nameController.text.toLowerCase() == 'user' || _nameController.text.toLowerCase() == 'zuhaib')) {
+            _nameController.text = rawFullName;
+          }
+          final rawJob = card['jobTitle']?.toString();
+          if (rawJob != null && rawJob.isNotEmpty &&
+              (_roleController.text.isEmpty || _roleController.text.toLowerCase() == 'member' || _roleController.text.toLowerCase() == 'employee')) {
+            _roleController.text = rawJob;
+          }
+          if (_bioController.text.isEmpty && card['bio'] != null && card['bio'].toString().isNotEmpty) {
+            _bioController.text = card['bio'].toString();
+          }
+          if (_experienceController.text.isEmpty && card['experience'] != null && card['experience'].toString().isNotEmpty) {
+            _experienceController.text = card['experience'].toString();
+          }
+          if (_cityController.text.isEmpty && card['city'] != null && card['city'].toString().isNotEmpty) {
+            _cityController.text = card['city'].toString();
+          }
+          if (_phoneController.text.isEmpty && card['phone'] != null && card['phone'].toString().isNotEmpty) {
+            _phoneController.text = card['phone'].toString();
+          }
+          if (_slugController.text.isEmpty && card['cardSlug'] != null && card['cardSlug'].toString().isNotEmpty) {
+            _slugController.text = card['cardSlug'].toString();
+          }
+          if (card['avatarUrl'] != null && card['avatarUrl'].toString().isNotEmpty) {
+            _profileImagePath = ImageUrlFormatter.format(card['avatarUrl'].toString());
+          }
+          final rawBanner = (card['bannerUrl'] ?? company?['companyBanner'])?.toString();
+          if (rawBanner != null && rawBanner.isNotEmpty) {
+            _bannerImagePath = ImageUrlFormatter.format(rawBanner);
+          }
+        }
+        setState(() {});
+      }
+    });
   }
 
   @override
@@ -164,6 +226,8 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
     _roleController.dispose();
     _companyController.dispose();
     _bioController.dispose();
+    _experienceController.dispose();
+    _cityController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
     _companyEmailController.dispose();
@@ -635,6 +699,8 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
       socialLinks: _socialLinks,
       companyName: _companyController.text.trim(),
       shortBio: _bioController.text.trim(),
+      experience: _experienceController.text.trim(),
+      city: _cityController.text.trim(),
       networkingStatus: 'Actively Networking',
     );
 
@@ -655,9 +721,38 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
       'phone': _phoneController.text.trim(),
       'website': _websiteController.text.trim(),
       'bio': _bioController.text.trim(),
+      'experience': _experienceController.text.trim(),
+      'city': _cityController.text.trim(),
       'companyName': _companyController.text.trim(),
       'avatarUrl': uploadedAvatarUrl ?? '',
       'bannerUrl': uploadedBannerUrl ?? '',
+      'socialLinks': _socialLinks
+          .map((l) => {'platform': l.platform, 'url': l.url})
+          .toList(),
+    });
+
+    // ── 6. Dual-Sync with Next.js REST API (/api/sync/employee) ──────────────
+    final brandColor = EmployeeBannerFetchService.instance.currentBrandData?.brandColor;
+    final isColorLocked = EmployeeBannerFetchService.instance.isBrandColorLocked ||
+        (EmployeeSyncService.instance.syncedCompanyData?['isColorLocked'] == true);
+
+    EmployeeSyncService.instance.saveEmployeeCardToApi({
+      'fullName': _nameController.text.trim(),
+      'jobTitle': _roleController.text.trim(),
+      'companyName': _companyController.text.trim(),
+      'bio': _bioController.text.trim(),
+      'experience': _experienceController.text.trim(),
+      'city': _cityController.text.trim(),
+      'cardSlug': finalSlug,
+      'email': _emailController.text.trim(),
+      'workEmail': _companyEmailController.text.trim(),
+      'phone': _phoneController.text.trim(),
+      'website': _websiteController.text.trim(),
+      'avatarUrl': uploadedAvatarUrl ?? '',
+      'bannerUrl': uploadedBannerUrl ?? '',
+      'templateStyle': 'corporate_clean',
+      if (brandColor != null && brandColor.isNotEmpty) 'themeColor': brandColor,
+      'isColorLocked': isColorLocked,
       'socialLinks': _socialLinks
           .map((l) => {'platform': l.platform, 'url': l.url})
           .toList(),
@@ -880,24 +975,47 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
               const SizedBox(height: 20),
 
               // Template Color Selector (Image 4)
-              ProfileTemplateSelector(
-                selectedIndex: _selectedTemplateIndex,
-                onSelectTemplate: (index) {
-                  setState(() {
-                    _selectedTemplateIndex = index;
-                    _bannerImagePath = ""; // Clear uploaded banner so template shows cleanly
-                  });
+              ListenableBuilder(
+                listenable: EmployeeBannerFetchService.instance,
+                builder: (context, _) {
+                  final brandData = EmployeeBannerFetchService.instance.currentBrandData;
+                  final isColorLocked = EmployeeBannerFetchService.instance.isBrandColorLocked ||
+                      (EmployeeSyncService.instance.syncedCompanyData?['isColorLocked'] == true);
+                  return ProfileTemplateSelector(
+                    selectedIndex: _selectedTemplateIndex,
+                    isLocked: isColorLocked,
+                    lockedBrandColor: brandData?.brandColor,
+                    onSelectTemplate: (index) {
+                      setState(() {
+                        _selectedTemplateIndex = index;
+                        _bannerImagePath = ""; // Clear uploaded banner so template shows cleanly
+                      });
+                    },
+                  );
                 },
               ),
 
               const SizedBox(height: 20),
 
               // Basic Info Inputs
-              ProfileBasicInfo(
-                nameController: _nameController,
-                roleController: _roleController,
-                companyController: _companyController,
-                bioController: _bioController,
+              ListenableBuilder(
+                listenable: EmployeeBannerFetchService.instance,
+                builder: (context, _) {
+                  final isEnterpriseManaged = (EmployeeHomeBackendService.instance.enterpriseUid != null &&
+                          EmployeeHomeBackendService.instance.enterpriseUid!.isNotEmpty) ||
+                      (EmployeeBannerFetchService.instance.currentBrandData?.enterpriseUid != null &&
+                          EmployeeBannerFetchService.instance.currentBrandData!.enterpriseUid.isNotEmpty);
+
+                  return ProfileBasicInfo(
+                    nameController: _nameController,
+                    roleController: _roleController,
+                    companyController: _companyController,
+                    bioController: _bioController,
+                    experienceController: _experienceController,
+                    cityController: _cityController,
+                    isCompanyLocked: isEnterpriseManaged,
+                  );
+                },
               ),
 
               const SizedBox(height: 20),
@@ -927,6 +1045,25 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
 
               const SizedBox(height: 20),
 
+// Documents (Resume / CV + Company Brochure) Section
+              ProfileResumeCard(
+                uid: _uid,
+                currentResumeUrl: IndividualProfileStore.instance.activeProfile?.resumeUrl,
+                currentResumeFileName: IndividualProfileStore.instance.activeProfile?.resumeFileName,
+                currentBrochureUrl: IndividualProfileStore.instance.activeProfile?.brochureUrl,
+                currentBrochureFileName: IndividualProfileStore.instance.activeProfile?.brochureFileName,
+                candidateName: _nameController.text.isNotEmpty ? _nameController.text : 'User',
+                jobTitle: _roleController.text,
+                enterpriseUid: EmployeeHomeBackendService.instance.enterpriseUid,
+                isEditable: true,
+                onResumeChanged: (url, fileName) {
+                  IndividualProfileStore.instance.loadProfile(_uid, _emailController.text, _nameController.text);
+                },
+                onBrochureChanged: (url, fileName) {
+                  IndividualProfileStore.instance.loadProfile(_uid, _emailController.text, _nameController.text);
+                },
+              ),
+              const SizedBox(height: 20),
               // Card Slug Section (Image 5)
               ProfileSlugSection(
                 slugController: _slugController,

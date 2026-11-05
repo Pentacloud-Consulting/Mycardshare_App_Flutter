@@ -8,7 +8,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// Approves or rejects enterprise registrations across both unified sync
 /// (/api/sync/master-admin) and platform routes (/api/platform/companies/{id}/approval).
 class MasterApprovalSyncService {
-  static const String baseUrl = 'https://digitalbusinesscloudcard.com';
+  static const String baseUrl = 'https://mycardshare.com';
+  static const String fallbackHost = 'https://digitalbusinesscloudcard.com';
   static const String endpoint = '$baseUrl/api/sync/master-admin';
 
   /// Primary approval method with automatic Bearer token resolution and fallback
@@ -98,22 +99,27 @@ class MasterApprovalSyncService {
         }
       }
 
-      // 2. Fallback to platform companies approval route
-      try {
-        final fallbackResponse = await http.post(
-          Uri.parse("$baseUrl/api/platform/companies/$companyId/approval"),
-          headers: {
+      // 2. Fallback to platform companies approval route (PATCH & POST)
+      for (final host in [baseUrl, fallbackHost]) {
+        try {
+          final uri = Uri.parse("$host/api/platform/companies/$companyId/approval");
+          final headers = {
             "Content-Type": "application/json",
             if (token.isNotEmpty) "Authorization": "Bearer $token",
-          },
-          body: payload,
-        ).timeout(const Duration(seconds: 5));
-        if (fallbackResponse.statusCode == 200) {
-          debugPrint("✅ Fallback platform approval route success: $companyId");
-          return true;
+          };
+          final patchRes = await http.patch(uri, headers: headers, body: payload).timeout(const Duration(seconds: 4));
+          if (patchRes.statusCode >= 200 && patchRes.statusCode < 300) {
+            debugPrint("✅ Platform approval route PATCH success ($host): $companyId");
+            return true;
+          }
+          final postRes = await http.post(uri, headers: headers, body: payload).timeout(const Duration(seconds: 4));
+          if (postRes.statusCode >= 200 && postRes.statusCode < 300) {
+            debugPrint("✅ Platform approval route POST success ($host): $companyId");
+            return true;
+          }
+        } catch (e) {
+          debugPrint("⚠️ Platform approval error on $host: $e");
         }
-      } catch (e) {
-        debugPrint("⚠️ Fallback approval error: $e");
       }
 
       // Firestore was already updated — return true

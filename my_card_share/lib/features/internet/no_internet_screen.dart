@@ -1,8 +1,12 @@
 import 'dart:async';
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../auth/font style/font_style.dart';
+
+// Conditional import: dart:io only on native platforms, stub on web.
+import 'connectivity_helper_io.dart'
+    if (dart.library.html) 'connectivity_helper_web.dart';
 
 /// Provider that maintains real-time internet connectivity status.
 /// Defaults to true so it doesn't flicker during immediate app startup.
@@ -20,6 +24,8 @@ class InternetConnectionNotifier extends StateNotifier<bool> {
   }
 
   void _startMonitoring() {
+    // Web platform always has internet — no polling needed.
+    if (kIsWeb) return;
     // Immediate initial check
     checkConnectivity();
     // Poll every 3 seconds to auto-detect connect / disconnect
@@ -28,29 +34,18 @@ class InternetConnectionNotifier extends StateNotifier<bool> {
     });
   }
 
-  /// Checks real internet connectivity using DNS lookups
+  /// Checks real internet connectivity.
+  /// On web always returns true (browser manages network).
   Future<bool> checkConnectivity() async {
+    if (kIsWeb) {
+      if (mounted && !state) state = true;
+      return true;
+    }
+
     if (_isChecking) return state;
     _isChecking = true;
 
-    bool isConnected = false;
-    try {
-      final res = await InternetAddress.lookup('google.com')
-          .timeout(const Duration(seconds: 3));
-      if (res.isNotEmpty && res[0].rawAddress.isNotEmpty) {
-        isConnected = true;
-      }
-    } catch (_) {
-      try {
-        final fallback = await InternetAddress.lookup('1.1.1.1')
-            .timeout(const Duration(seconds: 3));
-        if (fallback.isNotEmpty && fallback[0].rawAddress.isNotEmpty) {
-          isConnected = true;
-        }
-      } catch (_) {
-        isConnected = false;
-      }
-    }
+    final isConnected = await checkNativeConnectivity();
 
     _isChecking = false;
     if (mounted && state != isConnected) {

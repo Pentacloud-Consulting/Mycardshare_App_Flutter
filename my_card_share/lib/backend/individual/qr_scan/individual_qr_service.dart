@@ -41,11 +41,22 @@ class IndividualQRService {
           jobTitle: card['jobTitle'] ?? '',
           phoneNumber: card['phone'] ?? '',
           websiteUrl: card['website'] ?? '',
-          templateStyle: card['templateStyle'] ?? '0',
+          templateStyle: card['templateStyle'] ?? card['themeColor'] ?? '0',
           socialLinks: socialLinks,
           companyName: card['companyName'] ?? '',
           shortBio: card['bio'] ?? '',
           networkingStatus: card['userStatus'] ?? 'Actively Networking',
+          city: card['city'] ?? '',
+          country: card['country'] ?? '',
+          address: card['address'] ?? '',
+          focusAreas: card['focusAreas']?.toString() ?? '',
+          experience: card['experience'] ?? '',
+          calendly: card['calendly'] ?? '',
+          resumeUrl: card['resumeUrl'],
+          resumeFileName: card['resumeFileName'],
+          brochureUrl: card['brochureUrl'],
+          brochureFileName: card['brochureFileName'],
+          themeColor: card['themeColor'] ?? '#0052FF',
         );
       }
     } catch (apiErr) {
@@ -96,6 +107,17 @@ class IndividualQRService {
           companyName: data['companyName'] ?? '',
           shortBio: data['shortBio'] ?? '',
           networkingStatus: data['networkingStatus'] ?? 'Actively Networking',
+          city: (data['city'] as String?) ?? '',
+          country: (data['country'] as String?) ?? '',
+          address: (data['address'] as String?) ?? '',
+          focusAreas: (data['focusAreas'] as String?) ?? '',
+          experience: (data['experience'] as String?) ?? '',
+          calendly: (data['calendly'] as String?) ?? '',
+          resumeUrl: data['resumeUrl'] as String?,
+          resumeFileName: data['resumeFileName'] as String?,
+          brochureUrl: data['brochureUrl'] as String?,
+          brochureFileName: data['brochureFileName'] as String?,
+          themeColor: (data['themeColor'] as String?) ?? '#0052FF',
         );
       }
     } catch (e) {

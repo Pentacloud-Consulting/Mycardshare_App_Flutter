@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_style_widgets.dart';
+import '../../../../core/utils/image_url_formatter.dart';
 
 class DashboardHeroCard extends StatelessWidget {
   final String name;
@@ -30,8 +31,9 @@ class DashboardHeroCard extends StatelessWidget {
   });
 
   Widget _buildImageWidget(String? photo, {required Widget fallback}) {
-    if (photo == null || photo.trim().isEmpty) return fallback;
-    final p = photo.trim();
+    final formatted = ImageUrlFormatter.format(photo);
+    if (formatted == null || formatted.trim().isEmpty) return fallback;
+    final p = formatted.trim();
 
     // 1. Data URI (Base64) - e.g. "data:image/jpeg;base64,/9j/4AAQ..."
     if (p.startsWith('data:image')) {

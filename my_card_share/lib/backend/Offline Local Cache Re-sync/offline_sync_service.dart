@@ -31,6 +31,7 @@ class OfflineSyncService {
 
   /// 1. CHECK INTERNET AVAILABILITY SAFELY
   static Future<bool> isOnline() async {
+    if (kIsWeb) return true;
     try {
       final result = await InternetAddress.lookup('mycardshare.com')
           .timeout(const Duration(seconds: 4));

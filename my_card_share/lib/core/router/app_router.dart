@@ -90,8 +90,12 @@ class RouterNotifier extends ChangeNotifier {
     final hasCompletedSplash = _ref.read(splashCompletedProvider);
 
     // Always force splash screen on initial app launch until animation completes
+    // Exception: deep-linked card/profile paths must pass through even before splash
+    // so the URL is not lost when the app is cold-started via a QR scan / App Link.
+    final isDeepLinkedCard = path.startsWith('/card/') || path.startsWith('/profile/');
     if (!hasCompletedSplash) {
       if (path == '/splash') return null;
+      if (isDeepLinkedCard) return null; // allow card deep links even before splash
       return '/splash';
     }
 
@@ -130,7 +134,7 @@ class RouterNotifier extends ChangeNotifier {
       '/master-admin/login'
     ];
 
-    final isPublicCard = path.startsWith('/card/') || path.startsWith('/profile/');
+    // isDeepLinkedCard is already defined above (before splash guard)
 
     // If logged in, redirect away from auth paths (except enterprise onboarding, individual form & registration pending)
     if (loggedIn && authPaths.contains(path)) {
@@ -153,7 +157,7 @@ class RouterNotifier extends ChangeNotifier {
       return '/portal'; // employee or individual
     }
 
-    if (publicPaths.contains(path) || authPaths.contains(path) || isPublicCard) {
+    if (publicPaths.contains(path) || authPaths.contains(path) || isDeepLinkedCard) {
       return null; // no guard needed
     }
 
@@ -404,6 +408,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/master-admin/company',
+            builder: (c, s) => const MasterAdminCompanyScreen(),
+          ),
+          GoRoute(
+            path: '/master-admin/companies',
             builder: (c, s) => const MasterAdminCompanyScreen(),
           ),
           GoRoute(

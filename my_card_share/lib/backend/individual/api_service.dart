@@ -55,6 +55,34 @@ class IndividualApiService {
     return _handle(response);
   }
 
+  // ─── POST ─────────────────────────────────────────────────────────────────
+
+  static Future<Map<String, dynamic>> post(
+    String endpoint,
+    Map<String, dynamic> body,
+  ) async {
+    final headers = await _getHeaders();
+    debugPrint('[IndividualApiService] POST $baseUrl$endpoint body=$body');
+    final response = await http.post(
+      Uri.parse('$baseUrl$endpoint'),
+      headers: headers,
+      body: jsonEncode(body),
+    );
+    return _handle(response);
+  }
+
+  // ─── DELETE ───────────────────────────────────────────────────────────────
+
+  static Future<Map<String, dynamic>> delete(String endpoint) async {
+    final headers = await _getHeaders();
+    debugPrint('[IndividualApiService] DELETE $baseUrl$endpoint');
+    final response = await http.delete(
+      Uri.parse('$baseUrl$endpoint'),
+      headers: headers,
+    );
+    return _handle(response);
+  }
+
   // ─── Multipart Upload (avatar / banner) ───────────────────────────────────
 
   /// Uploads a file via POST /api/user/upload.

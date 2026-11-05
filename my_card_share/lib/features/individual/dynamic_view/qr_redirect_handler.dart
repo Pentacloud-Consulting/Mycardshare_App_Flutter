@@ -27,6 +27,9 @@ class QrRedirectHandler {
     'mycardshare.com',
     'www.mycardshare.com',
     'mycardshare.vercel.app',
+    'dbc-square.vercel.app',
+    'dbc.celestialedge.in',
+    'www.dbc.celestialedge.in',
     'localhost',
     '127.0.0.1',
   ];

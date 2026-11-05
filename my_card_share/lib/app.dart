@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
@@ -23,8 +24,8 @@ class MainApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       builder: (context, child) {
         final scaledChild = AppFontStyle.preventSystemFontScaling(context, child);
-        // Show NoInternetScreen only after splash animation finishes and when there is no internet
-        final showOfflineScreen = splashCompleted && !isOnline;
+        // Show NoInternetScreen only on mobile after splash animation finishes and when there is no internet
+        final showOfflineScreen = !kIsWeb && splashCompleted && !isOnline;
 
         return Stack(
           children: [

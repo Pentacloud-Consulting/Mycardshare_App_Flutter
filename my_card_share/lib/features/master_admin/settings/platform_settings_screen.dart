@@ -6,6 +6,8 @@ import 'widgets/ai_engine_keys_section.dart';
 import 'widgets/wallet_credentials_section.dart';
 import 'widgets/super_admin_accounts_section.dart';
 import 'widgets/system_status_section.dart';
+import 'widgets/governance_settings_section.dart';
+import 'widgets/plan_management_section.dart';
 
 class PlatformSettingsScreen extends StatefulWidget {
   const PlatformSettingsScreen({super.key});
@@ -19,6 +21,109 @@ class _PlatformSettingsScreenState extends State<PlatformSettingsScreen> {
   void initState() {
     super.initState();
     PlatformSettingsStore.instance.checkDatabaseHealth();
+    PlatformSettingsStore.instance.loadPlatformSettings();
+  }
+
+  void _showPlanDialog([SubscriptionPlanModel? existing]) {
+    final nameCtrl = TextEditingController(text: existing?.name ?? "");
+    final empCtrl = TextEditingController(text: existing != null ? existing.maxEmployees.toString() : "25");
+    final cardCtrl = TextEditingController(text: existing != null ? existing.maxCards.toString() : "50");
+    final priceCtrl = TextEditingController(text: existing != null ? existing.price.toStringAsFixed(0) : "49");
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          existing != null ? "Edit Plan" : "Add New Plan",
+          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameCtrl,
+              decoration: InputDecoration(
+                labelText: "Plan Name",
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: empCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: "Max Members",
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: cardCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: "Max Cards",
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: priceCtrl,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: "Monthly Price (USD)",
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          if (existing != null)
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                PlatformSettingsStore.instance.deletePlan(existing.id);
+                _showSnackBar("Plan removed.");
+              },
+              child: const Text("Delete", style: TextStyle(color: Color(0xFFEF4444))),
+            ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0052FF),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () {
+              final n = nameCtrl.text.trim();
+              if (n.isNotEmpty) {
+                Navigator.pop(ctx);
+                final p = SubscriptionPlanModel(
+                  id: existing?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+                  name: n,
+                  maxEmployees: int.tryParse(empCtrl.text.trim()) ?? 10,
+                  maxCards: int.tryParse(cardCtrl.text.trim()) ?? 20,
+                  price: double.tryParse(priceCtrl.text.trim()) ?? 29.0,
+                );
+                PlatformSettingsStore.instance.savePlan(p);
+                _showSnackBar("Plan ${p.name} saved.");
+              }
+            },
+            child: const Text("Save Plan", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showAddAdminDialog() {
@@ -179,7 +284,18 @@ class _PlatformSettingsScreenState extends State<PlatformSettingsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // 1. AI Engine Keys Section
+                          // 1. Governance & Platform Defaults (Matching Web Settings)
+                          const GovernanceSettingsSection(),
+                          const SizedBox(height: 20),
+
+                          // 2. Subscription Plan Management (Matching Web Settings)
+                          PlanManagementSection(
+                            onAddPlan: () => _showPlanDialog(),
+                            onEditPlan: (plan) => _showPlanDialog(plan),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // 3. AI Engine Keys Section
                           AiEngineKeysSection(
                             onEditGemini: () => _showEditKeyDialog('gemini', store.geminiKey),
                             onEditHuggingFace: () => _showEditKeyDialog('huggingface', store.huggingFaceKey),
@@ -189,7 +305,7 @@ class _PlatformSettingsScreenState extends State<PlatformSettingsScreen> {
                           ),
                           const SizedBox(height: 20),
 
-                          // 2. Digital Wallet Credentials Section
+                          // 4. Digital Wallet Credentials Section
                           WalletCredentialsSection(
                             onAppleWalletTap: () {
                               _showSnackBar("Apple Wallet PassKit Certificate: Active & Configured");
@@ -203,7 +319,7 @@ class _PlatformSettingsScreenState extends State<PlatformSettingsScreen> {
                           ),
                           const SizedBox(height: 20),
 
-                          // 3. Super Admin Accounts Section
+                          // 5. Super Admin Accounts Section
                           SuperAdminAccountsSection(
                             adminAccounts: accountItems,
                             onRemoveAccount: (account) async {
@@ -222,7 +338,7 @@ class _PlatformSettingsScreenState extends State<PlatformSettingsScreen> {
                           ),
                           const SizedBox(height: 20),
 
-                          // 4. System Status Section
+                          // 6. System Status Section
                           SystemStatusSection(
                             appVersion: "v1.0.0",
                             dbStatus: store.dbStatus,

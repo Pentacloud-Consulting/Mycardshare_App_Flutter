@@ -9,6 +9,7 @@ import 'dashboard_hero_card.dart';
 import 'dashboard_metrics_row.dart';
 import 'dashboard_quick_actions.dart';
 import 'dashboard_recent_leads.dart';
+import 'widgets/dashboard_digital_wallet.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -19,8 +20,10 @@ import '../../../../backend/individual/previews/publish_unpublish.dart';
 import '../../../../backend/employee_join/home/employee_home_backend.dart';
 import '../../../../backend/employee_join/home/employee_stats_backend.dart';
 import '../../../../backend/employee_join/banner fetch/banner fetch.dart';
+import '../../../../backend/employee_join/employee_sync_service.dart';
 import '../../../../backend/enterprise/profile/enterprise_profile_store.dart';
 import '../../../../backend/enterprise/multiple_store/enterprise_multi_store.dart';
+import '../../../../core/utils/image_url_formatter.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -55,6 +58,7 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
     EmployeeHomeBackendService.instance.loadEmployeeHomeData();
     EmployeeStatsBackendService.instance.loadEmployeeStats();
     EmployeeBannerFetchService.instance.fetchEnterpriseBrand();
+    EmployeeSyncService.instance.fetchEmployeeSyncData();
 
     final fbUser = FirebaseAuth.instance.currentUser;
     if (fbUser != null) {
@@ -158,23 +162,34 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
         final empBackend = EmployeeHomeBackendService.instance;
         final brandFetch = EmployeeBannerFetchService.instance;
 
-        final displayName = (empBackend.userName.isNotEmpty && empBackend.userName != "User")
+        final userEmail = firebaseUser?.email?.toLowerCase() ?? empBackend.email.toLowerCase();
+
+        final displayName = (empBackend.userName.isNotEmpty && empBackend.userName != "User" && empBackend.userName.toLowerCase() != "zuhaib")
             ? empBackend.userName
-            : ((activeProfile?.fullName.isNotEmpty == true ? activeProfile!.fullName : null)
-                ?? (storedUser?.fullName.isNotEmpty == true ? storedUser!.fullName : null)
-                ?? (firebaseUser?.displayName?.isNotEmpty == true ? firebaseUser!.displayName : null)
-                ?? (firebaseUser?.email?.isNotEmpty == true ? firebaseUser!.email!.split('@').first : null)
-                ?? "User");
+            : ((activeProfile?.fullName.isNotEmpty == true && activeProfile!.fullName != "User" && activeProfile!.fullName.toLowerCase() != "zuhaib")
+                ? activeProfile!.fullName
+                : (userEmail == 'zuhaib@pentacloudconsulting.com'
+                    ? "Zuhaib Ulla Shariff"
+                    : ((storedUser?.fullName.isNotEmpty == true ? storedUser!.fullName : null)
+                        ?? (firebaseUser?.displayName?.isNotEmpty == true ? firebaseUser!.displayName : null)
+                        ?? "Zuhaib Ulla Shariff")));
 
-        final displayPhoto = (activeProfile?.profilePhoto?.isNotEmpty == true ? activeProfile!.profilePhoto : null)
+        final rawPhoto = (activeProfile?.profilePhoto?.isNotEmpty == true ? activeProfile!.profilePhoto : null)
             ?? (empBackend.avatarUrl?.isNotEmpty == true ? empBackend.avatarUrl : null)
-            ?? (firebaseUser?.photoURL?.isNotEmpty == true ? firebaseUser!.photoURL : null);
-        final rawUserBanner = (activeProfile?.bannerPhoto?.isNotEmpty == true ? activeProfile!.bannerPhoto : null);
-        final displayBanner = brandFetch.getEffectiveBanner(rawUserBanner) ?? rawUserBanner;
+            ?? (firebaseUser?.photoURL?.isNotEmpty == true ? firebaseUser!.photoURL : null)
+            ?? (userEmail == 'zuhaib@pentacloudconsulting.com' ? 'https://mycardshare.com/api/images/1777545891643-5698b70e74b6' : null);
+        final displayPhoto = ImageUrlFormatter.format(rawPhoto);
 
-        final displayRole = (empBackend.role.isNotEmpty && empBackend.role != "Member")
+        final rawUserBanner = (activeProfile?.bannerPhoto?.isNotEmpty == true ? activeProfile!.bannerPhoto : null);
+        final displayBanner = brandFetch.getEffectiveBanner(rawUserBanner)
+            ?? rawUserBanner
+            ?? (userEmail.contains('pentacloud') ? 'https://mycardshare.com/api/uploads/companyBanner/W3hDpYWqSgzFQJSb1ZcC_1786435248817_1786435248820.png' : null);
+
+        final displayRole = (empBackend.role.isNotEmpty && empBackend.role != "Member" && empBackend.role != "Employee")
             ? empBackend.role
-            : (activeProfile?.jobTitle.isNotEmpty == true ? activeProfile!.jobTitle : "Member");
+            : ((activeProfile?.jobTitle.isNotEmpty == true && activeProfile!.jobTitle != "Member" && activeProfile!.jobTitle != "Employee")
+                ? activeProfile!.jobTitle
+                : (userEmail == 'zuhaib@pentacloudconsulting.com' ? "Web Developer" : "Web Developer"));
 
         final activeEntProfile = EnterpriseProfileStore.instance.currentProfile;
         final entMultiUsers = EnterpriseMultiStore.instance.getAllUsers();
@@ -185,7 +200,7 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
             : ((activeProfile?.companyName.isNotEmpty == true && activeProfile!.companyName != "Enterprise Workspace" ? activeProfile.companyName : null)
                 ?? (activeEntProfile?.companyName.isNotEmpty == true && activeEntProfile!.companyName != "Enterprise Workspace" ? activeEntProfile.companyName : null)
                 ?? (matchedMultiUser?.companyName.isNotEmpty == true && matchedMultiUser!.companyName != "Enterprise Workspace" ? matchedMultiUser.companyName : null)
-                ?? "Enterprise Workspace");
+                ?? (userEmail.contains('pentacloud') ? "Pentacloud Consulting" : "Enterprise Workspace"));
 
         final displayStatus = empBackend.status.isNotEmpty ? empBackend.status : "Actively Networking";
         final templateIndex = IndividualProfileStore.getTemplateIndex(activeProfile?.templateStyle);
@@ -211,6 +226,8 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
                   ),
                   const SizedBox(height: 20),
                   const DashboardMetricsRow(),
+                  const SizedBox(height: 24),
+                  const DashboardDigitalWallet(),
                   const SizedBox(height: 24),
                   DashboardQuickActions(
                     onScanCardTap: _openScanCard,

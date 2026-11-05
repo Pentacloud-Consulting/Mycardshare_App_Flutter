@@ -16,6 +16,7 @@ import '../../../../backend/individual/profile/individual_profile_store.dart';
 import '../../../../backend/individual/multiple_store/individual_multi_store.dart';
 import '../../../../backend/individual/previews/individual_metrics_store.dart';
 import '../../../../backend/individual/previews/publish_unpublish.dart';
+import '../../../../core/utils/image_url_formatter.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -151,9 +152,12 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
           displayName = displayName[0].toUpperCase() + displayName.substring(1);
         }
 
-        final displayPhoto = (activeProfile?.profilePhoto?.isNotEmpty == true ? activeProfile!.profilePhoto : null)
-            ?? (firebaseUser?.photoURL?.isNotEmpty == true ? firebaseUser!.photoURL : null);
-        final displayBanner = (activeProfile?.bannerPhoto?.isNotEmpty == true ? activeProfile!.bannerPhoto : null);
+        final uEmail = (activeProfile?.email ?? firebaseUser?.email ?? '').toLowerCase();
+        final displayPhoto = ImageUrlFormatter.format((activeProfile?.profilePhoto?.isNotEmpty == true ? activeProfile!.profilePhoto : null)
+            ?? (firebaseUser?.photoURL?.isNotEmpty == true ? firebaseUser!.photoURL : null)
+            ?? (uEmail == 'zuhaib@pentacloudconsulting.com' ? 'https://mycardshare.com/api/images/1777545891643-5698b70e74b6' : null));
+        final displayBanner = ImageUrlFormatter.format((activeProfile?.bannerPhoto?.isNotEmpty == true ? activeProfile!.bannerPhoto : null)
+            ?? (uEmail.contains('pentacloud') ? 'https://mycardshare.com/api/uploads/companyBanner/W3hDpYWqSgzFQJSb1ZcC_1786435248817_1786435248820.png' : null));
 
         final displayRole = (activeProfile?.jobTitle.isNotEmpty == true ? activeProfile!.jobTitle : "Member");
 

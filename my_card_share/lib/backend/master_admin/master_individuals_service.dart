@@ -340,6 +340,21 @@ class MasterIndividualsService {
   }) async {
     try {
       final actualToken = token ?? await getAuthToken();
+
+      // 1. Call DELETE /api/platform/individuals/:userId (Web platform standard endpoint)
+      for (final host in [baseUrl, 'https://digitalbusinesscloudcard.com']) {
+        try {
+          await http.delete(
+            Uri.parse('$host/api/platform/individuals/$userId'),
+            headers: {
+              'Content-Type': 'application/json',
+              if (actualToken.isNotEmpty) 'Authorization': 'Bearer $actualToken',
+            },
+          ).timeout(const Duration(seconds: 4));
+        } catch (_) {}
+      }
+
+      // 2. Call unified sync endpoint
       final response = await http.post(
         Uri.parse('$baseUrl/api/sync/master-admin-individuals'),
         headers: {

@@ -5,6 +5,9 @@ class ProfileBasicInfo extends StatelessWidget {
   final TextEditingController roleController;
   final TextEditingController companyController;
   final TextEditingController bioController;
+  final TextEditingController? experienceController;
+  final TextEditingController? cityController;
+  final bool isCompanyLocked;
 
   const ProfileBasicInfo({
     super.key,
@@ -12,6 +15,9 @@ class ProfileBasicInfo extends StatelessWidget {
     required this.roleController,
     required this.companyController,
     required this.bioController,
+    this.experienceController,
+    this.cityController,
+    this.isCompanyLocked = false,
   });
 
   @override
@@ -45,11 +51,37 @@ class ProfileBasicInfo extends StatelessWidget {
         ),
         const SizedBox(height: 8),
 
-        // Company Name Field
+        // Company Name Field (Locks if belonging to Enterprise workspace)
         _buildInputField(
           icon: Icons.apartment_rounded,
           label: "Company Name",
           controller: companyController,
+          isReadOnly: isCompanyLocked,
+          trailingBadge: isCompanyLocked
+              ? Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFFCBD5E1), width: 0.8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.lock_rounded, size: 11, color: Color(0xFF64748B)),
+                      SizedBox(width: 3),
+                      Text(
+                        "Managed",
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : null,
         ),
         const SizedBox(height: 8),
 
@@ -60,6 +92,27 @@ class ProfileBasicInfo extends StatelessWidget {
           controller: bioController,
           maxLines: 3,
         ),
+
+        // Experience Field
+        if (experienceController != null) ...[
+          const SizedBox(height: 8),
+          _buildInputField(
+            icon: Icons.history_edu_rounded,
+            label: "Experience",
+            controller: experienceController!,
+            maxLines: 3,
+          ),
+        ],
+
+        // City / Location Field
+        if (cityController != null) ...[
+          const SizedBox(height: 8),
+          _buildInputField(
+            icon: Icons.location_on_outlined,
+            label: "City / Location",
+            controller: cityController!,
+          ),
+        ],
       ],
     );
   }
@@ -69,59 +122,114 @@ class ProfileBasicInfo extends StatelessWidget {
     required String label,
     required TextEditingController controller,
     int maxLines = 1,
+    bool isReadOnly = false,
+    Widget? trailingBadge,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x05000000),
-            blurRadius: 6,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+    if (maxLines == 1) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: isReadOnly ? const Color(0xFFF8FAFC) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
+        ),
         child: Row(
-          crossAxisAlignment: maxLines > 1 ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Padding(
-              padding: EdgeInsets.only(top: maxLines > 1 ? 10 : 0),
-              child: Icon(icon, color: const Color(0xFF64748B), size: 18),
+            Icon(
+              icon,
+              color: isReadOnly ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+              size: 17,
             ),
             const SizedBox(width: 10),
-            SizedBox(
-              width: 90,
-              child: Padding(
-                padding: EdgeInsets.only(top: maxLines > 1 ? 10 : 0),
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF64748B),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                      color: isReadOnly ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      letterSpacing: 0.1,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 2),
+                  TextField(
+                    controller: controller,
+                    readOnly: isReadOnly,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isReadOnly ? const Color(0xFF64748B) : const Color(0xFF0F172A),
+                      fontWeight: FontWeight.w500,
+                    ),
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: TextField(
-                controller: controller,
-                maxLines: maxLines,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFF0F172A),
-                  fontWeight: FontWeight.w500,
+            if (trailingBadge != null) ...[
+              const SizedBox(width: 8),
+              trailingBadge,
+            ],
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isReadOnly ? const Color(0xFFF8FAFC) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFFE2E8F0),
+          width: 1.0,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  icon,
+                  color: isReadOnly ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  size: 17,
                 ),
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  isDense: true,
-                  contentPadding: EdgeInsets.symmetric(vertical: 10),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isReadOnly ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  ),
                 ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            TextField(
+              controller: controller,
+              readOnly: isReadOnly,
+              maxLines: maxLines,
+              style: TextStyle(
+                fontSize: 13,
+                color: isReadOnly ? const Color(0xFF64748B) : const Color(0xFF0F172A),
+                fontWeight: FontWeight.w500,
+              ),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
               ),
             ),
           ],
@@ -130,5 +238,3 @@ class ProfileBasicInfo extends StatelessWidget {
     );
   }
 }
-
-

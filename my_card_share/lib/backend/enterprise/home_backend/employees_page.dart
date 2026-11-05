@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../individual/api_service.dart';
 import '../profile/enterprise_profile_store.dart';
 import '../lock_banner/lock_banner.dart';
 import '../multiple_store/enterprise_multi_store.dart';
@@ -575,6 +577,13 @@ class EnterpriseEmployeesService {
           }, SetOptions(merge: true));
         }
       } catch (_) {}
+
+      // Dual-delete from Web Next.js MongoDB backend
+      final targetUserId = empUid.isNotEmpty ? empUid : employeeId;
+      unawaited(IndividualApiService.delete('/api/enterprise/workspace/$targetUserId').catchError((e) {
+        debugPrint('[EnterpriseEmployeesService] Dual-delete workspace API note: $e');
+        return null;
+      }));
 
       return true;
     } catch (e) {
@@ -1265,6 +1274,18 @@ class EnterpriseEmployeeListBackend extends StatelessWidget {
                       'updatedAt': FieldValue.serverTimestamp(),
                     }, SetOptions(merge: true));
                   }
+                  // Dual-sync status toggle to Web Next.js MongoDB backend
+                  final targetUserId = empUid.isNotEmpty ? empUid : emp.id;
+                  unawaited(IndividualApiService.post('/api/sync/enterprise', {
+                    'action': 'toggle_employee_status',
+                    'payload': {
+                      'employeeUserId': targetUserId,
+                      'newStatus': settingInactive ? 'inactive' : 'active',
+                    },
+                  }).catchError((e) {
+                    debugPrint('[EnterpriseEmployeesService] Toggle status API sync note: $e');
+                    return null;
+                  }));
                 } catch (_) {}
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(

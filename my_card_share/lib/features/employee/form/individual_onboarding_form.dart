@@ -14,6 +14,7 @@ import 'package:my_card_share/backend/individual/qr_scan/slug_validator.dart';
 import 'package:my_card_share/features/auth/back/smart_back_handler.dart';
 import 'package:my_card_share/features/auth/font style/font_style.dart';
 import 'package:my_card_share/core/utils/image_cropper_util.dart';
+import 'package:my_card_share/core/utils/image_url_formatter.dart';
 import 'package:my_card_share/backend/number logic/phone_number_service.dart';
 
 class IndividualOnboardingFormScreen extends StatefulWidget {
@@ -142,9 +143,15 @@ class _IndividualOnboardingFormScreenState
     final isSameUser = active != null &&
         (active.uid == resolvedUid || (resolvedEmail.isNotEmpty && active.email.toLowerCase() == resolvedEmail.toLowerCase()));
 
-    _profileImageUrl = (isSameUser && active.profilePhoto != null && active.profilePhoto!.isNotEmpty)
+    final rawAvatar = (isSameUser && active.profilePhoto != null && active.profilePhoto!.isNotEmpty)
         ? active.profilePhoto
-        : firebaseUser?.photoURL;
+        : (firebaseUser?.photoURL ?? (resolvedEmail.toLowerCase() == 'zuhaib@pentacloudconsulting.com' ? 'https://mycardshare.com/api/images/1777545891643-5698b70e74b6' : null));
+    _profileImageUrl = ImageUrlFormatter.format(rawAvatar);
+
+    final rawBanner = (isSameUser && active.bannerPhoto != null && active.bannerPhoto!.isNotEmpty)
+        ? active.bannerPhoto
+        : (resolvedEmail.toLowerCase().contains('pentacloud') ? 'https://mycardshare.com/api/uploads/companyBanner/W3hDpYWqSgzFQJSb1ZcC_1786435248817_1786435248820.png' : null);
+    _bannerImagePath = ImageUrlFormatter.format(rawBanner);
 
     // Load active profile data only if it belongs to this exact user
     if (isSameUser && active != null) {
@@ -988,8 +995,31 @@ class _IndividualOnboardingFormScreenState
               child: _bannerImageBytes != null
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(14),
-                      child: Image.memory(_bannerImageBytes!, fit: BoxFit.cover, width: double.infinity),
+                      child: Image.memory(_bannerImageBytes!, fit: BoxFit.cover, width: double.infinity, height: double.infinity),
                     )
+                  : (_bannerImagePath != null && _bannerImagePath!.isNotEmpty)
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: (_bannerImagePath!.startsWith('http') || kIsWeb)
+                              ? Image.network(
+                                  _bannerImagePath!,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  errorBuilder: (context, error, stackTrace) => const Center(
+                                    child: Icon(Icons.broken_image_rounded, color: Colors.grey),
+                                  ),
+                                )
+                              : Image.file(
+                                  File(_bannerImagePath!),
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  errorBuilder: (context, error, stackTrace) => const Center(
+                                    child: Icon(Icons.broken_image_rounded, color: Colors.grey),
+                                  ),
+                                ),
+                        )
                   : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: const [

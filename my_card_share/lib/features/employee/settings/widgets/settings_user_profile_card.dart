@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/utils/image_url_formatter.dart';
 
 class SettingsUserProfileCard extends StatelessWidget {
   final String name;
@@ -16,8 +18,21 @@ class SettingsUserProfileCard extends StatelessWidget {
   });
 
   Widget _buildAvatarWidget(String? photo, String userName) {
-    if (photo != null && photo.trim().isNotEmpty) {
-      final p = photo.trim();
+    final formatted = ImageUrlFormatter.format(photo);
+    if (formatted != null && formatted.trim().isNotEmpty) {
+      final p = formatted.trim();
+      if (p.startsWith('data:image')) {
+        try {
+          final commaIdx = p.indexOf(',');
+          final base64Str = commaIdx != -1 ? p.substring(commaIdx + 1) : p;
+          final bytes = base64Decode(base64Str.trim());
+          return Image.memory(
+            bytes,
+            fit: BoxFit.cover,
+            errorBuilder: (ctx, err, st) => _buildAvatarFallback(userName),
+          );
+        } catch (_) {}
+      }
       if (p.startsWith('http://') || p.startsWith('https://')) {
         return Image.network(
           p,

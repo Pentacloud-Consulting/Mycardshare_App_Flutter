@@ -448,8 +448,12 @@ class ApprovalsQueueStore extends ChangeNotifier {
           debugPrint('[ApprovalsQueueStore] MasterApprovalSyncService error: $apiErr');
         }
 
-        // 5. Notify legacy Next.js backend API
+        // 5. Notify Next.js platform API (PATCH & POST)
         try {
+          await MasterAdminApiClient.patch(
+            MasterAdminEndpoints.companyApproval(item.id),
+            {'action': 'approve', 'status': 'approved'},
+          );
           await MasterAdminApiClient.post(
             MasterAdminEndpoints.companyApproval(item.id),
             {'action': 'approve', 'status': 'approved'},
@@ -586,6 +590,10 @@ class ApprovalsQueueStore extends ChangeNotifier {
         }
 
         try {
+          await MasterAdminApiClient.patch(
+            MasterAdminEndpoints.companyApproval(item.id),
+            {'action': 'reject', 'status': 'rejected', 'reason': reason},
+          );
           await MasterAdminApiClient.post(
             MasterAdminEndpoints.companyApproval(item.id),
             {'action': 'reject', 'status': 'rejected', 'reason': reason},

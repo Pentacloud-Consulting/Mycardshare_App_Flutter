@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../backend/app view/app_view_auth_gate.dart';
 import '../../../backend/individual/profile/individual_profile_store.dart';
 import '../../../backend/individual/multiple_store/individual_multi_store.dart';
 import '../../../backend/individual/previews/publish_unpublish.dart';
+import '../../../core/utils/image_url_formatter.dart';
 import 'profile_editor_screen.dart';
 import 'widgets/profile_live_card_preview.dart';
 import 'widgets/profile_social_links.dart';
+import '../../profile/widgets/profile_resume_card.dart';
+import '../../profile/widgets/profile_brochure_card.dart';
 import '../../public_card/public_card_screen.dart';
 
 class ProfileViewScreen extends StatefulWidget {
@@ -56,9 +61,10 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
 
         final authPhoto = FirebaseAuth.instance.currentUser?.photoURL;
         final rawPhoto = activeProfile?.profilePhoto?.trim();
-        final displayPhoto = (rawPhoto != null && rawPhoto.isNotEmpty)
+        final displayPhoto = ImageUrlFormatter.format((rawPhoto != null && rawPhoto.isNotEmpty)
             ? rawPhoto
-            : ((authPhoto != null && authPhoto.trim().isNotEmpty) ? authPhoto.trim() : null);
+            : ((authPhoto != null && authPhoto.trim().isNotEmpty) ? authPhoto.trim() : null));
+        final displayBanner = ImageUrlFormatter.format(activeProfile?.bannerPhoto?.trim());
 
         return Scaffold(
           backgroundColor: const Color(0xFFF8FAFD),
@@ -76,7 +82,7 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                     status: status,
                     selectedTemplateIndex: templateIndex,
                     profilePhoto: displayPhoto,
-                    bannerPhoto: activeProfile?.bannerPhoto,
+                    bannerPhoto: displayBanner,
                     isPublished: isPublished,
                   ),
               const SizedBox(height: 20),
@@ -393,6 +399,32 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
               
               const SizedBox(height: 24),
               
+// Documents (Resume / CV + Company Brochure) Section
+              ProfileResumeCard(
+                uid: activeProfile?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? '',
+                currentResumeUrl: activeProfile?.resumeUrl,
+                currentResumeFileName: activeProfile?.resumeFileName,
+                currentBrochureUrl: activeProfile?.brochureUrl,
+                currentBrochureFileName: activeProfile?.brochureFileName,
+                candidateName: name,
+                jobTitle: role,
+                isEditable: true,
+                onResumeChanged: (url, fileName) {
+                  IndividualProfileStore.instance.loadProfile(
+                    activeProfile?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? '',
+                    email,
+                    name,
+                  );
+                },
+                onBrochureChanged: (url, fileName) {
+                  IndividualProfileStore.instance.loadProfile(
+                    activeProfile?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? '',
+                    email,
+                    name,
+                  );
+                },
+              ),
+              const SizedBox(height: 24),
               // Card Link Section (Slug Display)
               const Text(
                 "Card Link",
@@ -407,6 +439,46 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                 children: [
                   _buildViewRow(Icons.link_rounded, "Slug", slug),
                 ],
+              ),
+              const SizedBox(height: 24),
+
+              // Login / Log Out Button
+              Container(
+                width: double.infinity,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF1F2),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFFDA4AF), width: 1.2),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () async {
+                      await FirebaseAuth.instance.signOut();
+                      await AppViewAuthGate.instance.clearPersistentSession();
+                      if (context.mounted) {
+                        context.go('/login');
+                      }
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.login_rounded, color: Color(0xFFE11D48), size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          "Log Out to Login Screen",
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFFE11D48),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: 30),
             ],

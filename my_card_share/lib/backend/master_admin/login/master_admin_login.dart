@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../models/user_model.dart';
 
 /// Response wrapper for Master Admin login authentication.
@@ -19,13 +21,18 @@ class MasterAdminLoginService {
   MasterAdminLoginService._internal();
   static final MasterAdminLoginService instance = MasterAdminLoginService._internal();
 
-  /// Memory store for Master Admin credentials.
+  /// Designated master admin email matching Web RBAC v2 specification
+  static const String masterAdminEmail = 'admin@pentcloud.me';
+
+  /// Memory store for Master Admin credentials & local fallback.
   static final Map<String, String> _adminCredentials = {
+    'admin@pentcloud.me': 'admin123',
     'admin@mycardshare.com': 'admin123',
     'master@mycardshare.com': 'masterpass123',
   };
 
   static final Map<String, String> _adminNames = {
+    'admin@pentcloud.me': 'Platform Master Admin',
     'admin@mycardshare.com': 'System Master Admin',
     'master@mycardshare.com': 'Primary Platform Director',
   };
@@ -38,9 +45,6 @@ class MasterAdminLoginService {
     final normalizedEmail = email.trim().toLowerCase();
     debugPrint('[MasterAdminLoginService] Authenticating master admin: $normalizedEmail');
 
-    // Simulate secure authorization delay
-    await Future.delayed(const Duration(milliseconds: 500));
-
     if (normalizedEmail.isEmpty || !normalizedEmail.contains('@')) {
       return MasterAdminAuthResponse(
         isSuccess: false,
@@ -48,6 +52,73 @@ class MasterAdminLoginService {
       );
     }
 
+    // 1. Try real Firebase Auth authentication
+    try {
+      final cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: normalizedEmail,
+        password: password,
+      );
+
+      final fbUser = cred.user;
+      if (fbUser != null) {
+        bool isMaster = normalizedEmail == masterAdminEmail;
+
+        if (!isMaster) {
+          // Check Firestore user profile role
+          final doc = await FirebaseFirestore.instance.collection('users').doc(fbUser.uid).get();
+          if (doc.exists && doc.data() != null) {
+            final role = (doc.data()!['role'] ?? '').toString().toLowerCase();
+            isMaster = role == 'master-admin' ||
+                role == 'super_admin' ||
+                role == 'master_admin' ||
+                role == 'platform_admin';
+          }
+
+          if (!isMaster) {
+            // Check by email in users collection
+            final emailSnap = await FirebaseFirestore.instance
+                .collection('users')
+                .where('email', isEqualTo: normalizedEmail)
+                .limit(1)
+                .get();
+            if (emailSnap.docs.isNotEmpty) {
+              final role = (emailSnap.docs.first.data()['role'] ?? '').toString().toLowerCase();
+              isMaster = role == 'master-admin' ||
+                  role == 'super_admin' ||
+                  role == 'master_admin' ||
+                  role == 'platform_admin';
+            }
+          }
+
+          if (!isMaster) {
+            // Check in admins collection
+            final adminDoc = await FirebaseFirestore.instance.collection('admins').doc(fbUser.uid).get();
+            if (adminDoc.exists) {
+              isMaster = true;
+            }
+          }
+        }
+
+        if (isMaster) {
+          final user = UserModel(
+            id: fbUser.uid,
+            name: fbUser.displayName ?? _adminNames[normalizedEmail] ?? 'Master Admin',
+            email: normalizedEmail,
+            role: 'master-admin',
+          );
+          debugPrint('[MasterAdminLoginService] Master admin Firebase Auth success for $normalizedEmail');
+          return MasterAdminAuthResponse(
+            isSuccess: true,
+            message: "Master Admin authentication successful!",
+            userModel: user,
+          );
+        }
+      }
+    } catch (fbErr) {
+      debugPrint('[MasterAdminLoginService] Firebase Auth notice (attempting local fallback): $fbErr');
+    }
+
+    // 2. Local Fallback credentials check
     final storedPassword = _adminCredentials[normalizedEmail];
 
     if (storedPassword == null) {
@@ -73,7 +144,7 @@ class MasterAdminLoginService {
       role: 'master-admin',
     );
 
-    debugPrint('[MasterAdminLoginService] Master admin $normalizedEmail authenticated successfully');
+    debugPrint('[MasterAdminLoginService] Master admin $normalizedEmail authenticated via local credentials');
 
     return MasterAdminAuthResponse(
       isSuccess: true,

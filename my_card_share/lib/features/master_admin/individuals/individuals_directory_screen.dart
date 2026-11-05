@@ -10,6 +10,7 @@ import 'widgets/individuals_stat_chips_section.dart';
 import 'widgets/individuals_search_bar_section.dart';
 import 'widgets/individuals_filter_chips_section.dart';
 import 'widgets/individuals_list_section.dart';
+import '../../public_card/public_scanned_card_screen.dart';
 
 class MasterAdminIndividualsScreen extends StatefulWidget {
   const MasterAdminIndividualsScreen({super.key});
@@ -304,12 +305,7 @@ class _MasterAdminIndividualsScreenState
                         IndividualsListSection(
                           users: filteredUsers,
                           onUserTap: (user) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text("Selected user: ${user.name}"),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
+                            _showUserActionsSheet(context, user);
                           },
                           onMenuTap: (user) {
                             _showUserActionsSheet(context, user);
@@ -371,6 +367,32 @@ class _MasterAdminIndividualsScreenState
                   ),
                 ],
                 const SizedBox(height: 16),
+
+                // View Digital Card Action (Matching Web View Card)
+                if (user.cardSlug.isNotEmpty)
+                  ListTile(
+                    leading: const Icon(Icons.visibility_rounded, color: Color(0xFF0052FF)),
+                    title: const Text(
+                      "View Digital Card",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    subtitle: Text(
+                      "Slug: ${user.cardSlug}",
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    ),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PublicScannedCardScreen(cardSlug: user.cardSlug),
+                        ),
+                      );
+                    },
+                  ),
 
                 // Permanent Delete Action
                 if (user.isDeactivated || user.status == 'DELETION_PENDING')

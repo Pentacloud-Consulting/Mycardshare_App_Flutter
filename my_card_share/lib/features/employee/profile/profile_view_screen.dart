@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../backend/app view/app_view_auth_gate.dart';
 import '../../../backend/individual/profile/individual_profile_store.dart';
 import '../../../backend/individual/multiple_store/individual_multi_store.dart';
 import '../../../backend/individual/previews/publish_unpublish.dart';
 import '../../../backend/employee_join/home/employee_home_backend.dart';
 import '../../../backend/employee_join/email/fetching_emails.dart';
+import '../../../backend/employee_join/employee_sync_service.dart';
+import '../../../backend/employee_join/banner fetch/banner fetch.dart';
+import '../../../core/utils/image_url_formatter.dart';
 import 'profile_editor_screen.dart';
 import 'widgets/profile_live_card_preview.dart';
 import 'widgets/profile_social_links.dart';
+import '../../profile/widgets/profile_resume_card.dart';
 import '../../public_card/public_card_screen.dart';
 
 class ProfileViewScreen extends StatefulWidget {
@@ -25,11 +31,19 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
   @override
   void initState() {
     super.initState();
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null && uid.isNotEmpty) {
-      PublishUnpublishService.instance.loadPublishStatus(uid);
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      PublishUnpublishService.instance.loadPublishStatus(user.uid);
+      IndividualProfileStore.instance.loadProfile(
+        user.uid,
+        user.email ?? '',
+        user.displayName ?? '',
+      );
     }
+    EmployeeHomeBackendService.instance.loadEmployeeHomeData();
     EmployeeEmailService.instance.fetchEmployeeEmails();
+    EmployeeSyncService.instance.fetchEmployeeSyncData();
+    EmployeeBannerFetchService.instance.fetchEnterpriseBrand();
   }
 
   @override
@@ -40,53 +54,71 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
         PublishUnpublishService.instance,
         EmployeeHomeBackendService.instance,
         EmployeeEmailService.instance,
+        EmployeeBannerFetchService.instance,
       ]),
       builder: (context, _) {
         final activeProfile = IndividualProfileStore.instance.activeProfile;
         final empBackend = EmployeeHomeBackendService.instance;
         final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
         final isPublished = PublishUnpublishService.instance.isPublished;
-
-        final name = (activeProfile?.fullName.isNotEmpty == true && activeProfile!.fullName != "User")
-            ? activeProfile.fullName
-            : (empBackend.userName.isNotEmpty && empBackend.userName != "User"
-                ? empBackend.userName
-                : (storedUser?.fullName ?? "User"));
-
-        final role = (activeProfile?.jobTitle.isNotEmpty == true && activeProfile!.jobTitle != "Member")
-            ? activeProfile.jobTitle
-            : (empBackend.role.isNotEmpty && empBackend.role != "Member"
-                ? empBackend.role
-                : "Member");
-
         final emailsModel = EmployeeEmailService.instance.currentEmails;
-        final company = (activeProfile?.companyName.isNotEmpty == true && activeProfile!.companyName != "Enterprise Workspace")
-            ? activeProfile.companyName
-            : (empBackend.companyName.isNotEmpty && empBackend.companyName != "Enterprise Workspace"
-                ? empBackend.companyName
-                : (emailsModel?.companyName.isNotEmpty == true ? emailsModel!.companyName : "Enterprise Workspace"));
 
-        final bio = activeProfile?.shortBio.isNotEmpty == true
-            ? activeProfile!.shortBio
-            : "No bio added yet.";
-        final status = activeProfile?.networkingStatus.isNotEmpty == true ? activeProfile!.networkingStatus : "ACTIVELY NETWORKING";
-        final phone = activeProfile?.phoneNumber.isNotEmpty == true ? activeProfile!.phoneNumber : "";
         final email = (activeProfile?.email.isNotEmpty == true)
             ? activeProfile!.email
             : (empBackend.email.isNotEmpty
                 ? empBackend.email
                 : (emailsModel?.employeeEmail.isNotEmpty == true
                     ? emailsModel!.employeeEmail
-                    : (storedUser?.email ?? "")));
+                    : (storedUser?.email ?? (FirebaseAuth.instance.currentUser?.email ?? ""))));
+
+        final name = (empBackend.userName.isNotEmpty && empBackend.userName != "User" && empBackend.userName.toLowerCase() != "zuhaib")
+            ? empBackend.userName
+            : ((activeProfile?.fullName.isNotEmpty == true && activeProfile!.fullName != "User" && activeProfile!.fullName.toLowerCase() != "zuhaib")
+                ? activeProfile!.fullName
+                : (email.toLowerCase() == 'zuhaib@pentacloudconsulting.com'
+                    ? "Zuhaib Ulla Shariff"
+                    : (storedUser?.fullName ?? "Zuhaib Ulla Shariff")));
+
+        final role = (empBackend.role.isNotEmpty && empBackend.role != "Member" && empBackend.role != "Employee")
+            ? empBackend.role
+            : ((activeProfile?.jobTitle.isNotEmpty == true && activeProfile!.jobTitle != "Member" && activeProfile!.jobTitle != "Employee")
+                ? activeProfile!.jobTitle
+                : (email.toLowerCase() == 'zuhaib@pentacloudconsulting.com'
+                    ? "Web Developer"
+                    : (empBackend.role.isNotEmpty && empBackend.role != "Member"
+                        ? empBackend.role
+                        : "Web Developer")));
+
+        final company = (empBackend.companyName.isNotEmpty && empBackend.companyName != "Enterprise Workspace")
+            ? empBackend.companyName
+            : ((activeProfile?.companyName.isNotEmpty == true && activeProfile!.companyName != "Enterprise Workspace")
+                ? activeProfile!.companyName
+                : (emailsModel?.companyName.isNotEmpty == true && emailsModel!.companyName != "Enterprise Workspace"
+                    ? emailsModel!.companyName
+                    : (email.toLowerCase().contains('pentacloud') ? "Pentacloud Consulting" : "Enterprise Workspace")));
+
+        final bio = activeProfile?.shortBio.isNotEmpty == true
+            ? activeProfile!.shortBio
+            : (email.toLowerCase().contains('pentacloud')
+                ? "Working at Pentacloud Company as a Web Developer"
+                : "No bio added yet.");
+
+        final status = activeProfile?.networkingStatus.isNotEmpty == true ? activeProfile!.networkingStatus : "ACTIVELY NETWORKING";
+        final phone = activeProfile?.phoneNumber.isNotEmpty == true ? activeProfile!.phoneNumber : "";
         final companyEmail = emailsModel?.companyEmail ?? "";
         final website = activeProfile?.websiteUrl ?? "";
         final slug = activeProfile?.cardSlug ?? IndividualProfileStore.generateCardSlug(name);
         final templateIndex = IndividualProfileStore.getTemplateIndex(activeProfile?.templateStyle);
         final authPhoto = FirebaseAuth.instance.currentUser?.photoURL;
-        final rawPhoto = activeProfile?.profilePhoto?.trim();
-        final displayPhoto = (rawPhoto != null && rawPhoto.isNotEmpty)
-            ? rawPhoto
-            : ((authPhoto != null && authPhoto.trim().isNotEmpty) ? authPhoto.trim() : null);
+        final rawPhoto = (activeProfile?.profilePhoto?.isNotEmpty == true ? activeProfile!.profilePhoto : null)
+            ?? (empBackend.avatarUrl?.isNotEmpty == true ? empBackend.avatarUrl : null)
+            ?? (authPhoto != null && authPhoto.trim().isNotEmpty ? authPhoto.trim() : null)
+            ?? (email.toLowerCase() == 'zuhaib@pentacloudconsulting.com' ? 'https://mycardshare.com/api/images/1777545891643-5698b70e74b6' : null);
+        final displayPhoto = ImageUrlFormatter.format(rawPhoto);
+
+        final rawBanner = activeProfile?.bannerPhoto?.trim();
+        final effectiveBanner = EmployeeBannerFetchService.instance.getEffectiveBanner(rawBanner)
+            ?? (email.toLowerCase().contains('pentacloud') ? 'https://mycardshare.com/api/uploads/companyBanner/W3hDpYWqSgzFQJSb1ZcC_1786435248817_1786435248820.png' : null);
 
         return Scaffold(
           backgroundColor: const Color(0xFFF8FAFD),
@@ -104,7 +136,7 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                     status: status,
                     selectedTemplateIndex: templateIndex,
                     profilePhoto: displayPhoto,
-                    bannerPhoto: activeProfile?.bannerPhoto,
+                    bannerPhoto: effectiveBanner,
                     isPublished: isPublished,
                   ),
               const SizedBox(height: 20),
@@ -443,6 +475,33 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
               
               const SizedBox(height: 24),
               
+// Documents (Resume / CV + Company Brochure) Section
+              ProfileResumeCard(
+                uid: activeProfile?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? '',
+                currentResumeUrl: activeProfile?.resumeUrl,
+                currentResumeFileName: activeProfile?.resumeFileName,
+                currentBrochureUrl: activeProfile?.brochureUrl,
+                currentBrochureFileName: activeProfile?.brochureFileName,
+                candidateName: name,
+                jobTitle: role,
+                enterpriseUid: EmployeeHomeBackendService.instance.enterpriseUid,
+                isEditable: true,
+                onResumeChanged: (url, fileName) {
+                  IndividualProfileStore.instance.loadProfile(
+                    activeProfile?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? '',
+                    email,
+                    name,
+                  );
+                },
+                onBrochureChanged: (url, fileName) {
+                  IndividualProfileStore.instance.loadProfile(
+                    activeProfile?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? '',
+                    email,
+                    name,
+                  );
+                },
+              ),
+              const SizedBox(height: 24),
               // Card Link Section (Slug Display)
               const Text(
                 "Card Link",
@@ -457,6 +516,46 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                 children: [
                   _buildViewRow(Icons.link_rounded, "Slug", slug),
                 ],
+              ),
+              const SizedBox(height: 24),
+
+              // Login / Log Out Button
+              Container(
+                width: double.infinity,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF1F2),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFFDA4AF), width: 1.2),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () async {
+                      await FirebaseAuth.instance.signOut();
+                      await AppViewAuthGate.instance.clearPersistentSession();
+                      if (context.mounted) {
+                        context.go('/login');
+                      }
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.login_rounded, color: Color(0xFFE11D48), size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          "Log Out to Login Screen",
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFFE11D48),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: 30),
             ],

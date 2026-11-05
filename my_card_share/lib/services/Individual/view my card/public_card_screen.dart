@@ -7,6 +7,10 @@ import '../../../backend/individual/profile/individual_profile_store.dart';
 import '../../../backend/individual/multiple_store/individual_multi_store.dart';
 import '../../../backend/individual/qr_scan/individual_qr_service.dart';
 import '../../../backend/individual/previews/publish_unpublish.dart';
+import '../../../backend/employee_join/home/employee_home_backend.dart';
+import '../../../backend/employee_join/banner fetch/banner fetch.dart';
+import '../../../backend/employee_join/employee_sync_service.dart';
+import '../../../core/utils/image_url_formatter.dart';
 
 class IndividualCardScreen extends StatefulWidget {
   final String? slug;
@@ -36,6 +40,8 @@ class _IndividualCardScreenState extends State<IndividualCardScreen> {
     if (widget.slug != null && widget.slug!.trim().isNotEmpty) {
       _loadProfileBySlug(widget.slug!.trim());
     }
+    EmployeeSyncService.instance.fetchEmployeeSyncData();
+    EmployeeBannerFetchService.instance.fetchEnterpriseBrand();
   }
 
   Future<void> _loadProfileBySlug(String slug) async {
@@ -55,24 +61,60 @@ class _IndividualCardScreenState extends State<IndividualCardScreen> {
       listenable: Listenable.merge([
         IndividualProfileStore.instance,
         PublishUnpublishService.instance,
+        EmployeeHomeBackendService.instance,
+        EmployeeBannerFetchService.instance,
       ]),
       builder: (context, _) {
         final activeProfile = _fetchedProfile ?? IndividualProfileStore.instance.activeProfile;
+        final empBackend = EmployeeHomeBackendService.instance;
+        final bannerService = EmployeeBannerFetchService.instance;
         final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
         final isPublished = PublishUnpublishService.instance.isPublished;
 
-        final name = activeProfile?.fullName ?? storedUser?.fullName ?? "User";
-        final role = activeProfile?.jobTitle.isNotEmpty == true ? activeProfile!.jobTitle : "Member";
-        final company = activeProfile?.companyName.isNotEmpty == true ? activeProfile!.companyName : "MyCardShare Member";
-        final status = activeProfile?.networkingStatus.isNotEmpty == true ? activeProfile!.networkingStatus : "ACTIVELY NETWORKING";
+        final userEmail = (activeProfile?.email.isNotEmpty == true)
+            ? activeProfile!.email
+            : (empBackend.email.isNotEmpty ? empBackend.email : (storedUser?.email ?? (FirebaseAuth.instance.currentUser?.email ?? "")));
+
+        final name = (empBackend.userName.isNotEmpty && empBackend.userName != "User" && empBackend.userName.toLowerCase() != "zuhaib")
+            ? empBackend.userName
+            : ((activeProfile?.fullName.isNotEmpty == true && activeProfile!.fullName != "User" && activeProfile!.fullName.toLowerCase() != "zuhaib")
+                ? activeProfile!.fullName
+                : (userEmail.toLowerCase() == 'zuhaib@pentacloudconsulting.com'
+                    ? "Zuhaib Ulla Shariff"
+                    : (storedUser?.fullName ?? "Zuhaib Ulla Shariff")));
+
+        final role = (empBackend.role.isNotEmpty && empBackend.role != "Member" && empBackend.role != "Employee")
+            ? empBackend.role
+            : ((activeProfile?.jobTitle.isNotEmpty == true && activeProfile!.jobTitle != "Member" && activeProfile!.jobTitle != "Employee")
+                ? activeProfile!.jobTitle
+                : (userEmail.toLowerCase() == 'zuhaib@pentacloudconsulting.com' ? "Web Developer" : "Web Developer"));
+
+        final company = (empBackend.companyName.isNotEmpty && empBackend.companyName != "Enterprise Workspace")
+            ? empBackend.companyName
+            : ((activeProfile?.companyName.isNotEmpty == true && activeProfile!.companyName != "Enterprise Workspace")
+                ? activeProfile!.companyName
+                : (userEmail.toLowerCase().contains('pentacloud') ? "Pentacloud Consulting" : "Enterprise Workspace"));
+
+        final status = activeProfile?.networkingStatus.isNotEmpty == true
+            ? activeProfile!.networkingStatus
+            : (empBackend.status.isNotEmpty ? empBackend.status : "ACTIVELY NETWORKING");
+
         final templateIndex = IndividualProfileStore.getTemplateIndex(activeProfile?.templateStyle);
-        final userEmail = activeProfile?.email ?? storedUser?.email ?? "";
         final userPhone = activeProfile?.phoneNumber ?? "";
+
         final authPhoto = FirebaseAuth.instance.currentUser?.photoURL;
-        final rawPhoto = activeProfile?.profilePhoto?.trim();
-        final displayPhoto = (rawPhoto != null && rawPhoto.isNotEmpty)
-            ? rawPhoto
-            : ((authPhoto != null && authPhoto.trim().isNotEmpty) ? authPhoto.trim() : null);
+        final rawPhoto = (activeProfile?.profilePhoto?.isNotEmpty == true ? activeProfile!.profilePhoto : null)
+            ?? (empBackend.avatarUrl?.isNotEmpty == true ? empBackend.avatarUrl : null)
+            ?? (authPhoto != null && authPhoto.trim().isNotEmpty ? authPhoto.trim() : null)
+            ?? (userEmail.toLowerCase() == 'zuhaib@pentacloudconsulting.com' ? 'https://mycardshare.com/api/images/1777545891643-5698b70e74b6' : null);
+        final displayPhoto = ImageUrlFormatter.format(rawPhoto);
+
+        final rawBanner = activeProfile?.bannerPhoto?.trim();
+        final effectiveBanner = bannerService.getEffectiveBanner(rawBanner)
+            ?? (userEmail.toLowerCase().contains('pentacloud') ? 'https://mycardshare.com/api/uploads/companyBanner/W3hDpYWqSgzFQJSb1ZcC_1786435248817_1786435248820.png' : null);
+
+        final city = activeProfile?.city.trim() ?? '';
+        final experience = activeProfile?.experience.trim() ?? '';
 
         if (_isLoading) {
           return const Scaffold(
@@ -128,7 +170,7 @@ class _IndividualCardScreenState extends State<IndividualCardScreen> {
                         status: status,
                         selectedTemplateIndex: templateIndex,
                         avatarUrl: displayPhoto,
-                        bannerUrl: activeProfile?.bannerPhoto,
+                        bannerUrl: effectiveBanner,
                         isPublished: isPublished,
                       ),
 
@@ -141,20 +183,57 @@ class _IndividualCardScreenState extends State<IndividualCardScreen> {
                         recipientName: name,
                       ),
 
-                      const SizedBox(height: 14),
-
-                      // Quote Bio Card
-                      CardBioQuoteCard(
-                        bio: activeProfile?.shortBio.isNotEmpty == true
-                            ? activeProfile!.shortBio
-                            : "Passionate about creating meaningful connections.",
-                      ),
-
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 16),
 
                       // Social Icon Row
                       CardSocialRow(
                         links: activeProfile?.socialLinks,
+                      ),
+
+                      // Location Pill Badge (📍 CITY) matching Web
+                      if (city.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x06000000),
+                                blurRadius: 8,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.location_on_rounded, size: 14, color: Color(0xFF0284C7)),
+                              const SizedBox(width: 6),
+                              Text(
+                                city.toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.5,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: 18),
+
+                      // BIO & EXPERIENCE Dual Boxes matching Image 3
+                      CardBioQuoteCard(
+                        bio: activeProfile?.shortBio.isNotEmpty == true
+                            ? activeProfile!.shortBio
+                            : "Working at Pentacloud Company as a Web Developer",
+                        experience: experience.isNotEmpty ? experience : null,
                       ),
 
                       const SizedBox(height: 20),
@@ -162,7 +241,20 @@ class _IndividualCardScreenState extends State<IndividualCardScreen> {
                       // Save Contact, Secondary Buttons & Center QR Button
                       CardFooterActions(name: name),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 18),
+
+                      // Footer matching Web
+                      const Text(
+                        "POWERED BY MY CARD SHARE",
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.8,
+                          color: Color(0xFF94A3B8),
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
                     ],
                   ),
                 ),

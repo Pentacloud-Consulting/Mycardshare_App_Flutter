@@ -67,12 +67,14 @@ class _MasterAdminDashboardScreenState extends State<MasterAdminDashboardScreen>
 
                     const SizedBox(height: 20),
 
-                    // 2. 2x2 Grid of Stat Cards Section
+                    // 2. Grid of Stat Cards Section (6 Platform KPIs)
                     DashboardStatsGrid(
                       totalCompanies: store.totalCompanies.toString(),
                       totalIndividuals: store.totalIndividuals.toString(),
                       totalLeads: store.totalLeads.toString(),
                       pendingApprovals: store.pendingApprovals.toString(),
+                      suspendedCompanies: store.suspendedCompanies.toString(),
+                      renewalsThisMonth: store.renewalsThisMonth.toString(),
                     ),
 
                     const SizedBox(height: 24),

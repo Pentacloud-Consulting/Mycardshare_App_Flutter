@@ -77,6 +77,11 @@ class UnifiedCampaignService {
             "conv": data["conversionRate"] ?? "0%",
             "endsCaption": data["endsCaption"] ?? "Ends in ${data["durationDays"] ?? 14} days",
             "status": campStatus,
+            "area": data["area"] ?? "",
+            "budget": data["budget"],
+            "description": data["description"] ?? "",
+            "startDate": data["startDate"],
+            "endDate": data["endDate"],
             "targetUrl": data["targetUrl"] ?? "",
             "qrCodeUrl": data["qrCodeUrl"] ?? "",
             "createdAt": data["createdAt"],
@@ -115,6 +120,9 @@ class UnifiedCampaignService {
             "conv": c["conversionRate"] ?? c["conv"] ?? "0%",
             "endsCaption": c["endsCaption"] ?? "Ends in ${c["durationDays"] ?? 14} days",
             "status": c["status"] ?? "Active",
+            "area": c["area"] ?? "",
+            "budget": c["budget"],
+            "description": c["description"] ?? "",
             "targetUrl": c["targetUrl"] ?? "",
             "qrCodeUrl": c["qrCodeUrl"] ?? "",
           };
@@ -145,8 +153,11 @@ class UnifiedCampaignService {
     required bool isEnterprise,
     required String name,
     String? description,
+    String? area,
     int durationDays = 14,
     double? budget,
+    DateTime? startDate,
+    DateTime? endDate,
   }) async {
     final user = FirebaseAuth.instance.currentUser;
     final uid = user?.uid ?? "";
@@ -177,8 +188,11 @@ class UnifiedCampaignService {
           "label": name.trim(),
           "campaignName": name.trim(),
           "description": description ?? "",
+          "area": area ?? "",
           "durationDays": durationDays,
           "budget": budget,
+          "startDate": startDate?.toIso8601String(),
+          "endDate": endDate?.toIso8601String(),
           "status": "Active",
           "scans": 0,
           "leads": 0,
@@ -207,9 +221,12 @@ class UnifiedCampaignService {
             "label": name.trim(),
             "campaignName": name.trim(),
             "description": description ?? "",
+            "area": area ?? "",
             "durationDays": durationDays,
-            "budget": ?budget,
-            "campaignId": ?docRef?.id,
+            if (budget != null) "budget": budget,
+            if (startDate != null) "startDate": startDate.toIso8601String(),
+            if (endDate != null) "endDate": endDate.toIso8601String(),
+            if (docRef != null) "campaignId": docRef.id,
           }),
         ).timeout(const Duration(seconds: 5));
 
@@ -220,6 +237,23 @@ class UnifiedCampaignService {
       } catch (err) {
         debugPrint("[UnifiedCampaignService] Backend sync note: $err");
       }
+
+      // 3. Also post to Web Next.js /api/campaigns endpoint
+      try {
+        final headers = await _getHeaders();
+        await http.post(
+          Uri.parse("$baseUrl/api/campaigns"),
+          headers: headers,
+          body: jsonEncode({
+            "name": name.trim(),
+            "description": description ?? "",
+            "area": area ?? "",
+            if (budget != null) "budget": budget,
+            if (startDate != null) "startDate": startDate.toIso8601String(),
+            if (endDate != null) "endDate": endDate.toIso8601String(),
+          }),
+        ).timeout(const Duration(seconds: 4));
+      } catch (_) {}
 
       if (apiCampaign != null) {
         final rName = (apiCampaign["name"] ?? apiCampaign["title"] ?? apiCampaign["label"] ?? apiCampaign["campaignName"] ?? name.trim()).toString();
@@ -238,6 +272,7 @@ class UnifiedCampaignService {
           "label": name.trim(),
           "campaignName": name.trim(),
           "status": "Active",
+          "area": area ?? "",
           "scans": 0,
           "leads": 0,
           "leadsWon": 0,
@@ -248,6 +283,76 @@ class UnifiedCampaignService {
     } catch (e) {
       debugPrint("[UnifiedCampaignService] Create campaign error: $e");
       return {"success": false, "error": e.toString()};
+    }
+  }
+
+  /// 3. TOGGLE CAMPAIGN STATUS (Active <-> Ended)
+  static Future<bool> toggleCampaignStatus({
+    required bool isEnterprise,
+    required String campaignId,
+    required String currentStatus,
+  }) async {
+    final newStatus = currentStatus.toLowerCase() == "active" ? "Ended" : "Active";
+    final user = FirebaseAuth.instance.currentUser;
+    final uid = user?.uid ?? "";
+
+    try {
+      if (uid.isNotEmpty) {
+        final collectionPath = isEnterprise ? "enterprises" : "users";
+        await _firestore
+            .collection(collectionPath)
+            .doc(uid)
+            .collection("campaigns")
+            .doc(campaignId)
+            .update({
+          "status": newStatus,
+          "updatedAt": FieldValue.serverTimestamp(),
+        });
+      }
+
+      final headers = await _getHeaders();
+      await http.patch(
+        Uri.parse("$baseUrl/api/campaigns/$campaignId"),
+        headers: headers,
+        body: jsonEncode({"status": newStatus}),
+      ).timeout(const Duration(seconds: 4));
+
+      return true;
+    } catch (e) {
+      debugPrint("[UnifiedCampaignService] Toggle status error: $e");
+      return false;
+    }
+  }
+
+  /// 4. DELETE CAMPAIGN
+  static Future<bool> deleteCampaign({
+    required bool isEnterprise,
+    required String campaignId,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+    final uid = user?.uid ?? "";
+
+    try {
+      if (uid.isNotEmpty) {
+        final collectionPath = isEnterprise ? "enterprises" : "users";
+        await _firestore
+            .collection(collectionPath)
+            .doc(uid)
+            .collection("campaigns")
+            .doc(campaignId)
+            .delete();
+      }
+
+      final headers = await _getHeaders();
+      await http.delete(
+        Uri.parse("$baseUrl/api/campaigns?id=$campaignId"),
+        headers: headers,
+      ).timeout(const Duration(seconds: 4));
+
+      return true;
+    } catch (e) {
+      debugPrint("[UnifiedCampaignService] Delete campaign error: $e");
+      return false;
     }
   }
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/theme/app_theme.dart';
-import '../../../../../backend/individual/vault/share_card.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../backend/individual/vault/share_card.dart';
 
 class ViewVaultModal extends StatelessWidget {
   final String? id;

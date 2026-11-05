@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../../providers/auth_provider.dart';
-import '../../../../backend/app view/app_view_auth_gate.dart';
+import '../../../providers/auth_provider.dart';
+import '../../../backend/app view/app_view_auth_gate.dart';
 
 class RegistrationPendingScreen extends ConsumerStatefulWidget {
   const RegistrationPendingScreen({super.key});

@@ -358,6 +358,14 @@ class IndividualDeleteService {
       });
 
       for (final host in [primaryUrl, fallbackUrl]) {
+        try {
+          final headers = await _getHeaders();
+          await http.delete(
+            Uri.parse("$host/api/platform/individuals/$idToPurge"),
+            headers: headers,
+          ).timeout(const Duration(seconds: 4));
+        } catch (_) {}
+
         for (final endpoint in ["/api/sync/individual-deletion", "/api/sync/master-admin-individuals"]) {
           try {
             final headers = await _getHeaders();

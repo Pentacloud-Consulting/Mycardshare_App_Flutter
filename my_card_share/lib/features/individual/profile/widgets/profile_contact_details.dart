@@ -82,102 +82,97 @@ class _ProfileContactDetailsState extends State<ProfileContactDetails> {
 
         // Phone Field with Live Validation (Fixes 9729041 bug)
         Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: _phoneError != null
                   ? const Color(0xFFEF4444)
                   : (_isValidPhone ? const Color(0xFF22C55E) : const Color(0xFFE2E8F0)),
               width: _phoneError != null ? 1.4 : 1.0,
             ),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x05000000),
-                blurRadius: 6,
-                offset: Offset(0, 2),
-              ),
-            ],
           ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.phone_outlined,
-                  color: _phoneError != null
-                      ? const Color(0xFFEF4444)
-                      : (_isValidPhone ? const Color(0xFF16A34A) : const Color(0xFF64748B)),
-                  size: 18,
-                ),
-                const SizedBox(width: 10),
-                SizedBox(
-                  width: 70,
-                  child: Text(
-                    "Phone *",
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      color: _phoneError != null ? const Color(0xFFDC2626) : const Color(0xFF64748B),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: TextField(
-                    controller: widget.phoneController,
-                    keyboardType: TextInputType.phone,
-                    maxLength: 10,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(10),
-                    ],
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF0F172A),
-                      fontWeight: FontWeight.w500,
-                    ),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      isDense: true,
-                      counterText: "",
-                      hintText: "e.g. 9876543210",
-                      hintStyle: TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF94A3B8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.phone_outlined,
+                color: _phoneError != null
+                    ? const Color(0xFFEF4444)
+                    : (_isValidPhone ? const Color(0xFF16A34A) : const Color(0xFF64748B)),
+                size: 17,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "Phone *",
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                        color: _phoneError != null ? const Color(0xFFDC2626) : const Color(0xFF64748B),
+                        letterSpacing: 0.1,
                       ),
-                      contentPadding: EdgeInsets.symmetric(vertical: 10),
                     ),
+                    const SizedBox(height: 2),
+                    TextField(
+                      controller: widget.phoneController,
+                      keyboardType: TextInputType.phone,
+                      maxLength: 10,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(10),
+                      ],
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF0F172A),
+                        fontWeight: FontWeight.w500,
+                      ),
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        isDense: true,
+                        counterText: "",
+                        hintText: "e.g. 9876543210",
+                        hintStyle: TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF94A3B8),
+                        ),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (_isValidPhone) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDCFCE7),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 11),
+                      SizedBox(width: 3),
+                      Text(
+                        "Valid",
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF15803D),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                if (_isValidPhone) ...[
-                  const SizedBox(width: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFDCFCE7),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 12),
-                        SizedBox(width: 4),
-                        Text(
-                          "Valid",
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF15803D),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
               ],
-            ),
+            ],
           ),
         ),
 
@@ -235,81 +230,76 @@ class _ProfileContactDetailsState extends State<ProfileContactDetails> {
     bool isVerified = false,
   }) {
     return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
         color: isReadOnly ? const Color(0xFFF8FAFC) : Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x05000000),
-            blurRadius: 6,
-            offset: Offset(0, 2),
-          ),
-        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Icon(icon, color: const Color(0xFF64748B), size: 18),
-            const SizedBox(width: 10),
-            SizedBox(
-              width: 70,
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF64748B),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(icon, color: const Color(0xFF64748B), size: 17),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF64748B),
+                    letterSpacing: 0.1,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 2),
+                TextField(
+                  controller: controller,
+                  readOnly: isReadOnly,
+                  enabled: !isReadOnly,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isReadOnly ? const Color(0xFF334155) : const Color(0xFF0F172A),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: TextField(
-                controller: controller,
-                readOnly: isReadOnly,
-                enabled: !isReadOnly,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isReadOnly ? const Color(0xFF475569) : const Color(0xFF0F172A),
-                  fontWeight: FontWeight.w500,
-                ),
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  isDense: true,
-                  contentPadding: EdgeInsets.symmetric(vertical: 10),
-                ),
+          ),
+          if (isVerified) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDCFCE7),
+                borderRadius: BorderRadius.circular(6),
               ),
-            ),
-            if (isVerified) ...[
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDCFCE7),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 12),
-                    SizedBox(width: 4),
-                    Text(
-                      "Verified",
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF15803D),
-                      ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 11),
+                  SizedBox(width: 3),
+                  Text(
+                    "Verified",
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF15803D),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ],
-        ),
+        ],
       ),
     );
   }

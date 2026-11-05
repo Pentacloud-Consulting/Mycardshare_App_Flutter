@@ -61,6 +61,7 @@ dependencies:
   path_provider: ^2.1.6
   # iOS: Sign In with Apple button & service
   sign_in_with_apple: ^6.1.2
+  file_picker: ^11.0.3
 
 dev_dependencies:
   flutter_test:

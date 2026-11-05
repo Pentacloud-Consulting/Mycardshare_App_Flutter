@@ -11,6 +11,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../backend/individual/scan_profile_view/scan_profile_view.dart';
 import '../../backend/contact/save_contact_service.dart';
+import '../../backend/resume/resume_service.dart';
+import '../../backend/brochure/brochure_service.dart';
 import '../../backend/individual/wallet/wallet_service.dart';
 import '../../backend/individual/wallet/samsung_wallet.dart';
 import '../../backend/individual/wallet/apple_wallet.dart';
@@ -171,6 +173,38 @@ class _PublicScannedCardScreenState extends State<PublicScannedCardScreen> {
 
   void _onExchangeContact(PublicProfileData profile) {
     ActiveLeadService.showLeadExchangeModal(context, profile: profile);
+  }
+
+  void _onOpenResume(PublicProfileData profile) {
+    if (profile.resumeUrl != null && profile.resumeUrl!.isNotEmpty) {
+      ResumeService.openResume(profile.resumeUrl!);
+    }
+  }
+
+  void _onShareResume(PublicProfileData profile) {
+    if (profile.resumeUrl != null && profile.resumeUrl!.isNotEmpty) {
+      ResumeService.shareResume(
+        resumeUrl: profile.resumeUrl!,
+        candidateName: profile.fullName,
+        jobTitle: profile.jobTitle,
+      );
+    }
+  }
+
+  void _onOpenBrochure(PublicProfileData profile) {
+    if (profile.brochureUrl != null && profile.brochureUrl!.isNotEmpty) {
+      BrochureService.openBrochure(profile.brochureUrl!);
+    }
+  }
+
+  void _onShareBrochure(PublicProfileData profile) {
+    if (profile.brochureUrl != null && profile.brochureUrl!.isNotEmpty) {
+      BrochureService.shareBrochure(
+        brochureUrl: profile.brochureUrl!,
+        ownerName: profile.fullName,
+        companyName: profile.company,
+      );
+    }
   }
 
   void _onShareCard(PublicProfileData profile) {
@@ -476,27 +510,141 @@ class _PublicScannedCardScreenState extends State<PublicScannedCardScreen> {
                         ),
                       ),
 
-                      // Bio / About Quote Card
+                      // Location Badge
+                      if (profile.city.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF0F9FF),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: const Color(0xFFBAE6FD)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.location_on_rounded, size: 14, color: Color(0xFF0284C7)),
+                              const SizedBox(width: 5),
+                              Text(
+                                profile.city.toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.2,
+                                  color: Color(0xFF0369A1),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+
+                      // Bio Box
                       if (profile.bio.isNotEmpty) ...[
                         const SizedBox(height: 16),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
-                          ),
-                          child: Text(
-                            profile.bio,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF475569),
-                              height: 1.45,
-                              fontStyle: FontStyle.italic,
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.only(left: 4, bottom: 6),
+                              child: Text(
+                                "BIO",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF94A3B8),
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
                             ),
-                          ),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                              ),
+                              child: Text(
+                                profile.bio,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF475569),
+                                  height: 1.45,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+
+                      // Experience Box
+                      if (profile.experience.isNotEmpty) ...[
+                        const SizedBox(height: 14),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.only(left: 4, bottom: 6),
+                              child: Text(
+                                "EXPERIENCE",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF94A3B8),
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: profile.experience.split('\n').map((line) {
+                                  final trimmed = line.trim();
+                                  if (trimmed.isEmpty) return const SizedBox.shrink();
+                                  final cleanLine = trimmed.startsWith('•') || trimmed.startsWith('-')
+                                      ? trimmed.substring(1).trim()
+                                      : trimmed;
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 3),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Container(
+                                          width: 6,
+                                          height: 6,
+                                          margin: const EdgeInsets.only(top: 6, right: 8),
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Color(0xFFCBD5E1),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: Text(
+                                            cleanLine,
+                                            style: const TextStyle(
+                                              fontSize: 12.5,
+                                              color: Color(0xFF475569),
+                                              height: 1.45,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
 
@@ -636,9 +784,209 @@ class _PublicScannedCardScreenState extends State<PublicScannedCardScreen> {
                   ),
                 ),
 
+                if (profile.resumeUrl != null && profile.resumeUrl!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFEF2F2),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: const Color(0xFFFECACA)),
+                              ),
+                              child: const Icon(
+                                Icons.picture_as_pdf_rounded,
+                                color: Color(0xFFDC2626),
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "RESUME / CURRICULUM VITAE",
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF64748B),
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    profile.resumeFileName ?? 'Resume Document',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () => _onOpenResume(profile),
+                                icon: const Icon(Icons.download_rounded, color: Colors.white, size: 17),
+                                label: const Text(
+                                  "Download / View",
+                                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Colors.white),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF0F172A),
+                                  padding: const EdgeInsets.symmetric(vertical: 11),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () => _onShareResume(profile),
+                                icon: const Icon(Icons.share_rounded, color: Color(0xFF0052FF), size: 16),
+                                label: const Text(
+                                  "Share Resume",
+                                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF0052FF)),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Color(0xFFBFDBFE)),
+                                  backgroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 11),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
                 const SizedBox(height: 16),
                 const Divider(color: Color(0xFFE2E8F0), height: 1),
                 const SizedBox(height: 14),
+
+                if (profile.brochureUrl != null && profile.brochureUrl!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFF6FF),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: const Color(0xFFBFDBFE)),
+                              ),
+                              child: const Icon(
+                                Icons.menu_book_rounded,
+                                color: Color(0xFF0052FF),
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "COMPANY BROCHURE / PORTFOLIO",
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF64748B),
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    profile.brochureFileName ?? 'Company Brochure',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () => _onOpenBrochure(profile),
+                                icon: const Icon(Icons.download_rounded, color: Colors.white, size: 17),
+                                label: const Text(
+                                  "Download / View",
+                                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Colors.white),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF0F172A),
+                                  padding: const EdgeInsets.symmetric(vertical: 11),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () => _onShareBrochure(profile),
+                                icon: const Icon(Icons.share_rounded, color: Color(0xFF0052FF), size: 16),
+                                label: const Text(
+                                  "Share Brochure",
+                                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF0052FF)),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Color(0xFFBFDBFE)),
+                                  backgroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 11),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
 
                 // Digital Wallet Section
                 const Text(

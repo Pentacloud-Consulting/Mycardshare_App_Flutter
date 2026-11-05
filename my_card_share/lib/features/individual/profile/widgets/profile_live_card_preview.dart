@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../backend/individual/profile/individual_profile_store.dart';
+import '../../../../core/utils/image_url_formatter.dart';
 
 class ProfileLiveCardPreview extends StatelessWidget {
   final String name;
@@ -46,18 +47,21 @@ class ProfileLiveCardPreview extends StatelessWidget {
   }
 
   Widget _buildImageWidget(String? photo, {required Widget fallback}) {
-    if (photo == null || photo.trim().isEmpty) return fallback;
-    final p = photo.trim();
+    final formatted = ImageUrlFormatter.format(photo);
+    if (formatted == null || formatted.trim().isEmpty) return fallback;
+    final p = formatted.trim();
 
     // 1. Data URI / Base64
     if (p.startsWith('data:image')) {
       try {
         final commaIdx = p.indexOf(',');
         final base64Str = commaIdx != -1 ? p.substring(commaIdx + 1) : p;
-        final bytes = base64Decode(base64Str);
+        final bytes = base64Decode(base64Str.trim());
         return Image.memory(
           bytes,
           fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
           errorBuilder: (ctx, err, st) => fallback,
         );
       } catch (_) {
@@ -70,6 +74,8 @@ class ProfileLiveCardPreview extends StatelessWidget {
       return Image.network(
         p,
         fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
         errorBuilder: (ctx, err, st) => fallback,
       );
     }

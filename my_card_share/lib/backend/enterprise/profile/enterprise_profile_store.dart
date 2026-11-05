@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
+import '../../individual/api_service.dart';
 
 /// Data model for an Enterprise user profile (stored in Firestore).
 class EnterpriseProfileData {
@@ -12,12 +14,16 @@ class EnterpriseProfileData {
   final String website;
   final String phoneNumber;
   final String address;
+  final String area;
+  final String emirate;
   final String shortBio;
   final String plan; // 'free', 'pro', 'enterprise'
   final int employeeCount;
   final String brandColor;
   final String templateId;
   final String cardSlug;
+  final String? resumeUrl;
+  final String? resumeFileName;
   final DateTime updatedAt;
 
   EnterpriseProfileData({
@@ -30,12 +36,16 @@ class EnterpriseProfileData {
     this.website = '',
     this.phoneNumber = '',
     this.address = '',
+    this.area = '',
+    this.emirate = '',
     this.shortBio = '',
     this.plan = 'free',
     this.employeeCount = 0,
     this.brandColor = '#0052FF',
     this.templateId = 'modern_glass',
     this.cardSlug = '',
+    this.resumeUrl,
+    this.resumeFileName,
     DateTime? updatedAt,
   }) : updatedAt = updatedAt ?? DateTime.now();
 
@@ -48,12 +58,16 @@ class EnterpriseProfileData {
     String? website,
     String? phoneNumber,
     String? address,
+    String? area,
+    String? emirate,
     String? shortBio,
     String? plan,
     int? employeeCount,
     String? brandColor,
     String? templateId,
     String? cardSlug,
+    String? resumeUrl,
+    String? resumeFileName,
     DateTime? updatedAt,
   }) {
     return EnterpriseProfileData(
@@ -66,12 +80,16 @@ class EnterpriseProfileData {
       website: website ?? this.website,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       address: address ?? this.address,
+      area: area ?? this.area,
+      emirate: emirate ?? this.emirate,
       shortBio: shortBio ?? this.shortBio,
       plan: plan ?? this.plan,
       employeeCount: employeeCount ?? this.employeeCount,
       brandColor: brandColor ?? this.brandColor,
       templateId: templateId ?? this.templateId,
       cardSlug: cardSlug ?? this.cardSlug,
+      resumeUrl: resumeUrl ?? this.resumeUrl,
+      resumeFileName: resumeFileName ?? this.resumeFileName,
       updatedAt: updatedAt ?? DateTime.now(),
     );
   }
@@ -86,12 +104,16 @@ class EnterpriseProfileData {
         'website': website,
         'phoneNumber': phoneNumber,
         'address': address,
+        'area': area,
+        'emirate': emirate,
         'shortBio': shortBio,
         'plan': plan,
         'employeeCount': employeeCount,
         'brandColor': brandColor,
         'templateId': templateId,
         'cardSlug': cardSlug,
+        'resumeUrl': resumeUrl,
+        'resumeFileName': resumeFileName,
         'updatedAt': FieldValue.serverTimestamp(),
       };
 
@@ -107,12 +129,16 @@ class EnterpriseProfileData {
       website: data['website'] ?? '',
       phoneNumber: data['phoneNumber'] ?? data['phone'] ?? '',
       address: data['address'] ?? '',
+      area: data['area'] ?? '',
+      emirate: data['emirate'] ?? '',
       shortBio: data['shortBio'] ?? data['bio'] ?? '',
       plan: data['plan'] ?? 'free',
       employeeCount: (data['employeeCount'] as num?)?.toInt() ?? 0,
       brandColor: data['brandColor'] ?? '#0052FF',
       templateId: data['templateId'] ?? 'modern_glass',
       cardSlug: data['cardSlug'] ?? '',
+      resumeUrl: data['resumeUrl'] as String?,
+      resumeFileName: data['resumeFileName'] as String?,
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
     );
   }
@@ -159,7 +185,7 @@ class EnterpriseProfileStore {
   /// Loads the enterprise profile from `enterprises/{uid}` in Firestore.
   /// Falls back to `users/{uid}` for basic info if enterprise doc is absent.
   Future<void> loadProfile(
-      String uid, String email, String companyName) async {
+      String uid, [String email = '', String companyName = '']) async {
     try {
       final doc =
           await _firestore.collection('enterprises').doc(uid).get();
@@ -232,6 +258,8 @@ class EnterpriseProfileStore {
     String? website,
     String? phoneNumber,
     String? address,
+    String? area,
+    String? emirate,
     String? shortBio,
     String? plan,
     int? employeeCount,
@@ -259,12 +287,16 @@ class EnterpriseProfileStore {
         website: website ?? existing?.website ?? '',
         phoneNumber: phoneNumber ?? existing?.phoneNumber ?? '',
         address: address ?? existing?.address ?? '',
+        area: area ?? existing?.area ?? '',
+        emirate: emirate ?? existing?.emirate ?? '',
         shortBio: shortBio ?? existing?.shortBio ?? '',
         plan: plan ?? existing?.plan ?? 'free',
         employeeCount: employeeCount ?? existing?.employeeCount ?? 0,
         brandColor: brandColor ?? existing?.brandColor ?? '#0052FF',
         templateId: templateId ?? existing?.templateId ?? 'modern_glass',
         cardSlug: resolvedSlug,
+        resumeUrl: existing?.resumeUrl,
+        resumeFileName: existing?.resumeFileName,
       );
 
       await _firestore
@@ -285,6 +317,35 @@ class EnterpriseProfileStore {
       _currentProfile = updated;
       debugPrint(
           '[EnterpriseProfileStore] Saved enterprise profile for $uid');
+
+      // Dual-sync to Web Next.js MongoDB backend
+      unawaited(IndividualApiService.patch('/api/enterprise/profile', {
+        'companyName': updated.companyName,
+        'phoneNumber': updated.phoneNumber,
+        'website': updated.website,
+        'address': updated.address,
+        if (updated.area.isNotEmpty) 'area': updated.area,
+        if (updated.emirate.isNotEmpty) 'emirate': updated.emirate,
+        'description': updated.shortBio,
+        if (updated.logoUrl != null) 'companyLogo': updated.logoUrl,
+        if (updated.bannerUrl != null) 'companyBanner': updated.bannerUrl,
+        if (updated.cardSlug.isNotEmpty) 'slug': updated.cardSlug,
+      }).catchError((e) {
+        debugPrint('[EnterpriseProfileStore] Background API patch note: $e');
+        return null;
+      }));
+
+      // Also dispatch enterprise branding sync to propagate colors to employee cards
+      unawaited(IndividualApiService.post('/api/sync/enterprise', {
+        'companyName': updated.companyName,
+        'brandColor': updated.brandColor,
+        if (updated.logoUrl != null) 'companyLogo': updated.logoUrl,
+        if (updated.bannerUrl != null) 'companyBanner': updated.bannerUrl,
+      }).catchError((e) {
+        debugPrint('[EnterpriseProfileStore] Background enterprise sync note: $e');
+        return null;
+      }));
+
       return true;
     } catch (e) {
       debugPrint('[EnterpriseProfileStore] saveProfile error: $e');

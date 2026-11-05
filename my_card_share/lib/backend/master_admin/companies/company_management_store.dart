@@ -271,7 +271,12 @@ class CompanyManagementStore extends ChangeNotifier {
         }
       } catch (_) {}
 
-      // 6. Notify backend API
+      // 6. Notify backend API across platform REST and sync routes
+      try {
+        await MasterAdminApiClient.delete(
+          MasterAdminEndpoints.companyDetail(companyId),
+        );
+      } catch (_) {}
       try {
         await MasterAdminApiClient.post(
           '/api/sync/master-admin-companies',
@@ -376,11 +381,17 @@ class CompanyManagementStore extends ChangeNotifier {
         updateCompanyStatusLocally(companyName, newStatus);
       }
 
-      // 5. Also notify Next.js backend
+      // 5. Also notify Next.js backend (PATCH & POST)
+      try {
+        await MasterAdminApiClient.patch(
+          MasterAdminEndpoints.companySuspend(companyId),
+          {'isSuspended': suspend, 'suspend': suspend},
+        );
+      } catch (_) {}
       try {
         await MasterAdminApiClient.post(
           MasterAdminEndpoints.companySuspend(companyId),
-          {'suspend': suspend},
+          {'isSuspended': suspend, 'suspend': suspend},
         );
       } catch (_) {}
 

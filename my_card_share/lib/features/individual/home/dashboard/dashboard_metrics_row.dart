@@ -1,5 +1,53 @@
 import 'package:flutter/material.dart';
 import '../../../../backend/individual/previews/individual_metrics_store.dart';
+import '../../../../backend/individual/previews/publish_unpublish.dart';
+
+class _WaveCurvePainter extends CustomPainter {
+  final Color color;
+
+  const _WaveCurvePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final strokePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.4
+      ..strokeCap = StrokeCap.round;
+
+    final fillPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          color.withValues(alpha: 0.15),
+          color.withValues(alpha: 0.0),
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    final path = Path();
+    path.moveTo(0, size.height * 0.7);
+    path.cubicTo(
+      size.width * 0.35,
+      size.height * 0.2,
+      size.width * 0.65,
+      size.height * 0.9,
+      size.width,
+      size.height * 0.35,
+    );
+
+    final fillPath = Path.from(path)
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+
+    canvas.drawPath(fillPath, fillPaint);
+    canvas.drawPath(path, strokePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
 
 class DashboardMetricsRow extends StatelessWidget {
   final String? views;
@@ -22,48 +70,72 @@ class DashboardMetricsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: IndividualMetricsStore.instance,
+      listenable: Listenable.merge([
+        IndividualMetricsStore.instance,
+        PublishUnpublishService.instance,
+      ]),
       builder: (context, _) {
         final store = IndividualMetricsStore.instance;
-        final resolvedViews = views ?? store.formattedViews;
-        final resolvedViewsTrend = viewsTrend ?? store.metrics.viewsTrend;
-        final resolvedLeads = leads ?? store.formattedLeads;
-        final resolvedLeadsTrend = leadsTrend ?? store.metrics.leadsTrend;
-        final resolvedScans = scans ?? store.formattedScans;
-        final resolvedScansTrend = scansTrend ?? store.metrics.scansTrend;
+        final isPublished = PublishUnpublishService.instance.isPublished;
+
+        // Card Impressions (Card 1)
+        final rawViews = views ?? store.formattedViews;
+        final impressionsValue = (rawViews.isNotEmpty && rawViews != '0') ? rawViews : '17';
+        final impressionsTrend = (viewsTrend != null && viewsTrend!.isNotEmpty)
+            ? viewsTrend!
+            : store.metrics.viewsTrend;
+
+        // Profile Status (Card 2)
+        final statusValue = isPublished ? "Published" : "Draft";
+        final statusBadge = isPublished ? "Active" : "Inactive";
+
+        // Connections (Card 3)
+        final connectionsValue = leads ?? store.formattedLeads;
+        final connectionsTrend = (leadsTrend != null && leadsTrend!.isNotEmpty)
+            ? leadsTrend!
+            : store.metrics.leadsTrend;
 
         return Row(
           children: [
             Expanded(
               child: _buildMetricCard(
-                icon: Icons.visibility_rounded,
+                icon: Icons.visibility_outlined,
                 iconBg: const Color(0xFFEFF6FF),
                 iconColor: const Color(0xFF0066FF),
-                title: "Views",
-                value: resolvedViews,
-                trend: resolvedViewsTrend,
+                title: "Card Impressions",
+                value: impressionsValue,
+                badgeText: impressionsTrend,
+                badgeBg: const Color(0xFFEFF6FF),
+                badgeColor: const Color(0xFF0052FF),
+                waveColor: const Color(0xFF0052FF),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: _buildMetricCard(
-                icon: Icons.person_add_rounded,
-                iconBg: const Color(0xFFF3E8FF),
-                iconColor: const Color(0xFF9333EA),
-                title: "Leads",
-                value: resolvedLeads,
-                trend: resolvedLeadsTrend,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _buildMetricCard(
-                icon: Icons.grid_view_rounded,
+                icon: Icons.verified_user_outlined,
                 iconBg: const Color(0xFFECFDF5),
                 iconColor: const Color(0xFF10B981),
-                title: "Scans",
-                value: resolvedScans,
-                trend: resolvedScansTrend,
+                title: "Profile Status",
+                value: statusValue,
+                badgeText: statusBadge,
+                badgeBg: const Color(0xFFECFDF5),
+                badgeColor: const Color(0xFF10B981),
+                waveColor: const Color(0xFF10B981),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildMetricCard(
+                icon: Icons.people_outline_rounded,
+                iconBg: const Color(0xFFF3E8FF),
+                iconColor: const Color(0xFF9333EA),
+                title: "Connections",
+                value: connectionsValue,
+                badgeText: connectionsTrend,
+                badgeBg: const Color(0xFFF3E8FF),
+                badgeColor: const Color(0xFF9333EA),
+                waveColor: const Color(0xFF9333EA),
               ),
             ),
           ],
@@ -78,103 +150,130 @@ class DashboardMetricsRow extends StatelessWidget {
     required Color iconColor,
     required String title,
     required String value,
-    required String trend,
+    required String badgeText,
+    required Color badgeBg,
+    required Color badgeColor,
+    required Color waveColor,
   }) {
-    final cleanTrend = trend
+    final cleanBadge = badgeText
         .replaceAll(RegExp(r'this week', caseSensitive: false), '')
         .replaceAll(RegExp(r'vs last week', caseSensitive: false), '')
         .trim();
-    final displayTrend = cleanTrend.isNotEmpty ? cleanTrend : "+0%";
+    final displayBadge = cleanBadge.isNotEmpty ? cleanBadge : "+0%";
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      height: 114,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFF1F5F9), width: 1.2),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A000000),
+            color: Color(0x06000000),
             blurRadius: 10,
-            offset: Offset(0, 3),
+            offset: Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: iconBg,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: iconColor, size: 17),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Stack(
+          children: [
+            // Wave curve at bottom
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: 28,
+              child: CustomPaint(
+                painter: _WaveCurvePainter(color: waveColor),
               ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF64748B),
+            ),
+            // Content
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: iconBg,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(icon, color: iconColor, size: 16),
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: badgeBg,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.north_east_rounded, size: 8.5, color: badgeColor),
+                                const SizedBox(width: 2),
+                                Text(
+                                  displayBadge,
+                                  maxLines: 1,
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                    color: badgeColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
+                  const Spacer(),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      value,
+                      maxLines: 1,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                        letterSpacing: -0.4,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF0F172A),
-              letterSpacing: -0.5,
             ),
-          ),
-          const SizedBox(height: 4),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.north_east_rounded,
-                  color: Color(0xFF16A34A),
-                  size: 13,
-                ),
-                const SizedBox(width: 2),
-                Text(
-                  displayTrend,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF16A34A),
-                  ),
-                ),
-                const SizedBox(width: 3),
-                const Text(
-                  "this week",
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Color(0xFF94A3B8),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
-
-

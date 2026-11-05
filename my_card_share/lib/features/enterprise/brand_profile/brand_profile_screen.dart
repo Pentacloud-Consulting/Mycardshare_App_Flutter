@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../backend/app view/app_view_auth_gate.dart';
 import '../../Nav/enterprice nav/enterprise_profile_menu.dart';
 import 'widgets/brand_detail.dart';
 import '../../../backend/enterprise/profile/enterprise_profile_store.dart';
@@ -111,6 +112,48 @@ class EnterpriseProfileScreen extends StatelessWidget {
 
           // Enterprise Profile Menu Hub
           const EnterpriseProfileMenuHub(),
+
+          const SizedBox(height: 24),
+
+          // Login / Log Out Button
+          Container(
+            width: double.infinity,
+            height: 52,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF1F2),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFFDA4AF), width: 1.2),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () async {
+                  await FirebaseAuth.instance.signOut();
+                  await AppViewAuthGate.instance.clearPersistentSession();
+                  if (context.mounted) {
+                    context.go('/login');
+                  }
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.login_rounded, color: Color(0xFFE11D48), size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      "Log Out to Login Screen",
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFE11D48),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
         ],
       ),
     );

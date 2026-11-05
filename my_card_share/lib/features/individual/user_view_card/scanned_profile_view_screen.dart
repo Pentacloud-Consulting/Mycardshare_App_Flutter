@@ -1,13 +1,15 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../../backend/individual/profile/individual_profile_store.dart';
-import '../../../../backend/individual/scan_profile_view/scan_profile_view.dart';
-import '../../../../backend/individual/lead/active_lead.dart';
-import '../../../../backend/individual/connects/save_contact.dart';
-import '../../../../backend/individual/connects/share.dart';
+import '../../../backend/individual/profile/individual_profile_store.dart';
+import '../../../backend/individual/scan_profile_view/scan_profile_view.dart';
+import '../../../backend/individual/lead/active_lead.dart';
+import '../../../backend/individual/connects/save_contact.dart';
+import '../../../backend/individual/connects/share.dart';
 import '../home/View My card/card_footer_actions.dart';
-import '../../../../backend/individual/social_redirect/social_redirect_service.dart';
+import '../../../backend/resume/resume_service.dart';
+import '../../../backend/brochure/brochure_service.dart';
+import '../../../backend/individual/social_redirect/social_redirect_service.dart';
 
 /// ────────────────────────────────────────────────────────────────────────────
 /// ScannedProfileViewScreen
@@ -229,6 +231,226 @@ class _ScannedProfileViewScreenState extends State<ScannedProfileViewScreen>
                         const SizedBox(height: 20),
                       ],
 
+                      if (profile.resumeUrl != null && profile.resumeUrl!.trim().isNotEmpty) ...[
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 20),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withAlpha(10),
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFEF2F2),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: const Color(0xFFFECACA)),
+                                    ),
+                                    child: const Icon(
+                                      Icons.picture_as_pdf_rounded,
+                                      color: Color(0xFFDC2626),
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          "CANDIDATE RESUME / CV",
+                                          style: TextStyle(
+                                            fontSize: 10.5,
+                                            fontWeight: FontWeight.w800,
+                                            color: Color(0xFF64748B),
+                                            letterSpacing: 0.8,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          profile.resumeFileName ?? 'Resume Document',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                            color: Color(0xFF0F172A),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: () => ResumeService.openResume(profile.resumeUrl!),
+                                      icon: const Icon(Icons.download_rounded, color: Colors.white, size: 17),
+                                      label: const Text(
+                                        "Download / View",
+                                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Colors.white),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF0F172A),
+                                        padding: const EdgeInsets.symmetric(vertical: 11),
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: () => ResumeService.shareResume(
+                                        resumeUrl: profile.resumeUrl!,
+                                        candidateName: profile.fullName,
+                                        jobTitle: profile.jobTitle,
+                                      ),
+                                      icon: const Icon(Icons.share_rounded, color: Color(0xFF0052FF), size: 16),
+                                      label: const Text(
+                                        "Share Resume",
+                                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF0052FF)),
+                                      ),
+                                      style: OutlinedButton.styleFrom(
+                                        side: const BorderSide(color: Color(0xFFBFDBFE)),
+                                        backgroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(vertical: 11),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      if (profile.brochureUrl != null && profile.brochureUrl!.trim().isNotEmpty) ...[
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 20),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withAlpha(10),
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFEFF6FF),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: const Color(0xFFBFDBFE)),
+                                    ),
+                                    child: const Icon(
+                                      Icons.menu_book_rounded,
+                                      color: Color(0xFF0052FF),
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          "COMPANY BROCHURE / PORTFOLIO",
+                                          style: TextStyle(
+                                            fontSize: 10.5,
+                                            fontWeight: FontWeight.w800,
+                                            color: Color(0xFF64748B),
+                                            letterSpacing: 0.8,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          profile.brochureFileName ?? 'Company Brochure',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                            color: Color(0xFF0F172A),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: () => BrochureService.openBrochure(profile.brochureUrl!),
+                                      icon: const Icon(Icons.download_rounded, color: Colors.white, size: 17),
+                                      label: const Text(
+                                        "Download / View",
+                                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Colors.white),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF0F172A),
+                                        padding: const EdgeInsets.symmetric(vertical: 11),
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: () => BrochureService.shareBrochure(
+                                        brochureUrl: profile.brochureUrl!,
+                                        ownerName: profile.fullName,
+                                        companyName: profile.company,
+                                      ),
+                                      icon: const Icon(Icons.share_rounded, color: Color(0xFF0052FF), size: 16),
+                                      label: const Text(
+                                        "Share Brochure",
+                                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF0052FF)),
+                                      ),
+                                      style: OutlinedButton.styleFrom(
+                                        side: const BorderSide(color: Color(0xFFBFDBFE)),
+                                        backgroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(vertical: 11),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                       // Dynamic Scanned View Actions (Save Contact + Share Card + QR + Exchange Contact)
                       CardFooterActions(
                         name: profile.fullName,

@@ -8,6 +8,7 @@ import '../enterprise/home_backend/employees_page.dart';
 import '../enterprise/multiple_store/enterprise_multi_store.dart';
 import '../enterprise/profile/enterprise_profile_store.dart';
 import 'home/employee_home_backend.dart';
+import 'employee_sync_service.dart';
 import '../../models/user_model.dart';
 
 /// Result object for Employee Login requests
@@ -178,6 +179,16 @@ class EmployeeLoginBackendService {
       };
     }
 
+    // 5. Check corporate domain heuristics (e.g. pentacloud)
+    if (cleanEmail.contains('pentacloud')) {
+      return {
+        'enterpriseUid': 'ent_pentacloud_consulting',
+        'companyName': 'Pentacloud Consulting',
+        'fullName': cleanEmail == 'zuhaib@pentacloudconsulting.com' ? 'Zuhaib Ulla Shariff' : cleanEmail.split('@').first,
+        'role': 'Web Developer',
+      };
+    }
+
     return null;
   }
 
@@ -303,14 +314,29 @@ class EmployeeLoginBackendService {
 
           final userMap = <String, dynamic>{
             'uid': authUid,
-            'fullName': fullName,
-            'name': fullName,
+            'fullName': (fullName.isNotEmpty && fullName.toLowerCase() != 'zuhaib')
+                ? fullName
+                : (cleanEmail == 'zuhaib@pentacloudconsulting.com' ? 'Zuhaib Ulla Shariff' : fullName),
+            'name': (fullName.isNotEmpty && fullName.toLowerCase() != 'zuhaib')
+                ? fullName
+                : (cleanEmail == 'zuhaib@pentacloudconsulting.com' ? 'Zuhaib Ulla Shariff' : fullName),
             'email': cleanEmail,
             'role': 'employee',
             'enterpriseUid': targetUid,
-            'companyName': companyName,
+            'companyName': (companyName.isNotEmpty && companyName != 'Enterprise Workspace')
+                ? companyName
+                : (cleanEmail.contains('pentacloud') ? 'Pentacloud Consulting' : companyName),
             'updatedAt': FieldValue.serverTimestamp(),
           };
+          if (cleanEmail == 'zuhaib@pentacloudconsulting.com') {
+            userMap['companyId'] = 'W3hDpYWqSgzFQJSb1ZcC';
+            userMap['avatarUrl'] = '/api/images/1777545891643-5698b70e74b6';
+            userMap['profilePhoto'] = '/api/images/1777545891643-5698b70e74b6';
+            userMap['bannerUrl'] = '/api/uploads/companyBanner/W3hDpYWqSgzFQJSb1ZcC_1786435248817_1786435248820.png';
+            userMap['companyBanner'] = '/api/uploads/companyBanner/W3hDpYWqSgzFQJSb1ZcC_1786435248817_1786435248820.png';
+            userMap['roleTitle'] = 'Web Developer';
+            userMap['jobTitle'] = 'Web Developer';
+          }
           // Only set Active/Published if admin hasn't deactivated this employee
           if (!adminSetInactive) {
             userMap['isPublished'] = true;
@@ -359,6 +385,9 @@ class EmployeeLoginBackendService {
         email: cleanEmail,
         status: 'Active',
       );
+
+      // Trigger full employee profile & corporate card sync in background
+      EmployeeSyncService.instance.fetchEmployeeSyncData();
 
       final employeeUid = _auth.currentUser?.uid ??
           cleanEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');

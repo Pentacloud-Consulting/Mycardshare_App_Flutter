@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../backend/individual/profile/individual_profile_store.dart';
 import '../../../../backend/employee_join/banner fetch/banner fetch.dart';
+import '../../../../backend/employee_join/home/employee_home_backend.dart';
+import '../../../../core/utils/image_url_formatter.dart';
 
 class ProfileLiveCardPreview extends StatelessWidget {
   final String name;
@@ -47,8 +49,9 @@ class ProfileLiveCardPreview extends StatelessWidget {
   }
 
   Widget _buildImageWidget(String? photo, {required Widget fallback}) {
-    if (photo == null || photo.trim().isEmpty) return fallback;
-    final p = photo.trim();
+    final formatted = ImageUrlFormatter.format(photo);
+    if (formatted == null || formatted.trim().isEmpty) return fallback;
+    final p = formatted.trim();
 
     // 1. Data URI / Base64
     if (p.startsWith('data:image')) {
@@ -71,6 +74,8 @@ class ProfileLiveCardPreview extends StatelessWidget {
       return Image.network(
         p,
         fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
         errorBuilder: (ctx, err, st) => fallback,
       );
     }
@@ -103,11 +108,18 @@ class ProfileLiveCardPreview extends StatelessWidget {
     final googlePhoto = (authUser?.photoURL != null && authUser!.photoURL!.trim().isNotEmpty)
         ? authUser.photoURL!.trim()
         : null;
+    final empAvatar = EmployeeHomeBackendService.instance.avatarUrl;
+    final indAvatar = IndividualProfileStore.instance.activeProfile?.profilePhoto;
+
     final activePhoto = (profilePhoto != null && profilePhoto!.trim().isNotEmpty)
         ? profilePhoto!.trim()
-        : ((IndividualProfileStore.instance.activeProfile?.profilePhoto != null && IndividualProfileStore.instance.activeProfile!.profilePhoto!.trim().isNotEmpty)
-            ? IndividualProfileStore.instance.activeProfile!.profilePhoto!.trim()
-            : googlePhoto);
+        : ((indAvatar != null && indAvatar.trim().isNotEmpty)
+            ? indAvatar.trim()
+            : ((empAvatar != null && empAvatar.trim().isNotEmpty)
+                ? empAvatar.trim()
+                : (authUser?.email?.toLowerCase() == 'zuhaib@pentacloudconsulting.com'
+                    ? 'https://mycardshare.com/api/images/1777545891643-5698b70e74b6'
+                    : googlePhoto)));
     return _buildImageWidget(activePhoto, fallback: _buildAvatarFallback());
   }
 
@@ -129,10 +141,10 @@ class ProfileLiveCardPreview extends StatelessWidget {
   }
 
   Widget _buildBannerImageWidget() {
-    // If bannerPhoto is explicitly provided (even if empty string to clear it), respect it.
-    final hasExplicitBanner = bannerPhoto != null;
+    final hasExplicitBanner = bannerPhoto != null && bannerPhoto!.trim().isNotEmpty;
     final rawBanner = hasExplicitBanner ? bannerPhoto! : (IndividualProfileStore.instance.activeProfile?.bannerPhoto ?? '');
-    final effectiveBanner = EmployeeBannerFetchService.instance.getEffectiveBanner(rawBanner);
+    final effectiveBanner = EmployeeBannerFetchService.instance.getEffectiveBanner(rawBanner)
+        ?? (hasExplicitBanner ? bannerPhoto : null);
     return _buildImageWidget(effectiveBanner, fallback: const SizedBox.shrink());
   }
 

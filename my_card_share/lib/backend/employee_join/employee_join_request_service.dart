@@ -6,7 +6,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'email_send_request.dart';
 
 class EmployeeJoinRequestService {
-  static const String baseUrl = "https://mycardshare.com";
+  static const List<String> _hosts = [
+    "https://mycardshare.com",
+    "https://digitalbusinesscloudcard.com",
+  ];
 
   static Future<Map<String, String>> _getHeaders() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -15,6 +18,35 @@ class EmployeeJoinRequestService {
       "Content-Type": "application/json",
       if (token != null && token.isNotEmpty) "Authorization": "Bearer $token",
     };
+  }
+
+  static Future<http.Response?> _sendRequest(
+    String method,
+    String endpoint, {
+    Map<String, dynamic>? body,
+  }) async {
+    final headers = await _getHeaders();
+    final bodyStr = body != null ? jsonEncode(body) : null;
+
+    for (final host in _hosts) {
+      try {
+        final uri = Uri.parse("$host$endpoint");
+        final res = method == 'POST'
+            ? await http
+                .post(uri, headers: headers, body: bodyStr)
+                .timeout(const Duration(seconds: 8))
+            : await http
+                .get(uri, headers: headers)
+                .timeout(const Duration(seconds: 8));
+
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          return res;
+        }
+      } catch (e) {
+        debugPrint("[EmployeeJoinRequestService] $method on $host error: $e");
+      }
+    }
+    return null;
   }
 
   /// 1. BINA INVITE CODE KE SIGNUP: SUBMIT COMPANY WORK EMAIL FOR APPROVAL
@@ -63,40 +95,34 @@ class EmployeeJoinRequestService {
     }
 
     try {
-      final headers = await _getHeaders();
-      final res = await http.post(
-        Uri.parse("$baseUrl/api/sync/employee-join-request"),
-        headers: headers,
-        body: jsonEncode({
-          "action": "submit_join_request",
-          "workEmail": cleanEmail,
-          "fullName": cleanName,
-          "jobTitle": cleanRole,
-          "phone": phone ?? "",
-        }),
-      );
-      final json = jsonDecode(res.body);
-      if (res.statusCode == 200) {
+      final res = await _sendRequest('POST', '/api/sync/employee-join-request', body: {
+        "action": "submit_join_request",
+        "workEmail": cleanEmail,
+        "fullName": cleanName,
+        "jobTitle": cleanRole,
+        "phone": phone ?? "",
+      });
+
+      if (res != null && res.statusCode == 200) {
+        final json = jsonDecode(res.body);
         return json["data"] is Map<String, dynamic> ? json["data"] : {};
-      } else {
+      } else if (res != null) {
+        final json = jsonDecode(res.body);
         return {"error": json["error"] ?? "Failed to match company domain."};
       }
     } catch (e) {
       debugPrint("[JoinRequest] API Error: $e");
-      // Return success if Firestore record was created
-      return {"success": true, "status": "pending"};
     }
+
+    // Return success if Firestore record was created
+    return {"success": true, "status": "pending"};
   }
 
   /// 2. CHECK STATUS (Agar Pending screen par user khada hai)
   static Future<Map<String, dynamic>> checkMyJoinStatus() async {
     try {
-      final headers = await _getHeaders();
-      final res = await http.get(
-        Uri.parse("$baseUrl/api/sync/employee-join-request"),
-        headers: headers,
-      );
-      if (res.statusCode == 200) {
+      final res = await _sendRequest('GET', '/api/sync/employee-join-request');
+      if (res != null && res.statusCode == 200) {
         final json = jsonDecode(res.body);
         return json["data"] is Map<String, dynamic> ? json["data"] : {};
       }
@@ -109,16 +135,11 @@ class EmployeeJoinRequestService {
   /// 3. ENTERPRISE ADMIN ACTION: APPROVE PENDING EMPLOYEE
   static Future<bool> approveEmployeeRequest(String requestId) async {
     try {
-      final headers = await _getHeaders();
-      final res = await http.post(
-        Uri.parse("$baseUrl/api/sync/employee-join-request"),
-        headers: headers,
-        body: jsonEncode({
-          "action": "approve_request",
-          "requestId": requestId,
-        }),
-      );
-      return res.statusCode == 200;
+      final res = await _sendRequest('POST', '/api/sync/employee-join-request', body: {
+        "action": "approve_request",
+        "requestId": requestId,
+      });
+      return res != null && res.statusCode == 200;
     } catch (e) {
       debugPrint("[ApproveEmployee] Error: $e");
       return false;
@@ -128,16 +149,11 @@ class EmployeeJoinRequestService {
   /// 4. ENTERPRISE ADMIN ACTION: REJECT PENDING EMPLOYEE
   static Future<bool> rejectEmployeeRequest(String requestId) async {
     try {
-      final headers = await _getHeaders();
-      final res = await http.post(
-        Uri.parse("$baseUrl/api/sync/employee-join-request"),
-        headers: headers,
-        body: jsonEncode({
-          "action": "reject_request",
-          "requestId": requestId,
-        }),
-      );
-      return res.statusCode == 200;
+      final res = await _sendRequest('POST', '/api/sync/employee-join-request', body: {
+        "action": "reject_request",
+        "requestId": requestId,
+      });
+      return res != null && res.statusCode == 200;
     } catch (e) {
       debugPrint("[RejectEmployee] Error: $e");
       return false;

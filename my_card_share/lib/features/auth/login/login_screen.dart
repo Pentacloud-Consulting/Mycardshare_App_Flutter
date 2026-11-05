@@ -24,6 +24,7 @@ import '../../../backend/app view/app_view_auth_gate.dart';
 import '../../../backend/individual/profile/individual_profile_store.dart';
 import '../../../backend/individual/previews/publish_unpublish.dart';
 import '../../../backend/Global User Directory/global_auth_sync_service.dart';
+import '../../../backend/master_admin/login/master_admin_login.dart';
 import '../back/smart_back_handler.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -57,6 +58,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<String?> _getRoleByEmail(String email) async {
     final cleanEmail = email.trim().toLowerCase();
     try {
+      // 0. Check Master Admin identifiers
+      if (cleanEmail == 'admin@pentcloud.me' ||
+          cleanEmail == 'admin@mycardshare.com' ||
+          cleanEmail == 'master@mycardshare.com') {
+        return 'master-admin';
+      }
+
+      final masterSnap = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: cleanEmail)
+          .limit(1)
+          .get();
+      if (masterSnap.docs.isNotEmpty) {
+        final r = (masterSnap.docs.first.data()['role'] ?? '').toString().toLowerCase().trim();
+        if (r == 'master-admin' || r == 'master_admin' || r == 'super_admin' || r == 'platform_admin') {
+          return 'master-admin';
+        }
+      }
+
       // 1. If currently on Enterprise tab, check enterprises collection first!
       if (_selectedTab == 1) {
         final entSnap = await FirebaseFirestore.instance
@@ -109,6 +129,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<String?> _fetchRegisteredUserRole(String uid) async {
     try {
+      final adminDoc = await FirebaseFirestore.instance.collection('admins').doc(uid).get();
+      if (adminDoc.exists) return 'master-admin';
+
       // 1. Try unified backend sync bridge
       final roleData = await GlobalAuthSyncService.resolveUserRoleOnLogin();
       if (roleData != null && roleData['role'] != null) {
@@ -300,7 +323,55 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
 
     if (_selectedTab == 1) {
-      // â”€â”€ Enterprise: REAL Firebase Auth email/password login â”€â”€
+      final cleanEmail = email.trim().toLowerCase();
+      final isMasterAdminPreCheck = cleanEmail == 'admin@pentcloud.me' ||
+          cleanEmail == 'admin@mycardshare.com' ||
+          cleanEmail == 'master@mycardshare.com' ||
+          preCheckRole == 'master-admin' ||
+          preCheckRole == 'master_admin' ||
+          preCheckRole == 'super_admin' ||
+          preCheckRole == 'platform_admin';
+
+      if (isMasterAdminPreCheck) {
+        final adminResponse = await MasterAdminLoginService.authenticateMasterAdmin(
+          email: email,
+          password: password,
+        );
+
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+
+        if (adminResponse.isSuccess && adminResponse.userModel != null) {
+          ref.read(authProvider.notifier).login(adminResponse.userModel!);
+          await AppViewAuthGate.instance.savePersistentSession(adminResponse.userModel!);
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Row(
+                  children: [
+                    Icon(Icons.verified_user_rounded, color: Colors.white, size: 20),
+                    SizedBox(width: 10),
+                    Text("Logged in as Master Admin"),
+                  ],
+                ),
+                backgroundColor: const Color(0xFF10B981),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            );
+            context.go('/master-admin/dashboard');
+          }
+          return;
+        } else {
+          EnterpriseLoginPopupNotification.showWrongPasswordDialog(
+            context,
+          );
+          return;
+        }
+      }
+
+      // Enterprise: REAL Firebase Auth email/password login
       final result = await EnterpriseAuthService.instance.login(
         email: email,
         password: password,
@@ -314,6 +385,42 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
         // Role verification check
         final registeredRole = await _fetchRegisteredUserRole(fbUser.uid);
+
+        // Check if user is actually Master Admin logging in via Enterprise tab
+        if (registeredRole == 'master-admin' ||
+            registeredRole == 'master_admin' ||
+            registeredRole == 'super_admin' ||
+            registeredRole == 'platform_admin' ||
+            (fbUser.email != null && fbUser.email!.toLowerCase() == 'admin@pentcloud.me') ||
+            (fbUser.email != null && fbUser.email!.toLowerCase() == 'admin@mycardshare.com')) {
+          final user = UserModel(
+            id: fbUser.uid,
+            name: fbUser.displayName ?? 'Master Admin',
+            email: fbUser.email ?? email,
+            role: 'master-admin',
+          );
+          ref.read(authProvider.notifier).login(user);
+          await AppViewAuthGate.instance.savePersistentSession(user);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Row(
+                  children: [
+                    Icon(Icons.verified_user_rounded, color: Colors.white, size: 20),
+                    SizedBox(width: 10),
+                    Text("Logged in as Master Admin"),
+                  ],
+                ),
+                backgroundColor: const Color(0xFF10B981),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            );
+            context.go('/master-admin/dashboard');
+          }
+          return;
+        }
+
         if (registeredRole == 'individual' || (registeredRole != null && registeredRole != 'enterprise' && registeredRole != 'employee')) {
           await FirebaseAuth.instance.signOut();
           ref.read(authProvider.notifier).logout();
@@ -360,6 +467,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         }
 
       } else {
+        // Fallback: check if Master Admin credentials match
+        final adminResponse = await MasterAdminLoginService.authenticateMasterAdmin(
+          email: email,
+          password: password,
+        );
+        if (adminResponse.isSuccess && adminResponse.userModel != null) {
+          ref.read(authProvider.notifier).login(adminResponse.userModel!);
+          await AppViewAuthGate.instance.savePersistentSession(adminResponse.userModel!);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Row(
+                  children: [
+                    Icon(Icons.verified_user_rounded, color: Colors.white, size: 20),
+                    SizedBox(width: 10),
+                    Text("Logged in as Master Admin"),
+                  ],
+                ),
+                backgroundColor: const Color(0xFF10B981),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            );
+            context.go('/master-admin/dashboard');
+          }
+          return;
+        }
+
         final msg = result.message;
         if (msg.contains('No account') || msg.contains('not valid') || msg.contains('not found')) {
           EnterpriseLoginPopupNotification.showEmailNotFoundDialog(
@@ -502,6 +637,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (!mounted) return;
       if (result.isSuccess && result.firebaseUser != null) {
         final fbUser = result.firebaseUser!;
+        final registeredRole = await _fetchRegisteredUserRole(fbUser.uid);
+        if (registeredRole == 'master-admin' ||
+            registeredRole == 'master_admin' ||
+            registeredRole == 'super_admin' ||
+            registeredRole == 'platform_admin' ||
+            (fbUser.email != null && fbUser.email!.toLowerCase() == 'admin@pentcloud.me')) {
+          final user = UserModel(
+            id: fbUser.uid,
+            name: fbUser.displayName ?? 'Master Admin',
+            email: fbUser.email ?? '',
+            role: 'master-admin',
+          );
+          ref.read(authProvider.notifier).login(user);
+          await AppViewAuthGate.instance.savePersistentSession(user);
+          if (mounted) {
+            context.go('/master-admin/dashboard');
+          }
+          return;
+        }
 
         final user = UserModel(
           id: fbUser.uid,
@@ -949,30 +1103,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   const SizedBox(height: 12),
 
-                  // Master Admin Access Link
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "System Administrator? ",
-                        style: AppTextStyles.textTheme.bodyMedium?.copyWith(
-                          fontSize: 13.5,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () => context.push('/master-admin/login'),
-                        child: Text(
-                          "Master Admin Login",
-                          style: AppTextStyles.textTheme.bodyMedium?.copyWith(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF0F172A),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+// Master Admin login unified seamlessly into Enterprise tab
 
                   const SizedBox(height: 24),
                 ],

@@ -6,6 +6,8 @@ class DashboardStatsGrid extends StatelessWidget {
   final String totalIndividuals;
   final String totalLeads;
   final String pendingApprovals;
+  final String? suspendedCompanies;
+  final String? renewalsThisMonth;
 
   const DashboardStatsGrid({
     super.key,
@@ -13,6 +15,8 @@ class DashboardStatsGrid extends StatelessWidget {
     this.totalIndividuals = "0",
     this.totalLeads = "0",
     this.pendingApprovals = "0",
+    this.suspendedCompanies,
+    this.renewalsThisMonth,
   });
 
   @override
@@ -57,7 +61,7 @@ class DashboardStatsGrid extends StatelessWidget {
 
         const SizedBox(height: 14),
 
-        // Bottom Row: Platform Leads & 4th Box (Pending Approvals)
+        // Middle Row: Platform Leads & Pending Approvals
         IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -94,6 +98,45 @@ class DashboardStatsGrid extends StatelessWidget {
             ],
           ),
         ),
+
+        // Row 3 (Matching Web 6-Card Dashboard): Suspended & Renewals
+        if (suspendedCompanies != null || renewalsThisMonth != null) ...[
+          const SizedBox(height: 14),
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _buildStatCard(
+                    context: context,
+                    icon: Icons.cancel_outlined,
+                    iconColor: const Color(0xFFEF4444),
+                    value: suspendedCompanies ?? "0",
+                    label: "Suspended",
+                    badgeText: "Workspaces",
+                    badgeColor: const Color(0xFFEF4444),
+                    badgeBg: const Color(0xFFFEF2F2),
+                    route: '/master-admin/company',
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: _buildStatCard(
+                    context: context,
+                    icon: Icons.calendar_month_rounded,
+                    iconColor: const Color(0xFF06B6D4),
+                    value: renewalsThisMonth ?? "0",
+                    label: "Renewals This Month",
+                    badgeText: "Upcoming",
+                    badgeColor: const Color(0xFF06B6D4),
+                    badgeBg: const Color(0xFFECFEFF),
+                    route: '/master-admin/company',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }

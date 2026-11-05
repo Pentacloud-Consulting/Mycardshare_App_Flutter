@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:my_card_share/backend/app view/app_view_auth_gate.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -12,6 +13,7 @@ import 'package:my_card_share/backend/enterprise/home_backend/overall.dart';
 import 'package:my_card_share/core/utils/app_image_helper.dart';
 import 'enterprise_scanned_card_screen.dart';
 import 'widgets/brand_slug.dart';
+import '../../profile/widgets/profile_resume_card.dart';
 
 /// Enterprise Profile View Card Screen (mirrors Individual Profile View Screen).
 /// Displays real cover banner, company logo, live card preview, and enterprise info.
@@ -586,6 +588,14 @@ class _EnterpriseProfileViewScreenState
                               Icons.location_on_rounded,
                               "Address",
                               address.isEmpty ? "Not provided" : address),
+                          if (profile?.area.isNotEmpty == true) ...[
+                            const Divider(color: Color(0xFFF1F5F9), height: 24),
+                            _buildRow(Icons.map_rounded, "Area / District", profile!.area),
+                          ],
+                          if (profile?.emirate.isNotEmpty == true) ...[
+                            const Divider(color: Color(0xFFF1F5F9), height: 24),
+                            _buildRow(Icons.location_city_rounded, "Emirate / City", profile!.emirate),
+                          ],
                         ],
                       ],
                     ),
@@ -652,8 +662,66 @@ class _EnterpriseProfileViewScreenState
 
                     const SizedBox(height: 24),
 
+// ── Documents (Resume / CV + Company Brochure) ────────────────
+                    ProfileResumeCard(
+                      uid: uid,
+                      currentResumeUrl: profile?.resumeUrl,
+                      currentResumeFileName: profile?.resumeFileName,
+                      candidateName: companyName,
+                      companyOrUserName: companyName,
+                      jobTitle: 'Enterprise Profile',
+                      enterpriseUid: uid,
+                      isEditable: true,
+                      onResumeChanged: (url, fileName) {
+                        if (uid.isNotEmpty) {
+                          EnterpriseProfileStore.instance.loadProfile(uid);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 24),
                     // ── Brand Card Slug & Link Section ────────────────
                     const EnterpriseBrandSlugWidget(),
+
+                    const SizedBox(height: 24),
+
+                    // Login / Log Out Button
+                    Container(
+                      width: double.infinity,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF1F2),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFFDA4AF), width: 1.2),
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () async {
+                            await FirebaseAuth.instance.signOut();
+                            await AppViewAuthGate.instance.clearPersistentSession();
+                            if (context.mounted) {
+                              context.go('/login');
+                            }
+                          },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Icon(Icons.login_rounded, color: Color(0xFFE11D48), size: 20),
+                              SizedBox(width: 8),
+                              Text(
+                                "Log Out to Login Screen",
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFFE11D48),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
 
                     const SizedBox(height: 30),
                   ],

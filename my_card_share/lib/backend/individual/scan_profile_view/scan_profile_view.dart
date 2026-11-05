@@ -20,6 +20,15 @@ class PublicProfileData {
   final String userStatus;
   final String themeColor;
   final List<SocialLinkItem> socialLinks;
+  final String? resumeUrl;
+  final String? resumeFileName;
+  final String? brochureUrl;
+  final String? brochureFileName;
+  final String city;
+  final String country;
+  final String focusAreas;
+  final String experience;
+  final String calendly;
 
   PublicProfileData({
     required this.uid,
@@ -37,6 +46,15 @@ class PublicProfileData {
     this.userStatus = 'Actively Networking',
     this.themeColor = '#0052FF',
     this.socialLinks = const [],
+    this.resumeUrl,
+    this.resumeFileName,
+    this.brochureUrl,
+    this.brochureFileName,
+    this.city = '',
+    this.country = '',
+    this.focusAreas = '',
+    this.experience = '',
+    this.calendly = '',
   });
 
   /// Universal parser to extract social platforms from any data shape:
@@ -183,6 +201,15 @@ class PublicProfileData {
       userStatus: map['userStatus'] ?? map['networkingStatus'] ?? 'Actively Networking',
       themeColor: map['themeColor'] ?? '#0052FF',
       socialLinks: parsedLinks,
+      resumeUrl: map['resumeUrl'],
+      resumeFileName: map['resumeFileName'],
+      brochureUrl: map['brochureUrl'],
+      brochureFileName: map['brochureFileName'],
+      city: map['city'] ?? '',
+      country: map['country'] ?? '',
+      focusAreas: map['focusAreas']?.toString() ?? '',
+      experience: map['experience'] ?? '',
+      calendly: map['calendly'] ?? '',
     );
   }
 
@@ -195,13 +222,23 @@ class PublicProfileData {
       email: profile.email,
       phone: profile.phoneNumber,
       website: profile.websiteUrl,
-      address: '',
+      address: profile.address,
       bio: profile.shortBio,
       avatarUrl: profile.profilePhoto ?? '',
       bannerUrl: profile.bannerPhoto ?? '',
       cardSlug: profile.cardSlug,
       userStatus: profile.networkingStatus,
+      themeColor: profile.themeColor,
       socialLinks: profile.socialLinks,
+      resumeUrl: profile.resumeUrl,
+      resumeFileName: profile.resumeFileName,
+      brochureUrl: profile.brochureUrl,
+      brochureFileName: profile.brochureFileName,
+      city: profile.city,
+      country: profile.country,
+      focusAreas: profile.focusAreas,
+      experience: profile.experience,
+      calendly: profile.calendly,
     );
   }
 }

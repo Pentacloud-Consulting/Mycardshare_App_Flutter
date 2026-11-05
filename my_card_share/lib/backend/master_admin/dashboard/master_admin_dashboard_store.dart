@@ -17,6 +17,11 @@ class MasterAdminDashboardStore extends ChangeNotifier {
   int _totalIndividuals = 0;
   int _totalLeads = 0;
   int _pendingApprovals = 0;
+  int _approvedCompanies = 0;
+  int _suspendedCompanies = 0;
+  int _renewalsThisMonth = 0;
+  int _totalUsers = 0;
+  List<Map<String, dynamic>> _recentActivity = [];
   String _mrr = "\$0";
   bool _isLoading = false;
 
@@ -24,6 +29,11 @@ class MasterAdminDashboardStore extends ChangeNotifier {
   int get totalIndividuals => _totalIndividuals;
   int get totalLeads => _totalLeads;
   int get pendingApprovals => _pendingApprovals;
+  int get approvedCompanies => _approvedCompanies;
+  int get suspendedCompanies => _suspendedCompanies;
+  int get renewalsThisMonth => _renewalsThisMonth;
+  int get totalUsers => _totalUsers;
+  List<Map<String, dynamic>> get recentActivity => _recentActivity;
   String get mrr => _mrr;
   bool get isLoading => _isLoading;
 
@@ -33,19 +43,40 @@ class MasterAdminDashboardStore extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // 0. Try Next.js platform dashboard endpoint (Parallel-optimized web endpoint)
+      try {
+        final platData = await MasterAdminApiClient.get(MasterAdminEndpoints.platformDashboard);
+        if (platData != null && platData is Map<String, dynamic>) {
+          final payload = platData['data'] is Map<String, dynamic> ? platData['data'] : platData;
+          final stats = payload['stats'] is Map<String, dynamic> ? payload['stats'] : null;
+          if (stats != null) {
+            if (stats['totalCompanies'] != null) _totalCompanies = (stats['totalCompanies'] as num).toInt();
+            if (stats['pendingApprovals'] != null) _pendingApprovals = (stats['pendingApprovals'] as num).toInt();
+            if (stats['approvedCompanies'] != null) _approvedCompanies = (stats['approvedCompanies'] as num).toInt();
+            if (stats['suspendedCompanies'] != null) _suspendedCompanies = (stats['suspendedCompanies'] as num).toInt();
+            if (stats['totalLeads'] != null) _totalLeads = (stats['totalLeads'] as num).toInt();
+            if (stats['totalUsers'] != null) _totalUsers = (stats['totalUsers'] as num).toInt();
+            if (stats['renewalsThisMonth'] != null) _renewalsThisMonth = (stats['renewalsThisMonth'] as num).toInt();
+          }
+          if (payload['recentActivity'] is List) {
+            _recentActivity = List<Map<String, dynamic>>.from(payload['recentActivity']);
+          }
+        }
+      } catch (_) {}
+
       // 1. Try Next.js platform sync endpoint
       final syncData = await MasterAdminApiClient.get(MasterAdminEndpoints.masterAdminSync);
       if (syncData != null && syncData is Map<String, dynamic>) {
-        if (syncData['totalCompanies'] != null) {
+        if (syncData['totalCompanies'] != null && _totalCompanies == 0) {
           _totalCompanies = (syncData['totalCompanies'] as num).toInt();
         }
-        if (syncData['totalIndividuals'] != null) {
+        if (syncData['totalIndividuals'] != null && _totalIndividuals == 0) {
           _totalIndividuals = (syncData['totalIndividuals'] as num).toInt();
         }
-        if (syncData['totalLeads'] != null) {
+        if (syncData['totalLeads'] != null && _totalLeads == 0) {
           _totalLeads = (syncData['totalLeads'] as num).toInt();
         }
-        if (syncData['pendingApprovals'] != null) {
+        if (syncData['pendingApprovals'] != null && _pendingApprovals == 0) {
           _pendingApprovals = (syncData['pendingApprovals'] as num).toInt();
         }
         if (syncData['mrr'] != null) {

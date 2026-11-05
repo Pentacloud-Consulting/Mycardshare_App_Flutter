@@ -75,9 +75,7 @@ class _EnterpriseConnectorsScreenState extends State<EnterpriseConnectorsScreen>
                   const SizedBox(height: 16),
 
                   // 2. Custom Webhook URL Card
-                  const ConnectorWebhookCard(
-                    webhookUrl: "https://hooks.zapier.com/hooks/catch/94021/b29x81a",
-                  ),
+                  const ConnectorWebhookCard(),
 
                   const SizedBox(height: 16),
 

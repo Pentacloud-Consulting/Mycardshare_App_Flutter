@@ -26,6 +26,8 @@ class _EnterpriseBrandDetailWidgetState extends State<EnterpriseBrandDetailWidge
   final TextEditingController _websiteController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _areaController = TextEditingController();
+  final TextEditingController _emirateController = TextEditingController();
   final TextEditingController _bioController = TextEditingController();
 
   Color _selectedColor = const Color(0xFF0052FF);
@@ -103,6 +105,8 @@ class _EnterpriseBrandDetailWidgetState extends State<EnterpriseBrandDetailWidge
     _websiteController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
+    _areaController.dispose();
+    _emirateController.dispose();
     _bioController.dispose();
     super.dispose();
   }
@@ -125,6 +129,8 @@ class _EnterpriseBrandDetailWidgetState extends State<EnterpriseBrandDetailWidge
       website: _websiteController.text.trim(),
       phoneNumber: _phoneController.text.trim(),
       address: _addressController.text.trim(),
+      area: _areaController.text.trim(),
+      emirate: _emirateController.text.trim(),
       shortBio: _bioController.text.trim(),
       brandColor: colorHex,
       templateId: _selectedTemplateId,
@@ -280,6 +286,28 @@ class _EnterpriseBrandDetailWidgetState extends State<EnterpriseBrandDetailWidge
                 label: "Office Address",
                 hint: "123 Corporate Way, Suite 200",
                 icon: Icons.location_on_rounded,
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildInputField(
+                      controller: _areaController,
+                      label: "Area / District",
+                      hint: "e.g. Business Bay",
+                      icon: Icons.map_rounded,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildInputField(
+                      controller: _emirateController,
+                      label: "Emirate / City",
+                      hint: "e.g. Dubai",
+                      icon: Icons.location_city_rounded,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

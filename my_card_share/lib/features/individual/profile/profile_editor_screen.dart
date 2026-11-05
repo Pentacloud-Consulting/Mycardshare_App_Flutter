@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/utils/image_url_formatter.dart';
 import '../../../backend/individual/profile/individual_profile_store.dart';
 import '../../../backend/individual/profile/image_upload_service.dart';
 import '../../../backend/individual/multiple_store/individual_multi_store.dart';
@@ -9,6 +10,8 @@ import '../../../backend/individual/qr_scan/slug_validator.dart';
 import '../../../backend/individual/qr_scan/slug_backend_service.dart';
 import 'widgets/profile_basic_info.dart';
 import 'widgets/profile_contact_details.dart';
+import 'widgets/profile_location_details.dart';
+import '../../profile/widgets/profile_resume_card.dart';
 import 'widgets/profile_live_card_preview.dart';
 import 'widgets/profile_slug_section.dart';
 import 'widgets/profile_social_links.dart';
@@ -37,6 +40,12 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
   late TextEditingController _websiteController;
 
   late TextEditingController _slugController;
+  late TextEditingController _cityController;
+  late TextEditingController _countryController;
+  late TextEditingController _addressController;
+  late TextEditingController _focusAreasController;
+  late TextEditingController _experienceController;
+  late TextEditingController _calendlyController;
 
   late List<SocialLinkItem> _socialLinks;
   late String _uid;
@@ -54,11 +63,12 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
     _uid = fbUser?.uid ?? active?.uid ?? storedUser?.id ?? 'user_${DateTime.now().millisecondsSinceEpoch}';
     PublishUnpublishService.instance.loadPublishStatus(_uid);
     _selectedTemplateIndex = IndividualProfileStore.getTemplateIndex(active?.templateStyle);
-    _bannerImagePath = active?.bannerPhoto;
+    _bannerImagePath = ImageUrlFormatter.format(active?.bannerPhoto);
     final fbPhoto = fbUser?.photoURL?.trim();
-    _profileImagePath = (active?.profilePhoto != null && active!.profilePhoto!.trim().isNotEmpty)
+    final rawProfilePhoto = (active?.profilePhoto != null && active!.profilePhoto!.trim().isNotEmpty)
         ? active.profilePhoto!.trim()
         : ((fbPhoto != null && fbPhoto.isNotEmpty) ? fbPhoto : null);
+    _profileImagePath = ImageUrlFormatter.format(rawProfilePhoto);
 
     _nameController = TextEditingController(text: active?.fullName ?? storedUser?.fullName ?? "");
     _roleController = TextEditingController(text: active?.jobTitle ?? "");
@@ -71,6 +81,12 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
     _emailController = TextEditingController(text: active?.email ?? storedUser?.email ?? "");
     _websiteController = TextEditingController(text: active?.websiteUrl ?? "");
 
+    _cityController = TextEditingController(text: active?.city ?? "");
+    _countryController = TextEditingController(text: active?.country ?? "");
+    _addressController = TextEditingController(text: active?.address ?? "");
+    _focusAreasController = TextEditingController(text: active?.focusAreas ?? "");
+    _experienceController = TextEditingController(text: active?.experience ?? "");
+    _calendlyController = TextEditingController(text: active?.calendly ?? "");
     _slugController = TextEditingController(
       text: active?.cardSlug ?? IndividualProfileStore.generateCardSlug(_nameController.text),
     );
@@ -96,6 +112,12 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
     _emailController.dispose();
     _websiteController.dispose();
     _slugController.dispose();
+    _cityController.dispose();
+    _countryController.dispose();
+    _addressController.dispose();
+    _focusAreasController.dispose();
+    _experienceController.dispose();
+    _calendlyController.dispose();
     super.dispose();
   }
 
@@ -540,6 +562,12 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
       companyName: _companyController.text.trim(),
       shortBio: _bioController.text.trim(),
       networkingStatus: 'Actively Networking',
+      city: _cityController.text.trim(),
+      country: _countryController.text.trim(),
+      address: _addressController.text.trim(),
+      focusAreas: _focusAreasController.text.trim(),
+      experience: _experienceController.text.trim(),
+      calendly: _calendlyController.text.trim(),
     );
 
     // ── 4. Sync updated slug + profile to MongoDB so web QR page stays live ──
@@ -553,6 +581,12 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
       'companyName': _companyController.text.trim(),
       'avatarUrl': uploadedAvatarUrl ?? '',
       'bannerUrl': uploadedBannerUrl ?? '',
+      'city': _cityController.text.trim(),
+      'country': _countryController.text.trim(),
+      'address': _addressController.text.trim(),
+      'focusAreas': _focusAreasController.text.trim(),
+      'experience': _experienceController.text.trim(),
+      'calendly': _calendlyController.text.trim(),
       'socialLinks': _socialLinks
           .map((l) => {'platform': l.platform, 'url': l.url})
           .toList(),
@@ -788,6 +822,40 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
                 phoneController: _phoneController,
                 emailController: _emailController,
                 websiteController: _websiteController,
+              ),
+
+              const SizedBox(height: 20),
+
+              // Location & Professional Details (Synced with Web)
+              ProfileLocationDetails(
+                cityController: _cityController,
+                countryController: _countryController,
+                addressController: _addressController,
+                focusAreasController: _focusAreasController,
+                experienceController: _experienceController,
+                calendlyController: _calendlyController,
+              ),
+
+              const SizedBox(height: 20),
+
+              // Unified Documents (Resume / CV + Company Brochure) Card
+              ProfileResumeCard(
+                uid: _uid,
+                candidateName: _nameController.text.trim().isNotEmpty
+                    ? _nameController.text.trim()
+                    : 'Candidate',
+                companyOrUserName: _companyController.text.trim().isNotEmpty
+                    ? _companyController.text.trim()
+                    : (_nameController.text.trim().isNotEmpty
+                        ? _nameController.text.trim()
+                        : 'Business'),
+                jobTitle: _roleController.text.trim(),
+                currentResumeUrl: IndividualProfileStore.instance.activeProfile?.resumeUrl,
+                currentResumeFileName: IndividualProfileStore.instance.activeProfile?.resumeFileName,
+                currentBrochureUrl: IndividualProfileStore.instance.activeProfile?.brochureUrl,
+                currentBrochureFileName: IndividualProfileStore.instance.activeProfile?.brochureFileName,
+                onResumeChanged: (url, fileName) => setState(() {}),
+                onBrochureChanged: (url, fileName) => setState(() {}),
               ),
 
               const SizedBox(height: 20),

@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../lead/active_lead.dart';
 import 'individual_metrics_store.dart';
 import '../profile/individual_profile_store.dart';
+import '../api_service.dart';
 
 /// Backend service to manage, fetch, and count real leads for a user.
 class UserLeadsService extends ChangeNotifier {
@@ -183,6 +184,36 @@ class UserLeadsService extends ChangeNotifier {
 
     try {
       final List<LeadData> fetched = [];
+
+      // 0. Fetch MongoDB leads from Next.js API (/api/sync/individual)
+      try {
+        final apiRes = await IndividualApiService.get('/api/sync/individual');
+        if (apiRes['success'] == true && apiRes['data']?['leads'] is List) {
+          for (final l in apiRes['data']['leads']) {
+            if (l is Map<String, dynamic>) {
+              final leadId = (l['leadId'] ?? l['id'] ?? '').toString();
+              if (leadId.isNotEmpty) {
+                fetched.add(LeadData(
+                  id: leadId,
+                  targetUid: effectiveUid,
+                  name: (l['name'] ?? l['fullName'] ?? 'Contact').toString(),
+                  email: (l['email'] ?? '').toString(),
+                  phone: (l['phone'] ?? '').toString(),
+                  company: (l['company'] ?? l['companyName'] ?? '').toString(),
+                  notes: (l['note'] ?? l['notes'] ?? '').toString(),
+                  status: 'New',
+                  createdAt: l['capturedAt'] != null
+                      ? DateTime.tryParse(l['capturedAt'].toString()) ?? DateTime.now()
+                      : DateTime.now(),
+                ));
+              }
+            }
+          }
+          debugPrint('[UserLeadsService] Synced ${apiRes['data']['leads'].length} leads from MongoDB via /api/sync/individual');
+        }
+      } catch (syncErr) {
+        debugPrint('[UserLeadsService] /api/sync/individual leads note: $syncErr');
+      }
 
       // 1. Check user personal leads subcollection
       if (effectiveUid.isNotEmpty) {

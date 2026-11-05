@@ -17,7 +17,7 @@ class MasterAdminLoginScreen extends ConsumerStatefulWidget {
 
 class _MasterAdminLoginScreenState extends ConsumerState<MasterAdminLoginScreen> {
   final TextEditingController _emailController =
-      TextEditingController(text: "admin@mycardshare.com");
+      TextEditingController(text: "admin@pentcloud.me");
   final TextEditingController _passwordController =
       TextEditingController(text: "admin123");
   bool _obscurePassword = true;

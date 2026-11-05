@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../backend/individual/vault/contact_duplicate_service.dart';
+import '../backend/individual/api_service.dart';
 
 class VaultNotifier extends StateNotifier<List<Map<String, String>>> {
   VaultNotifier() : super([]) {
@@ -12,6 +13,31 @@ class VaultNotifier extends StateNotifier<List<Map<String, String>>> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null || uid.isEmpty) return;
 
+    final List<Map<String, String>> loaded = [];
+
+    // 0. Fetch MongoDB vault cards from Next.js API (/api/sync/individual)
+    try {
+      final apiRes = await IndividualApiService.get('/api/sync/individual');
+      if (apiRes['success'] == true && apiRes['data']?['vault'] is List) {
+        for (final v in apiRes['data']['vault']) {
+          if (v is Map<String, dynamic>) {
+            loaded.add({
+              'id': (v['id'] ?? '').toString(),
+              'name': (v['contactName'] ?? 'Contact').toString(),
+              'role': (v['jobTitle'] ?? '').toString(),
+              'company': (v['company'] ?? '').toString(),
+              'phone': (v['phone'] ?? '').toString(),
+              'email': (v['email'] ?? '').toString(),
+              'website': '',
+              'address': '',
+              'dateAdded': 'Recently',
+              'tag': 'Web Sync',
+            });
+          }
+        }
+      }
+    } catch (_) {}
+
     try {
       final snapshot = await FirebaseFirestore.instance
           .collection('users')
@@ -20,9 +46,9 @@ class VaultNotifier extends StateNotifier<List<Map<String, String>>> {
           .get();
 
       if (snapshot.docs.isNotEmpty) {
-        final loaded = snapshot.docs.map((doc) {
+        for (final doc in snapshot.docs) {
           final data = doc.data();
-          return {
+          loaded.add({
             'id': doc.id,
             'name': (data['name'] as String?) ?? 'Contact',
             'role': (data['role'] as String?) ?? 'Role',
@@ -33,14 +59,15 @@ class VaultNotifier extends StateNotifier<List<Map<String, String>>> {
             'address': (data['address'] as String?) ?? '',
             'dateAdded': 'Just now',
             'tag': (data['tag'] as String?) ?? 'OCR',
-          };
-        }).toList();
+          });
+        }
+      }
 
-        // 🛡️ Automatic Deduplication: Clean up any duplicate contacts
+      state = ContactDuplicateService.deduplicateContactsList(loaded);
+    } catch (e) {
+      if (loaded.isNotEmpty) {
         state = ContactDuplicateService.deduplicateContactsList(loaded);
       }
-    } catch (e) {
-      // Non-fatal
     }
   }
 

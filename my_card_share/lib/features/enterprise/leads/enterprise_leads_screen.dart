@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:share_plus/share_plus.dart';
 
 import 'widgets/leads_stats_row.dart';
 import 'widgets/leads_search_filter.dart';
@@ -22,6 +26,76 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
   String _searchQuery = "";
   String _selectedFilter = "All";
   DateTimeRange? _selectedDateRange;
+
+  @override
+  void initState() {
+    super.initState();
+    // Dual-sync: pull web-captured MongoDB leads in the background
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      EnterpriseLeadsService.instance.syncLeadsFromApi(uid);
+    }
+  }
+
+  Future<void> _exportCsv() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('enterprises')
+          .doc(uid)
+          .collection('leads')
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      if (snap.docs.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("No leads available to export."),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+
+      final buffer = StringBuffer();
+      buffer.writeln("Name,Mobile,Email,Nationality,Budget,Property,Source,Date");
+
+      for (final doc in snap.docs) {
+        final d = doc.data();
+        final name = (d['name'] ?? d['fullName'] ?? '').toString().replaceAll(',', ' ');
+        final phone = (d['phone'] ?? d['mobile'] ?? '').toString().replaceAll(',', ' ');
+        final email = (d['email'] ?? '').toString().replaceAll(',', ' ');
+        final nat = (d['nationality'] ?? '').toString().replaceAll(',', ' ');
+        final budget = (d['budgetRange'] ?? '').toString().replaceAll(',', ' ');
+        final prop = (d['propertyType'] ?? '').toString().replaceAll(',', ' ');
+        final src = (d['source'] ?? 'mobile').toString().replaceAll(',', ' ');
+        final date = (d['createdAt'] is Timestamp)
+            ? (d['createdAt'] as Timestamp).toDate().toIso8601String().split('T').first
+            : '';
+
+        buffer.writeln("$name,$phone,$email,$nat,$budget,$prop,$src,$date");
+      }
+
+      final bytes = Uint8List.fromList(utf8.encode(buffer.toString()));
+      final xFile = XFile.fromData(
+        bytes,
+        name: 'enterprise_leads.csv',
+        mimeType: 'text/csv',
+      );
+      await Share.shareXFiles([xFile], text: 'Exported Enterprise Leads');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Failed to export leads: $e"),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
 
   @override
   void dispose() {
@@ -331,6 +405,36 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Header Row: Title & Download CSV
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Lead Center",
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0F172A),
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: "Export CSV",
+                        onPressed: _exportCsv,
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFF0052FF),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: const BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                        ),
+                        icon: const Icon(Icons.file_download_outlined, size: 20),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
                   // 1. Real Lead Stats Row (Total, This Week, Sync Failed)
                   StreamBuilder<EnterpriseLeadStats>(
                     stream: EnterpriseLeadsService.instance.streamLeadStats(uid, _selectedDateRange),

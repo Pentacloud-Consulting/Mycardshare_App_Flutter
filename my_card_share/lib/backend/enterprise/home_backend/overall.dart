@@ -1,7 +1,9 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
+import '../../individual/api_service.dart';
 import '../profile/enterprise_profile_store.dart';
 
 /// Data container for enterprise overall metrics.
@@ -71,7 +73,7 @@ class EnterpriseOverallService {
           .get();
 
       final docs = empSnapshot.docs;
-      final totalEmp = docs.length;
+      int totalEmp = docs.length;
 
       int activeEmp = 0;
       int employeeViewsSum = 0;
@@ -105,7 +107,23 @@ class EnterpriseOverallService {
       } catch (_) {}
 
       // Total card views is the real sum of enterprise card views and employee card views
-      final int totalViewsSum = entProfileViews > 0 ? entProfileViews : employeeViewsSum;
+      int totalViewsSum = entProfileViews > 0 ? entProfileViews : employeeViewsSum;
+
+      // Dual-sync: Query MongoDB live metrics from /api/company/stats
+      try {
+        final apiStats = await IndividualApiService.get('/api/company/stats');
+        if (apiStats != null) {
+          final apiViews = (apiStats['totalViews'] as num?)?.toInt() ?? 0;
+          final apiLeads = (apiStats['leadsCount'] as num?)?.toInt() ?? 0;
+          final apiEmployees = (apiStats['employeeCount'] as num?)?.toInt() ?? 0;
+          final apiActive = (apiStats['activeCards'] as num?)?.toInt() ?? 0;
+
+          if (apiViews > totalViewsSum) totalViewsSum = apiViews;
+          if (apiLeads > leadsSum) leadsSum = apiLeads;
+          if (apiEmployees > totalEmp) totalEmp = apiEmployees;
+          if (apiActive > activeEmp) activeEmp = apiActive;
+        }
+      } catch (_) {}
 
       // Format conversion rate
       final double rate =

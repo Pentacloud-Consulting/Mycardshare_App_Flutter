@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../../core/utils/image_url_formatter.dart';
+import '../../../../backend/employee_join/banner fetch/banner fetch.dart';
 
 class CardHeaderBanner extends StatelessWidget {
   final String name;
@@ -47,8 +49,9 @@ class CardHeaderBanner extends StatelessWidget {
   }
 
   Widget _buildImageWidget(String? photo, {required Widget fallback}) {
-    if (photo == null || photo.trim().isEmpty) return fallback;
-    final p = photo.trim();
+    final formatted = ImageUrlFormatter.format(photo);
+    if (formatted == null || formatted.trim().isEmpty) return fallback;
+    final p = formatted.trim();
 
     if (p.startsWith('data:image')) {
       try {
@@ -58,6 +61,8 @@ class CardHeaderBanner extends StatelessWidget {
         return Image.memory(
           bytes,
           fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
           errorBuilder: (ctx, err, st) => fallback,
         );
       } catch (_) {
@@ -66,7 +71,13 @@ class CardHeaderBanner extends StatelessWidget {
     }
 
     if (p.startsWith('http://') || p.startsWith('https://')) {
-      return Image.network(p, fit: BoxFit.cover, errorBuilder: (ctx, err, st) => fallback);
+      return Image.network(
+        p,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (ctx, err, st) => fallback,
+      );
     }
 
     if (p.startsWith('assets/') || p.startsWith('asset/')) {
@@ -86,8 +97,8 @@ class CardHeaderBanner extends StatelessWidget {
     return fallback;
   }
 
-  Widget _buildBannerImage() {
-    return _buildImageWidget(bannerUrl ?? bannerAsset, fallback: const SizedBox.shrink());
+  Widget _buildBannerImage(String? effectiveBanner) {
+    return _buildImageWidget(effectiveBanner, fallback: const SizedBox.shrink());
   }
 
   Widget _buildAvatarImage() {
@@ -124,8 +135,14 @@ class CardHeaderBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final uppercaseStatus = status.toUpperCase();
     final gradientColors = _getGradientForTemplate(selectedTemplateIndex);
-    final photo = bannerUrl ?? bannerAsset;
-    final hasBannerImage = photo != null && photo.isNotEmpty;
+    
+    // Resolve effective banner URL: direct banner -> banner asset -> enterprise brand banner / logo
+    final effectiveBanner = (bannerUrl != null && bannerUrl!.trim().isNotEmpty)
+        ? bannerUrl!.trim()
+        : ((bannerAsset != null && bannerAsset!.trim().isNotEmpty)
+            ? bannerAsset!.trim()
+            : EmployeeBannerFetchService.instance.getEffectiveBanner(null));
+    final hasBannerImage = effectiveBanner != null && effectiveBanner.isNotEmpty;
 
     return Column(
       children: [
@@ -140,7 +157,7 @@ class CardHeaderBanner extends StatelessWidget {
                 height: 160,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(24),
                   gradient: LinearGradient(
                     colors: gradientColors,
                     begin: Alignment.topLeft,
@@ -157,49 +174,48 @@ class CardHeaderBanner extends StatelessWidget {
                 child: Stack(
                   children: [
                     // Full-width Banner Graphic Overlay
-                    Positioned.fill(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: _buildBannerImage(),
-                      ),
-                    ),
-
-                    // Gradient Mask: Dark vignette if custom image present, subtle match if template
                     if (hasBannerImage)
                       Positioned.fill(
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.black.withValues(alpha: 0.60),
-                                  Colors.black.withValues(alpha: 0.20),
-                                  Colors.transparent,
-                                ],
-                                begin: Alignment.centerLeft,
-                                end: Alignment.centerRight,
-                              ),
+                          borderRadius: BorderRadius.circular(24),
+                          child: _buildBannerImage(effectiveBanner),
+                        ),
+                      ),
+
+                    // Clean white bottom fade overlay matching Web
+                    Positioned.fill(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.transparent,
+                                Colors.white.withValues(alpha: hasBannerImage ? 0.35 : 0.0),
+                                Colors.white.withValues(alpha: hasBannerImage ? 0.85 : 0.0),
+                              ],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
                             ),
                           ),
                         ),
                       ),
+                    ),
 
-
-
-                    // Floating Badge Top Right
+                    // Floating Badge Top Right (ACTIVELY NETWORKING)
                     Positioned(
-                      top: 12,
-                      right: 12,
+                      top: 14,
+                      right: 14,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5.5),
                         decoration: BoxDecoration(
-                          color: isPublished ? Colors.white : const Color(0xFFFEF9C3),
+                          color: Colors.white.withValues(alpha: 0.92),
                           borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.6)),
                           boxShadow: const [
                             BoxShadow(
-                              color: Color(0x12000000),
-                              blurRadius: 6,
+                              color: Color(0x14000000),
+                              blurRadius: 8,
                               offset: Offset(0, 2),
                             ),
                           ],
@@ -210,19 +226,25 @@ class CardHeaderBanner extends StatelessWidget {
                             Container(
                               width: 8,
                               height: 8,
-                              decoration: BoxDecoration(
-                                color: isPublished ? const Color(0xFF16A34A) : const Color(0xFFEAB308),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF10B981),
                                 shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Color(0x6610B981),
+                                    blurRadius: 6,
+                                  ),
+                                ],
                               ),
                             ),
                             const SizedBox(width: 6),
                             Text(
                               isPublished ? uppercaseStatus : "INACTIVE",
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.5,
-                                color: isPublished ? const Color(0xFF0066FF) : const Color(0xFFA16207),
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.8,
+                                color: Color(0xFF10B981),
                               ),
                             ),
                           ],
@@ -247,8 +269,8 @@ class CardHeaderBanner extends StatelessWidget {
                       border: Border.all(color: Colors.white, width: 4),
                       boxShadow: const [
                         BoxShadow(
-                          color: Color(0x20000000),
-                          blurRadius: 14,
+                          color: Color(0x22000000),
+                          blurRadius: 16,
                           offset: Offset(0, 6),
                         ),
                       ],
@@ -270,8 +292,8 @@ class CardHeaderBanner extends StatelessWidget {
           name,
           textAlign: TextAlign.center,
           style: const TextStyle(
-            fontSize: 26,
-            fontWeight: FontWeight.w800,
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
             color: Color(0xFF0F172A),
             letterSpacing: -0.5,
           ),
@@ -281,24 +303,42 @@ class CardHeaderBanner extends StatelessWidget {
           role,
           textAlign: TextAlign.center,
           style: const TextStyle(
-            fontSize: 15,
+            fontSize: 14.5,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF0066FF),
-          ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          company,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 14,
             color: Color(0xFF64748B),
-            fontWeight: FontWeight.w500,
           ),
         ),
+        if (company.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                margin: const EdgeInsets.only(right: 6),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF6366F1),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              Flexible(
+                child: Text(
+                  company.toUpperCase(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF4F46E5),
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
 }
-
-

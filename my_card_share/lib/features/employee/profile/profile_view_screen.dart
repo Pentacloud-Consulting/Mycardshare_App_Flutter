@@ -485,7 +485,7 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                 candidateName: name,
                 jobTitle: role,
                 enterpriseUid: EmployeeHomeBackendService.instance.enterpriseUid,
-                isEditable: true,
+                isEditable: false,
                 onResumeChanged: (url, fileName) {
                   IndividualProfileStore.instance.loadProfile(
                     activeProfile?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? '',

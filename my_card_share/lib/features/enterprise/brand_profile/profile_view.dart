@@ -671,7 +671,7 @@ class _EnterpriseProfileViewScreenState
                       companyOrUserName: companyName,
                       jobTitle: 'Enterprise Profile',
                       enterpriseUid: uid,
-                      isEditable: true,
+                      isEditable: false,
                       onResumeChanged: (url, fileName) {
                         if (uid.isNotEmpty) {
                           EnterpriseProfileStore.instance.loadProfile(uid);

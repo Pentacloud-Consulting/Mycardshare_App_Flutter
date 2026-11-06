@@ -511,16 +511,34 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
                           children: [
                             DropdownButtonHideUnderline(
                               child: DropdownButton<String>(
-                                value: item.platform,
+                                value: () {
+                                  const allowed = [
+                                    'LinkedIn',
+                                    'Instagram',
+                                    'WhatsApp',
+                                    'GitHub',
+                                    'X (Twitter)',
+                                    'YouTube',
+                                    'Pinterest',
+                                    'Telegram',
+                                  ];
+                                  if (allowed.contains(item.platform)) return item.platform;
+                                  final lower = item.platform.trim().toLowerCase();
+                                  if (lower.contains('twitter') || lower == 'x') return 'X (Twitter)';
+                                  return allowed.firstWhere(
+                                    (p) => p.toLowerCase() == lower,
+                                    orElse: () => allowed.first,
+                                  );
+                                }(),
                                 dropdownColor: Colors.white,
                                 borderRadius: BorderRadius.circular(14),
                                 icon: const Icon(Icons.arrow_drop_down_rounded, color: Color(0xFF0052FF)),
-                                items: [
+                                items: const [
                                   'LinkedIn',
                                   'Instagram',
                                   'WhatsApp',
                                   'GitHub',
-                                  'Twitter / X',
+                                  'X (Twitter)',
                                   'YouTube',
                                   'Pinterest',
                                   'Telegram',

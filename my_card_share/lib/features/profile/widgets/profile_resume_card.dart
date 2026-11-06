@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../backend/individual/profile/individual_profile_store.dart';
 import '../../../backend/resume/resume_service.dart';
 import '../../../backend/brochure/brochure_service.dart';
+import '../screens/document_viewer_screen.dart';
 
 /// Custom Painter for dashed outline buttons matching the Web Documents design
 class DashedRectPainter extends CustomPainter {
@@ -152,6 +154,10 @@ class _ProfileResumeCardState extends State<ProfileResumeCard> {
             setState(() => _resumeUploadProgress = progress);
           }
         },
+      ).timeout(
+        const Duration(seconds: 45),
+        onTimeout: () => throw TimeoutException(
+            'Upload timed out. Please check your connection and try again.'),
       );
 
       await ResumeService.instance.saveResumeToFirestore(
@@ -188,6 +194,18 @@ class _ProfileResumeCardState extends State<ProfileResumeCard> {
             behavior: SnackBarBehavior.floating,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } on TimeoutException {
+      if (mounted) {
+        setState(() => _isUploadingResume = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'Upload timed out. Check your internet connection and try again.'),
+            backgroundColor: Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -282,7 +300,16 @@ class _ProfileResumeCardState extends State<ProfileResumeCard> {
 
   void _openResume() {
     if (_resumeUrl != null && _resumeUrl!.isNotEmpty) {
-      ResumeService.openResume(_resumeUrl!);
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => DocumentViewerScreen(
+            title: "Resume / CV",
+            documentUrl: _resumeUrl!,
+            fileName: _resumeFileName ?? "Resume.pdf",
+            onShare: _shareResume,
+          ),
+        ),
+      );
     }
   }
 
@@ -315,6 +342,10 @@ class _ProfileResumeCardState extends State<ProfileResumeCard> {
             setState(() => _brochureUploadProgress = p);
           }
         },
+      ).timeout(
+        const Duration(seconds: 45),
+        onTimeout: () => throw TimeoutException(
+            'Upload timed out. Please check your connection and try again.'),
       );
 
       await BrochureService.instance.saveBrochureToFirestore(
@@ -349,6 +380,18 @@ class _ProfileResumeCardState extends State<ProfileResumeCard> {
             behavior: SnackBarBehavior.floating,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } on TimeoutException {
+      if (mounted) {
+        setState(() => _isUploadingBrochure = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'Upload timed out. Check your internet connection and try again.'),
+            backgroundColor: Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -441,7 +484,16 @@ class _ProfileResumeCardState extends State<ProfileResumeCard> {
 
   void _openBrochure() {
     if (_brochureUrl != null && _brochureUrl!.isNotEmpty) {
-      BrochureService.openBrochure(_brochureUrl!);
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => DocumentViewerScreen(
+            title: "Company Brochure",
+            documentUrl: _brochureUrl!,
+            fileName: _brochureFileName ?? "Brochure.pdf",
+            onShare: _shareBrochure,
+          ),
+        ),
+      );
     }
   }
 
@@ -456,6 +508,10 @@ class _ProfileResumeCardState extends State<ProfileResumeCard> {
 
   @override
   Widget build(BuildContext context) {
+    final hasResume = _resumeUrl != null && _resumeUrl!.trim().isNotEmpty;
+    final hasBrochure = _brochureUrl != null && _brochureUrl!.trim().isNotEmpty;
+    final hasAnyDocument = hasResume || hasBrochure;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -500,48 +556,102 @@ class _ProfileResumeCardState extends State<ProfileResumeCard> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          const Text(
-            "Upload your resume or company brochure (PDF, DOC, DOCX — max 50MB). These will be visible and downloadable on your public card.",
-            style: TextStyle(
+          const SizedBox(height: 6),
+          Text(
+            widget.isEditable
+                ? "Upload your resume or company brochure (PDF, DOC, DOCX — max 50MB). These will be visible and downloadable on your public card."
+                : "Documents visible and downloadable on your public card.",
+            style: const TextStyle(
               fontSize: 12,
-              color: Color(0xFF2563EB),
+              color: Color(0xFF64748B),
               height: 1.4,
             ),
           ),
           const SizedBox(height: 16),
 
-          // 1. Resume / CV Sub-card
-          _buildDocumentItem(
-            title: "Resume / CV",
-            icon: Icons.description_outlined,
-            fileUrl: _resumeUrl,
-            fileName: _resumeFileName,
-            isUploading: _isUploadingResume,
-            uploadProgress: _resumeUploadProgress,
-            uploadButtonText: "Upload Resume",
-            onUpload: _pickAndUploadResume,
-            onOpen: _openResume,
-            onShare: _shareResume,
-            onDelete: _removeResume,
-          ),
+          // In View Mode: If neither resume nor brochure is added, show clean empty state
+          if (!widget.isEditable && !hasAnyDocument) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.folder_open_rounded,
+                        size: 22,
+                        color: Color(0xFF2563EB),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    "You have not added resume or brochure yet",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    "You can upload your documents anytime from Edit Profile.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
+            // 1. Resume / CV Sub-card
+            _buildDocumentItem(
+              title: "Resume / CV",
+              icon: Icons.description_outlined,
+              fileUrl: _resumeUrl,
+              fileName: _resumeFileName,
+              isUploading: _isUploadingResume,
+              uploadProgress: _resumeUploadProgress,
+              uploadButtonText: "Upload Resume",
+              onUpload: _pickAndUploadResume,
+              onOpen: _openResume,
+              onShare: _shareResume,
+              onDelete: _removeResume,
+            ),
 
-          const SizedBox(height: 12),
+            const SizedBox(height: 12),
 
-          // 2. Company Brochure Sub-card
-          _buildDocumentItem(
-            title: "Company Brochure",
-            icon: Icons.menu_book_outlined,
-            fileUrl: _brochureUrl,
-            fileName: _brochureFileName,
-            isUploading: _isUploadingBrochure,
-            uploadProgress: _brochureUploadProgress,
-            uploadButtonText: "Upload Brochure",
-            onUpload: _pickAndUploadBrochure,
-            onOpen: _openBrochure,
-            onShare: _shareBrochure,
-            onDelete: _removeBrochure,
-          ),
+            // 2. Company Brochure Sub-card
+            _buildDocumentItem(
+              title: "Company Brochure",
+              icon: Icons.menu_book_outlined,
+              fileUrl: _brochureUrl,
+              fileName: _brochureFileName,
+              isUploading: _isUploadingBrochure,
+              uploadProgress: _brochureUploadProgress,
+              uploadButtonText: "Upload Brochure",
+              onUpload: _pickAndUploadBrochure,
+              onOpen: _openBrochure,
+              onShare: _shareBrochure,
+              onDelete: _removeBrochure,
+            ),
+          ],
         ],
       ),
     );
@@ -562,6 +672,75 @@ class _ProfileResumeCardState extends State<ProfileResumeCard> {
   }) {
     final hasFile = fileUrl != null && fileUrl.trim().isNotEmpty;
 
+    // In View Mode (not editable) when this specific file is not added
+    if (!hasFile && !widget.isEditable) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Center(
+                child: Icon(icon, color: const Color(0xFF94A3B8), size: 20),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF475569),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    "Not added yet",
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: Color(0xFF94A3B8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+              ),
+              child: const Text(
+                "Not Added",
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -574,106 +753,150 @@ class _ProfileResumeCardState extends State<ProfileResumeCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 42,
+                height: 42,
                 decoration: BoxDecoration(
                   color: const Color(0xFFEFF6FF),
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFDBEAFE), width: 0.8),
                 ),
                 child: Center(
-                  child: Icon(icon, color: const Color(0xFF2563EB), size: 20),
+                  child: Icon(icon, color: const Color(0xFF2563EB), size: 22),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       title,
                       style: const TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
                         color: Color(0xFF0F172A),
+                        letterSpacing: -0.2,
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      hasFile
-                          ? (fileName ?? "Document uploaded")
-                          : "No file uploaded",
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: hasFile
-                            ? const Color(0xFF16A34A)
-                            : const Color(0xFF64748B),
-                        fontWeight:
-                            hasFile ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        if (hasFile) ...[
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF16A34A),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                        ],
+                        Expanded(
+                          child: Text(
+                            hasFile
+                                ? (fileName ?? "Document uploaded")
+                                : "No file uploaded",
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: hasFile
+                                  ? const Color(0xFF16A34A)
+                                  : const Color(0xFF64748B),
+                              fontWeight:
+                                  hasFile ? FontWeight.w600 : FontWeight.normal,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              if (hasFile && widget.isEditable) ...[
+                const SizedBox(width: 8),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: onDelete,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF2F2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                            color: const Color(0xFFFECACA), width: 0.8),
+                      ),
+                      child: const Icon(
+                        Icons.delete_outline_rounded,
+                        size: 17,
+                        color: Color(0xFFDC2626),
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-              if (hasFile && widget.isEditable)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.visibility_outlined,
-                          color: Color(0xFF2563EB), size: 18),
-                      tooltip: "View Document",
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: onOpen,
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline_rounded,
-                          color: Color(0xFFEF4444), size: 18),
-                      tooltip: "Delete Document",
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: onDelete,
-                    ),
-                  ],
-                ),
+              ],
             ],
           ),
+
+          // Uploading State
           if (isUploading) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2563EB)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Uploading document, please wait...',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF2563EB),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             ClipRRect(
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
-                value: uploadProgress,
-                backgroundColor: const Color(0xFFE2E8F0),
-                valueColor:
-                    const AlwaysStoppedAnimation<Color>(Color(0xFF2563EB)),
-                minHeight: 5,
+                value: uploadProgress > 0 ? uploadProgress : null,
+                backgroundColor: const Color(0xFFDBEAFE),
+                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF2563EB)),
+                minHeight: 4,
               ),
             ),
-          ] else if (hasFile) ...[
+          ],
+
+          // File actions (view/share) when file is present and not uploading
+          if (hasFile && !isUploading) ...[
             const SizedBox(height: 10),
             Row(
               children: [
                 Expanded(
-                  child: ElevatedButton.icon(
+                  child: OutlinedButton.icon(
                     onPressed: onOpen,
-                    icon: const Icon(Icons.visibility_rounded,
-                        size: 14, color: Colors.white),
-                    label: const Text(
-                      "View / Open",
-                      style:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
+                    icon: const Icon(Icons.open_in_new_rounded, size: 14),
+                    label: const Text('View', style: TextStyle(fontSize: 12)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF2563EB),
+                      side: const BorderSide(color: Color(0xFFDBEAFE)),
+                      padding: const EdgeInsets.symmetric(vertical: 7),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8)),
                     ),
@@ -683,79 +906,47 @@ class _ProfileResumeCardState extends State<ProfileResumeCard> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: onShare,
-                    icon: const Icon(Icons.share_rounded,
-                        size: 14, color: Color(0xFF2563EB)),
-                    label: const Text(
-                      "Share",
-                      style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF2563EB)),
-                    ),
+                    icon: const Icon(Icons.share_rounded, size: 14),
+                    label: const Text('Share', style: TextStyle(fontSize: 12)),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFFBFDBFE)),
-                      backgroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      foregroundColor: const Color(0xFF475569),
+                      side: const BorderSide(color: Color(0xFFE2E8F0)),
+                      padding: const EdgeInsets.symmetric(vertical: 7),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8)),
                     ),
                   ),
                 ),
-                if (widget.isEditable) ...[
-                  const SizedBox(width: 8),
-                  TextButton(
-                    onPressed: onUpload,
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 8),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                    child: const Text(
-                      "Replace",
-                      style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF2563EB)),
-                    ),
-                  ),
-                ],
               ],
             ),
-          ] else if (widget.isEditable) ...[
+          ],
+
+          // Upload button when no file and editable and not uploading
+          if (!hasFile && widget.isEditable && !isUploading) ...[
             const SizedBox(height: 10),
-            InkWell(
-              onTap: onUpload,
-              borderRadius: BorderRadius.circular(12),
+            SizedBox(
+              width: double.infinity,
               child: CustomPaint(
                 painter: DashedRectPainter(
                   color: const Color(0xFF93C5FD),
-                  strokeWidth: 1.2,
-                  dash: 6.0,
-                  gap: 4.0,
-                  radius: 12.0,
+                  strokeWidth: 1.4,
                 ),
-                child: Container(
-                  height: 44,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
+                child: TextButton.icon(
+                  onPressed: onUpload,
+                  icon: const Icon(Icons.upload_rounded,
+                      size: 16, color: Color(0xFF2563EB)),
+                  label: Text(
+                    uploadButtonText,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF2563EB),
+                    ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.file_upload_outlined,
-                          size: 18, color: Color(0xFF2563EB)),
-                      const SizedBox(width: 8),
-                      Text(
-                        uploadButtonText,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF2563EB),
-                        ),
-                      ),
-                    ],
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
               ),
@@ -766,5 +957,3 @@ class _ProfileResumeCardState extends State<ProfileResumeCard> {
     );
   }
 }
-
-typedef ProfileDocumentsCard = ProfileResumeCard;

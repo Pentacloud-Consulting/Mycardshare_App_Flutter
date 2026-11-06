@@ -1,3 +1,4 @@
+import '../previews/publish_unpublish.dart';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -386,6 +387,92 @@ class IndividualProfileStore extends ChangeNotifier {
     notifyListeners();
   }
 
+
+  /// Instantly updates document URLs in the active profile (resume / brochure) and notifies listeners.
+  /// Call this after a successful document upload so the UI refreshes without needing a full reload.
+  void updateDocumentUrls({
+    String? resumeUrl,
+    String? resumeFileName,
+    String? brochureUrl,
+    String? brochureFileName,
+  }) {
+    if (_activeProfile == null) return;
+    _activeProfile = _activeProfile!.copyWith(
+      resumeUrl: resumeUrl ?? _activeProfile!.resumeUrl,
+      resumeFileName: resumeFileName ?? _activeProfile!.resumeFileName,
+      brochureUrl: brochureUrl ?? _activeProfile!.brochureUrl,
+      brochureFileName: brochureFileName ?? _activeProfile!.brochureFileName,
+    );
+    notifyListeners();
+    debugPrint('[IndividualProfileStore] Document URLs updated in-memory');
+  }
+
+  /// Clears resume URL from active profile in-memory (call after removeResume).
+  void clearResumeUrl() {
+    if (_activeProfile == null) return;
+    _activeProfile = IndividualProfileData(
+      uid: _activeProfile!.uid,
+      fullName: _activeProfile!.fullName,
+      email: _activeProfile!.email,
+      cardSlug: _activeProfile!.cardSlug,
+      profilePhoto: _activeProfile!.profilePhoto,
+      bannerPhoto: _activeProfile!.bannerPhoto,
+      jobTitle: _activeProfile!.jobTitle,
+      phoneNumber: _activeProfile!.phoneNumber,
+      websiteUrl: _activeProfile!.websiteUrl,
+      templateStyle: _activeProfile!.templateStyle,
+      socialLinks: _activeProfile!.socialLinks,
+      companyName: _activeProfile!.companyName,
+      shortBio: _activeProfile!.shortBio,
+      networkingStatus: _activeProfile!.networkingStatus,
+      city: _activeProfile!.city,
+      country: _activeProfile!.country,
+      address: _activeProfile!.address,
+      focusAreas: _activeProfile!.focusAreas,
+      experience: _activeProfile!.experience,
+      calendly: _activeProfile!.calendly,
+      resumeUrl: null,
+      resumeFileName: null,
+      brochureUrl: _activeProfile!.brochureUrl,
+      brochureFileName: _activeProfile!.brochureFileName,
+      themeColor: _activeProfile!.themeColor,
+    );
+    notifyListeners();
+  }
+
+  /// Clears brochure URL from active profile in-memory (call after removeBrochure).
+  void clearBrochureUrl() {
+    if (_activeProfile == null) return;
+    _activeProfile = IndividualProfileData(
+      uid: _activeProfile!.uid,
+      fullName: _activeProfile!.fullName,
+      email: _activeProfile!.email,
+      cardSlug: _activeProfile!.cardSlug,
+      profilePhoto: _activeProfile!.profilePhoto,
+      bannerPhoto: _activeProfile!.bannerPhoto,
+      jobTitle: _activeProfile!.jobTitle,
+      phoneNumber: _activeProfile!.phoneNumber,
+      websiteUrl: _activeProfile!.websiteUrl,
+      templateStyle: _activeProfile!.templateStyle,
+      socialLinks: _activeProfile!.socialLinks,
+      companyName: _activeProfile!.companyName,
+      shortBio: _activeProfile!.shortBio,
+      networkingStatus: _activeProfile!.networkingStatus,
+      city: _activeProfile!.city,
+      country: _activeProfile!.country,
+      address: _activeProfile!.address,
+      focusAreas: _activeProfile!.focusAreas,
+      experience: _activeProfile!.experience,
+      calendly: _activeProfile!.calendly,
+      resumeUrl: _activeProfile!.resumeUrl,
+      resumeFileName: _activeProfile!.resumeFileName,
+      brochureUrl: null,
+      brochureFileName: null,
+      themeColor: _activeProfile!.themeColor,
+    );
+    notifyListeners();
+  }
+
   bool get hasCompletedOnboarding => _activeProfile != null && _activeProfile!.jobTitle.isNotEmpty;
 
   /// Helper to generate card slug from Full Name
@@ -755,6 +842,11 @@ class IndividualProfileStore extends ChangeNotifier {
         final resumeFileName = data['resumeFileName'] as String?;
         final brochureUrl = data['brochureUrl'] as String?;
         final brochureFileName = data['brochureFileName'] as String?;
+
+        final cardStatusStr = (data['cardStatus'] as String?) ?? (data['profileStatus'] as String?);
+        if (cardStatusStr != null && cardStatusStr.trim().isNotEmpty) {
+          PublishUnpublishService.instance.syncFromStatus(cardStatusStr);
+        }
 
         _activeProfile = IndividualProfileData(
           uid: uid.isNotEmpty ? uid : resolvedDocId,

@@ -206,9 +206,9 @@ class DashboardHeroCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
+                              Colors.black.withValues(alpha: 0.72),
                               Colors.black.withValues(alpha: 0.55),
-                              Colors.black.withValues(alpha: 0.25),
-                              Colors.transparent,
+                              Colors.black.withValues(alpha: 0.30),
                             ],
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
@@ -322,8 +322,8 @@ class DashboardHeroCard extends StatelessWidget {
                           const SizedBox(height: 6),
                           // Status Badge using GlassPill
                           GlassPill(
-                            label: isPublished ? status : "UNPUBLISHED",
-                            dotColor: isPublished ? AppColors.success : const Color(0xFFEAB308),
+                            label: isPublished ? "LIVE" : "DRAFT",
+                            dotColor: isPublished ? AppColors.success : const Color(0xFFF59E0B),
                           ),
                         ],
                       ),

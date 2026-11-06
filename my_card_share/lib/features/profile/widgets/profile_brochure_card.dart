@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
 import '../../../backend/brochure/brochure_service.dart';
+import '../screens/document_viewer_screen.dart';
 
 /// Reusable, high-fidelity Company Brochure section widget for Profile Screens & Editors.
 /// Supports document picking, uploading to Firebase Storage, viewing, sharing, and removing.
@@ -86,6 +86,17 @@ class _ProfileBrochureCardState extends State<ProfileBrochureCard> {
           const SnackBar(
             content: Text('Company brochure uploaded successfully!'),
             backgroundColor: Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } on TimeoutException {
+      setState(() => _isUploading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Upload timed out. Check your internet connection and try again.'),
+            backgroundColor: Color(0xFFEF4444),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -280,9 +291,23 @@ class _ProfileBrochureCardState extends State<ProfileBrochureCard> {
                       padding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                     icon: const Icon(Icons.visibility_rounded, size: 16),
-                    label: const Text('View Brochure',
+                    label: const Text('View',
                         style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
-                    onPressed: () => BrochureService.openBrochure(_brochureUrl!),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => DocumentViewerScreen(
+                            title: 'Company Brochure',
+                            documentUrl: _brochureUrl!,
+                            fileName: _brochureFileName ?? 'Brochure.pdf',
+                            onShare: () => BrochureService.shareBrochure(
+                              brochureUrl: _brochureUrl!,
+                              companyOrUserName: widget.companyOrUserName,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(width: 8),

@@ -266,12 +266,19 @@ class EmployeeEmailService extends ChangeNotifier {
       }
 
       // 8. If companyEmail / website is still empty, derive based on company name
-      if (resolvedCompanyEmail.isEmpty) {
-        if (resolvedCompanyName.isNotEmpty && resolvedCompanyName != 'Enterprise' && resolvedCompanyName != 'Enterprise Workspace') {
-          final cleanDomain = resolvedCompanyName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+      if (resolvedCompanyName.toLowerCase().contains('pentacloud') ||
+          resolvedEmployeeEmail.toLowerCase().contains('pentacloud') ||
+          resolvedCompanyEmail.contains('pentacloud')) {
+        resolvedCompanyEmail = "contact@pentacloudconsulting.com";
+      } else if (resolvedCompanyEmail.isEmpty) {
+        if (resolvedCompanyName.isNotEmpty &&
+            resolvedCompanyName != 'Enterprise' &&
+            resolvedCompanyName != 'Enterprise Workspace') {
+          final cleanDomain =
+              resolvedCompanyName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
           resolvedCompanyEmail = "contact@$cleanDomain.com";
         } else {
-          resolvedCompanyEmail = "contact@pentacloud.com";
+          resolvedCompanyEmail = "contact@pentacloudconsulting.com";
         }
       }
 
@@ -330,9 +337,9 @@ class EmployeeEmailService extends ChangeNotifier {
       debugPrint('[EmployeeEmailService] fetchEmployeeEmails error: $e');
       return _currentEmails ??
           const EmployeeEmailsModel(
-            employeeEmail: 'employee@pentacloud.com',
-            companyEmail: 'contact@pentacloud.com',
-            companyName: 'Pentacloud',
+            employeeEmail: 'employee@pentacloudconsulting.com',
+            companyEmail: 'contact@pentacloudconsulting.com',
+            companyName: 'Pentacloud Consulting',
           );
     } finally {
       _isLoading = false;

@@ -10,7 +10,6 @@ import 'profile_editor_screen.dart';
 import 'widgets/profile_live_card_preview.dart';
 import 'widgets/profile_social_links.dart';
 import '../../profile/widgets/profile_resume_card.dart';
-import '../../profile/widgets/profile_brochure_card.dart';
 import '../../public_card/public_card_screen.dart';
 
 class ProfileViewScreen extends StatefulWidget {
@@ -408,7 +407,7 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                 currentBrochureFileName: activeProfile?.brochureFileName,
                 candidateName: name,
                 jobTitle: role,
-                isEditable: true,
+                isEditable: false,
                 onResumeChanged: (url, fileName) {
                   IndividualProfileStore.instance.loadProfile(
                     activeProfile?.uid ?? FirebaseAuth.instance.currentUser?.uid ?? '',

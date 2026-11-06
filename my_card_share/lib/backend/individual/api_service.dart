@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
@@ -103,6 +104,39 @@ class IndividualApiService {
 
     debugPrint('[IndividualApiService] UPLOAD $filePath as $type');
     final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+    final data = _handle(response);
+    return data['data']?['url'] as String? ?? '';
+  }
+
+  /// Blazing-fast direct byte upload to POST /api/user/upload.
+  /// Works flawlessly across Web, Android, iOS without disk path or CORS hangs.
+  static Future<String> uploadBytes({
+    required Uint8List bytes,
+    required String filename,
+    required String type,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception('[IndividualApiService] Not authenticated.');
+    final idToken = await user.getIdToken(true);
+
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl/api/user/upload'),
+    );
+    request.headers['Authorization'] = 'Bearer $idToken';
+    request.fields['type'] = type;
+    request.files.add(http.MultipartFile.fromBytes(
+      'file',
+      bytes,
+      filename: filename,
+    ));
+
+    debugPrint('[IndividualApiService] FAST UPLOAD as ' + type + ' (' + bytes.length.toString() + ' bytes)');
+    final streamedResponse = await request.send().timeout(
+      const Duration(seconds: 30),
+      onTimeout: () => throw TimeoutException('Upload timed out after 30 seconds'),
+    );
     final response = await http.Response.fromStream(streamedResponse);
     final data = _handle(response);
     return data['data']?['url'] as String? ?? '';

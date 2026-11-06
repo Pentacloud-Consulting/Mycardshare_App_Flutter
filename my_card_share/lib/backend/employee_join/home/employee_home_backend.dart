@@ -1,3 +1,4 @@
+import '../../individual/previews/publish_unpublish.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -172,10 +173,16 @@ class EmployeeHomeBackendService extends ChangeNotifier {
             final fsEntUid = (mergedUserData['enterpriseUid'] as String?)?.trim() ?? fsCompanyId;
 
             if (fsName != null && fsName.isNotEmpty && fsName != 'User' && fsName.toLowerCase() != 'zuhaib') foundName = fsName;
-            if (fsCompany != null && fsCompany.isNotEmpty && fsCompany != 'Enterprise Workspace') foundCompany = fsCompany;
-            if (fsRole != null && fsRole.isNotEmpty && fsRole != 'Member' && fsRole != 'Employee') foundRole = fsRole;
+            // Don't set foundCompany from personal companyName yet - enterprise takes priority
+            final fsPersonalCompany = (fsCompany != null && fsCompany.isNotEmpty && fsCompany != 'Enterprise Workspace') ? fsCompany : null;
             if (fsAvatar != null && fsAvatar.isNotEmpty) foundAvatar = fsAvatar;
             if (fsEntUid != null && fsEntUid.isNotEmpty) foundEntUid = fsEntUid;
+            if (fsPersonalCompany != null && foundEntUid == null) foundCompany = fsPersonalCompany;
+
+            final fsCardStatus = (mergedUserData['cardStatus'] as String?)?.trim() ?? (mergedUserData['profileStatus'] as String?)?.trim();
+            if (fsCardStatus != null && fsCardStatus.isNotEmpty) {
+              PublishUnpublishService.instance.syncFromStatus(fsCardStatus);
+            }
           }
         } catch (e) {
           debugPrint('[EmployeeHomeBackendService] Firestore users lookup note: $e');

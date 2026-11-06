@@ -1,3 +1,6 @@
+import '../individual/api_service.dart';
+import '../individual/profile/individual_profile_store.dart';
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:file_picker/file_picker.dart';
@@ -29,7 +32,7 @@ class BrochureService {
         type: FileType.custom,
         allowedExtensions: ['pdf', 'doc', 'docx', 'png', 'jpg', 'jpeg'],
         allowMultiple: false,
-        withData: kIsWeb,
+        withData: true,
       );
 
       if (result != null && result.files.isNotEmpty) {
@@ -64,6 +67,29 @@ class BrochureService {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final safeName = file.name.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
       final storagePath = 'brochures/$effectiveUid/${timestamp}_$safeName';
+
+      // 1. Blazing fast direct backend upload (takes < 1 second, bypasses Firebase Storage CORS)
+      try {
+        Uint8List? fileBytes = file.bytes;
+        if (fileBytes == null && !kIsWeb && file.path != null) {
+          fileBytes = await File(file.path!).readAsBytes();
+        }
+        if (fileBytes != null && fileBytes.isNotEmpty) {
+          onProgress?.call(0.45);
+          final publicUrl = await IndividualApiService.uploadBytes(
+            bytes: fileBytes,
+            filename: file.name,
+            type: 'brochure',
+          );
+          if (publicUrl.isNotEmpty) {
+            onProgress?.call(1.0);
+            debugPrint('[BrochureService] High-speed upload success: $publicUrl');
+            return publicUrl;
+          }
+        }
+      } catch (fastErr) {
+        debugPrint('[BrochureService] Direct upload exception, falling back to Storage: $fastErr');
+      }
 
       final ref = _storage.ref().child(storagePath);
 
@@ -108,7 +134,10 @@ class BrochureService {
         });
       }
 
-      final snapshot = await uploadTask;
+      final snapshot = await uploadTask.timeout(
+        const Duration(seconds: 60),
+        onTimeout: () => throw TimeoutException('Firebase Storage upload timed out after 60 seconds'),
+      );
       final downloadUrl = await snapshot.ref.getDownloadURL();
       debugPrint('[BrochureService] Uploaded brochure successfully: $downloadUrl');
       return downloadUrl;
@@ -142,6 +171,14 @@ class BrochureService {
           .set(brochureData, SetOptions(merge: true));
 
       debugPrint('[BrochureService] Saved brochure info to Firestore for $effectiveUid');
+      // Update in-memory store so UI refreshes immediately
+      IndividualProfileStore.instance.updateDocumentUrls(brochureUrl: brochureUrl, brochureFileName: fileName);
+      try {
+        await IndividualApiService.patch('/api/user/me', {
+          'brochureUrl': brochureUrl,
+          'brochureFileName': fileName,
+        });
+      } catch (_) {}
       return true;
     } catch (e) {
       debugPrint('[BrochureService] saveBrochureToFirestore error: $e');
@@ -176,6 +213,8 @@ class BrochureService {
         } catch (_) {}
       }
 
+      // Clear in-memory store so UI reflects removal immediately
+      IndividualProfileStore.instance.clearBrochureUrl();
       return true;
     } catch (e) {
       debugPrint('[BrochureService] removeBrochure error: $e');

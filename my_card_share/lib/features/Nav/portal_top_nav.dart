@@ -200,100 +200,115 @@ class PortalTopNav extends ConsumerWidget implements PreferredSizeWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // Left Group: Hamburger Menu / Back Button + Title or Greeting
-                Row(
-                  children: [
-                    // Circular Light-Gray Menu / Back Button
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          if (shouldShowBack) {
-                            if (Navigator.canPop(context)) {
-                              Navigator.pop(context);
+                Expanded(
+                  child: Row(
+                    children: [
+                      // Circular Light-Gray Menu / Back Button
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            if (shouldShowBack) {
+                              if (Navigator.canPop(context)) {
+                                Navigator.pop(context);
+                              } else {
+                                context.go('/portal');
+                              }
                             } else {
-                              context.go('/portal');
+                              _openMenuModal(context);
                             }
-                          } else {
-                            _openMenuModal(context);
-                          }
-                        },
-                        borderRadius: BorderRadius.circular(20),
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFE2E8F0),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            shouldShowBack ? Icons.arrow_back_rounded : Icons.menu_rounded,
-                            color: const Color(0xFF334155),
-                            size: 22,
+                          },
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFE2E8F0),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              shouldShowBack ? Icons.arrow_back_rounded : Icons.menu_rounded,
+                              color: const Color(0xFF334155),
+                              size: 22,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
+                      const SizedBox(width: 10),
 
-                    if (isHome) ...[
-                      // Greeting Text on Home: "Hi, Zuhaib" + dynamic company badge
-                      Row(
-                        children: [
-                          RichText(
-                            text: TextSpan(
-                              style: const TextStyle(
-                                fontFamily: 'sans-serif',
-                                fontSize: 19,
-                              ),
-                              children: [
-                                const TextSpan(
-                                  text: "Hi, ",
-                                  style: TextStyle(
-                                    fontStyle: FontStyle.normal,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFF0F172A),
+                      if (isHome) ...[
+                        // Greeting Text on Home: "Hi, Zuhaib" + dynamic company badge
+                        Expanded(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Flexible(
+                                child: RichText(
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  text: TextSpan(
+                                    style: const TextStyle(
+                                      fontFamily: 'sans-serif',
+                                      fontSize: 18,
+                                    ),
+                                    children: [
+                                      const TextSpan(
+                                        text: "Hi, ",
+                                        style: TextStyle(
+                                          fontStyle: FontStyle.normal,
+                                          fontWeight: FontWeight.w800,
+                                          color: Color(0xFF0F172A),
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: resolvedUserName,
+                                        style: const TextStyle(
+                                          fontStyle: FontStyle.italic,
+                                          fontWeight: FontWeight.w800,
+                                          color: Color(0xFF0066FF),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                TextSpan(
-                                  text: resolvedUserName,
-                                  style: const TextStyle(
-                                    fontStyle: FontStyle.italic,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFF0066FF),
+                              ),
+                              if (isEmployee && resolvedCompany.isNotEmpty) ...[
+                                const SizedBox(width: 6),
+                                ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 100),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFEFF6FF),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: const Color(0xFFBFDBFE), width: 0.8),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.domain_rounded, size: 10.5, color: Color(0xFF0066FF)),
+                                        const SizedBox(width: 3),
+                                        Flexible(
+                                          child: Text(
+                                            resolvedCompany,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: Color(0xFF0066FF),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ],
-                            ),
+                            ],
                           ),
-                          if (isEmployee && resolvedCompany.isNotEmpty) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEFF6FF),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: const Color(0xFFBFDBFE), width: 1),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.domain_rounded, size: 13, color: Color(0xFF0066FF)),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    resolvedCompany,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFF0066FF),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ] else ...[
+                        ),
+                      ] else ...[
                       // Page Title & Subtitle on Sub-pages
                       Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -353,6 +368,7 @@ class PortalTopNav extends ConsumerWidget implements PreferredSizeWidget {
                     ],
                   ],
                 ),
+              ),
 
                 // Right Group: Custom Action + Bell Icon
                 Row(

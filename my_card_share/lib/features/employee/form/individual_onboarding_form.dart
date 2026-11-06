@@ -104,7 +104,7 @@ class _IndividualOnboardingFormScreenState
     'Instagram',
     'WhatsApp',
     'GitHub',
-    'Twitter / X',
+    'X (Twitter)',
     'YouTube',
     'Pinterest',
     'Telegram',
@@ -1213,7 +1213,15 @@ class _IndividualOnboardingFormScreenState
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
-                          value: link.platform,
+                          value: () {
+                            if (_platforms.contains(link.platform)) return link.platform;
+                            final lower = link.platform.trim().toLowerCase();
+                            if (lower.contains('twitter') || lower == 'x') return 'X (Twitter)';
+                            return _platforms.firstWhere(
+                              (p) => p.toLowerCase() == lower,
+                              orElse: () => _platforms.first,
+                            );
+                          }(),
                           dropdownColor: Colors.white,
                           elevation: 8,
                           menuMaxHeight: 300,

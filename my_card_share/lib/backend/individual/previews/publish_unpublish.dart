@@ -62,9 +62,16 @@ class PublishUnpublishService extends ChangeNotifier {
   String get cardStatus => _cardStatus;
   bool get isLoading => _isLoading;
   String get currentUid => _currentUid;
-  String get formattedStatus => _isPublished ? "Published" : "Unpublished";
+  String get formattedStatus => _isPublished ? "Published" : "Draft";
 
-  /// Load publish status from Firestore for the given user UID
+  void syncFromStatus(String status) {
+    final s = status.trim().toLowerCase();
+    _isPublished = (s == 'published' || s == 'live' || s == 'active');
+    _cardStatus = _isPublished ? 'Published' : 'Draft';
+    notifyListeners();
+  }
+
+  /// Load publish status from Firestore & Web API for the given user UID
   Future<void> loadPublishStatus([String? uid]) async {
     final targetUid = uid ?? FirebaseAuth.instance.currentUser?.uid ?? '';
     if (targetUid.isEmpty) return;
@@ -74,20 +81,56 @@ class PublishUnpublishService extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // 0. Live check from API /api/user/stats (ensures 100% sync with MongoDB and Web)
+      try {
+        final apiRes = await IndividualApiService.get('/api/user/stats');
+        if (apiRes['success'] == true && apiRes['data'] != null) {
+          final s = apiRes['data']['cardStatus'] as String?;
+          if (s != null && s.isNotEmpty) {
+            syncFromStatus(s);
+            _isLoading = false;
+            notifyListeners();
+            return;
+          }
+        }
+      } catch (_) {}
+
+      // 1. Check Firestore users collection
       final doc = await FirebaseFirestore.instance.collection('users').doc(targetUid).get();
       if (doc.exists && doc.data() != null) {
         final data = doc.data()!;
+        final String? statusStr = (data['cardStatus'] as String?) ?? (data['profileStatus'] as String?);
         final bool? isPub = data['isPublished'] as bool?;
-        final String? statusStr = data['cardStatus'] as String?;
 
-        if (isPub != null) {
+        if (statusStr != null && statusStr.trim().isNotEmpty) {
+          syncFromStatus(statusStr);
+        } else if (isPub != null) {
           _isPublished = isPub;
-        } else if (statusStr != null) {
-          _isPublished = statusStr.toLowerCase() == 'published';
+          _cardStatus = _isPublished ? 'Published' : 'Draft';
         } else {
-          _isPublished = true;
+          _isPublished = false;
+          _cardStatus = 'Draft';
         }
-        _cardStatus = _isPublished ? 'Published' : 'Unpublished';
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      // 2. Fallback check Firestore cards collection
+      final cardSnap = await FirebaseFirestore.instance
+          .collection('cards')
+          .where('userId', isEqualTo: targetUid)
+          .limit(1)
+          .get();
+      if (cardSnap.docs.isNotEmpty) {
+        final cData = cardSnap.docs.first.data();
+        final cStatus = (cData['cardStatus'] as String?) ?? (cData['profileStatus'] as String?);
+        if (cStatus != null && cStatus.trim().isNotEmpty) {
+          syncFromStatus(cStatus);
+          _isLoading = false;
+          notifyListeners();
+          return;
+        }
       }
     } catch (e) {
       debugPrint('[PublishUnpublishService] Error loading publish status from Firestore: $e');
@@ -106,7 +149,7 @@ class PublishUnpublishService extends ChangeNotifier {
     
     // Update local reactive state immediately for snappy UI feel
     _isPublished = published;
-    _cardStatus = published ? 'Published' : 'Unpublished';
+    _cardStatus = published ? 'Published' : 'Draft';
     _currentUid = targetUid;
     notifyListeners();
 
@@ -121,11 +164,19 @@ class PublishUnpublishService extends ChangeNotifier {
         {
           'isPublished': published,
           'cardStatus': _cardStatus,
-          'status': published ? 'Active' : 'Inactive',
+          'profileStatus': published ? 'published' : 'draft',
+          'status': published ? 'Active' : 'Draft',
           'updatedAt': DateTime.now().toIso8601String(),
         },
         SetOptions(merge: true),
       );
+
+      // 1a. Also update Web API /api/user/me
+      try {
+        await IndividualApiService.patch('/api/user/me', {
+          'cardStatus': _cardStatus,
+        });
+      } catch (_) {}
       debugPrint('[PublishUnpublishService] Updated publish status to $published ($cardStatus) in Firestore for UID: $targetUid');
 
       // 1b. Dual-sync to enterprise employee document so Enterprise Team/Workspace list shows Active / Inactive

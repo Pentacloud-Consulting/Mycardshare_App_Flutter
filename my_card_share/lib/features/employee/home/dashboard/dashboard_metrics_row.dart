@@ -83,14 +83,14 @@ class DashboardMetricsRow extends StatelessWidget {
 
         // Card Impressions (Card 1)
         final rawViews = views ?? (empStats.views > 0 ? '${empStats.views}' : store.formattedViews);
-        final impressionsValue = (rawViews.isNotEmpty && rawViews != '0') ? rawViews : '17';
+        final impressionsValue = rawViews.isNotEmpty ? rawViews : '0';
         final impressionsTrend = (viewsTrend != null && viewsTrend!.isNotEmpty)
             ? viewsTrend!
             : (empStats.viewsTrend.isNotEmpty ? empStats.viewsTrend : "+0%");
 
         // Profile Status (Card 2)
         final statusValue = isPublished ? "Published" : "Draft";
-        final statusBadge = isPublished ? "Active" : "Inactive";
+        final statusBadge = isPublished ? "Active" : "Draft";
 
         // Connections (Card 3)
         final connectionsValue = leads ?? (empStats.leads > 0 ? '${empStats.leads}' : store.formattedLeads);

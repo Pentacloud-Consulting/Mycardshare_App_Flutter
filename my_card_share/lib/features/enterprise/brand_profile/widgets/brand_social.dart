@@ -31,7 +31,7 @@ const List<SocialPlatformOption> kSupportedSocialPlatforms = [
   ),
   SocialPlatformOption(
     key: 'twitter',
-    label: 'Twitter / X',
+    label: 'X (Twitter)',
     icon: FontAwesomeIcons.xTwitter,
     color: Color(0xFF0F172A),
     hint: 'https://x.com/yourbrand',

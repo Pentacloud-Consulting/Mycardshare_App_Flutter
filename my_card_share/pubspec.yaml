@@ -62,6 +62,7 @@ dependencies:
   # iOS: Sign In with Apple button & service
   sign_in_with_apple: ^6.1.2
   file_picker: 8.3.7
+  syncfusion_flutter_pdfviewer: ^33.2.13
 
 dev_dependencies:
   flutter_test:

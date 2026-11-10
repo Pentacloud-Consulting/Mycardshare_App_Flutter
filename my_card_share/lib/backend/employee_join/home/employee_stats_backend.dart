@@ -83,7 +83,8 @@ class EmployeeStatsBackendService extends ChangeNotifier {
         await IndividualMetricsStore.instance.loadMetrics(targetUid);
         _syncFromIndividualMetrics();
 
-        // Check Firestore employee_analytics or user doc for updated real counts
+        // Check Firestore analytics ONLY as fallback when API returned 0
+        // Never overwrite live API data (123 views) with stale cached value (17)
         try {
           final docSnap = await _firestore
               .collection('users')
@@ -94,19 +95,19 @@ class EmployeeStatsBackendService extends ChangeNotifier {
 
           if (docSnap.exists && docSnap.data() != null) {
             final data = docSnap.data()!;
-            final realViews = (data['views'] as num?)?.toInt() ?? _stats.views;
-            final realLeads = (data['leads'] as num?)?.toInt() ?? _stats.leads;
-            final realScans = (data['scans'] as num?)?.toInt() ?? _stats.scans;
+            final fsViews = (data['views'] as num?)?.toInt() ?? 0;
+            final fsLeads = (data['leads'] as num?)?.toInt() ?? 0;
+            final fsScans = (data['scans'] as num?)?.toInt() ?? 0;
             final vTrend = data['viewsTrend'] as String? ?? _stats.viewsTrend;
             final lTrend = data['leadsTrend'] as String? ?? _stats.leadsTrend;
             final sTrend = data['scansTrend'] as String? ?? _stats.scansTrend;
-
+            // Only use Firestore value if API returned 0 (don't overwrite live data)
             _stats = EmployeeHomeStats(
-              views: realViews,
+              views: _stats.views > 0 ? _stats.views : fsViews,
               viewsTrend: vTrend,
-              leads: realLeads,
+              leads: _stats.leads > 0 ? _stats.leads : fsLeads,
               leadsTrend: lTrend,
-              scans: realScans,
+              scans: _stats.scans > 0 ? _stats.scans : fsScans,
               scansTrend: sTrend,
             );
           }

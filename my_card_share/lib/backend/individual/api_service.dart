@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:http_parser/http_parser.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -126,10 +127,22 @@ class IndividualApiService {
     );
     request.headers['Authorization'] = 'Bearer $idToken';
     request.fields['type'] = type;
+    // Determine MIME type from filename extension for server-side validation
+    String mimeType = 'application/octet-stream';
+    final ext = filename.split('.').last.toLowerCase();
+    if (ext == 'pdf') mimeType = 'application/pdf';
+    else if (ext == 'doc') mimeType = 'application/msword';
+    else if (ext == 'docx') mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    else if (ext == 'png') mimeType = 'image/png';
+    else if (ext == 'jpg' || ext == 'jpeg') mimeType = 'image/jpeg';
+    else if (ext == 'gif') mimeType = 'image/gif';
+    else if (ext == 'webp') mimeType = 'image/webp';
+
     request.files.add(http.MultipartFile.fromBytes(
       'file',
       bytes,
       filename: filename,
+      contentType: MediaType.parse(mimeType),
     ));
 
     debugPrint('[IndividualApiService] FAST UPLOAD as ' + type + ' (' + bytes.length.toString() + ' bytes)');

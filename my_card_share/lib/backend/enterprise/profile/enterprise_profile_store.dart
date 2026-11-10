@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+﻿import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 import '../../individual/api_service.dart';
@@ -198,6 +198,16 @@ class EnterpriseProfileStore {
         return;
       }
 
+      // Also check companies collection (Web uses this collection)
+      try {
+        final compDoc = await _firestore.collection('companies').doc(uid).get();
+        if (compDoc.exists && compDoc.data() != null) {
+          _currentProfile = EnterpriseProfileData.fromFirestore(uid, compDoc.data()!);
+          debugPrint('[EnterpriseProfileStore] Loaded from companies/$uid');
+          return;
+        }
+      } catch (_) {}
+
       // Fallback: read from users collection
       final userDoc =
           await _firestore.collection('users').doc(uid).get();
@@ -304,6 +314,20 @@ class EnterpriseProfileStore {
           .doc(uid)
           .set(updated.toFirestore(), SetOptions(merge: true));
 
+      // Dual-write to companies/{uid} - Web portal uses this collection
+      try {
+        await _firestore.collection('companies').doc(uid).set({
+          ...updated.toFirestore(),
+          'companyId': uid,
+          'adminUserId': uid,
+          'approvalStatus': 'active',
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+        debugPrint('[EnterpriseProfileStore] Dual-wrote to companies/$uid');
+      } catch (e) {
+        debugPrint('[EnterpriseProfileStore] companies dual-write note: $e');
+      }
+
       // Mirror basics to users/{uid} so auth gate sees role info
       await _firestore.collection('users').doc(uid).set({
         'companyName': updated.companyName,
@@ -311,6 +335,7 @@ class EnterpriseProfileStore {
         'logoUrl': updated.logoUrl,
         'plan': updated.plan,
         'cardSlug': updated.cardSlug,
+        'companyId': uid,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 

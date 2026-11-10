@@ -1,9 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../backend/individual/profile/individual_profile_store.dart';
 import '../../../backend/individual/multiple_store/individual_multi_store.dart';
 import 'widgets/settings_account_section.dart';
+import 'widgets/settings_card_link_section.dart';
+import 'widgets/settings_integration_section.dart';
 import 'widgets/settings_logout_section.dart';
 import 'widgets/settings_preferences_section.dart';
 import 'widgets/settings_support_section.dart';
@@ -71,6 +73,14 @@ class _IndividualSettingsScreenState extends State<IndividualSettingsScreen> {
 
                   // ACCOUNT Section
                   const SettingsAccountSection(),
+                  const SizedBox(height: 20),
+
+                  // CARD LINK Section
+                  const SettingsCardLinkSection(),
+                  const SizedBox(height: 20),
+
+                  // ZAPIER INTEGRATION Section
+                  const SettingsIntegrationSection(),
                   const SizedBox(height: 20),
 
                   // PREFERENCES Section

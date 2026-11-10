@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -10,6 +10,7 @@ import 'invite_resolver/invite_code_resolver.dart';
 import 'home/employee_home_backend.dart';
 import '../enterprise/invite_employee/enterprise_invite_sync_service.dart';
 import '../../models/user_model.dart';
+import 'employee_sync_service.dart';
 
 /// Result object for Workspace Join requests
 class JoinWorkspaceResult {
@@ -38,33 +39,6 @@ class JoinLoginBackendService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  /// Syncs join event to mycardshare.com Cloud MongoDB database API endpoint
-  Future<void> _syncToMyCardShareCloudMongoDB({
-    required String enterpriseUid,
-    required String companyName,
-    required String fullName,
-    required String email,
-    required String status,
-  }) async {
-    try {
-      final url = Uri.parse('https://mycardshare.com/api/employee/sync');
-      await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'enterpriseUid': enterpriseUid,
-          'companyName': companyName,
-          'fullName': fullName,
-          'email': email,
-          'status': status,
-          'syncedAt': DateTime.now().toIso8601String(),
-        }),
-      ).timeout(const Duration(seconds: 3));
-      debugPrint('[CloudMongoSync] Synced employee join to mycardshare.com MongoDB backend successfully.');
-    } catch (e) {
-      debugPrint('[CloudMongoSync] mycardshare.com MongoDB cloud sync note: $e');
-    }
-  }
 
   /// Helper to format raw slug/code to clean Company Name (e.g. ZUHAIB-7687 -> Zuhaib Workspace)
   String _formatCompanyNameFromCode(String code) {
@@ -211,6 +185,16 @@ class JoinLoginBackendService {
           'invitedEmails': FieldValue.arrayUnion([cleanEmail]),
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
+
+        // Dual-write to companies collection so Web portal finds the company
+        try {
+          await _firestore.collection('companies').doc(targetUid).set({
+            'companyId': targetUid,
+            'companyName': companyName,
+            'invitedEmails': FieldValue.arrayUnion([cleanEmail]),
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        } catch (_) {}
       } catch (fsErr) {
         debugPrint('[JoinLoginBackendService] Firestore employee update note: $fsErr');
       }
@@ -224,6 +208,7 @@ class JoinLoginBackendService {
           'email': cleanEmail,
           'role': 'employee',
           'enterpriseUid': targetUid,
+          'companyId': targetUid,
           'companyName': companyName,
           'isPublished': true,
           'cardStatus': 'Published',
@@ -269,14 +254,16 @@ class JoinLoginBackendService {
         role: 'Employee',
       );
 
-      // 6. Sync to mycardshare.com Cloud MongoDB Backend API
-      _syncToMyCardShareCloudMongoDB(
-        enterpriseUid: targetUid,
-        companyName: companyName,
-        fullName: cleanName,
-        email: cleanEmail,
-        status: 'Active',
-      );
+      // 6. Sync to mycardshare.com Cloud MongoDB via PATCH /api/sync/employee
+      EmployeeSyncService.instance.saveEmployeeCardToApi({
+        'fullName': cleanName,
+        'email': cleanEmail,
+        'companyId': targetUid,
+        'companyName': companyName,
+        'role': 'employee',
+        'cardStatus': 'Published',
+        'status': 'active',
+      }).catchError((_) {});
 
       final userModel = UserModel(
         id: targetUid,

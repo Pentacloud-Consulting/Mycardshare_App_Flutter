@@ -155,7 +155,7 @@ class _ProfileResumeCardState extends State<ProfileResumeCard> {
           }
         },
       ).timeout(
-        const Duration(seconds: 45),
+        const Duration(seconds: 60),
         onTimeout: () => throw TimeoutException(
             'Upload timed out. Please check your connection and try again.'),
       );
@@ -343,7 +343,7 @@ class _ProfileResumeCardState extends State<ProfileResumeCard> {
           }
         },
       ).timeout(
-        const Duration(seconds: 45),
+        const Duration(seconds: 60),
         onTimeout: () => throw TimeoutException(
             'Upload timed out. Please check your connection and try again.'),
       );

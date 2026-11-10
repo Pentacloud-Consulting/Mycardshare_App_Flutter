@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -283,6 +283,35 @@ class EnterpriseEmployeesService {
 
         // Also query by enterprise companyName if available
         final compName = profile?.companyName.trim();
+
+        // Also query by companyId (Web's field — employees joined via Web set this)
+        try {
+          final companyIdSnap = await _firestore
+              .collection('users')
+              .where('companyId', isEqualTo: targetUid)
+              .get();
+          for (final uDoc in companyIdSnap.docs) {
+            final uData = uDoc.data();
+            final uEmail = (uData['email'] as String? ?? '').trim();
+            if (uEmail.isNotEmpty && !existingEmails.contains(uEmail.toLowerCase())) {
+              existingEmails.add(uEmail.toLowerCase());
+              final uName = (uData['fullName'] ?? uData['name'] as String?)?.trim();
+              final name = (uName != null && uName.isNotEmpty) ? uName : uEmail.split('@').first;
+              list.add(EnterpriseEmployeeModel(
+                id: uDoc.id,
+                name: name,
+                email: uEmail,
+                roleTitle: uData['jobTitle'] as String? ?? 'Employee',
+                role: (uData['role'] as String? ?? 'Employee').toLowerCase() == 'admin' ? 'Admin' : 'Employee',
+                status: uData['status'] as String? ?? 'Active',
+                avatarUrl: (uData['avatarUrl'] ?? uData['profilePhoto']) as String?,
+                views: (uData['views'] as num?)?.toInt() ?? 0,
+                leads: (uData['leads'] as num?)?.toInt() ?? 0,
+              ));
+            }
+          }
+        } catch (_) {}
+
         if (compName != null && compName.isNotEmpty) {
           final compUsersSnap = await _firestore
               .collection('users')

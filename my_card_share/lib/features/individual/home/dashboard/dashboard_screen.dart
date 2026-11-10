@@ -9,6 +9,7 @@ import 'dashboard_hero_card.dart';
 import 'dashboard_metrics_row.dart';
 import 'dashboard_quick_actions.dart';
 import 'dashboard_recent_leads.dart';
+import 'dashboard_digital_wallet.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -187,6 +188,8 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
                   ),
                   const SizedBox(height: 20),
                   const DashboardMetricsRow(),
+                  const SizedBox(height: 24),
+                  const IndividualDashboardDigitalWallet(),
                   const SizedBox(height: 24),
                   DashboardQuickActions(
                     onScanCardTap: _openScanCard,

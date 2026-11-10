@@ -1,4 +1,4 @@
-import '../previews/publish_unpublish.dart';
+﻿import '../previews/publish_unpublish.dart';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -168,6 +168,8 @@ class IndividualProfileData {
   final String? brochureUrl;
   final String? brochureFileName;
   final String themeColor;
+  final bool isIntegrationEnabled;
+  final String zapierWebhookUrl;
   final DateTime updatedAt;
 
   IndividualProfileData({
@@ -196,6 +198,8 @@ class IndividualProfileData {
     this.brochureUrl,
     this.brochureFileName,
     this.themeColor = '#0052FF',
+    this.isIntegrationEnabled = false,
+    this.zapierWebhookUrl = '',
     DateTime? updatedAt,
   }) : updatedAt = updatedAt ?? DateTime.now();
 
@@ -224,6 +228,8 @@ class IndividualProfileData {
     String? brochureUrl,
     String? brochureFileName,
     String? themeColor,
+    bool? isIntegrationEnabled,
+    String? zapierWebhookUrl,
     DateTime? updatedAt,
   }) {
     return IndividualProfileData(
@@ -252,6 +258,8 @@ class IndividualProfileData {
       brochureUrl: brochureUrl ?? this.brochureUrl,
       brochureFileName: brochureFileName ?? this.brochureFileName,
       themeColor: themeColor ?? this.themeColor,
+      isIntegrationEnabled: isIntegrationEnabled ?? this.isIntegrationEnabled,
+      zapierWebhookUrl: zapierWebhookUrl ?? this.zapierWebhookUrl,
       updatedAt: updatedAt ?? DateTime.now(),
     );
   }
@@ -282,6 +290,8 @@ class IndividualProfileData {
         'brochureUrl': brochureUrl,
         'brochureFileName': brochureFileName,
         'themeColor': themeColor,
+        'isIntegrationEnabled': isIntegrationEnabled,
+        'zapierWebhookUrl': zapierWebhookUrl,
         'updatedAt': updatedAt.toIso8601String(),
       };
 }

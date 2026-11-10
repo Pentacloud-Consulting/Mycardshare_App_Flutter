@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../backend/individual/vault/contact_duplicate_service.dart';
@@ -90,7 +90,7 @@ class VaultNotifier extends StateNotifier<List<Map<String, String>>> {
   }
 
   /// Adds or updates contact in vault without creating duplicates
-  void addContact(Map<String, String> contact, {bool updateIfExists = true}) {
+  Future<void> addContact(Map<String, String> contact, {bool updateIfExists = true}) async {
     final existing = findExistingContact(
       name: contact['name'] ?? '',
       phone: contact['phone'],
@@ -117,6 +117,48 @@ class VaultNotifier extends StateNotifier<List<Map<String, String>>> {
     }
 
     state = [contact, ...state];
+
+    // 1. Save to Firestore contacts subcollection
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null && uid.isNotEmpty) {
+      try {
+        final contactId = contact['id']?.isNotEmpty == true
+            ? contact['id']!
+            : 'contact_';
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('contacts')
+            .doc(contactId)
+            .set({
+          'id': contactId,
+          'name': contact['name'] ?? '',
+          'role': contact['role'] ?? '',
+          'company': contact['company'] ?? '',
+          'phone': contact['phone'] ?? '',
+          'email': contact['email'] ?? '',
+          'website': contact['website'] ?? '',
+          'address': contact['address'] ?? '',
+          'tag': contact['tag'] ?? 'Manual',
+          'dateAdded': DateTime.now().toIso8601String(),
+        }, SetOptions(merge: true));
+      } catch (_) {}
+    }
+
+    // 2. Dual-write to MongoDB via /api/scanned-contacts (fire and forget)
+    try {
+      IndividualApiService.post('/api/scanned-contacts', {
+        'fullName': contact['name'] ?? '',
+        'email': contact['email'] ?? '',
+        'phone': contact['phone'] ?? '',
+        'company': contact['company'] ?? '',
+        'jobTitle': contact['role'] ?? '',
+        'website': contact['website'] ?? '',
+        'address': contact['address'] ?? '',
+        'notes': contact['notes'] ?? '',
+        'source': contact['tag'] ?? 'manual',
+      }).catchError((_) => <String, dynamic>{});
+    } catch (_) {}
   }
 
   Future<void> deleteContact({String? id, required String name, String? email}) async {

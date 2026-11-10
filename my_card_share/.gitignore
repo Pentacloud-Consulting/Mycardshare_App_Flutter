@@ -50,6 +50,7 @@ app.*.map.json
 # Firebase & Secrets
 **/google-services.json
 **/GoogleService-Info.plist
+**/key.properties
 *.env
 *.pem
 *.keystore

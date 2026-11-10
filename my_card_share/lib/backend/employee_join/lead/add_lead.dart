@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -152,6 +152,7 @@ class AddLeadService {
     // 3. Post to backend API /api/leads/create in background if available
     try {
       final Uri url = Uri.parse('${IndividualApiService.baseUrl}/api/leads/create');
+      final _companyId = EmployeeHomeBackendService.instance.enterpriseUid ?? '';
       http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -164,6 +165,8 @@ class AddLeadService {
           'notes': lead.notes,
           'status': lead.status,
           'capturedVia': lead.source,
+          'companyId': _companyId,
+          'capturedBy': effectiveUid,
         }),
       ).catchError((_) => http.Response('', 500));
     } catch (apiErr) {
@@ -553,6 +556,16 @@ class AddLeadService {
           .doc(leadId)
           .update({'status': newStatus})
           .catchError((_) {});
+
+      // Sync to Web MongoDB backend so Web portal shows updated status
+      try {
+        final Uri statusUrl = Uri.parse('${IndividualApiService.baseUrl}/api/leads/$leadId');
+        http.patch(
+          statusUrl,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'status': newStatus}),
+        ).catchError((_) => http.Response('', 500));
+      } catch (_) {}
 
       debugPrint('[AddLeadService] Updated lead $leadId status to $newStatus');
     } catch (e) {

@@ -87,18 +87,29 @@ class IndividualMetricsStore extends ChangeNotifier {
       // This reads MongoDB `cards.views` which is the REAL count (123, not 17)
       try {
         final apiRes = await IndividualApiService.get('/api/user/stats')
-            .timeout(const Duration(seconds: 8));
+            .timeout(const Duration(seconds: 10));
         if (apiRes['success'] == true && apiRes['data'] != null) {
           final data = apiRes['data'] as Map<String, dynamic>;
-          final liveViews = (data['views'] as num?)?.toInt() ?? 0;
-          final liveLeads = (data['connectionsCount'] as num?)?.toInt() ?? 0;
+          // Web API stores real views in `views` OR `impressions` field
+          final liveViews = (data['views'] as num?)?.toInt() ??
+              (data['impressions'] as num?)?.toInt() ??
+              (data['cardViews'] as num?)?.toInt() ??
+              0;
+          final liveLeads = (data['connectionsCount'] as num?)?.toInt() ??
+              (data['leads'] as num?)?.toInt() ??
+              0;
+          final liveScans = (data['scans'] as num?)?.toInt() ?? 0;
           final viewsTrend = (data['viewsTrend'] as String?) ?? "+0%";
-          final leadsTrend = (data['connectionsTrend'] as String?) ?? "+0%";
+          final leadsTrend = (data['connectionsTrend'] as String?) ??
+              (data['leadsTrend'] as String?) ??
+              "+0%";
           final cardStatus = data['cardStatus'] as String?;
 
+          // Only update if we got meaningful data (don't overwrite 123 with 0)
           _metrics = _metrics.copyWith(
-            views: liveViews,
-            leads: liveLeads,
+            views: liveViews > 0 ? liveViews : _metrics.views,
+            leads: liveLeads > 0 ? liveLeads : _metrics.leads,
+            scans: liveScans > 0 ? liveScans : _metrics.scans,
             viewsTrend: viewsTrend,
             leadsTrend: leadsTrend,
           );
@@ -110,7 +121,7 @@ class IndividualMetricsStore extends ChangeNotifier {
 
           // Write back to Firestore so offline reads get latest values
           _saveMetricsToFirestore(uid, _metrics);
-          debugPrint('[IndividualMetricsStore] ✅ API stats: views=$liveViews, leads=$liveLeads, cardStatus=$cardStatus');
+          debugPrint('[IndividualMetricsStore] ✅ API stats: views=$liveViews, leads=$liveLeads, scans=$liveScans, cardStatus=$cardStatus');
           return;
         }
       } catch (apiErr) {
@@ -249,10 +260,31 @@ class IndividualMetricsStore extends ChangeNotifier {
   Future<void> _saveMetricsToFirestore(String uid, IndividualMetricsData data) async {
     if (uid.isEmpty) return;
     try {
+      final metricsPayload = data.toJson();
+      // Save to users/{uid} top-level
       await FirebaseFirestore.instance.collection('users').doc(uid).set(
-        {'metrics': data.toJson()},
+        {'metrics': metricsPayload},
         SetOptions(merge: true),
       );
+      // Also write flat fields for direct reads
+      await FirebaseFirestore.instance.collection('users').doc(uid).set(
+        {
+          'cardViews': data.views,
+          'impressions': data.views,
+          'views': data.views,
+          'connectionsCount': data.leads,
+          'leads': data.leads,
+          'scans': data.scans,
+        },
+        SetOptions(merge: true),
+      );
+      // Also persist in analytics/overview subcollection for EmployeeStatsBackendService
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('analytics')
+          .doc('overview')
+          .set(metricsPayload, SetOptions(merge: true));
     } catch (e) {
       debugPrint('[IndividualMetricsStore] Error saving metrics to Firestore: $e');
     }

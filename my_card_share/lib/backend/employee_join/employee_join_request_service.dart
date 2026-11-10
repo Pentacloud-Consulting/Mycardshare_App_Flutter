@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
@@ -71,12 +71,20 @@ class EmployeeJoinRequestService {
 
       await FirebaseFirestore.instance.collection('enterprise_join_requests').doc(reqDocId).set({
         'id': reqDocId,
+        // Web-compatible field names (what the web portal reads)
+        'userId': applicantUid,
+        'workEmail': cleanEmail,
+        'employeeName': cleanName.isNotEmpty ? cleanName : cleanEmail.split('@').first,
+        'companyId': companySlug,
+        'companyName': companyName,
+        // Backward-compat fields (what the app previously wrote)
         'applicantUid': applicantUid,
         'applicantName': cleanName.isNotEmpty ? cleanName : cleanEmail.split('@').first,
         'applicantEmail': cleanEmail,
+        'enterpriseCompanyName': companyName,
+        // Common fields
         'jobTitle': cleanRole,
         'phone': phone ?? '',
-        'enterpriseCompanyName': companyName,
         'status': 'pending',
         'createdAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));

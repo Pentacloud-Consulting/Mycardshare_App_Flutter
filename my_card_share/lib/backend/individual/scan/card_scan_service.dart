@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -6,6 +6,7 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import '../../Camera Card Scan & Voice/camera/camera_card_scan_service.dart';
 import '../previews/individual_metrics_store.dart';
 import '../vault/contact_duplicate_service.dart';
+import '../api_service.dart';
 
 class ScannedContactData {
   final String id;
@@ -351,6 +352,20 @@ class CardScanService {
               contact.toJson(),
               SetOptions(merge: true),
             );
+
+        // Dual-write to MongoDB /api/scanned-contacts (fire and forget)
+        try {
+          IndividualApiService.post('/api/scanned-contacts', {
+            'fullName': contact.name,
+            'email': contact.email,
+            'phone': contact.phone,
+            'company': contact.company,
+            'jobTitle': contact.role,
+            'website': contact.website,
+            'address': contact.address,
+            'source': 'scanner',
+          }).catchError((_) => <String, dynamic>{});
+        } catch (_) {}
 
         if (!isUpdate) {
           // Increment real Scans metric on Home dashboard only for new contacts

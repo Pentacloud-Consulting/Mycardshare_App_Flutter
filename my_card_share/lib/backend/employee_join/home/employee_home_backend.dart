@@ -87,7 +87,9 @@ class EmployeeHomeBackendService extends ChangeNotifier {
       String? foundAvatar;
       String? foundEntUid;
 
-      // ── Step 1: Check IndividualProfileStore for this employee's active card/profile
+      // ── Step 1: Check IndividualProfileStore for this employee's personal data (name/role/avatar ONLY)
+      // NOTE: companyName is intentionally NOT read from personal profile here — the enterprise's
+      // canonical companyName must always win so all employees under one workspace show the same name.
       final activeIndProfile = IndividualProfileStore.instance.activeProfile;
       if (activeIndProfile != null) {
         if (activeIndProfile.fullName.isNotEmpty && activeIndProfile.fullName != 'User') {
@@ -96,9 +98,7 @@ class EmployeeHomeBackendService extends ChangeNotifier {
         if (activeIndProfile.jobTitle.isNotEmpty && activeIndProfile.jobTitle != 'Member') {
           foundRole = activeIndProfile.jobTitle;
         }
-        if (activeIndProfile.companyName.isNotEmpty && activeIndProfile.companyName != 'Enterprise Workspace') {
-          foundCompany = activeIndProfile.companyName;
-        }
+        // company intentionally skipped — enterprise doc takes priority
         if (activeIndProfile.profilePhoto?.isNotEmpty == true) {
           foundAvatar = activeIndProfile.profilePhoto;
         }
@@ -172,12 +172,15 @@ class EmployeeHomeBackendService extends ChangeNotifier {
             final fsCompanyId = (mergedUserData['companyId'] as String?)?.trim();
             final fsEntUid = (mergedUserData['enterpriseUid'] as String?)?.trim() ?? fsCompanyId;
 
-            if (fsName != null && fsName.isNotEmpty && fsName != 'User' && fsName.toLowerCase() != 'zuhaib') foundName = fsName;
-            // Don't set foundCompany from personal companyName yet - enterprise takes priority
+            if (fsName != null && fsName.isNotEmpty && fsName != 'User') foundName = fsName;
+            // Personal companyName is NEVER used if an enterpriseUid exists — enterprise doc wins
             final fsPersonalCompany = (fsCompany != null && fsCompany.isNotEmpty && fsCompany != 'Enterprise Workspace') ? fsCompany : null;
             if (fsAvatar != null && fsAvatar.isNotEmpty) foundAvatar = fsAvatar;
             if (fsEntUid != null && fsEntUid.isNotEmpty) foundEntUid = fsEntUid;
-            if (fsPersonalCompany != null && foundEntUid == null) foundCompany = fsPersonalCompany;
+            // Only fallback to personal company if there is absolutely no enterprise link
+            if (fsPersonalCompany != null && foundEntUid == null && foundCompany.isEmpty) {
+              foundCompany = fsPersonalCompany;
+            }
 
             final fsCardStatus = (mergedUserData['cardStatus'] as String?)?.trim() ?? (mergedUserData['profileStatus'] as String?)?.trim();
             if (fsCardStatus != null && fsCardStatus.isNotEmpty) {
@@ -193,18 +196,17 @@ class EmployeeHomeBackendService extends ChangeNotifier {
       if (currentEmail.isNotEmpty) {
         try {
           if (foundEntUid != null && foundEntUid.isNotEmpty) {
-            // Also directly read enterprise doc to guarantee companyName
-            if (foundCompany.isEmpty || foundCompany == 'Enterprise Workspace') {
-              try {
-                final entDoc = await _firestore.collection('enterprises').doc(foundEntUid).get();
-                if (entDoc.exists && entDoc.data() != null) {
-                  final c = (entDoc.data()!['companyName'] as String?)?.trim();
-                  if (c != null && c.isNotEmpty && c != 'Enterprise Workspace') {
-                    foundCompany = c;
-                  }
+            // Always read enterprise doc to get canonical companyName — this ensures all
+            // employees of the same workspace see the identical company name
+            try {
+              final entDoc = await _firestore.collection('enterprises').doc(foundEntUid).get();
+              if (entDoc.exists && entDoc.data() != null) {
+                final c = (entDoc.data()!['companyName'] as String?)?.trim();
+                if (c != null && c.isNotEmpty && c != 'Enterprise Workspace') {
+                  foundCompany = c; // Always override — enterprise canonical name wins
                 }
-              } catch (_) {}
-            }
+              }
+            } catch (_) {}
 
             final empSnap = await _firestore
                 .collection('enterprises')

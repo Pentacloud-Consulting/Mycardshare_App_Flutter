@@ -107,60 +107,7 @@ class CompanyDetailTeamSection extends StatelessWidget {
       }
     } catch (_) {}
 
-    // 3. Fallback for Islamic Web or workspaces with registered seats
-    if (memberMap.isEmpty && (cleanName.contains('islamic') || employeeCount >= 4)) {
-      final defaultIslamicEmployees = [
-        {
-          'id': 'emp_admin_islamic',
-          'name': 'Zuhaib Ulla Sharif',
-          'email': 'admin@islamicweb.com',
-          'roleTitle': 'Workspace Admin',
-          'role': 'Admin',
-          'status': 'Active',
-          'avatarUrl': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-        },
-        {
-          'id': 'emp_tushti_islamic',
-          'name': 'Tushti Dua',
-          'email': 'employee@islamicweb.com',
-          'roleTitle': 'Senior Developer',
-          'role': 'Employee',
-          'status': 'Active',
-          'avatarUrl': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
-        },
-        {
-          'id': 'emp_sandeep_islamic',
-          'name': 'Sandeep Soni',
-          'email': 'sandeep@islamicweb.com',
-          'roleTitle': 'Product Designer',
-          'role': 'Employee',
-          'status': 'Active',
-          'avatarUrl': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-        },
-        {
-          'id': 'emp_inaz_islamic',
-          'name': 'Inaz Corp Member',
-          'email': 'inaz@islamicweb.com',
-          'roleTitle': 'Digital Lead',
-          'role': 'Employee',
-          'status': 'Active',
-          'avatarUrl': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
-        },
-      ];
-
-      for (final emp in defaultIslamicEmployees) {
-        memberMap[emp['email']!] = emp;
-
-        // Persist to Firestore in the background
-        FirebaseFirestore.instance
-            .collection('enterprises')
-            .doc(targetEnterpriseId)
-            .collection('employees')
-            .doc(emp['id']!)
-            .set(emp, SetOptions(merge: true))
-            .catchError((_) {});
-      }
-    }
+    // 3. No fallback mock data — show empty if no real members found
 
     yield memberMap.values.toList();
   }

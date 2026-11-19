@@ -1,30 +1,16 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart';
 import '../reset_passowrd.dart';
 
 class MasterAdminResetPassword {
-  static const String baseUrl = "https://mycardshare.com";
+  static final FirebaseAuth _auth = FirebaseAuth.instance;
 
   /// Dispatches real password reset email to Super Admin / Master Admin
   static Future<bool> sendResetLink(String email) async {
     final normalizedEmail = email.trim().toLowerCase();
     try {
-      final res = await http.post(
-        Uri.parse("$baseUrl/api/sync/reset-password"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": normalizedEmail,
-          "role": "master_admin",
-        }),
-      );
-      if (res.statusCode == 200) {
-        final json = jsonDecode(res.body);
-        final token = json['data']?['resetToken'] ??
-            'token_${DateTime.now().millisecondsSinceEpoch}';
-        ResetPasswordStore.recordResetRequest(normalizedEmail, token: token);
-        return true;
-      }
-      return false;
+      await _auth.sendPasswordResetEmail(email: normalizedEmail);
+      ResetPasswordStore.recordResetRequest(normalizedEmail);
+      return true;
     } catch (_) {
       return false;
     }
@@ -37,15 +23,9 @@ class MasterAdminResetPassword {
   }) async {
     final normalizedEmail = email.trim().toLowerCase();
     try {
-      final res = await http.patch(
-        Uri.parse("$baseUrl/api/sync/reset-password"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": normalizedEmail,
-          "newPassword": newPassword,
-        }),
-      );
-      if (res.statusCode == 200) {
+      final user = _auth.currentUser;
+      if (user != null) {
+        await user.updatePassword(newPassword);
         ResetPasswordStore.saveResetPasswordRecord(normalizedEmail, newPassword);
         return true;
       }

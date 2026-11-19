@@ -7,8 +7,8 @@ import 'email_send_request.dart';
 
 class EmployeeJoinRequestService {
   static const List<String> _hosts = [
+    'https://mycardshare.com',
     "https://mycardshare.com",
-    "https://digitalbusinesscloudcard.com",
   ];
 
   static Future<Map<String, String>> _getHeaders() async {

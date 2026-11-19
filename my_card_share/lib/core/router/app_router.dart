@@ -231,7 +231,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/reset-password',
-        builder: (c, s) => const ResetPasswordScreen(),
+        builder: (c, s) => ResetPasswordScreen(initialEmail: s.extra as String?),
       ),
       GoRoute(
         path: '/registration-pending',

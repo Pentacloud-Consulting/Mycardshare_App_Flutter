@@ -182,9 +182,8 @@ class EmployeeEmailFetchService {
         debugPrint('[EmployeeEmailFetchService] users doc check note: $e');
       }
 
-      // 7. Seeded demo accounts & domain heuristics
-      final seededEnrolled = ['employee@islamicweb.com', 'zuhaib@pentacloudconsulting.com', 'admin@islamicweb.com'];
-      if (seededEnrolled.contains(cleanEmail) || cleanEmail.contains('pentacloud')) {
+      // 7. Pentacloud domain heuristic only
+      if (cleanEmail.contains('pentacloud')) {
         return EmployeeEmailVerificationResult(
           isEnrolled: true,
           enterpriseUid: 'ent_pentacloud_consulting',

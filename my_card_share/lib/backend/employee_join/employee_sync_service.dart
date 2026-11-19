@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
@@ -17,7 +17,7 @@ class EmployeeSyncService extends ChangeNotifier {
 
   static const List<String> _hosts = [
     'https://mycardshare.com',
-    'https://digitalbusinesscloudcard.com',
+    'https://mycardshare.com',
   ];
 
   Map<String, dynamic>? _syncedCompanyData;

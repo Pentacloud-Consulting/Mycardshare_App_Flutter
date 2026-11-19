@@ -1,4 +1,4 @@
-class MasterAdminEndpoints {
+﻿class MasterAdminEndpoints {
   MasterAdminEndpoints._();
 
   static const String baseUrl = 'https://mycardshare.com';

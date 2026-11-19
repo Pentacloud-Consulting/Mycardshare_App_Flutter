@@ -14,7 +14,7 @@ import '../../app view/app_view_auth_gate.dart';
 
 // ─── Shared Google Sign-In instance ──────────────────────────────────────────
 const String _webClientId =
-    '943022881240-igar8cpibfem295tuua1lhlkh24n4k4j.apps.googleusercontent.com';
+    '938552190532-2h3jm552fnvc78vsb4oq43jvrb93ldi3.apps.googleusercontent.com';
 
 final GoogleSignIn _googleSignIn = GoogleSignIn(
   serverClientId: _webClientId,

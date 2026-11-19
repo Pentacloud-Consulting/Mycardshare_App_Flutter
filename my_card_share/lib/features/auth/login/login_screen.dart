@@ -947,7 +947,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () => context.push('/reset-password'),
+                      onPressed: () {
+                        final email = _emailController.text.trim();
+                        if (email.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Please enter your email address first.'),
+                              backgroundColor: Color(0xFFEF4444),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                          return;
+                        }
+                        context.push('/reset-password', extra: email);
+                      },
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,
                         minimumSize: Size.zero,
@@ -1048,6 +1061,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       GestureDetector(
                         onTap: () {
+                          // Clear any lingering error snackbars before navigating to signup
+                          ScaffoldMessenger.of(context).clearSnackBars();
                           if (_selectedTab == 1) {
                             context.go('/signup?role=enterprise', extra: {'role': 'enterprise', 'tab': 1});
                           } else {
@@ -1068,30 +1083,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   const SizedBox(height: 12),
 
-                  // New Employee? Join Workspace
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "New Employee? ",
-                        style: AppTextStyles.textTheme.bodyMedium?.copyWith(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () => context.push('/join-workspace'),
-                        child: Text(
-                          "Join Workspace",
+                  // New Employee? Join Workspace — Only visible on Employee tab (tab index 2)
+                  if (_selectedTab == 2)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "New Employee? ",
                           style: AppTextStyles.textTheme.bodyMedium?.copyWith(
                             fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.accentGreen,
+                            color: AppColors.textSecondary,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                        GestureDetector(
+                          onTap: () => context.push('/join-workspace'),
+                          child: Text(
+                            "Join Workspace",
+                            style: AppTextStyles.textTheme.bodyMedium?.copyWith(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.accentGreen,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
 
                   const SizedBox(height: 12),
 

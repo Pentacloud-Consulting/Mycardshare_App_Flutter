@@ -31,9 +31,20 @@ class DashboardHeader extends StatelessWidget {
                 ? activeProfile!.fullName.split(' ').first
                 : (storedUser?.fullName.isNotEmpty == true ? storedUser!.fullName.split(' ').first : "User"));
 
-        final resolvedCompany = (companyName != null && companyName!.trim().isNotEmpty && companyName != "MyCardShare Member")
+        // Filter out numeric UID-based workspace names (e.g. "49126615 Workspace")
+        // that get set when joining via enterprise invite links.
+        bool _isJunkCompany(String? name) {
+          if (name == null || name.trim().isEmpty) return true;
+          final trimmed = name.trim();
+          if (trimmed == "MyCardShare Member" || trimmed == "Enterprise Workspace" ||
+              trimmed == "Acme Realty" || trimmed == "Pro Member") return true;
+          // e.g. "49126615 Workspace" — numeric prefix followed by " Workspace"
+          if (RegExp(r'\d+\s+Workspace', caseSensitive: false).hasMatch(trimmed)) return true;
+          return false;
+        }
+        final resolvedCompany = (!_isJunkCompany(companyName))
             ? companyName!.trim()
-            : (activeProfile?.companyName.isNotEmpty == true ? activeProfile!.companyName : "Pro Member");
+            : ((!_isJunkCompany(activeProfile?.companyName)) ? activeProfile!.companyName : "Pro Member");
 
         return Row(
           children: [

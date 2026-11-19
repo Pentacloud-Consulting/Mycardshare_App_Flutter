@@ -262,7 +262,8 @@ class EnterpriseLeadsService {
               .collection('leads')
               .where('email', isEqualTo: cleanEmail)
               .limit(1)
-              .get();
+              .get()
+              .timeout(const Duration(seconds: 3));
           if (existing.docs.isNotEmpty) {
             leadId = existing.docs.first.id;
             debugPrint('[EnterpriseLeadsService] Found existing lead by email. Updating $leadId.');
@@ -275,7 +276,8 @@ class EnterpriseLeadsService {
               .collection('leads')
               .where('phone', isEqualTo: phone.trim())
               .limit(1)
-              .get();
+              .get()
+              .timeout(const Duration(seconds: 3));
           if (existingPhone.docs.isNotEmpty) {
             leadId = existingPhone.docs.first.id;
             debugPrint('[EnterpriseLeadsService] Found existing lead by phone. Updating $leadId.');
@@ -326,7 +328,7 @@ class EnterpriseLeadsService {
         if (campaignName != null) 'campaignName': campaignName,
       }).catchError((e) {
         debugPrint('[EnterpriseLeadsService] MongoDB dual-sync notice: $e');
-        return null;
+        return <String, dynamic>{};
       }));
 
       return true;
@@ -395,7 +397,7 @@ class EnterpriseLeadsService {
       // Also PATCH to Web API
       unawaited(IndividualApiService.post('/api/enterprise/leads?id=$leadId', updates).catchError((e) {
         debugPrint('[EnterpriseLeadsService] Update lead API note: $e');
-        return null;
+        return <String, dynamic>{};
       }));
 
       return true;
@@ -418,7 +420,7 @@ class EnterpriseLeadsService {
       // Dual-delete from MongoDB leads collection
       unawaited(IndividualApiService.delete('/api/enterprise/leads?id=$leadId').catchError((e) {
         debugPrint('[EnterpriseLeadsService] Delete lead API note: $e');
-        return null;
+        return <String, dynamic>{};
       }));
 
       return true;

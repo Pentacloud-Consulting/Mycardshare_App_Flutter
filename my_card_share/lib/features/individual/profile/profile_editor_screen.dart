@@ -281,10 +281,8 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
                 _profileImagePath = croppedPath;
               });
               if (!mounted) return;
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Profile picture selected! Tap checkmark to save.')),
-              );
+              // Photo selected — user will tap checkmark to save
+              // (no snackbar here to avoid confusion with save confirmation)
             }
           }
         } catch (e) {
@@ -612,6 +610,7 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
 
     if (mounted) {
       setState(() => _isSaving = false);
+      ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Profile saved successfully!'),

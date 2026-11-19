@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+﻿import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../employee_join/home/employee_home_backend.dart';
@@ -187,7 +187,7 @@ class SamsungWalletService {
               textColor: Colors.amberAccent,
               onPressed: () {
                 final vcfUri = Uri.parse(
-                  'https://digitalbusinesscloudcard.com/api/sync/save-contact?cardSlug=$cardSlug&download=true',
+                  'https://mycardshare.com/api/sync/save-contact?cardSlug=$cardSlug&download=true',
                 );
                 launchUrl(vcfUri, mode: LaunchMode.externalApplication);
               },
@@ -536,7 +536,7 @@ class SamsungWalletService {
                     onPressed: () async {
                       Navigator.of(ctx).pop(false);
                       final vcfUri = Uri.parse(
-                        'https://digitalbusinesscloudcard.com/api/sync/save-contact?cardSlug=$cardSlug&download=true',
+                        'https://mycardshare.com/api/sync/save-contact?cardSlug=$cardSlug&download=true',
                       );
                       await launchUrl(vcfUri, mode: LaunchMode.externalApplication);
                     },
@@ -680,7 +680,7 @@ class SamsungWalletService {
                   onPressed: () async {
                     Navigator.of(ctx).pop();
                     final vcfUri = Uri.parse(
-                      'https://digitalbusinesscloudcard.com/api/sync/save-contact?cardSlug=$cardSlug&download=true',
+                      'https://mycardshare.com/api/sync/save-contact?cardSlug=$cardSlug&download=true',
                     );
                     await launchUrl(vcfUri, mode: LaunchMode.externalApplication);
                   },

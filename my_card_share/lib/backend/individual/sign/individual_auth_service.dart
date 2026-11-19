@@ -9,7 +9,7 @@ import '../../app view/app_view_auth_gate.dart';
 
 // ─── Shared Google Sign-In instance (mirrors GoogleSignUpService config) ──────
 const String _webClientId =
-    '943022881240-igar8cpibfem295tuua1lhlkh24n4k4j.apps.googleusercontent.com';
+    '938552190532-2h3jm552fnvc78vsb4oq43jvrb93ldi3.apps.googleusercontent.com';
 
 final GoogleSignIn _googleSignIn = GoogleSignIn(
   serverClientId: _webClientId,
@@ -163,6 +163,8 @@ class IndividualAuthService {
       debugPrint('[IndividualAuthService] Firebase user created: $uid');
 
       // Step 2 – Firestore users/{uid} document
+      // BUG #6 FIX: Same email re-signup → same UID → overwrite old data completely
+      // Using set() without merge so old fields (deleted bio, old slug etc.) are cleared
       final slug = IndividualProfileStore.generateCardSlug(fullName);
       await _firestore.collection('users').doc(uid).set({
         'uid': uid,
@@ -171,9 +173,29 @@ class IndividualAuthService {
         'role': 'individual',
         'status': 'active',
         'cardSlug': slug,
+        // Clear any leftover deleted/deactivated flags from previous account
+        'isDeleted': false,
+        'deleted': false,
+        'isDeactivated': false,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
+      // Also remove from deleted_accounts collections if present
+      try {
+        final cleanEmail = email.trim().toLowerCase();
+        final safeEmail = cleanEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+        await _firestore.collection('deleted_accounts').doc(uid).delete();
+        await _firestore.collection('deleted_accounts').doc(cleanEmail).delete();
+        await _firestore.collection('deleted_accounts').doc(safeEmail).delete();
+      } catch (_) {}
+      // Also reset MongoDB card via API (clear old card data)
+      try {
+        await IndividualApiService.patch('/api/cards/reset', {
+          'uid': uid,
+          'email': email.trim().toLowerCase(),
+          'fullName': fullName.trim(),
+        });
+      } catch (_) {}
 
       debugPrint('[IndividualAuthService] Firestore user doc created: $uid');
 

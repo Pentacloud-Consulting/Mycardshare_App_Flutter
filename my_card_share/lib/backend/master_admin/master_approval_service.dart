@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,7 +9,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// (/api/sync/master-admin) and platform routes (/api/platform/companies/{id}/approval).
 class MasterApprovalSyncService {
   static const String baseUrl = 'https://mycardshare.com';
-  static const String fallbackHost = 'https://digitalbusinesscloudcard.com';
+  static const String fallbackHost = 'https://mycardshare.com';
   static const String endpoint = '$baseUrl/api/sync/master-admin';
 
   /// Primary approval method with automatic Bearer token resolution and fallback
@@ -60,7 +60,7 @@ class MasterApprovalSyncService {
       }
 
       // 1. Try unified sync endpoint across known production hosts (POST & PATCH)
-      for (final host in ['https://digitalbusinesscloudcard.com', 'https://mycardshare.com']) {
+      for (final host in ['https://mycardshare.com', 'https://mycardshare.com']) {
         try {
           final uri = Uri.parse('$host/api/sync/master-admin');
           // Try POST first as per newest backend specifications

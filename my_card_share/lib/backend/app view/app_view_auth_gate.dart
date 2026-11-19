@@ -78,7 +78,7 @@ class AppViewAuthGate {
     String role = prefs.getString('user_role')?.toLowerCase() ?? 'individual';
     String uid = user?.uid ?? prefs.getString('user_id') ?? 'user_restored';
     String name = user?.displayName ?? prefs.getString('user_name') ?? (email.contains('@') ? email.split('@').first : 'User');
-    String companyName = 'Islamic Web';
+    String companyName = '';
 
     debugPrint('[AppViewAuthGate] Active session detected for $email ($uid, role: $role). Restoring session...');
 

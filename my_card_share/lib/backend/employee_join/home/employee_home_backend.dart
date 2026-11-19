@@ -145,25 +145,6 @@ class EmployeeHomeBackendService extends ChangeNotifier {
             }
           }
 
-          // Check canonical user doc for Pentacloud if email matches
-          if (currentEmail == 'zuhaib@pentacloudconsulting.com') {
-            try {
-              final docSnap = await _firestore.collection('users').doc('rDAJhxQjUWRK02nxTgfREKSZsN32').get();
-              if (docSnap.exists && docSnap.data() != null) {
-                final d = docSnap.data()!;
-                d.forEach((k, v) {
-                  if (v != null && (v is! String || v.trim().isNotEmpty)) {
-                    if (!mergedUserData.containsKey(k) ||
-                        mergedUserData[k] == null ||
-                        (mergedUserData[k] is String && (mergedUserData[k] as String).trim().isEmpty)) {
-                      mergedUserData[k] = v;
-                    }
-                  }
-                });
-              }
-            } catch (_) {}
-          }
-
           if (mergedUserData.isNotEmpty) {
             final fsName = (mergedUserData['fullName'] as String?)?.trim() ?? (mergedUserData['name'] as String?)?.trim();
             final fsCompany = (mergedUserData['companyName'] as String?)?.trim();
@@ -298,19 +279,7 @@ class EmployeeHomeBackendService extends ChangeNotifier {
         foundEntUid ??= activeEntProfile.uid;
       }
 
-      // ── Step 6: Fallback defaults if still empty (respecting corporate domain heuristics)
-      if ((foundCompany.isEmpty || foundCompany == 'Enterprise Workspace') && currentEmail.contains('pentacloud')) {
-        foundCompany = 'Pentacloud Consulting';
-      }
-      if ((foundName.isEmpty || foundName == 'User' || foundName.toLowerCase() == 'zuhaib') && currentEmail == 'zuhaib@pentacloudconsulting.com') {
-        foundName = 'Zuhaib Ulla Shariff';
-      }
-      if ((foundRole.isEmpty || foundRole == 'Member' || foundRole == 'Employee') && currentEmail == 'zuhaib@pentacloudconsulting.com') {
-        foundRole = 'Web Developer';
-      }
-      if ((foundAvatar == null || foundAvatar.isEmpty) && currentEmail == 'zuhaib@pentacloudconsulting.com') {
-        foundAvatar = '/api/images/1777545891643-5698b70e74b6';
-      }
+      // ── Step 6: Fallback defaults if still empty — NO hardcoded user data
 
       if (foundName.isEmpty) {
         foundName = fbUser?.displayName?.trim().isNotEmpty == true
@@ -340,7 +309,7 @@ class EmployeeHomeBackendService extends ChangeNotifier {
 
       // Automatically trigger corporate enterprise brand fetch
       EmployeeBannerFetchService.instance.fetchEnterpriseBrand(
-        enterpriseUid: _enterpriseUid ?? (currentEmail.contains('pentacloud') ? 'W3hDpYWqSgzFQJSb1ZcC' : null),
+        enterpriseUid: _enterpriseUid,
         employeeEmail: currentEmail,
       );
 

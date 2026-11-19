@@ -1,5 +1,5 @@
 // firebase_options.dart
-// Updated with real credentials from google-services.json
+// Updated with real credentials from google-services.json for mycardshare-23c8d
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
@@ -21,35 +21,32 @@ class DefaultFirebaseOptions {
     }
   }
 
-  // ── Android ────────────────────────────────────────────────────────────────
+  // ── Android ──────────────────────────────────────────────────────────────────
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDdd6s5MsYSk-TRQyG-NbhVuvebSyIKbUk',
-    appId: '1:943022881240:android:5a64941dbeec389b2e5aad',
-    messagingSenderId: '943022881240',
-    projectId: 'business-card-64459',
-    storageBucket: 'business-card-64459.firebasestorage.app',
+    apiKey: 'AIzaSyASPWs2Q_ICZ-U_we5t8a3RPxNEbzXR1nQ',
+    appId: '1:938552190532:android:f188ca9827fd1d3f2cfe11',
+    messagingSenderId: '938552190532',
+    projectId: 'mycardshare-23c8d',
+    storageBucket: 'mycardshare-23c8d.firebasestorage.app',
   );
 
-  // ── iOS ────────────────────────────────────────────────────────────────────
+  // ── iOS ──────────────────────────────────────────────────────────────────────
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDdd6s5MsYSk-TRQyG-NbhVuvebSyIKbUk',
-    appId: '1:943022881240:ios:YOUR_IOS_APP_ID',
-    messagingSenderId: '943022881240',
-    projectId: 'business-card-64459',
-    storageBucket: 'business-card-64459.firebasestorage.app',
-    iosClientId: '943022881240-uab2qbq06cpoc7vb3ur2ioc60su9dag0.apps.googleusercontent.com',
+    apiKey: 'AIzaSyASPWs2Q_ICZ-U_we5t8a3RPxNEbzXR1nQ',
+    appId: '1:938552190532:ios:YOUR_IOS_APP_ID',
+    messagingSenderId: '938552190532',
+    projectId: 'mycardshare-23c8d',
+    storageBucket: 'mycardshare-23c8d.firebasestorage.app',
     iosBundleId: 'com.pentacloud.mycardshare',
   );
 
-  // ── Web ─────────────────────────────────────────────────────────────────────
+  // ── Web ──────────────────────────────────────────────────────────────────────
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDdd6s5MsYSk-TRQyG-NbhVuvebSyIKbUk',
-    appId: '1:943022881240:web:5a64941dbeec389b2e5aad',
-    messagingSenderId: '943022881240',
-    projectId: 'business-card-64459',
-    storageBucket: 'business-card-64459.firebasestorage.app',
-    authDomain: 'business-card-64459.firebaseapp.com',
+    apiKey: 'AIzaSyASPWs2Q_ICZ-U_we5t8a3RPxNEbzXR1nQ',
+    appId: '1:938552190532:web:f188ca9827fd1d3f2cfe11',
+    messagingSenderId: '938552190532',
+    projectId: 'mycardshare-23c8d',
+    storageBucket: 'mycardshare-23c8d.firebasestorage.app',
+    authDomain: 'mycardshare-23c8d.firebaseapp.com',
   );
 }
-
-

@@ -303,7 +303,7 @@ class InviteCodeResolver {
 
         return ResolvedEnterpriseInfo(
           enterpriseUid: targetUid,
-          companyName: (companyName != null && companyName.isNotEmpty) ? companyName : 'Islamic Web',
+          companyName: (companyName != null && companyName.isNotEmpty) ? companyName : 'Enterprise Workspace',
           memberCount: members,
           logoUrl: logoUrl,
           industry: data['industry'] as String?,
@@ -316,24 +316,8 @@ class InviteCodeResolver {
       debugPrint('[InviteCodeResolver] Firestore query note: $e');
     }
 
-    // 4. Ultimate Fallback: Match active profile or local store ("Islamic Web", 4 Members)
-    final fallbackProfile = EnterpriseProfileStore.instance.currentProfile;
-    final companyName = (fallbackProfile?.companyName != null && fallbackProfile!.companyName.isNotEmpty)
-        ? fallbackProfile.companyName
-        : 'Islamic Web';
-    final memberCount = (fallbackProfile?.employeeCount ?? 0) > 0 ? fallbackProfile!.employeeCount : 4;
-    final rawLogo = fallbackProfile?.logoUrl;
-    final logoUrl = (rawLogo != null && rawLogo.trim().isNotEmpty) ? rawLogo.trim() : null;
-
-    return ResolvedEnterpriseInfo(
-      enterpriseUid: fallbackProfile?.uid ?? 'ent_islamic_web',
-      companyName: companyName,
-      memberCount: memberCount,
-      logoUrl: logoUrl,
-      industry: fallbackProfile?.industry ?? 'Deen',
-      workEmail: fallbackProfile?.email ?? 'zuhaibent@gmail.com',
-      isVerified: true,
-      inviteCode: cleanCode,
-    );
+    // 4. If nothing matched, return null so caller shows "Invalid invite code" error
+    // DO NOT fallback to any hardcoded enterprise data
+    return null;
   }
 }

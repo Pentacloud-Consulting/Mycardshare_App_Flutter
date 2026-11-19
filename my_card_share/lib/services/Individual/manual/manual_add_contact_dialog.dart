@@ -182,7 +182,7 @@ class _ManualAddContactDialogState extends ConsumerState<ManualAddContactDialog>
         child: SingleChildScrollView(
           child: Form(
             key: _formKey,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
+            autovalidateMode: AutovalidateMode.disabled,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -225,7 +225,7 @@ class _ManualAddContactDialogState extends ConsumerState<ManualAddContactDialog>
                   "Phone Number",
                   Icons.phone_outlined,
                   keyboardType: TextInputType.phone,
-                  hintText: "+91 98765 43210",
+                  hintText: "e.g. +91 99999 00000",
                   maxLength: 20,
                   required: true,
                   validator: (v) => ContactValidator.validatePhone(v, required: true),

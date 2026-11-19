@@ -22,14 +22,50 @@ class _EmployeeWorkforceScreenState extends State<EmployeeWorkforceScreen> {
   String _searchQuery = "";
   String _selectedFilter = "All";
 
+  @override
+  void initState() {
+    super.initState();
+    // Listen for changes from EmployeeHomeBackendService so that when
+    // enterpriseUid is resolved (possibly after an async Firestore load),
+    // the workforce stream is rebuilt and teammates appear.
+    EmployeeHomeBackendService.instance.addListener(_onBackendChanged);
+    // Trigger a data load in case enterpriseUid isn't set yet.
+    if (EmployeeHomeBackendService.instance.enterpriseUid == null ||
+        EmployeeHomeBackendService.instance.enterpriseUid!.isEmpty) {
+      EmployeeHomeBackendService.instance.loadEmployeeHomeData();
+    }
+  }
+
+  @override
+  void dispose() {
+    EmployeeHomeBackendService.instance.removeListener(_onBackendChanged);
+    super.dispose();
+  }
+
+  void _onBackendChanged() {
+    if (mounted) setState(() {});
+  }
+
   Stream<List<TeammateModel>> _getRealTeammatesStream() {
     final empBackend = EmployeeHomeBackendService.instance;
     final user = FirebaseAuth.instance.currentUser;
+
+    // Prefer the enterpriseUid stored in EmployeeHomeBackendService — this is
+    // the UID of the *enterprise workspace*, not the logged-in employee's own UID.
+    // Only fall back to EnterpriseProfileStore (admin path) or the current user's
+    // UID when the backend hasn't resolved the enterprise yet.
     final entUid = (empBackend.enterpriseUid != null && empBackend.enterpriseUid!.trim().isNotEmpty)
         ? empBackend.enterpriseUid!.trim()
-        : (EnterpriseProfileStore.instance.currentProfile?.uid ?? user?.uid ?? '');
+        : EnterpriseProfileStore.instance.currentProfile?.uid ?? '';
 
     if (entUid.isEmpty) {
+      // Enterprise UID not yet loaded — trigger a reload in background and
+      // return an empty stream so the UI shows the loading/empty state.
+      if (user != null) {
+        Future.microtask(() async {
+          await empBackend.loadEmployeeHomeData();
+        });
+      }
       return const Stream.empty();
     }
 

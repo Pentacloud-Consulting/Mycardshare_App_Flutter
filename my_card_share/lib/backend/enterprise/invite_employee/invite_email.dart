@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
@@ -34,10 +34,8 @@ class EnterpriseEmailInviteService {
     try {
       final headers = await _getHeaders();
 
-      // 1. Direct Next.js 15 Email Dispatch Endpoint (/api/sync/enterprise-email-invite)
+      // 1. Direct Next.js Email Dispatch Endpoint
       final payload = {
-        "action": "send_batch_email_invites",
-        "enterpriseId": senderUid,
         "emails": emails,
         "customMessage": customMessage ?? "Join our company digital card team workspace.",
       };
@@ -45,12 +43,25 @@ class EnterpriseEmailInviteService {
       http.Response? res;
       try {
         res = await http.post(
-          Uri.parse("$baseUrl/api/sync/enterprise-email-invite"),
+          Uri.parse("$baseUrl/api/enterprise/workspace/invite"),
           headers: headers,
-          body: jsonEncode(payload),
+          body: jsonEncode({"email": emails.first}), // Send one at a time — primary
         ).timeout(const Duration(seconds: 8));
       } catch (err) {
-        debugPrint("[EnterpriseEmailInviteService] enterprise-email-invite primary err: $err");
+        debugPrint("[EnterpriseEmailInviteService] enterprise invite primary err: $err");
+      }
+
+      // If multiple emails, send rest in batch via loop
+      if (res != null && res.statusCode == 200 && emails.length > 1) {
+        for (final email in emails.skip(1)) {
+          try {
+            await http.post(
+              Uri.parse("$baseUrl/api/enterprise/workspace/invite"),
+              headers: headers,
+              body: jsonEncode({"email": email}),
+            ).timeout(const Duration(seconds: 5));
+          } catch (_) {}
+        }
       }
 
       // If primary endpoint succeeded
@@ -63,16 +74,12 @@ class EnterpriseEmailInviteService {
         };
       }
 
-      // 2. Fallback: Secondary Endpoint (/api/sync/invite-code)
+      // 2. Fallback: Secondary Endpoint (/api/invite/verify style - Firestore direct)
       try {
         final fallbackRes = await http.post(
-          Uri.parse("$baseUrl/api/sync/invite-code"),
+          Uri.parse("$baseUrl/api/enterprise/workspace/invite"),
           headers: headers,
-          body: jsonEncode({
-            "action": "batch_invite_emails",
-            "enterpriseId": senderUid,
-            "emails": emails,
-          }),
+          body: jsonEncode({"email": emails.isNotEmpty ? emails.first : ''}),
         ).timeout(const Duration(seconds: 6));
 
         if (fallbackRes.statusCode == 200) {
@@ -141,13 +148,12 @@ class EnterpriseEmailInviteService {
   }) async {
     try {
       final res = await http.post(
-        Uri.parse("$baseUrl/api/sync/enterprise-email-invite"),
+        Uri.parse("$baseUrl/api/enterprise/workspace/invite"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
+          "email": email.trim().toLowerCase(),
           "action": "accept_email_invite",
           "enterpriseId": enterpriseId,
-          "email": email.trim().toLowerCase(),
-          "password": password,
           "fullName": fullName,
           "jobTitle": jobTitle,
         }),

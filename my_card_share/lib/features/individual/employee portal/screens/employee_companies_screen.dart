@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../auth/back/smart_back_handler.dart';
 import '../../../auth/font style/font_style.dart';
@@ -82,7 +82,7 @@ class EmployeeCompaniesScreen extends StatelessWidget {
                             location: "Corporate Workspace",
                             website: companyName.isNotEmpty && companyName != "Enterprise Workspace"
                                 ? "${companyName.toLowerCase().replaceAll(RegExp(r'[^a-zA-Z0-9]'), '')}.com"
-                                : "digitalbusinesscloudcard.com",
+                                : "mycardshare.com",
                             role: role,
                             joinedDate: "Active Member",
                           ),

@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
@@ -6,7 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 class WalletSyncService {
   // ⚡ Live backend server domain
-  static const String baseUrl = "https://digitalbusinesscloudcard.com";
+  static const String baseUrl = "https://mycardshare.com";
 
   /// 1. Add to Google Wallet or Samsung Wallet
   /// [walletType]: "google" | "samsung" | "apple"

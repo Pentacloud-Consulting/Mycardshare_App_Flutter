@@ -1,4 +1,4 @@
-// lib/backend/master_admin/master_admin_global_service.dart
+﻿// lib/backend/master_admin/master_admin_global_service.dart
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;

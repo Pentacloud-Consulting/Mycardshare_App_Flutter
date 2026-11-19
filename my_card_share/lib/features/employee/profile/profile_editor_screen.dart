@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../backend/individual/profile/individual_profile_store.dart';
 import '../../../backend/individual/profile/image_upload_service.dart';
@@ -730,6 +731,39 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
       avatarUrl: uploadedAvatarUrl,
     );
     EmployeeHomeBackendService.instance.loadEmployeeHomeData();
+
+    // ── 4b. Sync avatarUrl + name into enterprise employees subcollection ─────
+    // This ensures the Team Workforce screen and directory show the updated PFP.
+    try {
+      final entUid = EmployeeHomeBackendService.instance.enterpriseUid;
+      final fbUser2 = FirebaseAuth.instance.currentUser;
+      if (entUid != null && entUid.isNotEmpty && fbUser2 != null) {
+        final empQuery = await FirebaseFirestore.instance
+            .collection('enterprises')
+            .doc(entUid)
+            .collection('employees')
+            .where('email', isEqualTo: (fbUser2.email ?? '').toLowerCase().trim())
+            .limit(1)
+            .get();
+        if (empQuery.docs.isNotEmpty) {
+          final Map<String, dynamic> updateData = {
+            'updatedAt': FieldValue.serverTimestamp(),
+          };
+          if (uploadedAvatarUrl != null && uploadedAvatarUrl.isNotEmpty) {
+            updateData['avatarUrl'] = uploadedAvatarUrl;
+            updateData['profilePhoto'] = uploadedAvatarUrl;
+          }
+          final nm = _nameController.text.trim();
+          if (nm.isNotEmpty) updateData['name'] = nm;
+          final rl = _roleController.text.trim();
+          if (rl.isNotEmpty) updateData['roleTitle'] = rl;
+          await empQuery.docs.first.reference.update(updateData);
+          debugPrint('[ProfileEditor] ✅ enterprise/employees avatarUrl synced.');
+        }
+      }
+    } catch (syncErr) {
+      debugPrint('[ProfileEditor] enterprise employees sync notice: $syncErr');
+    }
 
     // ── 5. Sync updated slug + profile to MongoDB so web QR page stays live ──
     SlugBackendService.instance.ensureSlugSynced(finalSlug, {

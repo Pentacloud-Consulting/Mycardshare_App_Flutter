@@ -793,26 +793,6 @@ class IndividualProfileStore extends ChangeNotifier {
         } catch (_) {}
       }
 
-      // Check canonical user doc for Pentacloud if email matches
-      if (email.trim().toLowerCase() == 'zuhaib@pentacloudconsulting.com') {
-        try {
-          final pentacloudDoc = await FirebaseFirestore.instance.collection('users').doc('rDAJhxQjUWRK02nxTgfREKSZsN32').get();
-          if (pentacloudDoc.exists && pentacloudDoc.data() != null) {
-            final pData = pentacloudDoc.data()!;
-            pData.forEach((k, v) {
-              if (v != null && (v is! String || v.trim().isNotEmpty)) {
-                if (!mergedData.containsKey(k) ||
-                    mergedData[k] == null ||
-                    (mergedData[k] is String && (mergedData[k] as String).trim().isEmpty)) {
-                  mergedData[k] = v;
-                }
-              }
-            });
-            if (resolvedDocId.isEmpty) resolvedDocId = pentacloudDoc.id;
-          }
-        } catch (_) {}
-      }
-
       if (mergedData.isNotEmpty) {
         final data = mergedData;
         final rawPhoto = data['profilePhoto'] ??
@@ -820,33 +800,31 @@ class IndividualProfileStore extends ChangeNotifier {
             data['photoURL'] ??
             data['photoUrl'] ??
             data['picture'] ??
-            data['profileImage'] ??
-            (email.toLowerCase() == 'zuhaib@pentacloudconsulting.com' ? '/api/images/1777545891643-5698b70e74b6' : null);
+            data['profileImage'];
         final photo = ImageUrlFormatter.format(rawPhoto?.toString()) ?? authPhoto;
         final rawBanner = data['bannerPhoto'] ??
             data['bannerUrl'] ??
             data['companyBanner'] ??
-            data['coverImage'] ??
-            (email.toLowerCase().contains('pentacloud') ? '/api/uploads/companyBanner/W3hDpYWqSgzFQJSb1ZcC_1786435248817_1786435248820.png' : null);
+            data['coverImage'];
         final banner = ImageUrlFormatter.format(rawBanner?.toString());
 
-        final resolvedName = (data['fullName'] as String?)?.trim().isNotEmpty == true && (data['fullName'] as String).trim().toLowerCase() != 'zuhaib'
+        final resolvedName = (data['fullName'] as String?)?.trim().isNotEmpty == true
             ? (data['fullName'] as String).trim()
-            : ((data['name'] as String?)?.trim().isNotEmpty == true && (data['name'] as String).trim().toLowerCase() != 'zuhaib'
+            : ((data['name'] as String?)?.trim().isNotEmpty == true
                 ? (data['name'] as String).trim()
-                : (email.toLowerCase() == 'zuhaib@pentacloudconsulting.com' ? 'Zuhaib Ulla Shariff' : (fullName.trim().isNotEmpty ? fullName.trim() : (email.contains('@') ? email.split('@').first : 'User'))));
+                : (fullName.trim().isNotEmpty ? fullName.trim() : (email.contains('@') ? email.split('@').first : 'User')));
 
         final resolvedRole = (data['jobTitle'] as String?)?.trim().isNotEmpty == true && (data['jobTitle'] as String).trim() != 'Employee' && (data['jobTitle'] as String).trim() != 'Member'
             ? (data['jobTitle'] as String).trim()
             : ((data['roleTitle'] as String?)?.trim().isNotEmpty == true && (data['roleTitle'] as String).trim() != 'Employee' && (data['roleTitle'] as String).trim() != 'Member'
                 ? (data['roleTitle'] as String).trim()
-                : (email.toLowerCase() == 'zuhaib@pentacloudconsulting.com' ? 'Web Developer' : ''));
+                : '');
 
         final resolvedComp = (data['companyName'] as String?)?.trim().isNotEmpty == true && (data['companyName'] as String).trim() != 'Enterprise Workspace'
             ? (data['companyName'] as String).trim()
             : ((data['company'] as String?)?.trim().isNotEmpty == true && (data['company'] as String).trim() != 'Enterprise Workspace'
                 ? (data['company'] as String).trim()
-                : (email.contains('pentacloud') ? 'Pentacloud Consulting' : ''));
+                : '');
 
         final resumeUrl = data['resumeUrl'] as String?;
         final resumeFileName = data['resumeFileName'] as String?;
@@ -988,7 +966,7 @@ class IndividualProfileStore extends ChangeNotifier {
     IndividualApiService.patch('/api/sync/individual', {
       'action': 'update_profile',
       'updates': payload,
-    }).catchError((_) {});
+    }).catchError((_) => <String, dynamic>{});
   }
 
 }

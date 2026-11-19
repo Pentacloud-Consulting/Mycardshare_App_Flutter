@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -6,7 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../backend/individual/profile/individual_profile_store.dart';
 
 class IndividualDeleteService {
-  static const String primaryUrl = "https://digitalbusinesscloudcard.com";
+  static const String primaryUrl = "https://mycardshare.com";
   static const String fallbackUrl = "https://mycardshare.com";
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 

@@ -1,4 +1,4 @@
-// lib/backend/number logic/phone_number_service.dart
+﻿// lib/backend/number logic/phone_number_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -110,7 +110,7 @@ class PhoneValidationModel {
 }
 
 class PhoneNumberSyncService {
-  static const String _syncEndpoint = 'https://digitalbusinesscloudcard.com/api/sync/number-logic';
+  static const String _syncEndpoint = 'https://mycardshare.com/api/sync/number-logic';
 
   /// Live validation with Next.js web backend
   static Future<PhoneValidationModel> validateWithBackend(String phone) async {

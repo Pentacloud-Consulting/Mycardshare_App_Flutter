@@ -119,9 +119,7 @@ class ProfileLiveCardPreview extends StatelessWidget {
             ? indAvatar.trim()
             : ((empAvatar != null && empAvatar.trim().isNotEmpty)
                 ? empAvatar.trim()
-                : (authUser?.email?.toLowerCase() == 'zuhaib@pentacloudconsulting.com'
-                    ? 'https://mycardshare.com/api/images/1777545891643-5698b70e74b6'
-                    : googlePhoto)));
+                : googlePhoto));
     return _buildImageWidget(activePhoto, fallback: _buildAvatarFallback());
   }
 
@@ -214,9 +212,7 @@ class ProfileLiveCardPreview extends StatelessWidget {
                     child: GestureDetector(
                       onTap: onAvatarEditTap ??
                           () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Upload photo clicked")),
-                            );
+                            // No-op: avatar edit handled by parent screen
                           },
                       behavior: HitTestBehavior.opaque,
                       child: Stack(

@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -8,8 +8,6 @@ import '../../individual/api_service.dart';
 class EnterpriseInviteSyncService {
   static const List<String> _hosts = [
     'https://mycardshare.com',
-    'https://digitalbusinesscloudcard.com',
-    'https://dbc.celestialedge.in',
   ];
 
   static Future<Map<String, String>> _getHeaders() async {
@@ -78,7 +76,7 @@ class EnterpriseInviteSyncService {
         'email': workEmail.trim().toLowerCase(),
       }).catchError((e) {
         debugPrint("[EnterpriseInviteSyncService] Web workspace invite error: $e");
-        return null;
+        return <String, dynamic>{};
       }));
 
       final res = await _sendResilientRequest('POST', '/api/sync/invite-code', body: {
@@ -107,7 +105,7 @@ class EnterpriseInviteSyncService {
             'email': clean,
           }).catchError((e) {
             debugPrint("[EnterpriseInviteSyncService] Batch invite error for $clean: $e");
-            return null;
+            return <String, dynamic>{};
           }));
         }
       }

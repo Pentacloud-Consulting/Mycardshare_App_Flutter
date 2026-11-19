@@ -145,12 +145,12 @@ class _IndividualOnboardingFormScreenState
 
     final rawAvatar = (isSameUser && active.profilePhoto != null && active.profilePhoto!.isNotEmpty)
         ? active.profilePhoto
-        : (firebaseUser?.photoURL ?? (resolvedEmail.toLowerCase() == 'zuhaib@pentacloudconsulting.com' ? 'https://mycardshare.com/api/images/1777545891643-5698b70e74b6' : null));
+        : firebaseUser?.photoURL;
     _profileImageUrl = ImageUrlFormatter.format(rawAvatar);
 
     final rawBanner = (isSameUser && active.bannerPhoto != null && active.bannerPhoto!.isNotEmpty)
         ? active.bannerPhoto
-        : (resolvedEmail.toLowerCase().contains('pentacloud') ? 'https://mycardshare.com/api/uploads/companyBanner/W3hDpYWqSgzFQJSb1ZcC_1786435248817_1786435248820.png' : null);
+        : null;
     _bannerImagePath = ImageUrlFormatter.format(rawBanner);
 
     // Load active profile data only if it belongs to this exact user
@@ -480,13 +480,17 @@ class _IndividualOnboardingFormScreenState
     }
 
     // ── 2. Upload images ──────────────────────────────────────────────────────
+    // BUG FIX: On upload failure, use null instead of local path.
     String? uploadedAvatarUrl = _profileImageUrl;
     if (_profileImagePath != null && _profileImagePath!.isNotEmpty && !_profileImagePath!.startsWith('http')) {
       try {
         uploadedAvatarUrl = await IndividualApiService.uploadFile(_profileImagePath!, 'avatar');
+        if (uploadedAvatarUrl != null && (uploadedAvatarUrl.isEmpty || (!uploadedAvatarUrl.startsWith('http') && !uploadedAvatarUrl.startsWith('/')))) {
+          uploadedAvatarUrl = _profileImageUrl;
+        }
       } catch (e) {
         debugPrint('[OnboardingForm] Avatar upload notice: $e');
-        uploadedAvatarUrl = _profileImagePath;
+        uploadedAvatarUrl = _profileImageUrl; // Don't save local path
       }
     }
 
@@ -494,9 +498,12 @@ class _IndividualOnboardingFormScreenState
     if (_bannerImagePath != null && _bannerImagePath!.isNotEmpty && !_bannerImagePath!.startsWith('http')) {
       try {
         uploadedBannerUrl = await IndividualApiService.uploadFile(_bannerImagePath!, 'banner');
+        if (uploadedBannerUrl != null && (uploadedBannerUrl.isEmpty || (!uploadedBannerUrl.startsWith('http') && !uploadedBannerUrl.startsWith('/')))) {
+          uploadedBannerUrl = null;
+        }
       } catch (e) {
         debugPrint('[OnboardingForm] Banner upload notice: $e');
-        uploadedBannerUrl = _bannerImagePath;
+        uploadedBannerUrl = null; // Don't save local path
       }
     }
 

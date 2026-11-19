@@ -88,6 +88,9 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
         fbUser.email ?? '',
         fbUser.displayName ?? '',
       );
+      // Reload metrics for the current user so the PFP and stats stay fresh
+      // after returning from the profile editor or any other sub-screen.
+      IndividualMetricsStore.instance.loadMetrics(fbUser.uid);
     }
   }
 
@@ -155,10 +158,8 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
 
         final uEmail = (activeProfile?.email ?? firebaseUser?.email ?? '').toLowerCase();
         final displayPhoto = ImageUrlFormatter.format((activeProfile?.profilePhoto?.isNotEmpty == true ? activeProfile!.profilePhoto : null)
-            ?? (firebaseUser?.photoURL?.isNotEmpty == true ? firebaseUser!.photoURL : null)
-            ?? (uEmail == 'zuhaib@pentacloudconsulting.com' ? 'https://mycardshare.com/api/images/1777545891643-5698b70e74b6' : null));
-        final displayBanner = ImageUrlFormatter.format((activeProfile?.bannerPhoto?.isNotEmpty == true ? activeProfile!.bannerPhoto : null)
-            ?? (uEmail.contains('pentacloud') ? 'https://mycardshare.com/api/uploads/companyBanner/W3hDpYWqSgzFQJSb1ZcC_1786435248817_1786435248820.png' : null));
+            ?? (firebaseUser?.photoURL?.isNotEmpty == true ? firebaseUser!.photoURL : null));
+        final displayBanner = ImageUrlFormatter.format((activeProfile?.bannerPhoto?.isNotEmpty == true ? activeProfile!.bannerPhoto : null));
 
         final displayRole = (activeProfile?.jobTitle.isNotEmpty == true ? activeProfile!.jobTitle : "Member");
 

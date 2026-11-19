@@ -611,7 +611,7 @@ class EnterpriseEmployeesService {
       final targetUserId = empUid.isNotEmpty ? empUid : employeeId;
       unawaited(IndividualApiService.delete('/api/enterprise/workspace/$targetUserId').catchError((e) {
         debugPrint('[EnterpriseEmployeesService] Dual-delete workspace API note: $e');
-        return null;
+        return <String, dynamic>{};
       }));
 
       return true;
@@ -701,9 +701,9 @@ class EnterpriseEmployeesService {
             final userDoc = await _firestore.collection('users').doc(authUid).get();
             if (userDoc.exists) {
               final uData = userDoc.data() ?? {};
-              existingAvatarUrl = (uData['avatarUrl'] ?? uData['profilePhoto'] ?? uData['photoURL'])?.toString()?.trim();
-              existingBannerUrl = (uData['bannerUrl'] ?? uData['bannerPhoto'] ?? uData['coverImage'])?.toString()?.trim();
-              existingCardSlug = (uData['cardSlug'] ?? uData['slug'])?.toString()?.trim();
+              existingAvatarUrl = (uData['avatarUrl'] ?? uData['profilePhoto'] ?? uData['photoURL'])?.toString().trim();
+              existingBannerUrl = (uData['bannerUrl'] ?? uData['bannerPhoto'] ?? uData['coverImage'])?.toString().trim();
+              existingCardSlug = (uData['cardSlug'] ?? uData['slug'])?.toString().trim();
             }
           }
           // Also check email-based doc
@@ -712,9 +712,9 @@ class EnterpriseEmployeesService {
             final emailDoc = await _firestore.collection('users').doc(emailDocId).get();
             if (emailDoc.exists) {
               final eData = emailDoc.data() ?? {};
-              existingAvatarUrl = (eData['avatarUrl'] ?? eData['profilePhoto'] ?? eData['photoURL'])?.toString()?.trim();
-              existingBannerUrl ??= (eData['bannerUrl'] ?? eData['bannerPhoto'])?.toString()?.trim();
-              existingCardSlug ??= (eData['cardSlug'] ?? eData['slug'])?.toString()?.trim();
+              existingAvatarUrl = (eData['avatarUrl'] ?? eData['profilePhoto'] ?? eData['photoURL'])?.toString().trim();
+              existingBannerUrl ??= (eData['bannerUrl'] ?? eData['bannerPhoto'])?.toString().trim();
+              existingCardSlug ??= (eData['cardSlug'] ?? eData['slug'])?.toString().trim();
             }
           }
         } catch (_) {}
@@ -1313,7 +1313,7 @@ class EnterpriseEmployeeListBackend extends StatelessWidget {
                     },
                   }).catchError((e) {
                     debugPrint('[EnterpriseEmployeesService] Toggle status API sync note: $e');
-                    return null;
+                    return <String, dynamic>{};
                   }));
                 } catch (_) {}
                 if (context.mounted) {

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../public_card/scanned_card_choice_modal.dart';
 import '../../public_card/public_scanned_card_screen.dart';
@@ -10,7 +10,7 @@ import '../../public_card/public_scanned_card_screen.dart';
 ///
 /// Decision logic:
 ///   • If the scanned URL is a MyCardShare card link
-///     (`digitalbusinesscloudcard.com/card/<slug>`, `mycardshare.com/card/<slug>`, etc.)
+///     (`mycardshare.com/card/<slug>`, `mycardshare.com/card/<slug>`, etc.)
 ///     prompts the user with [ScannedCardChoiceModal] to choose:
 ///       1. "Open in App" -> opens [PublicScannedCardScreen] (with auto-home redirect on back)
 ///       2. "Open in Web Browser" -> opens Chrome / browser
@@ -22,8 +22,8 @@ class QrRedirectHandler {
 
   /// Base domains that belong to the MyCardShare platform.
   static const _cardDomains = [
-    'digitalbusinesscloudcard.com',
-    'www.digitalbusinesscloudcard.com',
+    'mycardshare.com',
+    'www.mycardshare.com',
     'mycardshare.com',
     'www.mycardshare.com',
     'mycardshare.vercel.app',

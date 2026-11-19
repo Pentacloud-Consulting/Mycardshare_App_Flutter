@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
@@ -16,11 +16,11 @@ class EnterpriseGoogleAuthSyncService {
       EnterpriseGoogleAuthSyncService._internal();
 
   // ⚡ Live production domain
-  static const String baseUrl = "https://digitalbusinesscloudcard.com";
+  static const String baseUrl = "https://mycardshare.com";
   static const String fallbackUrl = "https://mycardshare.com";
 
   static const String _webClientId =
-      '943022881240-igar8cpibfem295tuua1lhlkh24n4k4j.apps.googleusercontent.com';
+      '938552190532-2h3jm552fnvc78vsb4oq43jvrb93ldi3.apps.googleusercontent.com';
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

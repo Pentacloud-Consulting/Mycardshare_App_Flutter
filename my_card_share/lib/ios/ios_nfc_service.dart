@@ -1,4 +1,4 @@
-import 'dart:io' show Platform;
+﻿import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -39,7 +39,7 @@ class IOSNFCService {
     required BuildContext context,
     required String cardSlug,
     required String ownerName,
-    String baseUrl = 'https://digitalbusinesscloudcard.com',
+    String baseUrl = 'https://mycardshare.com',
   }) async {
     final cardUrl = '$baseUrl/card/$cardSlug';
 
@@ -64,7 +64,7 @@ class IOSNFCService {
     required String cardSlug,
     required String ownerName,
     required Function(String status) onProgress,
-    String baseUrl = 'https://digitalbusinesscloudcard.com',
+    String baseUrl = 'https://mycardshare.com',
   }) async {
     if (!Platform.isIOS) {
       onProgress('NFC write is only supported via this method on iOS.');

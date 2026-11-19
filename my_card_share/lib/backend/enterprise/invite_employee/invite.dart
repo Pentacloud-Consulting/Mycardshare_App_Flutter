@@ -157,6 +157,7 @@ class _EnterpriseInviteFormModalState extends State<EnterpriseInviteFormModal>
     setState(() => _isSubmitting = true);
 
     try {
+      // 1. Save to Firestore immediately (this is fast — local Firebase)
       final success = await EnterpriseEmployeesService.instance.addEmployee(
         uid: uid,
         name: name,
@@ -165,20 +166,21 @@ class _EnterpriseInviteFormModalState extends State<EnterpriseInviteFormModal>
         role: _selectedRole,
       );
 
-      // Real-time Next.js API sync to register on MongoDB cards database
-      await EnterpriseInviteSyncService.addSingleEmployee(
+      // 2. Fire-and-forget: API calls run in background, don't block UI
+      // These may fail silently if backend is unreachable — that's fine.
+      EnterpriseInviteSyncService.addSingleEmployee(
         fullName: name,
         workEmail: email,
         jobTitle: title.isNotEmpty ? title : 'Employee',
         role: _selectedRole.toLowerCase(),
-      );
+      ).catchError((_) => false);
 
-      // Dispatch real branded invite email to the new employee
-      await EnterpriseEmailInviteService.sendBatchEmailInvites(
+      EnterpriseEmailInviteService.sendBatchEmailInvites(
         emails: [email],
         enterpriseId: uid,
-      );
+      ).catchError((_) => <String, dynamic>{});
 
+      // 3. Close modal immediately after Firestore save — no waiting for API
       if (mounted) {
         setState(() => _isSubmitting = false);
         if (success) {
@@ -226,14 +228,14 @@ class _EnterpriseInviteFormModalState extends State<EnterpriseInviteFormModal>
     setState(() => _isSubmitting = true);
 
     try {
-      // Merge with existing invitedEmails in enterprises/{uid}
+      // 1. Save to Firestore immediately (fast)
       final docRef = FirebaseFirestore.instance.collection('enterprises').doc(uid);
       await docRef.set({
         'invitedEmails': FieldValue.arrayUnion(_invitedEmailsList),
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      // Sync multi store
+      // 2. Sync local multi store
       final companyName =
           EnterpriseProfileStore.instance.currentProfile?.companyName ?? 'Enterprise Workspace';
       for (final email in _invitedEmailsList) {
@@ -245,15 +247,16 @@ class _EnterpriseInviteFormModalState extends State<EnterpriseInviteFormModal>
         );
       }
 
-      // Dispatch real branded email invites via Nodemailer / SMTP backend
-      await EnterpriseEmailInviteService.sendBatchEmailInvites(
-        emails: _invitedEmailsList,
+      // 3. Fire-and-forget: API calls run in background, don't block UI
+      final emailsCopy = List<String>.from(_invitedEmailsList);
+      EnterpriseEmailInviteService.sendBatchEmailInvites(
+        emails: emailsCopy,
         enterpriseId: uid,
-      );
+      ).catchError((_) => <String, dynamic>{});
 
-      // Sync batch invites to Next.js API /api/sync/invite-code
-      await EnterpriseInviteSyncService.batchInviteEmails(_invitedEmailsList);
+      EnterpriseInviteSyncService.batchInviteEmails(emailsCopy).catchError((_) => false);
 
+      // 4. Close modal immediately after Firestore save
       if (mounted) {
         setState(() => _isSubmitting = false);
         Navigator.pop(context);

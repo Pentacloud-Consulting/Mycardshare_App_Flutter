@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 import 'package:http_parser/http_parser.dart';
 import 'package:http/http.dart' as http;
@@ -101,7 +101,20 @@ class IndividualApiService {
     );
     request.headers['Authorization'] = 'Bearer $idToken';
     request.fields['type'] = type;
-    request.files.add(await http.MultipartFile.fromPath('file', filePath));
+    // Explicitly pass MIME type so the backend image validator accepts the file.
+    // Without this, fromPath() may send 'application/octet-stream' which
+    // the server rejects, causing silent upload failures.
+    final ext = filePath.split('.').last.toLowerCase();
+    final mimeType = ext == 'png'
+        ? 'image/png'
+        : ext == 'webp' ? 'image/webp' : 'image/jpeg';
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        'file',
+        filePath,
+        contentType: MediaType.parse(mimeType),
+      ),
+    );
 
     debugPrint('[IndividualApiService] UPLOAD $filePath as $type');
     final streamedResponse = await request.send();

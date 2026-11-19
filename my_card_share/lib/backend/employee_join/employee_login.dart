@@ -214,16 +214,7 @@ class EmployeeLoginBackendService {
       };
     }
 
-    // 5. Check corporate domain heuristics (e.g. pentacloud)
-    if (cleanEmail.contains('pentacloud')) {
-      return {
-        'enterpriseUid': 'ent_pentacloud_consulting',
-        'companyName': 'Pentacloud Consulting',
-        'fullName': cleanEmail == 'zuhaib@pentacloudconsulting.com' ? 'Zuhaib Ulla Shariff' : cleanEmail.split('@').first,
-        'role': 'Web Developer',
-      };
-    }
-
+    // 5. No corporate domain heuristics — return null and let caller handle it
     return null;
   }
 
@@ -370,30 +361,15 @@ class EmployeeLoginBackendService {
 
           final userMap = <String, dynamic>{
             'uid': authUid,
-            'fullName': (fullName.isNotEmpty && fullName.toLowerCase() != 'zuhaib')
-                ? fullName
-                : (cleanEmail == 'zuhaib@pentacloudconsulting.com' ? 'Zuhaib Ulla Shariff' : fullName),
-            'name': (fullName.isNotEmpty && fullName.toLowerCase() != 'zuhaib')
-                ? fullName
-                : (cleanEmail == 'zuhaib@pentacloudconsulting.com' ? 'Zuhaib Ulla Shariff' : fullName),
+            'fullName': fullName.isNotEmpty ? fullName : cleanEmail.split('@').first,
+            'name': fullName.isNotEmpty ? fullName : cleanEmail.split('@').first,
             'email': cleanEmail,
             'role': 'employee',
             'enterpriseUid': targetUid,
-            'companyName': (companyName.isNotEmpty && companyName != 'Enterprise Workspace')
-                ? companyName
-                : (cleanEmail.contains('pentacloud') ? 'Pentacloud Consulting' : companyName),
+            'companyName': companyName.isNotEmpty ? companyName : 'Enterprise Workspace',
             'updatedAt': FieldValue.serverTimestamp(),
           };
-          if (cleanEmail == 'zuhaib@pentacloudconsulting.com') {
-            userMap['companyId'] = 'W3hDpYWqSgzFQJSb1ZcC';
-            userMap['avatarUrl'] = '/api/images/1777545891643-5698b70e74b6';
-            userMap['profilePhoto'] = '/api/images/1777545891643-5698b70e74b6';
-            userMap['bannerUrl'] = '/api/uploads/companyBanner/W3hDpYWqSgzFQJSb1ZcC_1786435248817_1786435248820.png';
-            userMap['companyBanner'] = '/api/uploads/companyBanner/W3hDpYWqSgzFQJSb1ZcC_1786435248817_1786435248820.png';
-            userMap['roleTitle'] = 'Web Developer';
-            userMap['jobTitle'] = 'Web Developer';
-          } else {
-            if (entInfo?['avatarUrl'] != null && entInfo!['avatarUrl'].toString().isNotEmpty) {
+          if (entInfo?['avatarUrl'] != null && entInfo!['avatarUrl'].toString().isNotEmpty) {
               userMap['avatarUrl'] = entInfo!['avatarUrl'];
               userMap['profilePhoto'] = entInfo!['avatarUrl'];
             }
@@ -405,7 +381,6 @@ class EmployeeLoginBackendService {
               userMap['roleTitle'] = entInfo!['role'];
               userMap['jobTitle'] = entInfo!['role'];
             }
-          }
           // Only set Active/Published if admin hasn't deactivated this employee
           if (!adminSetInactive) {
             userMap['isPublished'] = true;

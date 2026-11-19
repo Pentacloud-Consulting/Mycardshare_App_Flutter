@@ -1,11 +1,16 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_style_widgets.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../backend/individual/profile/individual_profile_store.dart';
+import '../../../backend/individual/api_service.dart';
 
 class OnboardingWizardScreen extends ConsumerStatefulWidget {
   const OnboardingWizardScreen({super.key});
@@ -16,6 +21,15 @@ class OnboardingWizardScreen extends ConsumerStatefulWidget {
 
 class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen> {
   int _currentStep = 1; // 1: Profile & Template, 2: Social Links, 3: Bio & Preview
+
+  // ── Photo upload state ───────────────────────────────────────────────────
+  File? _profileImageFile;
+  String? _uploadedAvatarUrl; // URL after backend upload
+  bool _isUploadingPhoto = false;
+
+  File? _bannerImageFile;
+  String? _uploadedBannerUrl; // URL after backend upload
+  bool _isUploadingBanner = false;
 
   // Step 1 Controllers
   final TextEditingController _jobTitleController = TextEditingController();
@@ -84,7 +98,7 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
         _currentStep++;
       });
     } else {
-      _onFinishWizard();
+      _onFinishWizard(); // async — called without await intentionally
     }
   }
 
@@ -102,8 +116,148 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
     });
   }
 
-  void _onFinishWizard() {
+  // ── Pick & upload banner photo ───────────────────────────────────────────
+  Future<void> _pickBannerPhoto() async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 1200,
+        maxHeight: 400,
+      );
+      if (picked == null) return;
+
+      final file = File(picked.path);
+      setState(() {
+        _bannerImageFile = file;
+        _isUploadingBanner = true;
+      });
+
+      try {
+        final bytes = await file.readAsBytes();
+        final fileName = 'banner_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final url = await IndividualApiService.uploadBytes(
+          bytes: bytes,
+          filename: fileName,
+          type: 'banner',
+        );
+        if (url.isNotEmpty) {
+          setState(() => _uploadedBannerUrl = url);
+          debugPrint('[OnboardingWizard] Banner uploaded: $url');
+        }
+      } catch (uploadErr) {
+        debugPrint('[OnboardingWizard] Banner upload error: $uploadErr');
+      } finally {
+        if (mounted) setState(() => _isUploadingBanner = false);
+      }
+    } catch (e) {
+      debugPrint('[OnboardingWizard] pickBannerPhoto error: $e');
+      if (mounted) setState(() => _isUploadingBanner = false);
+    }
+  }
+
+  // ── Pick & upload profile photo ─────────────────────────────────────────
+  Future<void> _pickProfilePhoto() async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 800,
+        maxHeight: 800,
+      );
+      if (picked == null) return;
+
+      final file = File(picked.path);
+      setState(() {
+        _profileImageFile = file;
+        _isUploadingPhoto = true;
+      });
+
+      // Upload to backend
+      try {
+        final bytes = await file.readAsBytes();
+        final fileName = 'avatar_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final url = await IndividualApiService.uploadBytes(
+          bytes: bytes,
+          filename: fileName,
+          type: 'avatar',
+        );
+        if (url.isNotEmpty) {
+          setState(() => _uploadedAvatarUrl = url);
+          debugPrint('[OnboardingWizard] Avatar uploaded: $url');
+        }
+      } catch (uploadErr) {
+        debugPrint('[OnboardingWizard] Photo upload error: $uploadErr');
+      } finally {
+        if (mounted) setState(() => _isUploadingPhoto = false);
+      }
+    } catch (e) {
+      debugPrint('[OnboardingWizard] pickProfilePhoto error: $e');
+      if (mounted) setState(() => _isUploadingPhoto = false);
+    }
+  }
+
+  Future<void> _onFinishWizard() async {
     final role = ref.read(authProvider).role;
+
+    // ── Save all wizard data to Firestore before navigating ──
+    // This fixes the bug where job title, company, bio filled during
+    // onboarding never appeared in the profile editor or view card.
+    if (role == 'individual' || role.isEmpty) {
+      final fbUser = FirebaseAuth.instance.currentUser;
+      if (fbUser != null) {
+        try {
+          // Build social links from step 2 controllers
+          final socialLinks = <SocialLinkItem>[];
+          if (_linkedInController.text.trim().isNotEmpty) {
+            socialLinks.add(SocialLinkItem(platform: 'LinkedIn', url: _linkedInController.text.trim()));
+          }
+          if (_instagramController.text.trim().isNotEmpty) {
+            socialLinks.add(SocialLinkItem(platform: 'Instagram', url: _instagramController.text.trim()));
+          }
+          if (_whatsappController.text.trim().isNotEmpty) {
+            socialLinks.add(SocialLinkItem(platform: 'WhatsApp', url: _whatsappController.text.trim()));
+          }
+          if (_websiteController.text.trim().isNotEmpty) {
+            socialLinks.add(SocialLinkItem(platform: 'Website', url: _websiteController.text.trim()));
+          }
+          if (_githubController.text.trim().isNotEmpty) {
+            socialLinks.add(SocialLinkItem(platform: 'GitHub', url: _githubController.text.trim()));
+          }
+          if (_youtubeController.text.trim().isNotEmpty) {
+            socialLinks.add(SocialLinkItem(platform: 'YouTube', url: _youtubeController.text.trim()));
+          }
+          for (final c in _customLinkControllers) {
+            if (c.text.trim().isNotEmpty) {
+              socialLinks.add(SocialLinkItem(platform: 'Website', url: c.text.trim()));
+            }
+          }
+
+          await IndividualProfileStore.instance.saveProfile(
+            uid: fbUser.uid,
+            fullName: fbUser.displayName ?? fbUser.email?.split('@').first ?? 'User',
+            email: fbUser.email ?? '',
+            jobTitle: _jobTitleController.text.trim(),
+            phoneNumber: _phoneController.text.trim(),
+            companyName: _companyNameController.text.trim(),
+            shortBio: _shortBioController.text.trim(),
+            networkingStatus: _networkingStatus,
+            templateStyle: _selectedTemplate.toString(),
+            socialLinks: socialLinks,
+            websiteUrl: _websiteController.text.trim(),
+            profilePhoto: _uploadedAvatarUrl ?? fbUser.photoURL,
+            bannerPhoto: _uploadedBannerUrl,
+          );
+          debugPrint('[OnboardingWizard] Profile saved to Firestore successfully.');
+        } catch (e) {
+          debugPrint('[OnboardingWizard] Error saving profile: $e');
+        }
+      }
+    }
+
+    if (!mounted) return;
     if (role == 'master-admin') {
       context.go('/master-admin/dashboard');
     } else if (role == 'enterprise') {
@@ -311,67 +465,151 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
         Center(
           child: Column(
             children: [
-              SizedBox(
-                width: 110,
-                height: 110,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    CustomPaint(
-                      size: const Size(110, 110),
-                      painter: DashedAvatarCirclePainter(),
-                    ),
-                    Container(
-                      width: 84,
-                      height: 84,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFE2E8F0),
-                        shape: BoxShape.circle,
+              GestureDetector(
+                onTap: _isUploadingPhoto ? null : _pickProfilePhoto,
+                child: SizedBox(
+                  width: 110,
+                  height: 110,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      CustomPaint(
+                        size: const Size(110, 110),
+                        painter: DashedAvatarCirclePainter(),
                       ),
-                      child: const Icon(
-                        Icons.person_rounded,
-                        size: 52,
-                        color: AppColors.textMuted,
-                      ),
-                    ),
-                    Positioned(
-                      right: 4,
-                      bottom: 4,
-                      child: Container(
-                        width: 32,
-                        height: 32,
+                      Container(
+                        width: 84,
+                        height: 84,
                         decoration: BoxDecoration(
-                          color: AppColors.primary,
+                          color: const Color(0xFFE2E8F0),
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2.5),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primary.withValues(alpha: 0.3),
-                              blurRadius: 6,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
+                          image: _profileImageFile != null
+                              ? DecorationImage(
+                                  image: FileImage(_profileImageFile!),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                         ),
-                        child: const Icon(
-                          Icons.camera_alt_rounded,
-                          color: Colors.white,
-                          size: 16,
+                        child: _isUploadingPhoto
+                            ? const CircularProgressIndicator(strokeWidth: 2)
+                            : _profileImageFile == null
+                                ? const Icon(
+                                    Icons.person_rounded,
+                                    size: 52,
+                                    color: AppColors.textMuted,
+                                  )
+                                : null,
+                      ),
+                      Positioned(
+                        right: 4,
+                        bottom: 4,
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: _profileImageFile != null
+                                ? const Color(0xFF10B981)
+                                : AppColors.primary,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withValues(alpha: 0.3),
+                                blurRadius: 6,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            _profileImageFile != null
+                                ? Icons.check_rounded
+                                : Icons.camera_alt_rounded,
+                            color: Colors.white,
+                            size: 16,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                "Upload Photo",
+                _isUploadingPhoto
+                    ? "Uploading..."
+                    : _profileImageFile != null
+                        ? "Photo Selected ✓"
+                        : "Upload Photo",
                 style: AppTextStyles.textTheme.bodyMedium?.copyWith(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
+                  color: _profileImageFile != null
+                      ? const Color(0xFF10B981)
+                      : AppColors.primary,
                 ),
               ),
             ],
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // Banner Photo Uploader
+        GestureDetector(
+          onTap: _isUploadingBanner ? null : _pickBannerPhoto,
+          child: Container(
+            height: 90,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE2E8F0),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: _bannerImageFile != null
+                    ? const Color(0xFF10B981)
+                    : const Color(0xFFCBD5E1),
+                width: 1.5,
+              ),
+              image: _bannerImageFile != null
+                  ? DecorationImage(
+                      image: FileImage(_bannerImageFile!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: _isUploadingBanner
+                ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
+                : _bannerImageFile == null
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.panorama_rounded,
+                              color: AppColors.textMuted, size: 24),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Upload Banner (Optional)',
+                            style: AppTextStyles.textTheme.bodyMedium?.copyWith(
+                              color: AppColors.textMuted,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      )
+                    : Align(
+                        alignment: Alignment.bottomRight,
+                        child: Container(
+                          margin: const EdgeInsets.all(8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Text('Banner ✓',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600)),
+                        ),
+                      ),
           ),
         ),
 
@@ -610,7 +848,7 @@ class _OnboardingWizardScreenState extends ConsumerState<OnboardingWizardScreen>
               size: 20,
             ),
           ),
-          hintText: "+91 98765 43210",
+          hintText: "e.g. +91 99999 00000",
           controller: _whatsappController,
         ),
 

@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -235,7 +235,7 @@ class WalletService {
       publicProfile: publicProfile,
     );
     final slug = data['cardSlug'] as String;
-    final publicCardUrl = 'https://digitalbusinesscloudcard.com/card/$slug';
+    final publicCardUrl = 'https://mycardshare.com/card/$slug';
     data['publicCardUrl'] = publicCardUrl;
 
     final cardPayload = {
@@ -266,27 +266,50 @@ class WalletService {
     try {
       debugPrint('🎟️ [WalletService] Requesting Google Wallet saveUrl from backend...');
       final response = await http.post(
-        Uri.parse('https://digitalbusinesscloudcard.com/api/wallet/google'),
+        Uri.parse('https://mycardshare.com/api/wallet/google'),
         headers: headers,
         body: jsonEncode(cardPayload),
       ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final resJson = jsonDecode(response.body) as Map<String, dynamic>;
-        saveUrl = _extractString(resJson, [
-          'data.saveUrl', 'saveUrl', 'data.url', 'url',
-          'data.addToWalletUrl', 'addToWalletUrl', 'data.walletUrl', 'walletUrl',
-        ]);
-        debugPrint('🎟️ [WalletService] Backend returned Google Wallet saveUrl: $saveUrl');
+        // Check if backend explicitly returned an error (e.g. WALLET_PERMISSION_ERROR)
+        final success = resJson['success'] as bool? ?? true;
+        final errCode = resJson['error']?['code']?.toString() ?? '';
+        if (success) {
+          saveUrl = _extractString(resJson, [
+            'data.saveUrl', 'saveUrl', 'data.url', 'url',
+            'data.addToWalletUrl', 'addToWalletUrl', 'data.walletUrl', 'walletUrl',
+          ]);
+          debugPrint('🎟️ [WalletService] Backend returned Google Wallet saveUrl: $saveUrl');
+        } else {
+          debugPrint('⚠️ [WalletService] Backend error: $errCode — using card link fallback');
+          // For WALLET_PERMISSION_ERROR, open the card URL in Google Pay as a web link
+          if (errCode.contains('WALLET_PERMISSION') || errCode.contains('PERMISSION')) {
+            final cardUrl = 'https://mycardshare.com/card/$slug';
+            if (context != null && context.mounted) {
+              final launched = await _launchExternalUrl(cardUrl);
+              if (!launched) await launchUrl(Uri.parse(cardUrl), mode: LaunchMode.externalApplication);
+            }
+            throw WalletException(
+              title: 'Google Wallet Not Available',
+              message: 'Google Wallet API is not configured yet. Your card has been opened in browser instead.',
+              cardUrl: cardUrl,
+            );
+          }
+        }
       }
     } catch (e) {
+      if (e is WalletException) rethrow;
       debugPrint('ℹ️ [WalletService] Google Wallet backend call note: $e');
     }
 
-    // ── 2. Fallback: If backend is offline or slow, generate Google Wallet Pass link directly ──
-    if (saveUrl == null || saveUrl.isEmpty || saveUrl.contains('/save/#')) {
-      saveUrl = generateGoogleWalletSaveUrl(cardPayload);
-      debugPrint('🎟️ [WalletService] Generated offline Google Wallet pass link: $saveUrl');
+    // ── 2. Fallback: If backend is offline or slow, open card URL directly ──
+    if (saveUrl == null || saveUrl.isEmpty) {
+      // Can't generate a valid unsigned JWT for Google Wallet — open card URL instead
+      final cardUrl = 'https://mycardshare.com/card/$slug';
+      debugPrint('🎟️ [WalletService] No saveUrl — opening card URL: $cardUrl');
+      saveUrl = cardUrl;
     }
 
     // ── 3. Exact Web ki tarah system intent me open karo (LaunchMode.externalApplication) ──
@@ -316,7 +339,7 @@ class WalletService {
       publicProfile: publicProfile,
     );
     final slug = data['cardSlug'] as String;
-    final publicCardUrl = 'https://digitalbusinesscloudcard.com/card/$slug';
+    final publicCardUrl = 'https://mycardshare.com/card/$slug';
     data['publicCardUrl'] = publicCardUrl;
     final refId = 'ref-${data['userId']}-${DateTime.now().millisecondsSinceEpoch}';
 
@@ -353,7 +376,7 @@ class WalletService {
     try {
       debugPrint('🎟️ [WalletService] Requesting Samsung Wallet pass from backend...');
       var response = await http.post(
-        Uri.parse('https://digitalbusinesscloudcard.com/api/wallet/samsung'),
+        Uri.parse('https://mycardshare.com/api/wallet/samsung'),
         headers: headers,
         body: jsonEncode({
           'refId': refId,
@@ -363,7 +386,7 @@ class WalletService {
 
       if (response.statusCode != 200) {
         response = await http.post(
-          Uri.parse('https://digitalbusinesscloudcard.com/api/sync/wallet'),
+          Uri.parse('https://mycardshare.com/api/sync/wallet'),
           headers: headers,
           body: jsonEncode({
             'walletType': 'samsung',
@@ -389,7 +412,7 @@ class WalletService {
     // we redirect user to the digital card page (best UX alternative).
     if (addToWalletUrl == null || addToWalletUrl.isEmpty || !addToWalletUrl.startsWith('http')) {
       final slug = data['cardSlug'] as String? ?? 'card';
-      addToWalletUrl = 'https://digitalbusinesscloudcard.com/card/$slug';
+      addToWalletUrl = 'https://mycardshare.com/card/$slug';
       debugPrint('🎟️ [WalletService] Samsung Wallet backend unavailable — opening card URL as fallback: $addToWalletUrl');
     }
 
@@ -445,7 +468,7 @@ class WalletService {
     final claims = {
       'iss': 'mycardshare-wallet@mycardshare-platform.iam.gserviceaccount.com',
       'aud': 'google',
-      'origins': ['https://mycardshare.com', 'https://digitalbusinesscloudcard.com'],
+      'origins': ['https://mycardshare.com', 'https://mycardshare.com'],
       'typ': 'savetowallet',
       'payload': {
         'genericObjects': [genericObject],

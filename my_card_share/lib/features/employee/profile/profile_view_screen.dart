@@ -71,23 +71,19 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                     ? emailsModel!.employeeEmail
                     : (storedUser?.email ?? (FirebaseAuth.instance.currentUser?.email ?? ""))));
 
-        final name = (empBackend.userName.isNotEmpty && empBackend.userName != "User" && empBackend.userName.toLowerCase() != "zuhaib")
+        final name = (empBackend.userName.isNotEmpty && empBackend.userName != "User")
             ? empBackend.userName
-            : ((activeProfile?.fullName.isNotEmpty == true && activeProfile!.fullName != "User" && activeProfile!.fullName.toLowerCase() != "zuhaib")
+            : ((activeProfile?.fullName.isNotEmpty == true && activeProfile!.fullName != "User")
                 ? activeProfile!.fullName
-                : (email.toLowerCase() == 'zuhaib@pentacloudconsulting.com'
-                    ? "Zuhaib Ulla Shariff"
-                    : (storedUser?.fullName ?? "Zuhaib Ulla Shariff")));
+                : (storedUser?.fullName ?? email.split('@').first));
 
         final role = (empBackend.role.isNotEmpty && empBackend.role != "Member" && empBackend.role != "Employee")
             ? empBackend.role
             : ((activeProfile?.jobTitle.isNotEmpty == true && activeProfile!.jobTitle != "Member" && activeProfile!.jobTitle != "Employee")
                 ? activeProfile!.jobTitle
-                : (email.toLowerCase() == 'zuhaib@pentacloudconsulting.com'
-                    ? "Web Developer"
-                    : (empBackend.role.isNotEmpty && empBackend.role != "Member"
-                        ? empBackend.role
-                        : "Web Developer")));
+                : (empBackend.role.isNotEmpty && empBackend.role != "Member"
+                    ? empBackend.role
+                    : ''));
 
         final company = (empBackend.companyName.isNotEmpty && empBackend.companyName != "Enterprise Workspace")
             ? empBackend.companyName
@@ -95,13 +91,11 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                 ? activeProfile!.companyName
                 : (emailsModel?.companyName.isNotEmpty == true && emailsModel!.companyName != "Enterprise Workspace"
                     ? emailsModel!.companyName
-                    : (email.toLowerCase().contains('pentacloud') ? "Pentacloud Consulting" : "Enterprise Workspace")));
+                    : 'Enterprise Workspace'));
 
         final bio = activeProfile?.shortBio.isNotEmpty == true
             ? activeProfile!.shortBio
-            : (email.toLowerCase().contains('pentacloud')
-                ? "Working at Pentacloud Company as a Web Developer"
-                : "No bio added yet.");
+            : '';
 
         final status = activeProfile?.networkingStatus.isNotEmpty == true ? activeProfile!.networkingStatus : "ACTIVELY NETWORKING";
         final phone = activeProfile?.phoneNumber.isNotEmpty == true ? activeProfile!.phoneNumber : "";
@@ -112,13 +106,11 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
         final authPhoto = FirebaseAuth.instance.currentUser?.photoURL;
         final rawPhoto = (activeProfile?.profilePhoto?.isNotEmpty == true ? activeProfile!.profilePhoto : null)
             ?? (empBackend.avatarUrl?.isNotEmpty == true ? empBackend.avatarUrl : null)
-            ?? (authPhoto != null && authPhoto.trim().isNotEmpty ? authPhoto.trim() : null)
-            ?? (email.toLowerCase() == 'zuhaib@pentacloudconsulting.com' ? 'https://mycardshare.com/api/images/1777545891643-5698b70e74b6' : null);
+            ?? (authPhoto != null && authPhoto.trim().isNotEmpty ? authPhoto.trim() : null);
         final displayPhoto = ImageUrlFormatter.format(rawPhoto);
 
         final rawBanner = activeProfile?.bannerPhoto?.trim();
-        final effectiveBanner = EmployeeBannerFetchService.instance.getEffectiveBanner(rawBanner)
-            ?? (email.toLowerCase().contains('pentacloud') ? 'https://mycardshare.com/api/uploads/companyBanner/W3hDpYWqSgzFQJSb1ZcC_1786435248817_1786435248820.png' : null);
+        final effectiveBanner = EmployeeBannerFetchService.instance.getEffectiveBanner(rawBanner);
 
         return Scaffold(
           backgroundColor: const Color(0xFFF8FAFD),

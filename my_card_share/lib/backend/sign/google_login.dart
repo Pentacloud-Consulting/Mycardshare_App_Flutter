@@ -28,7 +28,7 @@ class GoogleLoginService {
   static final GoogleLoginService instance = GoogleLoginService._internal();
 
   static const String webClientId =
-      '943022881240-igar8cpibfem295tuua1lhlkh24n4k4j.apps.googleusercontent.com';
+      '938552190532-2h3jm552fnvc78vsb4oq43jvrb93ldi3.apps.googleusercontent.com';
 
   static final GoogleSignIn _googleSignIn = GoogleSignIn(
     serverClientId: webClientId,

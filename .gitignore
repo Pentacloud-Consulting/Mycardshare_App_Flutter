@@ -1,3 +1,5 @@
 # Ignore reference copies and temporary working directories
 DBC_Revamp - Copy/
 DBC_Revamp*/
+
+*.zip

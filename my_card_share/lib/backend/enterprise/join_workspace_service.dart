@@ -1,9 +1,10 @@
 // lib/backend/enterprise/join_workspace_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../individual/api_service.dart';
 
 class JoinWorkspaceService {
-  static const String endpoint = 'https://digitalbusinesscloudcard.com/api/sync/enterprise-invite-link';
+  static String get endpoint => '${IndividualApiService.baseUrl}/api/sync/enterprise-invite-link';
 
   /// Verifies employee invite or voucher code with strict enterprise binding
   static Future<Map<String, dynamic>> verifyJoinCode({
@@ -11,15 +12,18 @@ class JoinWorkspaceService {
     String? enterpriseId,
   }) async {
     final url = Uri.parse(endpoint);
+    final payload = <String, dynamic>{
+      'action': 'lookup_code',
+      'code': code.trim(),
+    };
+    if (enterpriseId != null && enterpriseId.isNotEmpty) {
+      payload['enterpriseId'] = enterpriseId;
+    }
     
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'action': 'lookup_code',
-        'code': code.trim(),
-        'enterpriseId': ?enterpriseId,
-      }),
+      body: json.encode(payload),
     );
     final data = json.decode(response.body);
     if (response.statusCode == 200 && data['success'] == true) {

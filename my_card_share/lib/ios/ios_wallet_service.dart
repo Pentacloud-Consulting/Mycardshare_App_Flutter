@@ -1,4 +1,4 @@
-import 'dart:io' show Platform;
+﻿import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -37,7 +37,7 @@ class IOSWalletService {
 
   /// Fallback: opens the card URL in Safari if Apple Wallet not available.
   static Future<void> openCardInSafari(String cardSlug) async {
-    final url = 'https://digitalbusinesscloudcard.com/card/$cardSlug';
+    final url = 'https://mycardshare.com/card/$cardSlug';
     await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
   }
 }

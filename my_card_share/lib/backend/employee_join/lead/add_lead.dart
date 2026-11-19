@@ -355,7 +355,7 @@ class AddLeadService {
         : 'Team Member';
     final myCompany = (empBackend.companyName.isNotEmpty && empBackend.companyName != 'Enterprise Workspace')
         ? empBackend.companyName
-        : (entProfile?.companyName ?? 'Islamic Web');
+        : (entProfile?.companyName ?? '');
 
     // Add Current User as the primary option
     usersMap[myUid] = {
@@ -428,7 +428,7 @@ class AddLeadService {
             final name = (d['name'] ?? d['fullName'] ?? '').toString().trim();
             final email = (d['email'] ?? '').toString().trim();
             final role = (d['roleTitle'] ?? d['role'] ?? 'Employee').toString().trim();
-            final company = (d['companyName'] ?? 'Islamic Web').toString().trim();
+            final company = (d['companyName'] ?? '').toString().trim();
             final avatar = (d['avatarUrl'] ?? '').toString().trim();
 
             if (!usersMap.containsKey(empId) &&

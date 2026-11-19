@@ -1,11 +1,11 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../models/campaign_model.dart';
 
 class CampaignSyncService {
-  static const String baseUrl = 'https://digitalbusinesscloudcard.com/api/sync/campaign-tracker';
+  static const String baseUrl = 'https://mycardshare.com/api/sync/campaign-tracker';
   static const String fallbackUrl = 'https://mycardshare.com/api/sync/individual-campaigns';
 
   static Future<Map<String, String>> _getHeaders([String? token]) async {

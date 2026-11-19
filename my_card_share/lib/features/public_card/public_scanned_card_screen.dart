@@ -1,4 +1,4 @@
-import 'dart:io' show Platform;
+﻿import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -208,7 +208,7 @@ class _PublicScannedCardScreenState extends State<PublicScannedCardScreen> {
   }
 
   void _onShareCard(PublicProfileData profile) {
-    final shareUrl = 'https://digitalbusinesscloudcard.com/card/${profile.cardSlug}';
+    final shareUrl = 'https://mycardshare.com/card/${profile.cardSlug}';
     Clipboard.setData(ClipboardData(text: shareUrl));
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(

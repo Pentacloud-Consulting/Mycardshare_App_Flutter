@@ -65,6 +65,7 @@ class IndividualMetricsStore extends ChangeNotifier {
   static final IndividualMetricsStore instance = IndividualMetricsStore._internal();
 
   IndividualMetricsData _metrics = const IndividualMetricsData();
+  String _loadedForUid = '';
 
   IndividualMetricsData get metrics => _metrics;
 
@@ -82,6 +83,15 @@ class IndividualMetricsStore extends ChangeNotifier {
   /// Load real user metrics — primary source: Web API, fallback: Firestore
   Future<void> loadMetrics(String uid) async {
     if (uid.isEmpty) return;
+
+    // Reset metrics when switching to a different user to prevent stale data
+    // from one account bleeding into another account's display.
+    if (_loadedForUid != uid) {
+      _loadedForUid = uid;
+      _metrics = const IndividualMetricsData();
+      notifyListeners();
+    }
+
     try {
       // ── P0: Live Sync from Web API (/api/user/stats) ──────────────────────
       // This reads MongoDB `cards.views` which is the REAL count (123, not 17)
@@ -209,6 +219,7 @@ class IndividualMetricsStore extends ChangeNotifier {
 
   /// Increment views count
   Future<void> incrementViews(String uid) async {
+    _loadedForUid = uid;
     _metrics = _metrics.copyWith(views: _metrics.views + 1);
     notifyListeners();
     await _saveMetricsToFirestore(uid, _metrics);

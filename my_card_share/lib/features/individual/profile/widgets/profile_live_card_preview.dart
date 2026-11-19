@@ -206,9 +206,7 @@ class ProfileLiveCardPreview extends StatelessWidget {
                     child: GestureDetector(
                       onTap: onAvatarEditTap ??
                           () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Upload photo clicked")),
-                            );
+                            // No-op: avatar edit handled by parent screen
                           },
                       behavior: HitTestBehavior.opaque,
                       child: Stack(

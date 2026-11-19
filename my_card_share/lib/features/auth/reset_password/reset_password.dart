@@ -5,14 +5,15 @@ import '../../../backend/reset_password/reset_password_service.dart';
 import '../back/smart_back_handler.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
-  const ResetPasswordScreen({super.key});
+  final String? initialEmail;
+  const ResetPasswordScreen({super.key, this.initialEmail});
 
   @override
   State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
 }
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
-  final TextEditingController _emailController = TextEditingController();
+  late final TextEditingController _emailController;
   final FocusNode _emailFocusNode = FocusNode();
 
   bool _isLoading = false;
@@ -27,6 +28,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   void initState() {
     super.initState();
+    _emailController = TextEditingController(text: widget.initialEmail ?? '');
     _emailFocusNode.addListener(() {
       setState(() {});
     });

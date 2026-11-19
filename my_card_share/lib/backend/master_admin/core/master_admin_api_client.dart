@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
@@ -11,7 +11,7 @@ class MasterAdminApiClient {
 
   static const List<String> _hosts = [
     MasterAdminEndpoints.baseUrl,
-    'https://digitalbusinesscloudcard.com',
+    'https://mycardshare.com',
   ];
 
   static Future<Map<String, String>> _headers() async {

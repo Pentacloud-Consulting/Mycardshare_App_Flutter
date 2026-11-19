@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'public_scanned_card_screen.dart';
 
@@ -50,7 +50,7 @@ class ScannedCardChoiceModal extends StatelessWidget {
     Navigator.of(context).pop(); // dismiss modal
     final targetUrl = rawUrl.startsWith('http')
         ? rawUrl
-        : 'https://digitalbusinesscloudcard.com/card/$cardSlug';
+        : 'https://mycardshare.com/card/$cardSlug';
 
     final uri = Uri.parse(targetUrl);
     try {
@@ -265,7 +265,7 @@ class ScannedCardChoiceModal extends StatelessWidget {
                           ),
                           SizedBox(height: 2),
                           Text(
-                            "View public card on digitalbusinesscloudcard.com in Chrome / browser",
+                            "View public card on mycardshare.com in Chrome / browser",
                             style: TextStyle(
                               fontSize: 11.5,
                               color: Color(0xFF64748B),

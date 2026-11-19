@@ -102,6 +102,9 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
         fbUser.email ?? '',
         fbUser.displayName ?? '',
       );
+      // Reload metrics for the current user so the dashboard cards reflect
+      // the latest data (and don't show stale data from a previous user).
+      IndividualMetricsStore.instance.loadMetrics(fbUser.uid);
     }
   }
 
@@ -164,32 +167,27 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
 
         final userEmail = firebaseUser?.email?.toLowerCase() ?? empBackend.email.toLowerCase();
 
-        final displayName = (empBackend.userName.isNotEmpty && empBackend.userName != "User" && empBackend.userName.toLowerCase() != "zuhaib")
+        final displayName = (empBackend.userName.isNotEmpty && empBackend.userName != "User")
             ? empBackend.userName
-            : ((activeProfile?.fullName.isNotEmpty == true && activeProfile!.fullName != "User" && activeProfile!.fullName.toLowerCase() != "zuhaib")
+            : ((activeProfile?.fullName.isNotEmpty == true && activeProfile!.fullName != "User")
                 ? activeProfile!.fullName
-                : (userEmail == 'zuhaib@pentacloudconsulting.com'
-                    ? "Zuhaib Ulla Shariff"
-                    : ((storedUser?.fullName.isNotEmpty == true ? storedUser!.fullName : null)
-                        ?? (firebaseUser?.displayName?.isNotEmpty == true ? firebaseUser!.displayName : null)
-                        ?? "Zuhaib Ulla Shariff")));
+                : ((storedUser?.fullName.isNotEmpty == true ? storedUser!.fullName : null)
+                    ?? (firebaseUser?.displayName?.isNotEmpty == true ? firebaseUser!.displayName : null)
+                    ?? userEmail.split('@').first));
 
         final rawPhoto = (activeProfile?.profilePhoto?.isNotEmpty == true ? activeProfile!.profilePhoto : null)
             ?? (empBackend.avatarUrl?.isNotEmpty == true ? empBackend.avatarUrl : null)
-            ?? (firebaseUser?.photoURL?.isNotEmpty == true ? firebaseUser!.photoURL : null)
-            ?? (userEmail == 'zuhaib@pentacloudconsulting.com' ? 'https://mycardshare.com/api/images/1777545891643-5698b70e74b6' : null);
+            ?? (firebaseUser?.photoURL?.isNotEmpty == true ? firebaseUser!.photoURL : null);
         final displayPhoto = ImageUrlFormatter.format(rawPhoto);
 
         final rawUserBanner = (activeProfile?.bannerPhoto?.isNotEmpty == true ? activeProfile!.bannerPhoto : null);
-        final displayBanner = brandFetch.getEffectiveBanner(rawUserBanner)
-            ?? rawUserBanner
-            ?? (userEmail.contains('pentacloud') ? 'https://mycardshare.com/api/uploads/companyBanner/W3hDpYWqSgzFQJSb1ZcC_1786435248817_1786435248820.png' : null);
+        final displayBanner = brandFetch.getEffectiveBanner(rawUserBanner) ?? rawUserBanner;
 
         final displayRole = (empBackend.role.isNotEmpty && empBackend.role != "Member" && empBackend.role != "Employee")
             ? empBackend.role
             : ((activeProfile?.jobTitle.isNotEmpty == true && activeProfile!.jobTitle != "Member" && activeProfile!.jobTitle != "Employee")
                 ? activeProfile!.jobTitle
-                : (userEmail == 'zuhaib@pentacloudconsulting.com' ? "Web Developer" : "Web Developer"));
+                : '');
 
         final activeEntProfile = EnterpriseProfileStore.instance.currentProfile;
         final entMultiUsers = EnterpriseMultiStore.instance.getAllUsers();

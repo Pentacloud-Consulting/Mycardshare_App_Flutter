@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../public_card/scanned_card_choice_modal.dart';
 import '../../public_card/public_scanned_card_screen.dart';
@@ -11,8 +11,8 @@ class QrRedirectHandler {
   QrRedirectHandler._();
 
   static const _cardDomains = [
-    'digitalbusinesscloudcard.com',
-    'www.digitalbusinesscloudcard.com',
+    'mycardshare.com',
+    'www.mycardshare.com',
     'mycardshare.com',
     'www.mycardshare.com',
     'mycardshare.vercel.app',

@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
@@ -520,7 +520,7 @@ class _DeletionRequestsBottomSheetWidgetState
     try {
       final token = await FirebaseAuth.instance.currentUser?.getIdToken();
       final response = await http.get(
-        Uri.parse("https://digitalbusinesscloudcard.com/api/sync/individual-deletion"),
+        Uri.parse("https://mycardshare.com/api/sync/individual-deletion"),
         headers: {
           "Content-Type": "application/json",
           if (token != null && token.isNotEmpty) "Authorization": "Bearer $token",

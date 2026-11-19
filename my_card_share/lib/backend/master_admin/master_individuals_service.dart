@@ -1,4 +1,4 @@
-// lib/backend/master_admin/master_individuals_service.dart
+﻿// lib/backend/master_admin/master_individuals_service.dart
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -159,8 +159,8 @@ class MasterIndividualsService {
       }),
       Uri.parse('https://mycardshare.com/api/sync/master-admin-individuals').replace(queryParameters: queryParams),
       Uri.parse(platformUrl).replace(queryParameters: queryParams),
-      Uri.parse('https://digitalbusinesscloudcard.com/api/sync/master-admin-individuals').replace(queryParameters: queryParams),
-      Uri.parse('https://digitalbusinesscloudcard.com/api/platform/individuals').replace(queryParameters: queryParams),
+      Uri.parse('https://mycardshare.com/api/sync/master-admin-individuals').replace(queryParameters: queryParams),
+      Uri.parse('https://mycardshare.com/api/platform/individuals').replace(queryParameters: queryParams),
     ];
 
     http.Response? lastResponse;
@@ -342,7 +342,7 @@ class MasterIndividualsService {
       final actualToken = token ?? await getAuthToken();
 
       // 1. Call DELETE /api/platform/individuals/:userId (Web platform standard endpoint)
-      for (final host in [baseUrl, 'https://digitalbusinesscloudcard.com']) {
+      for (final host in [baseUrl, 'https://mycardshare.com']) {
         try {
           await http.delete(
             Uri.parse('$host/api/platform/individuals/$userId'),

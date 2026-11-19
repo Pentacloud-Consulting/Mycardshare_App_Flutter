@@ -357,7 +357,7 @@ class EnterpriseProfileStore {
         if (updated.cardSlug.isNotEmpty) 'slug': updated.cardSlug,
       }).catchError((e) {
         debugPrint('[EnterpriseProfileStore] Background API patch note: $e');
-        return null;
+        return <String, dynamic>{};
       }));
 
       // Also dispatch enterprise branding sync to propagate colors to employee cards
@@ -368,7 +368,7 @@ class EnterpriseProfileStore {
         if (updated.bannerUrl != null) 'companyBanner': updated.bannerUrl,
       }).catchError((e) {
         debugPrint('[EnterpriseProfileStore] Background enterprise sync note: $e');
-        return null;
+        return <String, dynamic>{};
       }));
 
       return true;

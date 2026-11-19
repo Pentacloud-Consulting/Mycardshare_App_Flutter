@@ -112,9 +112,7 @@ class CardHeaderBanner extends StatelessWidget {
         ? avatarUrl!.trim()
         : ((avatarAsset != null && avatarAsset!.trim().isNotEmpty)
             ? avatarAsset!.trim()
-            : (authUser?.email?.toLowerCase() == 'zuhaib@pentacloudconsulting.com'
-                ? 'https://mycardshare.com/api/images/1777545891643-5698b70e74b6'
-                : googlePhoto));
+            : googlePhoto);
     return _buildImageWidget(photo, fallback: _buildAvatarFallback());
   }
 

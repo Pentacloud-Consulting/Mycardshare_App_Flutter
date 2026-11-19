@@ -190,7 +190,7 @@ class MasterIndividualsService {
               u.email != 'zuhaib@mycardshare.com'
             ).toList();
 
-            if (cleaned.length >= 10) {
+            if (cleaned.isNotEmpty) {
               return MasterIndividualsResponse(
                 total: cleaned.length,
                 active: cleaned.where((u) => u.status == 'ACTIVE').length,

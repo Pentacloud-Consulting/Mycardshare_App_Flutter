@@ -99,8 +99,25 @@ class MasterAdminDashboardStore extends ChangeNotifier {
       } catch (_) {}
 
       // 3. Query Firestore real counts to guarantee live accuracy fallback
-      final compSnap = await _firestore.collection('enterprises').count().get();
-      if (_totalCompanies == 0) _totalCompanies = compSnap.count ?? _totalCompanies;
+      try {
+        final entSnap = await _firestore.collection('enterprises').get();
+        final compSnap = await _firestore.collection('companies').get();
+        final Set<String> companyIds = {};
+        for (final d in entSnap.docs) {
+          companyIds.add(d.id);
+        }
+        for (final d in compSnap.docs) {
+          companyIds.add(d.id);
+        }
+        if (companyIds.isNotEmpty) {
+          _totalCompanies = companyIds.length;
+        }
+      } catch (_) {
+        if (_totalCompanies == 0) {
+          final compSnap = await _firestore.collection('enterprises').count().get();
+          _totalCompanies = compSnap.count ?? _totalCompanies;
+        }
+      }
 
       if (_totalIndividuals == 0) {
         try {

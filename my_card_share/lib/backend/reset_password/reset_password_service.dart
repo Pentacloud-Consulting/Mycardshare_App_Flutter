@@ -13,13 +13,6 @@ class ResetPasswordService {
     try {
       await FirebaseAuth.instance.sendPasswordResetEmail(
         email: cleanEmail,
-        actionCodeSettings: ActionCodeSettings(
-          url: "https://mycardshare.com/reset-password",
-          handleCodeInApp: false,
-          androidPackageName: "com_pentacloud.mycarshare",
-          androidInstallApp: true,
-          androidMinimumVersion: "1",
-        ),
       );
 
       // Also try backend sync in background (don't block on it)
@@ -37,6 +30,8 @@ class ResetPasswordService {
         errMsg = "Invalid email format.";
       } else if (e.code == 'too-many-requests') {
         errMsg = "Too many requests. Please wait a few minutes and try again.";
+      } else if (e.message != null && e.message!.isNotEmpty) {
+        errMsg = e.message!;
       }
       return {"success": false, "error": errMsg};
     } catch (e) {

@@ -27,9 +27,17 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
   @override
   void initState() {
     super.initState();
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null && uid.isNotEmpty) {
-      PublishUnpublishService.instance.loadPublishStatus(uid);
+    final fbUser = FirebaseAuth.instance.currentUser;
+    if (fbUser != null && fbUser.uid.isNotEmpty) {
+      PublishUnpublishService.instance.loadPublishStatus(fbUser.uid);
+      final active = IndividualProfileStore.instance.activeProfile;
+      if (active == null || (active.uid != fbUser.uid && active.email.toLowerCase() != (fbUser.email ?? '').toLowerCase())) {
+        IndividualProfileStore.instance.loadProfile(
+          fbUser.uid,
+          fbUser.email ?? '',
+          fbUser.displayName ?? '',
+        );
+      }
     }
   }
 
@@ -41,29 +49,43 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
         PublishUnpublishService.instance,
       ]),
       builder: (context, _) {
+        final fbUser = FirebaseAuth.instance.currentUser;
+        final currentEmail = (fbUser?.email ?? '').toLowerCase();
         final activeProfile = IndividualProfileStore.instance.activeProfile;
-        final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
+        final isSameUser = activeProfile != null &&
+            ((fbUser != null && activeProfile.uid == fbUser.uid) ||
+             (currentEmail.isNotEmpty && activeProfile.email.toLowerCase() == currentEmail));
+        final validActive = isSameUser ? activeProfile : null;
+
+        final storedUser = currentEmail.isNotEmpty
+            ? (IndividualMultiStore.instance.getUser(currentEmail) ??
+               IndividualMultiStore.instance.getAllUsers().cast<IndividualUserRecord?>().firstWhere(
+                 (u) => u?.email.toLowerCase() == currentEmail,
+                 orElse: () => null,
+               ))
+            : null;
+
         final isPublished = PublishUnpublishService.instance.isPublished;
 
-        final name = activeProfile?.fullName ?? storedUser?.fullName ?? "User";
-        final role = activeProfile?.jobTitle.isNotEmpty == true ? activeProfile!.jobTitle : "Not specified";
-        final company = activeProfile?.companyName.isNotEmpty == true ? activeProfile!.companyName : "Not specified";
-        final bio = activeProfile?.shortBio.isNotEmpty == true
-            ? activeProfile!.shortBio
+        final name = validActive?.fullName ?? storedUser?.fullName ?? (fbUser?.displayName?.isNotEmpty == true ? fbUser!.displayName : null) ?? (currentEmail.isNotEmpty ? currentEmail.split('@').first : "User");
+        final role = validActive?.jobTitle.isNotEmpty == true ? validActive!.jobTitle : "Not specified";
+        final company = validActive?.companyName.isNotEmpty == true ? validActive!.companyName : "Not specified";
+        final bio = validActive?.shortBio.isNotEmpty == true
+            ? validActive!.shortBio
             : "No bio added yet.";
-        final status = activeProfile?.networkingStatus.isNotEmpty == true ? activeProfile!.networkingStatus : "ACTIVELY NETWORKING";
-        final phone = activeProfile?.phoneNumber.isNotEmpty == true ? activeProfile!.phoneNumber : "";
-        final email = activeProfile?.email ?? storedUser?.email ?? "";
-        final website = activeProfile?.websiteUrl ?? "";
-        final slug = activeProfile?.cardSlug ?? IndividualProfileStore.generateCardSlug(name);
-        final templateIndex = IndividualProfileStore.getTemplateIndex(activeProfile?.templateStyle);
+        final status = validActive?.networkingStatus.isNotEmpty == true ? validActive!.networkingStatus : "ACTIVELY NETWORKING";
+        final phone = validActive?.phoneNumber.isNotEmpty == true ? validActive!.phoneNumber : "";
+        final email = validActive?.email ?? storedUser?.email ?? currentEmail;
+        final website = validActive?.websiteUrl ?? "";
+        final slug = validActive?.cardSlug ?? IndividualProfileStore.generateCardSlug(name);
+        final templateIndex = IndividualProfileStore.getTemplateIndex(validActive?.templateStyle);
 
-        final authPhoto = FirebaseAuth.instance.currentUser?.photoURL;
-        final rawPhoto = activeProfile?.profilePhoto?.trim();
+        final authPhoto = fbUser?.photoURL;
+        final rawPhoto = validActive?.profilePhoto?.trim();
         final displayPhoto = ImageUrlFormatter.format((rawPhoto != null && rawPhoto.isNotEmpty)
             ? rawPhoto
             : ((authPhoto != null && authPhoto.trim().isNotEmpty) ? authPhoto.trim() : null));
-        final displayBanner = ImageUrlFormatter.format(activeProfile?.bannerPhoto?.trim());
+        final displayBanner = ImageUrlFormatter.format(validActive?.bannerPhoto?.trim());
 
         return Scaffold(
           backgroundColor: const Color(0xFFF8FAFD),

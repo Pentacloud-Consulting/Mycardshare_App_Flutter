@@ -57,25 +57,38 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
         EmployeeBannerFetchService.instance,
       ]),
       builder: (context, _) {
+        final fbUser = FirebaseAuth.instance.currentUser;
+        final currentEmail = (fbUser?.email ?? '').toLowerCase();
         final activeProfile = IndividualProfileStore.instance.activeProfile;
+        final isSameUser = activeProfile != null &&
+            ((fbUser != null && activeProfile.uid == fbUser.uid) ||
+             (currentEmail.isNotEmpty && activeProfile.email.toLowerCase() == currentEmail));
+        final validActive = isSameUser ? activeProfile : null;
+
         final empBackend = EmployeeHomeBackendService.instance;
-        final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
+        final storedUser = currentEmail.isNotEmpty
+            ? (IndividualMultiStore.instance.getUser(currentEmail) ??
+               IndividualMultiStore.instance.getAllUsers().cast<IndividualUserRecord?>().firstWhere(
+                 (u) => u?.email.toLowerCase() == currentEmail,
+                 orElse: () => null,
+               ))
+            : null;
         final isPublished = PublishUnpublishService.instance.isPublished;
         final emailsModel = EmployeeEmailService.instance.currentEmails;
 
-        final email = (activeProfile?.email.isNotEmpty == true)
-            ? activeProfile!.email
+        final email = (validActive?.email.isNotEmpty == true)
+            ? validActive!.email
             : (empBackend.email.isNotEmpty
                 ? empBackend.email
                 : (emailsModel?.employeeEmail.isNotEmpty == true
                     ? emailsModel!.employeeEmail
-                    : (storedUser?.email ?? (FirebaseAuth.instance.currentUser?.email ?? ""))));
+                    : (storedUser?.email ?? currentEmail)));
 
         final name = (empBackend.userName.isNotEmpty && empBackend.userName != "User")
             ? empBackend.userName
-            : ((activeProfile?.fullName.isNotEmpty == true && activeProfile!.fullName != "User")
-                ? activeProfile!.fullName
-                : (storedUser?.fullName ?? email.split('@').first));
+            : ((validActive?.fullName.isNotEmpty == true && validActive!.fullName != "User")
+                ? validActive!.fullName
+                : (storedUser?.fullName ?? (currentEmail.isNotEmpty ? currentEmail.split('@').first : "Employee")));
 
         final role = (empBackend.role.isNotEmpty && empBackend.role != "Member" && empBackend.role != "Employee")
             ? empBackend.role

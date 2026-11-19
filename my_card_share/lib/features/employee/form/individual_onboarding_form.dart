@@ -114,58 +114,58 @@ class _IndividualOnboardingFormScreenState
   void initState() {
     super.initState();
     final firebaseUser = FirebaseAuth.instance.currentUser;
-    final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
+    final currentEmail = (widget.initialEmail ?? firebaseUser?.email ?? '').trim().toLowerCase();
+    final currentUid = (widget.uid ?? firebaseUser?.uid ?? '').trim();
+
+    // Check if active profile strictly belongs to THIS current user
     final active = IndividualProfileStore.instance.activeProfile;
+    final isSameUser = active != null &&
+        ((currentUid.isNotEmpty && active.uid == currentUid) ||
+         (currentEmail.isNotEmpty && active.email.toLowerCase() == currentEmail));
+    final validActive = isSameUser ? active : null;
+
+    final storedUser = currentEmail.isNotEmpty
+        ? (IndividualMultiStore.instance.getUser(currentEmail) ??
+           IndividualMultiStore.instance.getAllUsers().cast<IndividualUserRecord?>().firstWhere(
+             (u) => u?.email.toLowerCase() == currentEmail,
+             orElse: () => null,
+           ))
+        : null;
 
     final resolvedName = widget.initialFullName ??
-        (active?.fullName.isNotEmpty == true ? active!.fullName : null) ??
-        (storedUser?.fullName.isNotEmpty == true ? storedUser!.fullName : null) ??
         (firebaseUser?.displayName?.isNotEmpty == true ? firebaseUser!.displayName : null) ??
-        (firebaseUser?.email?.isNotEmpty == true ? firebaseUser!.email!.split('@').first : null) ??
+        (validActive?.fullName.isNotEmpty == true ? validActive!.fullName : null) ??
+        (storedUser?.fullName.isNotEmpty == true ? storedUser!.fullName : null) ??
+        (currentEmail.isNotEmpty ? currentEmail.split('@').first : null) ??
         'User';
 
-    final resolvedEmail = widget.initialEmail ??
-        (active?.email.isNotEmpty == true ? active!.email : null) ??
-        (storedUser?.email.isNotEmpty == true ? storedUser!.email : null) ??
-        firebaseUser?.email ??
-        '';
-
-    final resolvedUid = widget.uid ??
-        active?.uid ??
-        storedUser?.id ??
-        firebaseUser?.uid ??
-        'user_${DateTime.now().millisecondsSinceEpoch}';
-
     _fullName = resolvedName;
-    _email = resolvedEmail;
-    _uid = resolvedUid;
+    _email = currentEmail;
+    _uid = currentUid.isNotEmpty ? currentUid : 'user_${DateTime.now().millisecondsSinceEpoch}';
 
-    final isSameUser = active != null &&
-        (active.uid == resolvedUid || (resolvedEmail.isNotEmpty && active.email.toLowerCase() == resolvedEmail.toLowerCase()));
-
-    final rawAvatar = (isSameUser && active.profilePhoto != null && active.profilePhoto!.isNotEmpty)
-        ? active.profilePhoto
+    final rawAvatar = (validActive != null && validActive.profilePhoto != null && validActive.profilePhoto!.isNotEmpty)
+        ? validActive.profilePhoto
         : firebaseUser?.photoURL;
     _profileImageUrl = ImageUrlFormatter.format(rawAvatar);
 
-    final rawBanner = (isSameUser && active.bannerPhoto != null && active.bannerPhoto!.isNotEmpty)
-        ? active.bannerPhoto
+    final rawBanner = (validActive != null && validActive.bannerPhoto != null && validActive.bannerPhoto!.isNotEmpty)
+        ? validActive.bannerPhoto
         : null;
     _bannerImagePath = ImageUrlFormatter.format(rawBanner);
 
     // Load active profile data only if it belongs to this exact user
-    if (isSameUser && active != null) {
-      _jobTitleController.text = active.jobTitle;
-      _phoneController.text = active.phoneNumber;
-      _websiteController.text = active.websiteUrl;
-      _selectedColorIndex = IndividualProfileStore.getTemplateIndex(active.templateStyle);
-      _companyController.text = active.companyName;
-      _bioController.text = active.shortBio;
-      _networkingStatus = active.networkingStatus;
-      _slugController.text = active.cardSlug;
-      if (active.socialLinks.isNotEmpty) {
+    if (validActive != null) {
+      _jobTitleController.text = validActive.jobTitle;
+      _phoneController.text = validActive.phoneNumber;
+      _websiteController.text = validActive.websiteUrl;
+      _selectedColorIndex = IndividualProfileStore.getTemplateIndex(validActive.templateStyle);
+      _companyController.text = validActive.companyName;
+      _bioController.text = validActive.shortBio;
+      _networkingStatus = validActive.networkingStatus;
+      _slugController.text = validActive.cardSlug;
+      if (validActive.socialLinks.isNotEmpty) {
         _socialLinks.clear();
-        _socialLinks.addAll(active.socialLinks.where((l) => l.platform != 'Website' && l.platform != 'Portfolio'));
+        _socialLinks.addAll(validActive.socialLinks.where((l) => l.platform != 'Website' && l.platform != 'Portfolio'));
         if (_socialLinks.isEmpty) {
           _socialLinks.add(SocialLinkItem(platform: 'LinkedIn', url: ''));
         }

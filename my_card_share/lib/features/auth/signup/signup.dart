@@ -152,7 +152,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           role: roleStr,
         );
         ref.read(authProvider.notifier).login(user);
-        context.go('/individual/form');
+        context.go('/individual/form', extra: {
+          'fullName': fbUser.displayName ?? name,
+          'email': fbUser.email ?? email,
+          'uid': fbUser.uid,
+        });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -234,7 +238,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         role: roleStr,
       );
       ref.read(authProvider.notifier).login(user);
-      context.go('/individual/form');
+      context.go('/individual/form', extra: {
+        'fullName': resolvedName,
+        'email': fbUser.email ?? '',
+        'uid': fbUser.uid,
+      });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../backend/employee_join/home/employee_home_backend.dart';
 import '../../../../backend/enterprise/profile/enterprise_profile_store.dart';
 import '../../../../backend/enterprise/multiple_store/enterprise_multi_store.dart';
@@ -30,9 +31,19 @@ class DashboardHeader extends StatelessWidget {
                 ? homeBackend.userName
                 : "Employee");
 
+        final currentEmail = (FirebaseAuth.instance.currentUser?.email ?? '').toLowerCase();
         final activeEntProfile = EnterpriseProfileStore.instance.currentProfile;
+        final isSameEnt = activeEntProfile != null &&
+            (currentEmail.isNotEmpty && activeEntProfile.email.toLowerCase() == currentEmail);
+        final validEntProfile = isSameEnt ? activeEntProfile : null;
+
         final entMultiUsers = EnterpriseMultiStore.instance.getAllUsers();
-        final matchedMultiUser = entMultiUsers.isNotEmpty ? entMultiUsers.first : null;
+        final matchedMultiUser = currentEmail.isNotEmpty
+            ? entMultiUsers.cast<EnterpriseUserRecord?>().firstWhere(
+                (u) => u?.email.toLowerCase() == currentEmail,
+                orElse: () => null,
+              )
+            : null;
 
         final resolvedCompany = (companyName != null && companyName!.trim().isNotEmpty && companyName != "Enterprise Workspace" && companyName != "Acme Realty")
             ? companyName!.trim()

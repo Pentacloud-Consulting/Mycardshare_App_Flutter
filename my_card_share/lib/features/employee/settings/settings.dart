@@ -39,21 +39,33 @@ class _IndividualSettingsScreenState extends State<IndividualSettingsScreen> {
           listenable: IndividualProfileStore.instance,
           builder: (context, _) {
             final firebaseUser = FirebaseAuth.instance.currentUser;
+            final currentEmail = (firebaseUser?.email ?? '').toLowerCase();
             final activeProfile = IndividualProfileStore.instance.activeProfile;
-            final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
+            final isSameUser = activeProfile != null &&
+                ((firebaseUser != null && activeProfile.uid == firebaseUser.uid) ||
+                 (currentEmail.isNotEmpty && activeProfile.email.toLowerCase() == currentEmail));
+            final validActive = isSameUser ? activeProfile : null;
 
-            final displayName = (activeProfile?.fullName.isNotEmpty == true ? activeProfile!.fullName : null)
+            final storedUser = currentEmail.isNotEmpty
+                ? (IndividualMultiStore.instance.getUser(currentEmail) ??
+                   IndividualMultiStore.instance.getAllUsers().cast<IndividualUserRecord?>().firstWhere(
+                     (u) => u?.email.toLowerCase() == currentEmail,
+                     orElse: () => null,
+                   ))
+                : null;
+
+            final displayName = (validActive?.fullName.isNotEmpty == true ? validActive!.fullName : null)
                 ?? (storedUser?.fullName.isNotEmpty == true ? storedUser!.fullName : null)
                 ?? (firebaseUser?.displayName?.isNotEmpty == true ? firebaseUser!.displayName : null)
                 ?? (firebaseUser?.email?.isNotEmpty == true ? firebaseUser!.email!.split('@').first : null)
                 ?? "User";
 
-            final displayEmail = (activeProfile?.email.isNotEmpty == true ? activeProfile!.email : null)
+            final displayEmail = (validActive?.email.isNotEmpty == true ? validActive!.email : null)
                 ?? (storedUser?.email.isNotEmpty == true ? storedUser!.email : null)
                 ?? (firebaseUser?.email?.isNotEmpty == true ? firebaseUser!.email : null)
                 ?? "";
 
-            final displayPhoto = (activeProfile?.profilePhoto?.isNotEmpty == true ? activeProfile!.profilePhoto : null)
+            final displayPhoto = (validActive?.profilePhoto?.isNotEmpty == true ? validActive!.profilePhoto : null)
                 ?? (firebaseUser?.photoURL?.isNotEmpty == true ? firebaseUser!.photoURL : null);
 
             return SingleChildScrollView(

@@ -23,15 +23,27 @@ class GoogleWalletService {
     IndividualProfileData? profile,
     PublicProfileData? publicProfile,
   }) async {
-    final activeProfile = profile ?? IndividualProfileStore.instance.activeProfile;
-    final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
-    final empBackend = EmployeeHomeBackendService.instance;
     final fbUser = FirebaseAuth.instance.currentUser;
+    final currentEmail = (fbUser?.email ?? '').toLowerCase();
+    final activeProfile = profile ?? IndividualProfileStore.instance.activeProfile;
+    final isSameUser = activeProfile != null &&
+        ((fbUser != null && activeProfile.uid == fbUser.uid) ||
+         (currentEmail.isNotEmpty && activeProfile.email.toLowerCase() == currentEmail));
+    final validActive = isSameUser ? activeProfile : null;
+
+    final storedUser = currentEmail.isNotEmpty
+        ? (IndividualMultiStore.instance.getUser(currentEmail) ??
+           IndividualMultiStore.instance.getAllUsers().cast<IndividualUserRecord?>().firstWhere(
+             (u) => u?.email.toLowerCase() == currentEmail,
+             orElse: () => null,
+           ))
+        : null;
+    final empBackend = EmployeeHomeBackendService.instance;
 
     final String name = publicProfile?.fullName.isNotEmpty == true
         ? publicProfile!.fullName
-        : (activeProfile?.fullName.isNotEmpty == true
-            ? activeProfile!.fullName
+        : (validActive?.fullName.isNotEmpty == true
+            ? validActive!.fullName
             : (storedUser?.fullName.isNotEmpty == true
                 ? storedUser!.fullName
                 : (empBackend.userName != 'User' && empBackend.userName.isNotEmpty

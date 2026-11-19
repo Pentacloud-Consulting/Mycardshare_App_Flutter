@@ -24,20 +24,32 @@ class CardQuickActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeProfile = IndividualProfileStore.instance.activeProfile;
-    final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
     final fbUser = FirebaseAuth.instance.currentUser;
+    final currentEmail = (fbUser?.email ?? '').toLowerCase();
+    final activeProfile = IndividualProfileStore.instance.activeProfile;
+    final isSameUser = activeProfile != null &&
+        ((fbUser != null && activeProfile.uid == fbUser.uid) ||
+         (currentEmail.isNotEmpty && activeProfile.email.toLowerCase() == currentEmail));
+    final validActive = isSameUser ? activeProfile : null;
+
+    final storedUser = currentEmail.isNotEmpty
+        ? (IndividualMultiStore.instance.getUser(currentEmail) ??
+           IndividualMultiStore.instance.getAllUsers().cast<IndividualUserRecord?>().firstWhere(
+             (u) => u?.email.toLowerCase() == currentEmail,
+             orElse: () => null,
+           ))
+        : null;
 
     final targetEmail = (email?.trim().isNotEmpty == true ? email!.trim() : null)
-        ?? (activeProfile?.email.trim().isNotEmpty == true ? activeProfile!.email.trim() : null)
+        ?? (validActive?.email.trim().isNotEmpty == true ? validActive!.email.trim() : null)
         ?? (storedUser?.email.trim().isNotEmpty == true ? storedUser!.email.trim() : null)
         ?? (fbUser?.email?.trim().isNotEmpty == true ? fbUser!.email!.trim() : "");
 
     final targetPhone = (phone?.trim().isNotEmpty == true ? phone!.trim() : null)
-        ?? (activeProfile?.phoneNumber.trim().isNotEmpty == true ? activeProfile!.phoneNumber.trim() : "");
+        ?? (validActive?.phoneNumber.trim().isNotEmpty == true ? validActive!.phoneNumber.trim() : "");
 
     final targetName = (recipientName?.trim().isNotEmpty == true ? recipientName!.trim() : null)
-        ?? (activeProfile?.fullName.trim().isNotEmpty == true ? activeProfile!.fullName.trim() : null)
+        ?? (validActive?.fullName.trim().isNotEmpty == true ? validActive!.fullName.trim() : null)
         ?? (storedUser?.fullName.trim().isNotEmpty == true ? storedUser!.fullName.trim() : "");
 
     return Row(

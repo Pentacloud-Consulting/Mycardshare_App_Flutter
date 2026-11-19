@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import '../api_service.dart';
 import '../profile/individual_profile_store.dart';
+import '../multiple_store/individual_multi_store.dart';
 import '../../app view/app_view_auth_gate.dart';
 
 // ─── Shared Google Sign-In instance (mirrors GoogleSignUpService config) ──────
@@ -145,6 +146,9 @@ class IndividualAuthService {
     try {
       final cleanEmail = email.trim().toLowerCase();
 
+      // Clear any prior active profile before creating new user
+      IndividualProfileStore.instance.clearProfile();
+
       // Pre-check if email belongs to a deleted account
       if (await isAccountDeleted('', cleanEmail)) {
         return IndividualAuthResult.error(
@@ -159,6 +163,14 @@ class IndividualAuthService {
       );
       final user = credential.user!;
       final uid = user.uid;
+
+      // Register new user into isolated IndividualMultiStore
+      IndividualMultiStore.instance.saveUser(
+        fullName: fullName.trim(),
+        email: cleanEmail,
+        password: password,
+        role: 'individual',
+      );
 
       debugPrint('[IndividualAuthService] Firebase user created: $uid');
 

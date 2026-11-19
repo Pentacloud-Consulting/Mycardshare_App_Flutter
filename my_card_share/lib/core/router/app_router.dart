@@ -243,7 +243,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/individual/form',
-        builder: (c, s) => const IndividualOnboardingFormScreen(),
+        builder: (c, s) {
+          final extra = s.extra as Map<String, dynamic>?;
+          return IndividualOnboardingFormScreen(
+            initialFullName: extra?['fullName'] as String?,
+            initialEmail: extra?['email'] as String?,
+            uid: extra?['uid'] as String?,
+          );
+        },
       ),
       GoRoute(
         path: '/master-admin/login',

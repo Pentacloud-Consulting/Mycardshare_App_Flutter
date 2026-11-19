@@ -14,7 +14,7 @@ class ResetPasswordService {
       final verifyRes = await http.post(
         Uri.parse("$baseUrl/api/sync/reset-password"),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"email": cleanEmail, "role": "auto"}),
+        body: jsonEncode({"email": cleanEmail, "role": "auto", "checkOnly": true}),
       ).timeout(const Duration(seconds: 6));
 
       if (verifyRes.statusCode == 404) {

@@ -159,49 +159,70 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
       ]),
       builder: (context, _) {
         final firebaseUser = FirebaseAuth.instance.currentUser;
-        final activeProfile = IndividualProfileStore.instance.activeProfile;
-        final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
-        final isPublished = PublishUnpublishService.instance.isPublished;
         final empBackend = EmployeeHomeBackendService.instance;
-        final brandFetch = EmployeeBannerFetchService.instance;
-
         final userEmail = firebaseUser?.email?.toLowerCase() ?? empBackend.email.toLowerCase();
+
+        final activeProfile = IndividualProfileStore.instance.activeProfile;
+        final isSameUser = activeProfile != null &&
+            ((firebaseUser != null && activeProfile.uid == firebaseUser.uid) ||
+             (userEmail.isNotEmpty && activeProfile.email.toLowerCase() == userEmail));
+        final validActive = isSameUser ? activeProfile : null;
+
+        final storedUser = userEmail.isNotEmpty
+            ? (IndividualMultiStore.instance.getUser(userEmail) ??
+               IndividualMultiStore.instance.getAllUsers().cast<IndividualUserRecord?>().firstWhere(
+                 (u) => u?.email.toLowerCase() == userEmail,
+                 orElse: () => null,
+               ))
+            : null;
+
+        final isPublished = PublishUnpublishService.instance.isPublished;
+        final brandFetch = EmployeeBannerFetchService.instance;
 
         final displayName = (empBackend.userName.isNotEmpty && empBackend.userName != "User")
             ? empBackend.userName
-            : ((activeProfile?.fullName.isNotEmpty == true && activeProfile!.fullName != "User")
-                ? activeProfile!.fullName
+            : ((validActive?.fullName.isNotEmpty == true && validActive!.fullName != "User")
+                ? validActive!.fullName
                 : ((storedUser?.fullName.isNotEmpty == true ? storedUser!.fullName : null)
                     ?? (firebaseUser?.displayName?.isNotEmpty == true ? firebaseUser!.displayName : null)
-                    ?? userEmail.split('@').first));
+                    ?? (userEmail.isNotEmpty ? userEmail.split('@').first : "Employee")));
 
-        final rawPhoto = (activeProfile?.profilePhoto?.isNotEmpty == true ? activeProfile!.profilePhoto : null)
+        final rawPhoto = (validActive?.profilePhoto?.isNotEmpty == true ? validActive!.profilePhoto : null)
             ?? (empBackend.avatarUrl?.isNotEmpty == true ? empBackend.avatarUrl : null)
             ?? (firebaseUser?.photoURL?.isNotEmpty == true ? firebaseUser!.photoURL : null);
         final displayPhoto = ImageUrlFormatter.format(rawPhoto);
 
-        final rawUserBanner = (activeProfile?.bannerPhoto?.isNotEmpty == true ? activeProfile!.bannerPhoto : null);
+        final rawUserBanner = (validActive?.bannerPhoto?.isNotEmpty == true ? validActive!.bannerPhoto : null);
         final displayBanner = brandFetch.getEffectiveBanner(rawUserBanner) ?? rawUserBanner;
 
         final displayRole = (empBackend.role.isNotEmpty && empBackend.role != "Member" && empBackend.role != "Employee")
             ? empBackend.role
-            : ((activeProfile?.jobTitle.isNotEmpty == true && activeProfile!.jobTitle != "Member" && activeProfile!.jobTitle != "Employee")
-                ? activeProfile!.jobTitle
+            : ((validActive?.jobTitle.isNotEmpty == true && validActive!.jobTitle != "Member" && validActive!.jobTitle != "Employee")
+                ? validActive!.jobTitle
                 : '');
 
         final activeEntProfile = EnterpriseProfileStore.instance.currentProfile;
+        final isSameEnt = activeEntProfile != null &&
+            (userEmail.isNotEmpty && activeEntProfile.email.toLowerCase() == userEmail);
+        final validEntProfile = isSameEnt ? activeEntProfile : null;
+
         final entMultiUsers = EnterpriseMultiStore.instance.getAllUsers();
-        final matchedMultiUser = entMultiUsers.isNotEmpty ? entMultiUsers.first : null;
+        final matchedMultiUser = userEmail.isNotEmpty
+            ? entMultiUsers.cast<EnterpriseUserRecord?>().firstWhere(
+                (u) => u?.email.toLowerCase() == userEmail,
+                orElse: () => null,
+              )
+            : null;
 
         final displayCompany = (empBackend.companyName.isNotEmpty && empBackend.companyName != "Enterprise Workspace" && empBackend.companyName != "Acme Realty")
             ? empBackend.companyName
-            : ((activeProfile?.companyName.isNotEmpty == true && activeProfile!.companyName != "Enterprise Workspace" ? activeProfile.companyName : null)
-                ?? (activeEntProfile?.companyName.isNotEmpty == true && activeEntProfile!.companyName != "Enterprise Workspace" ? activeEntProfile.companyName : null)
+            : ((validActive?.companyName.isNotEmpty == true && validActive!.companyName != "Enterprise Workspace" ? validActive.companyName : null)
+                ?? (validEntProfile?.companyName.isNotEmpty == true && validEntProfile!.companyName != "Enterprise Workspace" ? validEntProfile.companyName : null)
                 ?? (matchedMultiUser?.companyName.isNotEmpty == true && matchedMultiUser!.companyName != "Enterprise Workspace" ? matchedMultiUser.companyName : null)
-                ?? (userEmail.contains('pentacloud') ? "Pentacloud Consulting" : "Enterprise Workspace"));
+                ?? "Enterprise Workspace");
 
         final displayStatus = empBackend.status.isNotEmpty ? empBackend.status : "Actively Networking";
-        final templateIndex = IndividualProfileStore.getTemplateIndex(activeProfile?.templateStyle);
+        final templateIndex = IndividualProfileStore.getTemplateIndex(validActive?.templateStyle);
 
         return Scaffold(
           backgroundColor: AppColors.background,

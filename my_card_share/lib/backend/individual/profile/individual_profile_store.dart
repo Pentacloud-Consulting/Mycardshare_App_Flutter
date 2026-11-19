@@ -569,12 +569,12 @@ class IndividualProfileStore extends ChangeNotifier {
       companyName: companyName,
       shortBio: shortBio,
       networkingStatus: networkingStatus,
-      city: city.isNotEmpty ? city : (_activeProfile?.city ?? ''),
-      country: country.isNotEmpty ? country : (_activeProfile?.country ?? ''),
-      address: address.isNotEmpty ? address : (_activeProfile?.address ?? ''),
-      focusAreas: focusAreas.isNotEmpty ? focusAreas : (_activeProfile?.focusAreas ?? ''),
-      experience: experience.isNotEmpty ? experience : (_activeProfile?.experience ?? ''),
-      calendly: calendly.isNotEmpty ? calendly : (_activeProfile?.calendly ?? ''),
+      city: city.isNotEmpty ? city : (isSameUser ? (_activeProfile?.city ?? '') : ''),
+      country: country.isNotEmpty ? country : (isSameUser ? (_activeProfile?.country ?? '') : ''),
+      address: address.isNotEmpty ? address : (isSameUser ? (_activeProfile?.address ?? '') : ''),
+      focusAreas: focusAreas.isNotEmpty ? focusAreas : (isSameUser ? (_activeProfile?.focusAreas ?? '') : ''),
+      experience: experience.isNotEmpty ? experience : (isSameUser ? (_activeProfile?.experience ?? '') : ''),
+      calendly: calendly.isNotEmpty ? calendly : (isSameUser ? (_activeProfile?.calendly ?? '') : ''),
       resumeUrl: finalResumeUrl,
       resumeFileName: finalResumeFileName,
       brochureUrl: finalBrochureUrl,
@@ -708,6 +708,13 @@ class IndividualProfileStore extends ChangeNotifier {
   /// Load profile from Next.js API (/api/sync/individual or /api/cards) or Firestore
   Future<void> loadProfile(String uid, String email, String fullName) async {
     try {
+      // Clear profile if currently holding data for a different user
+      if (_activeProfile != null &&
+          (_activeProfile!.uid != uid && _activeProfile!.email.toLowerCase() != email.trim().toLowerCase())) {
+        _activeProfile = null;
+        notifyListeners();
+      }
+
       final currentAuth = FirebaseAuth.instance.currentUser;
       final authPhoto = (currentAuth?.photoURL != null && currentAuth!.photoURL!.trim().isNotEmpty)
           ? currentAuth.photoURL!.trim()
@@ -869,7 +876,8 @@ class IndividualProfileStore extends ChangeNotifier {
       }
 
       // 3. Fallback active profile if neither API nor Firestore returned
-      if (_activeProfile == null) {
+      if (_activeProfile == null ||
+          (_activeProfile!.uid != uid && _activeProfile!.email.toLowerCase() != email.trim().toLowerCase())) {
         final resolvedName = fullName.trim().isNotEmpty
             ? fullName.trim()
             : (email.contains('@') ? email.split('@').first : 'User');

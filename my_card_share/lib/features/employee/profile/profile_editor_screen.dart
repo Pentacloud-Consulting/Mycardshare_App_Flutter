@@ -59,28 +59,40 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
   @override
   void initState() {
     super.initState();
-    final active = IndividualProfileStore.instance.activeProfile;
-    final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
     final fbUser = FirebaseAuth.instance.currentUser;
+    final currentEmail = (fbUser?.email ?? '').toLowerCase();
+    final active = IndividualProfileStore.instance.activeProfile;
+    final isSameUser = active != null &&
+        ((fbUser != null && active.uid == fbUser.uid) ||
+         (currentEmail.isNotEmpty && active.email.toLowerCase() == currentEmail));
+    final validActive = isSameUser ? active : null;
 
-    _uid = fbUser?.uid ?? active?.uid ?? storedUser?.id ?? 'user_${DateTime.now().millisecondsSinceEpoch}';
+    final storedUser = currentEmail.isNotEmpty
+        ? (IndividualMultiStore.instance.getUser(currentEmail) ??
+           IndividualMultiStore.instance.getAllUsers().cast<IndividualUserRecord?>().firstWhere(
+             (u) => u?.email.toLowerCase() == currentEmail,
+             orElse: () => null,
+           ))
+        : null;
+
+    _uid = fbUser?.uid ?? validActive?.uid ?? storedUser?.id ?? 'user_${DateTime.now().millisecondsSinceEpoch}';
     PublishUnpublishService.instance.loadPublishStatus(_uid);
-    _selectedTemplateIndex = IndividualProfileStore.getTemplateIndex(active?.templateStyle);
-    _bannerImagePath = active?.bannerPhoto;
+    _selectedTemplateIndex = IndividualProfileStore.getTemplateIndex(validActive?.templateStyle);
+    _bannerImagePath = validActive?.bannerPhoto;
     final fbPhoto = fbUser?.photoURL?.trim();
-    _profileImagePath = (active?.profilePhoto != null && active!.profilePhoto!.trim().isNotEmpty)
-        ? active.profilePhoto!.trim()
+    _profileImagePath = (validActive?.profilePhoto != null && validActive!.profilePhoto!.trim().isNotEmpty)
+        ? validActive!.profilePhoto!.trim()
         : ((fbPhoto != null && fbPhoto.isNotEmpty) ? fbPhoto : null);
 
     final empBackend = EmployeeHomeBackendService.instance;
     final cachedEmails = EmployeeEmailService.instance.currentEmails;
 
     _nameController = TextEditingController(
-      text: active?.fullName.isNotEmpty == true
-          ? active!.fullName
+      text: validActive?.fullName.isNotEmpty == true
+          ? validActive!.fullName
           : (empBackend.userName.isNotEmpty && empBackend.userName != "User"
               ? empBackend.userName
-              : (storedUser?.fullName ?? "")),
+              : (storedUser?.fullName ?? (fbUser?.displayName?.isNotEmpty == true ? fbUser!.displayName! : (currentEmail.isNotEmpty ? currentEmail.split('@').first : "")))),
     );
     _roleController = TextEditingController(
       text: active?.jobTitle.isNotEmpty == true

@@ -78,13 +78,25 @@ class WalletService {
     IndividualProfileData? profile,
     PublicProfileData? publicProfile,
   }) {
-    final activeProfile = profile ?? IndividualProfileStore.instance.activeProfile;
-    final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
-    final empBackend = EmployeeHomeBackendService.instance;
     final fbUser = FirebaseAuth.instance.currentUser;
+    final currentEmail = (fbUser?.email ?? '').toLowerCase();
+    final activeProfile = profile ?? IndividualProfileStore.instance.activeProfile;
+    final isSameUser = activeProfile != null &&
+        ((fbUser != null && activeProfile.uid == fbUser.uid) ||
+         (currentEmail.isNotEmpty && activeProfile.email.toLowerCase() == currentEmail));
+    final validActive = isSameUser ? activeProfile : null;
+
+    final storedUser = currentEmail.isNotEmpty
+        ? (IndividualMultiStore.instance.getUser(currentEmail) ??
+           IndividualMultiStore.instance.getAllUsers().cast<IndividualUserRecord?>().firstWhere(
+             (u) => u?.email.toLowerCase() == currentEmail,
+             orElse: () => null,
+           ))
+        : null;
+    final empBackend = EmployeeHomeBackendService.instance;
 
     final String resolvedUid = publicProfile?.uid ??
-        activeProfile?.uid ??
+        validActive?.uid ??
         fbUser?.uid ??
         storedUser?.id ??
         'user_${DateTime.now().millisecondsSinceEpoch}';

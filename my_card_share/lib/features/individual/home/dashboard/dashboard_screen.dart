@@ -142,11 +142,24 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
       ]),
       builder: (context, _) {
         final firebaseUser = FirebaseAuth.instance.currentUser;
+        final currentEmail = (firebaseUser?.email ?? '').toLowerCase();
         final activeProfile = IndividualProfileStore.instance.activeProfile;
-        final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
+        final isSameUser = activeProfile != null &&
+            ((firebaseUser != null && activeProfile.uid == firebaseUser.uid) ||
+             (currentEmail.isNotEmpty && activeProfile.email.toLowerCase() == currentEmail));
+        final validActive = isSameUser ? activeProfile : null;
+
+        final storedUser = currentEmail.isNotEmpty
+            ? (IndividualMultiStore.instance.getUser(currentEmail) ??
+               IndividualMultiStore.instance.getAllUsers().cast<IndividualUserRecord?>().firstWhere(
+                 (u) => u?.email.toLowerCase() == currentEmail,
+                 orElse: () => null,
+               ))
+            : null;
+
         final isPublished = PublishUnpublishService.instance.isPublished;
 
-        String displayName = (activeProfile?.fullName.isNotEmpty == true ? activeProfile!.fullName : null)
+        String displayName = (validActive?.fullName.isNotEmpty == true ? validActive!.fullName : null)
             ?? (storedUser?.fullName.isNotEmpty == true ? storedUser!.fullName : null)
             ?? (firebaseUser?.displayName?.isNotEmpty == true ? firebaseUser!.displayName : null)
             ?? (firebaseUser?.email?.isNotEmpty == true ? firebaseUser!.email!.split('@').first : null)
@@ -156,17 +169,17 @@ class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
           displayName = displayName[0].toUpperCase() + displayName.substring(1);
         }
 
-        final uEmail = (activeProfile?.email ?? firebaseUser?.email ?? '').toLowerCase();
-        final displayPhoto = ImageUrlFormatter.format((activeProfile?.profilePhoto?.isNotEmpty == true ? activeProfile!.profilePhoto : null)
+        final uEmail = (validActive?.email ?? currentEmail).toLowerCase();
+        final displayPhoto = ImageUrlFormatter.format((validActive?.profilePhoto?.isNotEmpty == true ? validActive!.profilePhoto : null)
             ?? (firebaseUser?.photoURL?.isNotEmpty == true ? firebaseUser!.photoURL : null));
-        final displayBanner = ImageUrlFormatter.format((activeProfile?.bannerPhoto?.isNotEmpty == true ? activeProfile!.bannerPhoto : null));
+        final displayBanner = ImageUrlFormatter.format((validActive?.bannerPhoto?.isNotEmpty == true ? validActive!.bannerPhoto : null));
 
-        final displayRole = (activeProfile?.jobTitle.isNotEmpty == true ? activeProfile!.jobTitle : "Member");
+        final displayRole = (validActive?.jobTitle.isNotEmpty == true ? validActive!.jobTitle : "Member");
 
-        final displayCompany = (activeProfile?.companyName.isNotEmpty == true ? activeProfile!.companyName : "MyCardShare Member");
+        final displayCompany = (validActive?.companyName.isNotEmpty == true ? validActive!.companyName : "MyCardShare Member");
 
-        final displayStatus = (activeProfile?.networkingStatus.isNotEmpty == true ? activeProfile!.networkingStatus : "Actively Networking");
-        final templateIndex = IndividualProfileStore.getTemplateIndex(activeProfile?.templateStyle);
+        final displayStatus = (validActive?.networkingStatus.isNotEmpty == true ? validActive!.networkingStatus : "Actively Networking");
+        final templateIndex = IndividualProfileStore.getTemplateIndex(validActive?.templateStyle);
 
         return Scaffold(
           backgroundColor: AppColors.background,

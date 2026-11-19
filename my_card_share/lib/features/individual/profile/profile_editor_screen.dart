@@ -56,43 +56,58 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
   @override
   void initState() {
     super.initState();
-    final active = IndividualProfileStore.instance.activeProfile;
-    final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
     final fbUser = FirebaseAuth.instance.currentUser;
+    final currentEmail = (fbUser?.email ?? '').toLowerCase();
+    final active = IndividualProfileStore.instance.activeProfile;
+    final isSameUser = active != null &&
+        ((fbUser != null && active.uid == fbUser.uid) ||
+         (currentEmail.isNotEmpty && active.email.toLowerCase() == currentEmail));
+    final validActive = isSameUser ? active : null;
 
-    _uid = fbUser?.uid ?? active?.uid ?? storedUser?.id ?? 'user_${DateTime.now().millisecondsSinceEpoch}';
+    final storedUser = currentEmail.isNotEmpty
+        ? (IndividualMultiStore.instance.getUser(currentEmail) ??
+           IndividualMultiStore.instance.getAllUsers().cast<IndividualUserRecord?>().firstWhere(
+             (u) => u?.email.toLowerCase() == currentEmail,
+             orElse: () => null,
+           ))
+        : null;
+
+    _uid = fbUser?.uid ?? validActive?.uid ?? storedUser?.id ?? 'user_${DateTime.now().millisecondsSinceEpoch}';
     PublishUnpublishService.instance.loadPublishStatus(_uid);
-    _selectedTemplateIndex = IndividualProfileStore.getTemplateIndex(active?.templateStyle);
-    _bannerImagePath = ImageUrlFormatter.format(active?.bannerPhoto);
+    _selectedTemplateIndex = IndividualProfileStore.getTemplateIndex(validActive?.templateStyle);
+    _bannerImagePath = ImageUrlFormatter.format(validActive?.bannerPhoto);
     final fbPhoto = fbUser?.photoURL?.trim();
-    final rawProfilePhoto = (active?.profilePhoto != null && active!.profilePhoto!.trim().isNotEmpty)
-        ? active.profilePhoto!.trim()
+    final rawProfilePhoto = (validActive?.profilePhoto != null && validActive!.profilePhoto!.trim().isNotEmpty)
+        ? validActive!.profilePhoto!.trim()
         : ((fbPhoto != null && fbPhoto.isNotEmpty) ? fbPhoto : null);
     _profileImagePath = ImageUrlFormatter.format(rawProfilePhoto);
 
-    _nameController = TextEditingController(text: active?.fullName ?? storedUser?.fullName ?? "");
-    _roleController = TextEditingController(text: active?.jobTitle ?? "");
-    _companyController = TextEditingController(text: active?.companyName ?? "");
+    final resolvedInitialName = validActive?.fullName ?? storedUser?.fullName ?? fbUser?.displayName ?? (currentEmail.isNotEmpty ? currentEmail.split('@').first : "");
+    final resolvedInitialEmail = validActive?.email ?? storedUser?.email ?? currentEmail;
+
+    _nameController = TextEditingController(text: resolvedInitialName);
+    _roleController = TextEditingController(text: validActive?.jobTitle ?? "");
+    _companyController = TextEditingController(text: validActive?.companyName ?? "");
     _bioController = TextEditingController(
-      text: active?.shortBio ?? "",
+      text: validActive?.shortBio ?? "",
     );
 
-    _phoneController = TextEditingController(text: active?.phoneNumber ?? "");
-    _emailController = TextEditingController(text: active?.email ?? storedUser?.email ?? "");
-    _websiteController = TextEditingController(text: active?.websiteUrl ?? "");
+    _phoneController = TextEditingController(text: validActive?.phoneNumber ?? "");
+    _emailController = TextEditingController(text: resolvedInitialEmail);
+    _websiteController = TextEditingController(text: validActive?.websiteUrl ?? "");
 
-    _cityController = TextEditingController(text: active?.city ?? "");
-    _countryController = TextEditingController(text: active?.country ?? "");
-    _addressController = TextEditingController(text: active?.address ?? "");
-    _focusAreasController = TextEditingController(text: active?.focusAreas ?? "");
-    _experienceController = TextEditingController(text: active?.experience ?? "");
-    _calendlyController = TextEditingController(text: active?.calendly ?? "");
+    _cityController = TextEditingController(text: validActive?.city ?? "");
+    _countryController = TextEditingController(text: validActive?.country ?? "");
+    _addressController = TextEditingController(text: validActive?.address ?? "");
+    _focusAreasController = TextEditingController(text: validActive?.focusAreas ?? "");
+    _experienceController = TextEditingController(text: validActive?.experience ?? "");
+    _calendlyController = TextEditingController(text: validActive?.calendly ?? "");
     _slugController = TextEditingController(
-      text: active?.cardSlug ?? IndividualProfileStore.generateCardSlug(_nameController.text),
+      text: validActive?.cardSlug ?? IndividualProfileStore.generateCardSlug(_nameController.text),
     );
 
-    if (active?.socialLinks != null && active!.socialLinks.isNotEmpty) {
-      _socialLinks = active.socialLinks.map((l) => SocialLinkItem(platform: l.platform, url: l.url)).toList();
+    if (validActive?.socialLinks != null && validActive!.socialLinks.isNotEmpty) {
+      _socialLinks = validActive!.socialLinks.map((l) => SocialLinkItem(platform: l.platform, url: l.url)).toList();
     } else {
       _socialLinks = [];
     }

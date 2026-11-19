@@ -1,4 +1,5 @@
 ﻿import 'dart:io' show Platform;
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 
@@ -168,15 +169,27 @@ class CardFooterActions extends StatelessWidget {
 
                   () {
 
+                    final fbUser = FirebaseAuth.instance.currentUser;
+                    final currentEmail = (fbUser?.email ?? '').toLowerCase();
                     final activeProfile = IndividualProfileStore.instance.activeProfile;
+                    final isSameUser = activeProfile != null &&
+                        ((fbUser != null && activeProfile.uid == fbUser.uid) ||
+                         (currentEmail.isNotEmpty && activeProfile.email.toLowerCase() == currentEmail));
+                    final validActive = isSameUser ? activeProfile : null;
 
-                    final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
+                    final storedUser = currentEmail.isNotEmpty
+                        ? (IndividualMultiStore.instance.getUser(currentEmail) ??
+                           IndividualMultiStore.instance.getAllUsers().cast<IndividualUserRecord?>().firstWhere(
+                             (u) => u?.email.toLowerCase() == currentEmail,
+                             orElse: () => null,
+                           ))
+                        : null;
 
-                    final fullName = (activeProfile?.fullName.trim().isNotEmpty == true)
-
-                        ? activeProfile!.fullName.trim()
-
-                        : name;
+                    final fullName = (validActive?.fullName.trim().isNotEmpty == true)
+                        ? validActive!.fullName.trim()
+                        : (storedUser?.fullName.trim().isNotEmpty == true
+                            ? storedUser!.fullName.trim()
+                            : name);
 
                     final phone = (activeProfile?.phoneNumber.trim().isNotEmpty == true)
 

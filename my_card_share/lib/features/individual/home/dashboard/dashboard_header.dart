@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../backend/individual/profile/individual_profile_store.dart';
 import '../../../../backend/individual/multiple_store/individual_multi_store.dart';
 
@@ -22,14 +23,31 @@ class DashboardHeader extends StatelessWidget {
     return ListenableBuilder(
       listenable: IndividualProfileStore.instance,
       builder: (context, _) {
+        final fbUser = FirebaseAuth.instance.currentUser;
+        final currentEmail = (fbUser?.email ?? '').toLowerCase();
         final activeProfile = IndividualProfileStore.instance.activeProfile;
-        final storedUser = IndividualMultiStore.instance.getAllUsers().firstOrNull;
+        final isSameUser = activeProfile != null &&
+            ((fbUser != null && activeProfile.uid == fbUser.uid) ||
+             (currentEmail.isNotEmpty && activeProfile.email.toLowerCase() == currentEmail));
+        final validActive = isSameUser ? activeProfile : null;
+
+        final storedUser = currentEmail.isNotEmpty
+            ? (IndividualMultiStore.instance.getUser(currentEmail) ??
+               IndividualMultiStore.instance.getAllUsers().cast<IndividualUserRecord?>().firstWhere(
+                 (u) => u?.email.toLowerCase() == currentEmail,
+                 orElse: () => null,
+               ))
+            : null;
 
         final resolvedName = (userName != null && userName!.trim().isNotEmpty && userName != "User")
             ? userName!.trim()
-            : (activeProfile?.fullName.isNotEmpty == true
-                ? activeProfile!.fullName.split(' ').first
-                : (storedUser?.fullName.isNotEmpty == true ? storedUser!.fullName.split(' ').first : "User"));
+            : (validActive?.fullName.isNotEmpty == true
+                ? validActive!.fullName.split(' ').first
+                : (storedUser?.fullName.isNotEmpty == true
+                    ? storedUser!.fullName.split(' ').first
+                    : (fbUser?.displayName?.isNotEmpty == true
+                        ? fbUser!.displayName!.split(' ').first
+                        : (currentEmail.isNotEmpty ? currentEmail.split('@').first : "User"))));
 
         // Filter out numeric UID-based workspace names (e.g. "49126615 Workspace")
         // that get set when joining via enterprise invite links.

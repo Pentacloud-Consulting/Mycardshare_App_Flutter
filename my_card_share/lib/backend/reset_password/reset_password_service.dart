@@ -9,14 +9,33 @@ class ResetPasswordService {
   static Future<Map<String, dynamic>> sendResetEmail(String email) async {
     final cleanEmail = email.trim().toLowerCase();
 
-    // STEP 1: Try Firebase Native FIRST (most reliable — directly checks Firebase Auth)
+    // STEP 1: Verify with backend whether this account actually exists
+    try {
+      final verifyRes = await http.post(
+        Uri.parse("$baseUrl/api/sync/reset-password"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"email": cleanEmail, "role": "auto"}),
+      ).timeout(const Duration(seconds: 6));
+
+      if (verifyRes.statusCode == 404) {
+        final body = jsonDecode(verifyRes.body);
+        if (body["error"]?["code"] == "USER_NOT_FOUND" ||
+            body["error"]?["message"]?.toString().contains("No registered account") == true) {
+          return {
+            "success": false,
+            "error": "You have never signed up with this email. Please create an account first.",
+          };
+        }
+      }
+    } catch (_) {
+      // If network/timeout on check, fall through to Firebase Auth directly
+    }
+
+    // STEP 2: Send reset email via Firebase Auth
     try {
       await FirebaseAuth.instance.sendPasswordResetEmail(
         email: cleanEmail,
       );
-
-      // Also try backend sync in background (don't block on it)
-      _syncResetWithBackend(cleanEmail);
 
       return {
         "success": true,
@@ -25,7 +44,7 @@ class ResetPasswordService {
     } on FirebaseAuthException catch (e) {
       String errMsg = "Failed to send reset link.";
       if (e.code == 'user-not-found') {
-        errMsg = "No account found with this email. Please sign up first.";
+        errMsg = "You have never signed up with this email. Please create an account first.";
       } else if (e.code == 'invalid-email') {
         errMsg = "Invalid email format.";
       } else if (e.code == 'too-many-requests') {
@@ -37,14 +56,5 @@ class ResetPasswordService {
     } catch (e) {
       return {"success": false, "error": "An unexpected error occurred. Try again later."};
     }
-  }
-
-  /// Background sync with backend (fire-and-forget)
-  static void _syncResetWithBackend(String email) {
-    http.post(
-      Uri.parse("$baseUrl/api/sync/reset-password"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"email": email, "role": "auto"}),
-    ).catchError((_) => http.Response('', 500));
   }
 }

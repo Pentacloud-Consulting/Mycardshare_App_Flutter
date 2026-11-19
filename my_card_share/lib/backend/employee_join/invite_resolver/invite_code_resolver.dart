@@ -91,7 +91,60 @@ class InviteCodeResolver {
     if (cleanCode.isEmpty && directEntId == null) return null;
 
     try {
-      // 0. Live Backend Verification via JoinWorkspaceService (prevents collision!)
+      // 0a. Query Firestore `companies` collection where `voucherCode` matches cleanCode
+      try {
+        final compSnap = await _firestore
+            .collection('companies')
+            .where('voucherCode', isEqualTo: cleanCode)
+            .limit(1)
+            .get();
+        if (compSnap.docs.isNotEmpty) {
+          final doc = compSnap.docs.first;
+          final data = doc.data();
+          final companyName = (data['companyName'] as String?)?.trim();
+          final rawLogo = (data['companyLogo'] ?? data['logoUrl']) as String?;
+          final logoUrl = (rawLogo != null && rawLogo.trim().isNotEmpty) ? rawLogo.trim() : null;
+          final storedCount = (data['employeeCount'] as num?)?.toInt() ?? 1;
+          return ResolvedEnterpriseInfo(
+            enterpriseUid: doc.id,
+            companyName: (companyName != null && companyName.isNotEmpty) ? companyName : 'Enterprise Workspace',
+            memberCount: storedCount > 0 ? storedCount : 1,
+            logoUrl: logoUrl,
+            industry: data['industry'] as String?,
+            workEmail: data['email'] as String?,
+            isVerified: true,
+            isExpired: false,
+            inviteCode: cleanCode,
+          );
+        }
+      } catch (compErr) {
+        debugPrint('[InviteCodeResolver] companies voucher query err: $compErr');
+      }
+
+      // 0b. If direct enterpriseId is present, check companies collection directly too
+      if (directEntId != null && directEntId.isNotEmpty) {
+        try {
+          final compDoc = await _firestore.collection('companies').doc(directEntId).get();
+          if (compDoc.exists && compDoc.data() != null) {
+            final data = compDoc.data()!;
+            final companyName = (data['companyName'] as String?)?.trim();
+            final rawLogo = (data['companyLogo'] ?? data['logoUrl']) as String?;
+            final logoUrl = (rawLogo != null && rawLogo.trim().isNotEmpty) ? rawLogo.trim() : null;
+            return ResolvedEnterpriseInfo(
+              enterpriseUid: compDoc.id,
+              companyName: (companyName != null && companyName.isNotEmpty) ? companyName : 'Enterprise Workspace',
+              memberCount: (data['employeeCount'] as num?)?.toInt() ?? 1,
+              logoUrl: logoUrl,
+              industry: data['industry'] as String?,
+              workEmail: data['email'] as String?,
+              isVerified: true,
+              inviteCode: cleanCode.isNotEmpty ? cleanCode : (data['voucherCode'] ?? directEntId),
+            );
+          }
+        } catch (_) {}
+      }
+
+      // 0c. Live Backend Verification via JoinWorkspaceService (prevents collision!)
       try {
         final apiResult = await JoinWorkspaceService.verifyJoinCode(
           code: cleanCode,

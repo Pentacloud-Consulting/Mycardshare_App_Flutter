@@ -95,10 +95,6 @@ class EmployeeBannerFetchService extends ChangeNotifier {
     if (formattedCustom != null && formattedCustom.isNotEmpty) {
       return formattedCustom;
     }
-    final email = _auth.currentUser?.email ?? EmployeeHomeBackendService.instance.email;
-    if (email.toLowerCase().contains('pentacloud')) {
-      return 'https://mycardshare.com/api/uploads/companyBanner/W3hDpYWqSgzFQJSb1ZcC_1786435248817_1786435248820.png';
-    }
     return null;
   }
 
@@ -143,12 +139,7 @@ class EmployeeBannerFetchService extends ChangeNotifier {
         } catch (_) {}
       }
 
-      // Pentacloud corporate heuristic
-      if ((entId == null || entId.isEmpty || entId.startsWith('ent_')) && email.toLowerCase().contains('pentacloud')) {
-        entId = 'W3hDpYWqSgzFQJSb1ZcC';
-      }
-
-      // 2. First check `companies` collection (Pentacloud & corporate brands live here)
+      // 2. First check `companies` collection (corporate brands live here)
       if (entId != null && entId.isNotEmpty) {
         try {
           final compSnap = await _firestore.collection('companies').doc(entId).get();
@@ -158,7 +149,7 @@ class EmployeeBannerFetchService extends ChangeNotifier {
                 (data['lockedBannerUrl'] as String?) ??
                 (data['bannerUrl'] as String?);
             final rawLogo = (data['companyLogo'] as String?) ?? (data['logoUrl'] as String?);
-            final compName = (data['companyName'] as String?)?.trim() ?? 'Pentacloud Consulting';
+            final compName = (data['companyName'] as String?)?.trim() ?? '';
             final brandColor = (data['brandColor'] as String?) ?? (data['primaryColor'] as String?) ?? '#0052FF';
 
             _currentBrandData = EmployeeEnterpriseBrandData(
@@ -193,17 +184,7 @@ class EmployeeBannerFetchService extends ChangeNotifier {
         }
       }
 
-      // 4. Guaranteed corporate fallback for Pentacloud if needed
-      if ((_currentBrandData == null || _currentBrandData!.lockedBannerUrl == null) && email.toLowerCase().contains('pentacloud')) {
-        _currentBrandData = EmployeeEnterpriseBrandData(
-          enterpriseUid: 'W3hDpYWqSgzFQJSb1ZcC',
-          companyName: 'Pentacloud Consulting',
-          logoUrl: 'https://mycardshare.com/api/uploads/companyLogo/W3hDpYWqSgzFQJSb1ZcC_1786357871734_1786357871734.png',
-          lockedBannerUrl: 'https://mycardshare.com/api/uploads/companyBanner/W3hDpYWqSgzFQJSb1ZcC_1786435248817_1786435248820.png',
-          isBannerLocked: true,
-          brandColor: '#38bdf8',
-        );
-      }
+      // No guaranteed fallback — only show banner if user's actual company has one
 
       debugPrint('[EmployeeBannerFetchService] Fetched brand data: logo=${_currentBrandData?.logoUrl}, banner=${_currentBrandData?.lockedBannerUrl}, locked=${_currentBrandData?.isBannerLocked}');
       return _currentBrandData;

@@ -147,12 +147,16 @@ class PortalTopNav extends ConsumerWidget implements PreferredSizeWidget {
 
         final activeEntProfile = EnterpriseProfileStore.instance.currentProfile;
         final entMultiUsers = EnterpriseMultiStore.instance.getAllUsers();
-        final matchedMultiUser = entMultiUsers.isNotEmpty
-            ? entMultiUsers.firstWhere(
-                (u) => u.email.toLowerCase() == (firebaseUser?.email?.toLowerCase() ?? ''),
-                orElse: () => entMultiUsers.first,
-              )
-            : null;
+        EnterpriseUserRecord? matchedMultiUser;
+        if (entMultiUsers.isNotEmpty) {
+          try {
+            matchedMultiUser = entMultiUsers.firstWhere(
+              (u) => u.email.toLowerCase() == (firebaseUser?.email?.toLowerCase() ?? ''),
+            );
+          } catch (_) {
+            matchedMultiUser = null; // No match — don't use first user's data
+          }
+        }
 
         final resolvedCompany = isEmployee
             ? ((empBackend.companyName.isNotEmpty && empBackend.companyName != "Enterprise Workspace" && empBackend.companyName != "Acme Realty")

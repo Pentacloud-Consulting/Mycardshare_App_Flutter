@@ -104,17 +104,21 @@ class EmployeeHomeBackendService extends ChangeNotifier {
         }
       }
 
-      // Also check local stores
-      final indUsers = IndividualMultiStore.instance.getAllUsers();
-      if (foundName.isEmpty && indUsers.isNotEmpty) {
-        final matchedInd = indUsers.firstWhere(
-          (u) => u.email.toLowerCase() == currentEmail,
-          orElse: () => indUsers.first,
-        );
-        if (matchedInd.fullName.isNotEmpty && matchedInd.fullName != 'User') {
-          foundName = matchedInd.fullName;
+        // Also check local stores — ONLY if email matches exactly
+        final indUsers = IndividualMultiStore.instance.getAllUsers();
+        if (foundName.isEmpty && indUsers.isNotEmpty) {
+          try {
+            final matchedInd = indUsers.firstWhere(
+              (u) => u.email.toLowerCase() == currentEmail,
+              // Do NOT fall back to first — that leaks another user's name
+            );
+            if (matchedInd.fullName.isNotEmpty && matchedInd.fullName != 'User') {
+              foundName = matchedInd.fullName;
+            }
+          } catch (_) {
+            // No matching individual user found — skip
+          }
         }
-      }
 
       // ── Step 2: Query Firestore `users` collection for UID and emailDocId
       if (currentUid.isNotEmpty || currentEmail.isNotEmpty) {
@@ -260,15 +264,19 @@ class EmployeeHomeBackendService extends ChangeNotifier {
         }
       }
 
-      // ── Step 4: Enterprise multi store check
+      // ── Step 4: Enterprise multi store check — ONLY use if email matches exactly
       final entUsers = EnterpriseMultiStore.instance.getAllUsers();
       if (entUsers.isNotEmpty) {
-        final entUser = entUsers.firstWhere(
-          (u) => u.email.toLowerCase() == currentEmail,
-          orElse: () => entUsers.first,
-        );
-        if ((foundCompany.isEmpty || foundCompany == 'Enterprise Workspace') && entUser.companyName.isNotEmpty) {
-          foundCompany = entUser.companyName;
+        try {
+          final entUser = entUsers.firstWhere(
+            (u) => u.email.toLowerCase() == currentEmail,
+            // Do NOT fall back to first — that leaks another enterprise user's data
+          );
+          if ((foundCompany.isEmpty || foundCompany == 'Enterprise Workspace') && entUser.companyName.isNotEmpty) {
+            foundCompany = entUser.companyName;
+          }
+        } catch (_) {
+          // No matching enterprise user found — skip, do not use first
         }
       }
 

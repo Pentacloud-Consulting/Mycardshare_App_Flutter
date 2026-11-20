@@ -173,7 +173,7 @@ class _SplashAnimationScreenState extends ConsumerState<SplashAnimationScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A), // Premium Dark Navy
+      backgroundColor: const Color(0xFFFAF6F2), // Warm Cream (Hero Background)
       body: AnimatedBuilder(
         animation: _exitController,
         builder: (context, child) {
@@ -187,7 +187,7 @@ class _SplashAnimationScreenState extends ConsumerState<SplashAnimationScreen>
         },
         child: Stack(
           children: [
-            // Ambient Glowing Background Gradients
+            // Ambient Glowing Background Gradients (Warm Cream & Matte Orange)
             Positioned(
               top: -120,
               left: -100,
@@ -198,8 +198,8 @@ class _SplashAnimationScreenState extends ConsumerState<SplashAnimationScreen>
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      const Color(0xFF0066FF).withValues(alpha: 0.35),
-                      const Color(0xFF0052FF).withValues(alpha: 0.10),
+                      const Color(0xFFD4642C).withValues(alpha: 0.18),
+                      const Color(0xFFE8824E).withValues(alpha: 0.08),
                       Colors.transparent,
                     ],
                   ),
@@ -216,8 +216,8 @@ class _SplashAnimationScreenState extends ConsumerState<SplashAnimationScreen>
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      const Color(0xFF38BDF8).withValues(alpha: 0.25),
-                      const Color(0xFF0066FF).withValues(alpha: 0.08),
+                      const Color(0xFFE8824E).withValues(alpha: 0.16),
+                      const Color(0xFFD4642C).withValues(alpha: 0.06),
                       Colors.transparent,
                     ],
                   ),
@@ -255,8 +255,8 @@ class _SplashAnimationScreenState extends ConsumerState<SplashAnimationScreen>
                                       shape: BoxShape.circle,
                                       gradient: RadialGradient(
                                         colors: [
-                                          const Color(0xFF0066FF).withValues(alpha: 0.40),
-                                          const Color(0xFF38BDF8).withValues(alpha: 0.15),
+                                          const Color(0xFFD4642C).withValues(alpha: 0.28),
+                                          const Color(0xFFE8824E).withValues(alpha: 0.12),
                                           Colors.transparent,
                                         ],
                                       ),
@@ -264,20 +264,20 @@ class _SplashAnimationScreenState extends ConsumerState<SplashAnimationScreen>
                                   ),
                                 ),
 
-                                // Glassmorphic Card Backing for Logo
+                                // Clean White Card Backing for Logo
                                 Container(
                                   width: 136,
                                   height: 136,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    color: Colors.white.withValues(alpha: 0.08),
+                                    color: Colors.white,
                                     border: Border.all(
-                                      color: Colors.white.withValues(alpha: 0.25),
+                                      color: const Color(0xFFD4642C).withValues(alpha: 0.25),
                                       width: 1.5,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xFF0066FF).withValues(alpha: 0.35),
+                                        color: const Color(0xFFD4642C).withValues(alpha: 0.22),
                                         blurRadius: 32,
                                         spreadRadius: 4,
                                         offset: const Offset(0, 10),
@@ -295,7 +295,7 @@ class _SplashAnimationScreenState extends ConsumerState<SplashAnimationScreen>
                                           return const Icon(
                                             Icons.style_rounded,
                                             size: 64,
-                                            color: Colors.white,
+                                            color: Color(0xFFD4642C),
                                           );
                                         },
                                       ),
@@ -326,13 +326,12 @@ class _SplashAnimationScreenState extends ConsumerState<SplashAnimationScreen>
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // App Title with Gradient Text
+                          // App Title with Matte Orange & Rich Charcoal Gradient Text
                           ShaderMask(
                             shaderCallback: (bounds) => const LinearGradient(
                               colors: [
-                                Colors.white,
-                                Color(0xFFE2E8F0),
-                                Color(0xFF38BDF8),
+                                Color(0xFF1E293B),
+                                Color(0xFFD4642C),
                               ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
@@ -350,17 +349,17 @@ class _SplashAnimationScreenState extends ConsumerState<SplashAnimationScreen>
 
                           const SizedBox(height: 10),
 
-                          // Subtitle Badge / Tagline
+                          // Subtitle Badge / Tagline in Warm Matte Style
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF0066FF).withValues(alpha: 0.18),
+                              color: const Color(0xFFD4642C).withValues(alpha: 0.10),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: const Color(0xFF0066FF).withValues(alpha: 0.35),
+                                color: const Color(0xFFD4642C).withValues(alpha: 0.28),
                                 width: 1,
                               ),
                             ),
@@ -369,8 +368,8 @@ class _SplashAnimationScreenState extends ConsumerState<SplashAnimationScreen>
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xFF94A3B8),
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFFD4642C),
                                 letterSpacing: 0.3,
                               ),
                             ),
@@ -381,7 +380,7 @@ class _SplashAnimationScreenState extends ConsumerState<SplashAnimationScreen>
 
                     const Spacer(flex: 3),
 
-                    // Subtle Bottom Loading Shimmer Dots
+                    // Subtle Bottom Loading Shimmer Dots in Matte Orange
                     AnimatedBuilder(
                       animation: _textController,
                       builder: (context, child) {
@@ -462,11 +461,11 @@ class _SplashLoadingDotState extends State<_SplashLoadingDot>
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           gradient: const LinearGradient(
-            colors: [Color(0xFF0066FF), Color(0xFF38BDF8)],
+            colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF0066FF).withValues(alpha: 0.6),
+              color: const Color(0xFFD4642C).withValues(alpha: 0.45),
               blurRadius: 6,
               spreadRadius: 1,
             ),

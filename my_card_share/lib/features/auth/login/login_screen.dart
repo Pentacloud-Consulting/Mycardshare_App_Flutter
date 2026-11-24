@@ -1,12 +1,11 @@
-﻿import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:google_sign_in/google_sign_in.dart';
+﻿import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_style_widgets.dart';
 import '../../../providers/auth_provider.dart';
@@ -424,7 +423,96 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           return;
         }
 
-        if (!result.isApproved) {
+        bool isApproved = result.isApproved;
+        if (!isApproved) {
+          try {
+            final uEmail = (fbUser.email ?? email).trim().toLowerCase();
+
+            // 1. Check local SharedPreferences (same-device instant resolution)
+            final prefs = await SharedPreferences.getInstance();
+            final resolvedIds = prefs.getStringList('master_admin_resolved_ids') ?? [];
+            final approvedEmails = prefs.getStringList('master_admin_approved_emails') ?? [];
+            final approvedUids = prefs.getStringList('master_admin_approved_uids') ?? [];
+
+            if (resolvedIds.contains(fbUser.uid) ||
+                approvedUids.contains(fbUser.uid) ||
+                (uEmail.isNotEmpty && approvedEmails.contains(uEmail))) {
+              isApproved = true;
+            }
+
+            // 2. Check cloud platform_config/approved_enterprises
+            if (!isApproved) {
+              final fs = FirebaseFirestore.instance;
+              final platSnap = await fs.collection('platform_config').doc('approved_enterprises').get();
+              if (platSnap.exists && platSnap.data() != null) {
+                final pData = platSnap.data()!;
+                final List pUids = (pData['approvedUids'] as List?) ?? [];
+                final List pEmails = (pData['approvedEmails'] as List?) ?? [];
+                if (pUids.contains(fbUser.uid) || (uEmail.isNotEmpty && pEmails.contains(uEmail))) {
+                  isApproved = true;
+                }
+              }
+            }
+
+            // 3. Direct real-time fallback check across Firestore collections
+            if (!isApproved) {
+              final fs = FirebaseFirestore.instance;
+              final orgSnap = await fs.collection('approved_organizations').doc(uEmail).get();
+              final orgByUid = await fs.collection('approved_organizations').doc(fbUser.uid).get();
+
+              final uSnap = await fs.collection('users').doc(fbUser.uid).get();
+              final eSnap = await fs.collection('enterprises').doc(fbUser.uid).get();
+              final cSnap = await fs.collection('companies').doc(fbUser.uid).get();
+
+              final uStatus = (uSnap.data()?['approvalStatus'] ?? uSnap.data()?['status'] ?? '').toString().toLowerCase();
+              final eStatus = (eSnap.data()?['approvalStatus'] ?? eSnap.data()?['status'] ?? '').toString().toLowerCase();
+              final cStatus = (cSnap.data()?['approvalStatus'] ?? cSnap.data()?['status'] ?? '').toString().toLowerCase();
+
+              bool isCompApprovedByEmail = false;
+              if (uEmail.isNotEmpty) {
+                final compByEmail = await fs.collection('companies').where('adminEmail', isEqualTo: uEmail).get();
+                for (final cDoc in compByEmail.docs) {
+                  final cs = (cDoc.data()['approvalStatus'] ?? cDoc.data()['status'] ?? '').toString().toLowerCase();
+                  if (cs == 'approved' || cs == 'active') {
+                    isCompApprovedByEmail = true;
+                    break;
+                  }
+                }
+              }
+
+              if (orgSnap.data()?['approved'] == true ||
+                  orgByUid.data()?['approved'] == true ||
+                  isCompApprovedByEmail ||
+                  uStatus == 'approved' || uStatus == 'active' ||
+                  eStatus == 'approved' || eStatus == 'active' ||
+                  cStatus == 'approved' || cStatus == 'active') {
+                isApproved = true;
+              }
+            }
+
+            if (isApproved) {
+              final fs = FirebaseFirestore.instance;
+              await fs.collection('users').doc(fbUser.uid).set({
+                'approvalStatus': 'approved',
+                'status': 'active',
+                'isSuspended': false,
+                'role': 'enterprise',
+              }, SetOptions(merge: true));
+              await fs.collection('enterprises').doc(fbUser.uid).set({
+                'approvalStatus': 'approved',
+                'status': 'Active',
+                'isSuspended': false,
+              }, SetOptions(merge: true));
+              await fs.collection('companies').doc(fbUser.uid).set({
+                'approvalStatus': 'approved',
+                'status': 'active',
+                'isSuspended': false,
+              }, SetOptions(merge: true));
+            }
+          } catch (_) {}
+        }
+
+        if (!isApproved) {
           // Block login: clear session and prevent entering enterprise workspace
           await FirebaseAuth.instance.signOut();
           ref.read(authProvider.notifier).logout();
@@ -1141,12 +1229,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF0066FF) : Colors.transparent,
+            color: isSelected ? const Color(0xFFD4642C) : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: const Color(0xFF0066FF).withValues(alpha: 0.3),
+                      color: const Color(0xFFD4642C).withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),

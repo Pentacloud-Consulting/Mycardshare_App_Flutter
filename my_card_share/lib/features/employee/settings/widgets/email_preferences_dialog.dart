@@ -28,11 +28,6 @@ class _EmailPreferencesDialogState extends State<EmailPreferencesDialog> {
               blurRadius: 24,
               offset: Offset(0, 10),
             ),
-            BoxShadow(
-              color: Color(0x90FFFFFF),
-              blurRadius: 12,
-              offset: Offset(-4, -4),
-            ),
           ],
         ),
         padding: const EdgeInsets.all(22.0),
@@ -117,7 +112,7 @@ class _EmailPreferencesDialogState extends State<EmailPreferencesDialog> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x380052FF),
+                    color: Color(0x38D4642C),
                     blurRadius: 14,
                     offset: Offset(0, 5),
                   ),
@@ -135,7 +130,7 @@ class _EmailPreferencesDialogState extends State<EmailPreferencesDialog> {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0052FF),
+                  backgroundColor: const Color(0xFFD4642C),
                   elevation: 0,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
@@ -205,7 +200,7 @@ class _EmailPreferencesDialogState extends State<EmailPreferencesDialog> {
           Switch.adaptive(
             value: value,
             activeThumbColor: Colors.white,
-            activeTrackColor: const Color(0xFF0052FF),
+            activeTrackColor: const Color(0xFFD4642C),
             onChanged: onChanged,
           ),
         ],

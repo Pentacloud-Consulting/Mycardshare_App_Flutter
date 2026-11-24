@@ -99,7 +99,7 @@ class EnterpriseLoginPopupNotification {
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0066FF),
+                          backgroundColor: const Color(0xFFD4642C),
                           foregroundColor: Colors.white,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -221,7 +221,7 @@ class EnterpriseLoginPopupNotification {
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0066FF),
+                          backgroundColor: const Color(0xFFD4642C),
                           foregroundColor: Colors.white,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -270,13 +270,13 @@ class EnterpriseLoginPopupNotification {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
+                    color: const Color(0xFFFFF7ED),
                     shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFBFDBFE), width: 1.5),
+                    border: Border.all(color: const Color(0xFFFED7AA), width: 1.5),
                   ),
                   child: const Icon(
                     Icons.hourglass_top_rounded,
-                    color: Color(0xFF0066FF),
+                    color: Color(0xFFD4642C),
                     size: 28,
                   ),
                 ),
@@ -333,7 +333,7 @@ class EnterpriseLoginPopupNotification {
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0066FF),
+                          backgroundColor: const Color(0xFFD4642C),
                           foregroundColor: Colors.white,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 12),

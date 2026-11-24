@@ -196,8 +196,8 @@ class _RevenueTrendChartPainter extends CustomPainter {
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [
-        const Color(0xFF0052FF).withValues(alpha: 0.28),
-        const Color(0xFF0052FF).withValues(alpha: 0.0),
+        const Color(0xFFD4642C).withValues(alpha: 0.28),
+        const Color(0xFFD4642C).withValues(alpha: 0.0),
       ],
     );
 
@@ -209,7 +209,7 @@ class _RevenueTrendChartPainter extends CustomPainter {
 
     // Stroke line
     final linePaint = Paint()
-      ..color = const Color(0xFF0052FF)
+      ..color = const Color(0xFFD4642C)
       ..strokeWidth = 3.0
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
@@ -219,7 +219,7 @@ class _RevenueTrendChartPainter extends CustomPainter {
     // Highlight endpoint dot
     final lastPoint = points.last;
     final dotOuterPaint = Paint()
-      ..color = const Color(0xFF0052FF)
+      ..color = const Color(0xFFD4642C)
       ..style = PaintingStyle.fill;
     final dotInnerPaint = Paint()
       ..color = Colors.white

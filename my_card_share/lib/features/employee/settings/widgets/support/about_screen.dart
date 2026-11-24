@@ -35,12 +35,12 @@ class AboutScreen extends StatelessWidget {
                       height: 72,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFF0066FF), Color(0xFF2563EB)],
+                          colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
                         ),
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: const [
                           BoxShadow(
-                            color: Color(0x330066FF),
+                            color: Color(0x33D4642C),
                             blurRadius: 14,
                             offset: Offset(0, 4),
                           ),
@@ -66,7 +66,7 @@ class AboutScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
+                        color: const Color(0xFFFFF7ED),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Text(
@@ -74,7 +74,7 @@ class AboutScreen extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF0284C7),
+                          color: Color(0xFFD4642C),
                         ),
                       ),
                     ),
@@ -120,7 +120,7 @@ class AboutScreen extends StatelessWidget {
                     const Divider(height: 20),
                     _buildFeatureItem(Icons.bolt_rounded, Colors.amber, "Instant AI OCR & Voice Scanning"),
                     const Divider(height: 20),
-                    _buildFeatureItem(Icons.sync_rounded, Colors.blue, "Real-time Contact Vault Syncing"),
+                    _buildFeatureItem(Icons.sync_rounded, const Color(0xFFD4642C), "Real-time Contact Vault Syncing"),
                     const Divider(height: 20),
                     _buildFeatureItem(Icons.shield_rounded, Colors.purple, "Enterprise Encryption & Security"),
                   ],

@@ -14,7 +14,7 @@ class BrandColorSelector extends StatefulWidget {
   final ValueChanged<bool> onLockChanged;
 
   static const List<BrandColorOption> defaultColors = [
-    BrandColorOption(name: "Primary Blue",   color: Color(0xFF0052FF)),
+    BrandColorOption(name: "Matte Orange",  color: Color(0xFFD4642C)),
     BrandColorOption(name: "Purple Accent",  color: Color(0xFF7C3AED)),
     BrandColorOption(name: "Teal Modern",    color: Color(0xFF0D9488)),
     BrandColorOption(name: "Dark Navy",      color: Color(0xFF0F172A)),
@@ -127,12 +127,12 @@ class _BrandColorSelectorState extends State<BrandColorSelector> {
                   width: 38, height: 38,
                   decoration: BoxDecoration(
                     color: _isCustomSelected
-                        ? const Color(0xFF0052FF).withValues(alpha: 0.08)
+                        ? const Color(0xFFD4642C).withValues(alpha: 0.08)
                         : const Color(0xFFF1F5F9),
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: _isCustomSelected
-                          ? const Color(0xFF0052FF)
+                          ? const Color(0xFFD4642C)
                           : const Color(0xFFCBD5E1),
                       width: _isCustomSelected ? 2.0 : 1.2,
                     ),
@@ -141,7 +141,7 @@ class _BrandColorSelectorState extends State<BrandColorSelector> {
                     child: Icon(
                       Icons.add_rounded,
                       color: _isCustomSelected
-                          ? const Color(0xFF0052FF)
+                          ? const Color(0xFFD4642C)
                           : const Color(0xFF475569),
                       size: 18,
                     ),
@@ -179,7 +179,7 @@ class _BrandColorSelectorState extends State<BrandColorSelector> {
                   ),
                   Switch.adaptive(
                     value: widget.isLocked,
-                    activeTrackColor: const Color(0xFF0052FF),
+                    activeTrackColor: const Color(0xFFD4642C),
                     onChanged: widget.onLockChanged,
                   ),
                 ],

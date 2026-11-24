@@ -6,8 +6,8 @@ class CompanyBrandingCardSection extends StatelessWidget {
 
   const CompanyBrandingCardSection({
     super.key,
-    this.lockedColor = const Color(0xFF0052FF),
-    this.lockedColorName = "Corporate Blue (#0052FF)",
+    this.lockedColor = const Color(0xFFD4642C),
+    this.lockedColorName = "Matte Orange (#D4642C)",
   });
 
   @override
@@ -29,12 +29,12 @@ class CompanyBrandingCardSection extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFFF0F7FF),
+            color: const Color(0xFFFFF7ED),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFBFDBFE), width: 1.2),
+            border: Border.all(color: const Color(0xFFFED7AA), width: 1.2),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF0052FF).withValues(alpha: 0.05),
+                color: const Color(0xFFD4642C).withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 3),
               ),
@@ -52,12 +52,12 @@ class CompanyBrandingCardSection extends StatelessWidget {
                         width: 32,
                         height: 32,
                         decoration: const BoxDecoration(
-                          color: Color(0xFFEFF6FF),
+                          color: Color(0xFFFFF7ED),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
                           Icons.lock_rounded,
-                          color: Color(0xFF0052FF),
+                          color: Color(0xFFD4642C),
                           size: 17,
                         ),
                       ),
@@ -78,12 +78,15 @@ class CompanyBrandingCardSection extends StatelessWidget {
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
-                      color: lockedColor,
+                      color: (lockedColor.toARGB32() == const Color(0xFF0052FF).toARGB32() ||
+                              lockedColor.toARGB32() == Colors.blue.toARGB32())
+                          ? const Color(0xFFD4642C)
+                          : lockedColor,
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 2),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.15),
+                          color: const Color(0xFFD4642C).withValues(alpha: 0.25),
                           blurRadius: 4,
                           offset: const Offset(0, 1),
                         ),

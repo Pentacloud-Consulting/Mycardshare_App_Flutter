@@ -34,7 +34,7 @@ class LeadsListCards extends StatelessWidget {
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(24.0),
-              child: CircularProgressIndicator(color: Color(0xFF0052FF)),
+              child: CircularProgressIndicator(color: Color(0xFFD4642C)),
             ),
           );
         }
@@ -114,7 +114,7 @@ class LeadsListCards extends StatelessWidget {
                       width: 44,
                       height: 44,
                       decoration: const BoxDecoration(
-                        color: Color(0xFFEFF4FF),
+                        color: Color(0xFFFFF7ED),
                         shape: BoxShape.circle,
                       ),
                       child: Center(
@@ -123,7 +123,7 @@ class LeadsListCards extends StatelessWidget {
                           style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF0052FF),
+                            color: Color(0xFFD4642C),
                           ),
                         ),
                       ),

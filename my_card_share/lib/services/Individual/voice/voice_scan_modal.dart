@@ -134,17 +134,17 @@ class _VoiceScanModalState extends ConsumerState<VoiceScanModal> with SingleTick
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close_rounded, color: Colors.white),
+          icon: const Icon(Icons.close_rounded, color: Color(0xFF0F172A), size: 24),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           "Voice Add Contact",
-          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(color: Color(0xFF0F172A), fontSize: 18, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
@@ -160,15 +160,23 @@ class _VoiceScanModalState extends ConsumerState<VoiceScanModal> with SingleTick
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: Colors.white.withAlpha(15),
+                  color: const Color(0xFFFAF6F2),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: _isSuccess
-                        ? const Color(0xFF4ADE80)
+                        ? const Color(0xFF10B981)
                         : _isListening
-                            ? const Color(0xFFA855F7)
-                            : Colors.white.withAlpha(30),
+                            ? const Color(0xFFD4642C)
+                            : const Color(0xFFE2E8F0),
+                    width: 1.5,
                   ),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x06000000),
+                      blurRadius: 10,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -177,16 +185,17 @@ class _VoiceScanModalState extends ConsumerState<VoiceScanModal> with SingleTick
                       controller: _transcriptController,
                       maxLines: 3,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: Color(0xFF0F172A),
                         fontSize: 15,
                         height: 1.4,
+                        fontWeight: FontWeight.w500,
                       ),
-                      cursorColor: const Color(0xFFA855F7),
-                      decoration: InputDecoration(
+                      cursorColor: const Color(0xFFD4642C),
+                      decoration: const InputDecoration(
                         border: InputBorder.none,
                         hintText: "Speak or type contact info...\n\"Met John Doe, Design Lead at Figma. Email john@figma.com\"",
                         hintStyle: TextStyle(
-                          color: Colors.white.withAlpha(90),
+                          color: Color(0xFF94A3B8),
                           fontSize: 14,
                           height: 1.4,
                           fontStyle: FontStyle.italic,
@@ -198,19 +207,19 @@ class _VoiceScanModalState extends ConsumerState<VoiceScanModal> with SingleTick
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFA855F7).withAlpha(40),
+                          color: const Color(0xFFFAF6F2),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFA855F7)),
+                          border: Border.all(color: const Color(0xFF10B981)),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.check_circle_rounded, color: Color(0xFF4ADE80), size: 16),
+                            const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 16),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 "Parsed by AI: ${_extractedContact!.fullName} • ${_extractedContact!.company}",
                                 style: const TextStyle(
-                                  color: Colors.white,
+                                  color: Color(0xFF0F172A),
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -226,10 +235,11 @@ class _VoiceScanModalState extends ConsumerState<VoiceScanModal> with SingleTick
                         _statusMessage!,
                         style: TextStyle(
                           color: _isListening
-                              ? const Color(0xFFE9D5FF)
-                              : Colors.white70,
+                              ? const Color(0xFFD4642C)
+                              : const Color(0xFF64748B),
                           fontSize: 12,
                           fontStyle: FontStyle.italic,
+                          fontWeight: FontWeight.w500,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -245,7 +255,7 @@ class _VoiceScanModalState extends ConsumerState<VoiceScanModal> with SingleTick
                 ElevatedButton.icon(
                   onPressed: _isProcessing ? null : () => _finishListeningAndParse(),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFA855F7),
+                    backgroundColor: const Color(0xFFD4642C),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -274,17 +284,17 @@ class _VoiceScanModalState extends ConsumerState<VoiceScanModal> with SingleTick
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
                         colors: _isListening
-                            ? [const Color(0xFFEC4899), const Color(0xFFEF4444)]
-                            : [const Color(0xFFA855F7), const Color(0xFFEC4899)],
+                            ? [const Color(0xFFEF4444), const Color(0xFFDC2626)]
+                            : [const Color(0xFFD4642C), const Color(0xFFE8824E)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       boxShadow: [
                         BoxShadow(
                           color: (_isListening
-                                  ? const Color(0xFFEC4899)
-                                  : const Color(0xFFA855F7))
-                              .withAlpha(120),
+                                  ? const Color(0xFFEF4444)
+                                  : const Color(0xFFD4642C))
+                              .withAlpha(90),
                           blurRadius: 26,
                           spreadRadius: 4,
                         ),
@@ -312,7 +322,11 @@ class _VoiceScanModalState extends ConsumerState<VoiceScanModal> with SingleTick
                         : _isSuccess
                             ? "Saved!"
                             : "Tap mic to speak or enter text above",
-                style: const TextStyle(color: Colors.white60, fontSize: 13),
+                style: const TextStyle(
+                  color: Color(0xFF64748B),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
 
               const SizedBox(height: 40),

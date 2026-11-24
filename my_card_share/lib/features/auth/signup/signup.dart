@@ -278,7 +278,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFF0066FF).withValues(alpha: 0.18),
+                    const Color(0xFFD4642C).withValues(alpha: 0.18),
                     Colors.transparent,
                   ],
                 ),
@@ -295,7 +295,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
               height: 20,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF0066FF).withValues(alpha: 0.12),
+                color: const Color(0xFFD4642C).withValues(alpha: 0.12),
               ),
             ),
           ),
@@ -523,7 +523,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         height: 24,
                         child: Checkbox(
                           value: _agreeTerms,
-                          activeColor: const Color(0xFF0066FF),
+                          activeColor: const Color(0xFFD4642C),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(5),
                           ),
@@ -548,7 +548,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF0066FF),
+                                color: Color(0xFFD4642C),
                               ),
                             ),
                             Text(
@@ -560,7 +560,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF0066FF),
+                                color: Color(0xFFD4642C),
                               ),
                             ),
                           ],
@@ -578,14 +578,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     child: Container(
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFF0066FF), Color(0xFF0099FF)],
+                          colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
                           begin: Alignment.centerLeft,
                           end: Alignment.centerRight,
                         ),
                         borderRadius: BorderRadius.circular(28),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF0066FF).withValues(alpha: 0.35),
+                            color: const Color(0xFFD4642C).withValues(alpha: 0.35),
                             blurRadius: 16,
                             offset: const Offset(0, 8),
                           ),
@@ -730,7 +730,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF0066FF),
+                            color: Color(0xFFD4642C),
                           ),
                         ),
                       ),
@@ -792,12 +792,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF0066FF) : Colors.transparent,
+            color: isSelected ? const Color(0xFFD4642C) : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: const Color(0xFF0066FF).withValues(alpha: 0.3),
+                      color: const Color(0xFFD4642C).withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),

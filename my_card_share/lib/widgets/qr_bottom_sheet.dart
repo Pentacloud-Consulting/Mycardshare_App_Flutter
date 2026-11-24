@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../backend/individual/wallet/add_to_wallet.dart';
 
@@ -16,14 +17,10 @@ class QRBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
-        child: Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFF232528).withValues(alpha: 0.8), // Glassy dark background matching Image 2
-          ),
+    final sheetContent = Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF232528).withValues(alpha: kIsWeb ? 0.95 : 0.8), // Glassy dark background matching Image 2
+      ),
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
           child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -142,9 +139,22 @@ class QRBottomSheet extends StatelessWidget {
           SizedBox(height: MediaQuery.of(context).padding.bottom),
         ],
       ),
-    ),
-  ),
-);
+    );
+
+    if (kIsWeb) {
+      return ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        child: sheetContent,
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+        child: sheetContent,
+      ),
+    );
   }
 
   Widget _buildIconBtn(IconData icon) {

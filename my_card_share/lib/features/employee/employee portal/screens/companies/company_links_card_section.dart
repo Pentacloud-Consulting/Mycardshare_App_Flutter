@@ -50,10 +50,10 @@ class CompanyLinksCardSection extends StatelessWidget {
                   width: 36,
                   height: 36,
                   decoration: const BoxDecoration(
-                    color: Color(0xFFEFF6FF),
+                    color: Color(0xFFFFF7ED),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.language_rounded, color: Color(0xFF0052FF), size: 19),
+                  child: const Icon(Icons.language_rounded, color: Color(0xFFD4642C), size: 19),
                 ),
                 title: const Text(
                   "Visit Company Website",

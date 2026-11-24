@@ -137,7 +137,7 @@ class CardFooterActions extends StatelessWidget {
 
               gradient: const LinearGradient(
 
-                colors: [Color(0xFF0052FF), Color(0xFF0088FF)],
+                colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
 
                 begin: Alignment.centerLeft,
 
@@ -151,7 +151,7 @@ class CardFooterActions extends StatelessWidget {
 
                 BoxShadow(
 
-                  color: Color(0x350052FF),
+                  color: Color(0x35D4642C),
 
                   blurRadius: 14,
 
@@ -307,7 +307,7 @@ class CardFooterActions extends StatelessWidget {
 
                   gradient: const LinearGradient(
 
-                    colors: [Color(0xFF0052FF), Color(0xFF0088FF)],
+                    colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
 
                     begin: Alignment.centerLeft,
 
@@ -321,7 +321,7 @@ class CardFooterActions extends StatelessWidget {
 
                     BoxShadow(
 
-                      color: Color(0x300052FF),
+                      color: Color(0x30D4642C),
 
                       blurRadius: 10,
 
@@ -417,7 +417,7 @@ class CardFooterActions extends StatelessWidget {
 
                   gradient: const LinearGradient(
 
-                    colors: [Color(0xFF0052FF), Color(0xFF0088FF)],
+                    colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
 
                     begin: Alignment.centerLeft,
 
@@ -431,7 +431,7 @@ class CardFooterActions extends StatelessWidget {
 
                     BoxShadow(
 
-                      color: Color(0x300052FF),
+                      color: Color(0x30D4642C),
 
                       blurRadius: 10,
 
@@ -559,7 +559,7 @@ class CardFooterActions extends StatelessWidget {
 
                   height: 2,
 
-                  color: const Color(0xFF93C5FD),
+                  color: const Color(0xFFD4642C),
 
                 ),
 

@@ -138,7 +138,7 @@ class _IndividualConnectorsScreenState extends State<IndividualConnectorsScreen>
       return const Scaffold(
         backgroundColor: Color(0xFFF8FAFD),
         body: Center(
-          child: CircularProgressIndicator(color: Color(0xFF0052FF)),
+          child: CircularProgressIndicator(color: Color(0xFFD4642C)),
         ),
       );
     }
@@ -154,16 +154,16 @@ class _IndividualConnectorsScreenState extends State<IndividualConnectorsScreen>
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
+                color: const Color(0xFFFFF7ED),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFBFDBFE)),
+                border: Border.all(color: const Color(0xFFFED7AA)),
               ),
               child: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: const BoxDecoration(
-                      color: Color(0xFF0052FF),
+                      color: Color(0xFFD4642C),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.bolt_rounded, color: Colors.white, size: 22),
@@ -175,12 +175,12 @@ class _IndividualConnectorsScreenState extends State<IndividualConnectorsScreen>
                       children: [
                         Text(
                           "Automated CRM Lead Delivery",
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1E3A8A)),
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
                         ),
                         SizedBox(height: 2),
                         Text(
                           "When someone scans your digital card and submits their contact, automatically push it to your CRM in real time.",
-                          style: TextStyle(fontSize: 12, color: Color(0xFF3B82F6)),
+                          style: TextStyle(fontSize: 12, color: Color(0xFF9A3412)),
                         ),
                       ],
                     ),
@@ -237,8 +237,8 @@ class _IndividualConnectorsScreenState extends State<IndividualConnectorsScreen>
               title: "Custom HTTP Webhook",
               subtitle: "POST raw lead payload to your custom backend or API server",
               icon: Icons.webhook_rounded,
-              iconColor: const Color(0xFF0052FF),
-              iconBg: const Color(0xFFEFF6FF),
+              iconColor: const Color(0xFFD4642C),
+              iconBg: const Color(0xFFFFF7ED),
               controller: _customWebhookCtrl,
               hint: "https://api.yourdomain.com/v1/leads/webhook",
               isEnabled: _customWebhookEnabled,
@@ -299,7 +299,7 @@ class _IndividualConnectorsScreenState extends State<IndividualConnectorsScreen>
               Switch.adaptive(
                 value: isEnabled,
                 onChanged: onToggle,
-                activeTrackColor: const Color(0xFF0052FF),
+                activeTrackColor: const Color(0xFFD4642C),
               ),
             ],
           ),
@@ -319,7 +319,7 @@ class _IndividualConnectorsScreenState extends State<IndividualConnectorsScreen>
               alignment: Alignment.centerRight,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0052FF),
+                  backgroundColor: const Color(0xFFD4642C),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 ),

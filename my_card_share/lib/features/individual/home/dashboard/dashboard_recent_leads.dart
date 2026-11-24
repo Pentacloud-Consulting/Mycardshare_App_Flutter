@@ -38,7 +38,7 @@ class DashboardRecentLeads extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13.5,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0066FF),
+                      color: Color(0xFFD4642C),
                     ),
                   ),
                 ),

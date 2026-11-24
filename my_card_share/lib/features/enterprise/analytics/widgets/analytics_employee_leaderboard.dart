@@ -87,12 +87,12 @@ class AnalyticsEmployeeLeaderboard extends StatelessWidget {
 
                   Color rankBg = const Color(0xFFF1F5F9);
                   Color rankTextColor = const Color(0xFF64748B);
-                  Color progressColor = const Color(0xFF0052FF);
+                  Color progressColor = const Color(0xFFD4642C);
 
                   if (performer.rank == 1) {
                     rankBg = const Color(0xFFFEF3C7);
                     rankTextColor = const Color(0xFFD97706);
-                    progressColor = const Color(0xFF0052FF);
+                    progressColor = const Color(0xFFD4642C);
                   } else if (performer.rank == 2) {
                     rankBg = const Color(0xFFF1F5F9);
                     rankTextColor = const Color(0xFF475569);
@@ -131,13 +131,13 @@ class AnalyticsEmployeeLeaderboard extends StatelessWidget {
                           // Avatar
                           CircleAvatar(
                             radius: 16,
-                            backgroundColor: const Color(0xFFEFF4FF),
+                            backgroundColor: const Color(0xFFFFF7ED),
                             child: Text(
                               performer.initials,
                               style: const TextStyle(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF0052FF),
+                                color: Color(0xFFD4642C),
                               ),
                             ),
                           ),

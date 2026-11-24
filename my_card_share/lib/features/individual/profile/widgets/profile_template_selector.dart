@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/card_templates.dart';
+import '../../../../core/widgets/template_picker_bottom_sheet.dart';
 
 class ProfileTemplateSelector extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onSelectTemplate;
+  final bool isLocked;
+  final String? lockedBrandColor;
 
   const ProfileTemplateSelector({
     super.key,
     required this.selectedIndex,
     required this.onSelectTemplate,
+    this.isLocked = false,
+    this.lockedBrandColor,
   });
 
   @override
@@ -27,17 +33,22 @@ class ProfileTemplateSelector extends StatelessWidget {
               ),
             ),
             GestureDetector(
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("All templates opened")),
+              onTap: () async {
+                final chosen = await TemplatePickerBottomSheet.show(
+                  context,
+                  currentIndex: selectedIndex,
+                  onSelect: onSelectTemplate,
                 );
+                if (chosen != null) {
+                  onSelectTemplate(chosen);
+                }
               },
               child: const Text(
                 "See All",
                 style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0066FF),
+                  color: Color(0xFFD4642C),
                 ),
               ),
             ),
@@ -47,33 +58,17 @@ class ProfileTemplateSelector extends StatelessWidget {
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
-            children: [
-              _buildTemplateTile(
-                index: 0,
-                colors: [const Color(0xFF0052FF), const Color(0xFF38BDF8)],
-              ),
-              const SizedBox(width: 10),
-              _buildTemplateTile(
-                index: 1,
-                colors: [const Color(0xFF833AB4), const Color(0xFFC13584)],
-              ),
-              const SizedBox(width: 10),
-              _buildTemplateTile(
-                index: 2,
-                colors: [const Color(0xFF0D9488), const Color(0xFF2DD4BF)],
-              ),
-              const SizedBox(width: 10),
-              _buildTemplateTile(
-                index: 3,
-                colors: [const Color(0xFF0F172A), const Color(0xFF334155)],
-              ),
-              const SizedBox(width: 10),
-              _buildTemplateTile(
-                index: 4,
-                colors: [const Color(0xFFF1F5F9), const Color(0xFFE2E8F0)],
-                isLight: true,
-              ),
-            ],
+            children: List.generate(CardTemplates.all.length, (index) {
+              final template = CardTemplates.all[index];
+              return Padding(
+                padding: const EdgeInsets.only(right: 10.0),
+                child: _buildTemplateTile(
+                  index: template.id,
+                  colors: template.gradient,
+                  isLight: template.isLight,
+                ),
+              );
+            }),
           ),
         ),
       ],
@@ -102,15 +97,15 @@ class ProfileTemplateSelector extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
-                ? const Color(0xFF0052FF)
+                ? const Color(0xFFD4642C)
                 : isLight
                     ? const Color(0xFFCBD5E1)
                     : Colors.transparent,
-            width: isSelected ? 2.0 : 1.0,
+            width: isSelected ? 2.5 : 1.0,
           ),
           boxShadow: [
             BoxShadow(
-              color: isSelected ? const Color(0x300052FF) : const Color(0x08000000),
+              color: isSelected ? const Color(0x35D4642C) : const Color(0x08000000),
               blurRadius: isSelected ? 8 : 4,
               offset: const Offset(0, 2),
             ),
@@ -122,7 +117,7 @@ class ProfileTemplateSelector extends StatelessWidget {
                   width: 18,
                   height: 18,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF0052FF),
+                    color: Color(0xFFD4642C),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -137,5 +132,3 @@ class ProfileTemplateSelector extends StatelessWidget {
     );
   }
 }
-
-

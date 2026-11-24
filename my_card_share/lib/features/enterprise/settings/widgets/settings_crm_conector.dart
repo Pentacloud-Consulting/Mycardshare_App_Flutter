@@ -45,12 +45,12 @@ class SettingsCrmConnectorRow extends StatelessWidget {
                   width: 34,
                   height: 34,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFF4FF),
+                    color: const Color(0xFFFFF7ED),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
                     Icons.hub_rounded,
-                    color: Color(0xFF0052FF),
+                    color: Color(0xFFD4642C),
                     size: 19,
                   ),
                 ),
@@ -125,7 +125,7 @@ class _EnterpriseCrmConnectorsScreenState extends State<EnterpriseCrmConnectorsS
             Text("Webhook URL copied to clipboard!"),
           ],
         ),
-        backgroundColor: const Color(0xFF0052FF),
+        backgroundColor: const Color(0xFFD4642C),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         duration: const Duration(seconds: 2),
@@ -199,7 +199,7 @@ class _EnterpriseCrmConnectorsScreenState extends State<EnterpriseCrmConnectorsS
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0052FF),
+              backgroundColor: const Color(0xFFD4642C),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () async {
@@ -426,7 +426,7 @@ class _EnterpriseCrmConnectorsScreenState extends State<EnterpriseCrmConnectorsS
                                         child: const Icon(
                                           Icons.copy_rounded,
                                           size: 16,
-                                          color: Color(0xFF0052FF),
+                                          color: Color(0xFFD4642C),
                                         ),
                                       ),
                                     ),
@@ -439,20 +439,20 @@ class _EnterpriseCrmConnectorsScreenState extends State<EnterpriseCrmConnectorsS
                               // Outlined Test Webhook Button
                               OutlinedButton.icon(
                                 style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: Color(0xFF0052FF), width: 1.5),
+                                  side: const BorderSide(color: Color(0xFFD4642C), width: 1.5),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
                                 ),
                                 onPressed: _isTestingWebhook ? null : _handleTestWebhook,
                                 icon: _isTestingWebhook
-                                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0052FF)))
-                                    : const Icon(Icons.send_rounded, size: 16, color: Color(0xFF0052FF)),
+                                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFD4642C)))
+                                    : const Icon(Icons.send_rounded, size: 16, color: Color(0xFFD4642C)),
                                 label: const Text(
                                   "Test Webhook",
                                   style: TextStyle(
                                     fontSize: 13.5,
                                     fontWeight: FontWeight.w700,
-                                    color: Color(0xFF0052FF),
+                                    color: Color(0xFFD4642C),
                                   ),
                                 ),
                               ),
@@ -501,7 +501,7 @@ class _EnterpriseCrmConnectorsScreenState extends State<EnterpriseCrmConnectorsS
                                   style: TextStyle(
                                     fontSize: 13.5,
                                     fontWeight: FontWeight.w800,
-                                    color: Color(0xFF0052FF),
+                                    color: Color(0xFFD4642C),
                                     decoration: TextDecoration.underline,
                                   ),
                                 ),
@@ -632,8 +632,8 @@ class _EnterpriseCrmConnectorsScreenState extends State<EnterpriseCrmConnectorsS
           if (connector.isConnected) ...[
             Switch(
               value: connector.isConnected,
-              activeThumbColor: const Color(0xFF0052FF),
-              activeTrackColor: const Color(0xFFDBEAFE),
+              activeThumbColor: const Color(0xFFD4642C),
+              activeTrackColor: const Color(0xFFFED7AA),
               onChanged: (val) async {
                 await EnterpriseCrmService.instance.updateConnectorStatus(
                   connectorId: connector.id,
@@ -646,7 +646,7 @@ class _EnterpriseCrmConnectorsScreenState extends State<EnterpriseCrmConnectorsS
           ] else ...[
             OutlinedButton(
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF0052FF), width: 1.5),
+                side: const BorderSide(color: Color(0xFFD4642C), width: 1.5),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
@@ -656,7 +656,7 @@ class _EnterpriseCrmConnectorsScreenState extends State<EnterpriseCrmConnectorsS
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF0052FF),
+                  color: Color(0xFFD4642C),
                 ),
               ),
             ),
@@ -745,7 +745,7 @@ class FailedSyncLogsModal extends StatelessWidget {
             height: 46,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0052FF),
+                backgroundColor: const Color(0xFFD4642C),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: () async {

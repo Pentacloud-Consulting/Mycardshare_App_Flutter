@@ -89,7 +89,7 @@ const List<SocialPlatformOption> kSupportedSocialPlatforms = [
     key: 'website',
     label: 'Company Website',
     icon: FontAwesomeIcons.globe,
-    color: Color(0xFF0052FF),
+    color: Color(0xFFD4642C),
     hint: 'https://yourbrand.com',
   ),
   SocialPlatformOption(
@@ -232,7 +232,7 @@ class _BrandSocialWidgetState extends State<BrandSocialWidget> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text("✓ ${_selectedPlatform.label} link added successfully!"),
-        backgroundColor: const Color(0xFF0052FF),
+        backgroundColor: const Color(0xFFD4642C),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ),
@@ -254,7 +254,7 @@ class _BrandSocialWidgetState extends State<BrandSocialWidget> {
         key: key,
         label: key[0].toUpperCase() + key.substring(1),
         icon: FontAwesomeIcons.globe,
-        color: const Color(0xFF0052FF),
+        color: const Color(0xFFD4642C),
         hint: 'https://$key.com',
       ),
     );
@@ -380,7 +380,7 @@ class _BrandSocialWidgetState extends State<BrandSocialWidget> {
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0052FF),
+                      backgroundColor: const Color(0xFFD4642C),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -472,7 +472,7 @@ class _BrandSocialWidgetState extends State<BrandSocialWidget> {
                     ),
                     // Test Launch Link
                     IconButton(
-                      icon: const Icon(Icons.open_in_new_rounded, color: Color(0xFF0052FF), size: 18),
+                      icon: const Icon(Icons.open_in_new_rounded, color: Color(0xFFD4642C), size: 18),
                       tooltip: "Test Open Link",
                       onPressed: () => EnterpriseSocialRedirectService.launchSocialPlatform(
                         platform: entry.key,

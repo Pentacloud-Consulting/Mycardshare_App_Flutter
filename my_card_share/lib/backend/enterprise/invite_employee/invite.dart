@@ -40,14 +40,14 @@ class EnterpriseInviteButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFF0052FF), Color(0xFF38BDF8)],
+            colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
           ),
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF0052FF).withValues(alpha: 0.35),
+              color: const Color(0xFFD4642C).withValues(alpha: 0.35),
               blurRadius: 14,
               offset: const Offset(0, 4),
             ),
@@ -318,7 +318,7 @@ class _EnterpriseInviteFormModalState extends State<EnterpriseInviteFormModal>
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.person_add_rounded, color: Color(0xFF0052FF), size: 24),
+                    Icon(Icons.person_add_rounded, color: Color(0xFFD4642C), size: 24),
                     SizedBox(width: 10),
                     Text(
                       "Add & Invite Team",
@@ -372,7 +372,7 @@ class _EnterpriseInviteFormModalState extends State<EnterpriseInviteFormModal>
                   ),
                 ],
               ),
-              labelColor: const Color(0xFF0052FF),
+              labelColor: const Color(0xFFD4642C),
               unselectedLabelColor: const Color(0xFF64748B),
               labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
               unselectedLabelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
@@ -469,7 +469,7 @@ class _EnterpriseInviteFormModalState extends State<EnterpriseInviteFormModal>
             height: 50,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0052FF),
+                backgroundColor: const Color(0xFFD4642C),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
               onPressed: _isSubmitting ? null : _submitSingleEmployee,
@@ -534,7 +534,7 @@ class _EnterpriseInviteFormModalState extends State<EnterpriseInviteFormModal>
                   padding: const EdgeInsets.only(right: 6.0),
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0052FF),
+                      backgroundColor: const Color(0xFFD4642C),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     ),
@@ -556,9 +556,9 @@ class _EnterpriseInviteFormModalState extends State<EnterpriseInviteFormModal>
               children: List.generate(_invitedEmailsList.length, (index) {
                 final em = _invitedEmailsList[index];
                 return Chip(
-                  backgroundColor: const Color(0xFFEFF4FF),
-                  side: const BorderSide(color: Color(0xFFBFDBFE)),
-                  label: Text(em, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF0052FF))),
+                  backgroundColor: const Color(0xFFFFF7ED),
+                  side: const BorderSide(color: Color(0xFFFED7AA)),
+                  label: Text(em, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFFD4642C))),
                   deleteIcon: const Icon(Icons.close_rounded, size: 16, color: Color(0xFF64748B)),
                   onDeleted: () {
                     setState(() {
@@ -577,7 +577,7 @@ class _EnterpriseInviteFormModalState extends State<EnterpriseInviteFormModal>
             height: 50,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0052FF),
+                backgroundColor: const Color(0xFFD4642C),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
               onPressed: _isSubmitting ? null : _submitBatchInvites,

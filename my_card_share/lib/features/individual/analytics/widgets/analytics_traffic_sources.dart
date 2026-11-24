@@ -80,7 +80,7 @@ class _AnalyticsTrafficSourcesState extends State<AnalyticsTrafficSources> {
                     padding: EdgeInsets.symmetric(vertical: 20),
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Color(0xFF0066FF),
+                      color: Color(0xFFD4642C),
                     ),
                   ),
                 )

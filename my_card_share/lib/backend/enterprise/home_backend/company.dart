@@ -142,13 +142,13 @@ class EnterpriseCompanyHeaderWidget extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF0052FF), Color(0xFF38BDF8)],
+                    colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF0052FF).withValues(alpha: 0.25),
+                      color: const Color(0xFFD4642C).withValues(alpha: 0.25),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),

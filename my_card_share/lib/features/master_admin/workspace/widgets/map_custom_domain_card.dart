@@ -16,7 +16,7 @@ class MapCustomDomainCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: CustomPaint(
         painter: DashedRectPainter(
-          color: const Color(0xFF60A5FA), // Soft blue border
+          color: const Color(0xFFFED7AA), // Warm orange border
           strokeWidth: 1.5,
           gap: 5.0,
           radius: 16.0,
@@ -25,7 +25,7 @@ class MapCustomDomainCard extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
           decoration: BoxDecoration(
-            color: const Color(0xFFF0F7FF).withValues(alpha: 0.6), // Light blue tint background
+            color: const Color(0xFFFFF7ED).withValues(alpha: 0.7), // Warm cream background
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -35,7 +35,7 @@ class MapCustomDomainCard extends StatelessWidget {
                 width: 28,
                 height: 28,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF2563EB),
+                  color: Color(0xFFD4642C),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -50,7 +50,7 @@ class MapCustomDomainCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF2563EB),
+                  color: Color(0xFFD4642C),
                   letterSpacing: -0.2,
                 ),
               ),

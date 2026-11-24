@@ -26,9 +26,9 @@ class DashboardQuickActions extends StatelessWidget {
               _buildActionChip(
                 icon: Icons.person_add_outlined,
                 label: "Invite Employee",
-                bgColor: const Color(0xFFEFF4FF),
-                borderColor: const Color(0xFFDBEAFE),
-                iconColor: const Color(0xFF0052FF),
+                bgColor: const Color(0xFFFFF7ED),
+                borderColor: const Color(0xFFFED7AA),
+                iconColor: const Color(0xFFD4642C),
                 onTap: () => showEnterpriseInviteModal(context),
               ),
               const SizedBox(width: 10),

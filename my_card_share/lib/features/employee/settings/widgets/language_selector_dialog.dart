@@ -34,11 +34,6 @@ class LanguageSelectorDialog extends StatelessWidget {
               blurRadius: 24,
               offset: Offset(0, 10),
             ),
-            BoxShadow(
-              color: Color(0x90FFFFFF),
-              blurRadius: 12,
-              offset: Offset(-4, -4),
-            ),
           ],
         ),
         padding: const EdgeInsets.all(22.0),
@@ -87,11 +82,11 @@ class LanguageSelectorDialog extends StatelessWidget {
                 return Container(
                   margin: const EdgeInsets.only(bottom: 10),
                   decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
+                    color: isSelected ? const Color(0xFFFFF7ED) : Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: isSelected ? const Color(0x120052FF) : const Color(0x08000000),
+                        color: isSelected ? const Color(0x18D4642C) : const Color(0x08000000),
                         blurRadius: isSelected ? 10 : 6,
                         offset: const Offset(0, 2),
                       ),
@@ -124,14 +119,14 @@ class LanguageSelectorDialog extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 14.5,
                                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                                  color: isSelected ? const Color(0xFF0052FF) : const Color(0xFF0F172A),
+                                  color: isSelected ? const Color(0xFFD4642C) : const Color(0xFF0F172A),
                                 ),
                               ),
                             ),
                             if (isSelected)
                               const Icon(
                                 Icons.check_circle_rounded,
-                                color: Color(0xFF0052FF),
+                                color: Color(0xFFD4642C),
                                 size: 21,
                               ),
                           ],

@@ -64,15 +64,15 @@ class LeadsFilterPills extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF0052FF) : Colors.white,
+          color: isSelected ? const Color(0xFFD4642C) : Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected ? const Color(0xFF0052FF) : const Color(0xFFE2E8F0),
+            color: isSelected ? const Color(0xFFD4642C) : const Color(0xFFE2E8F0),
             width: 1.0,
           ),
           boxShadow: [
             BoxShadow(
-              color: isSelected ? const Color(0x1F0052FF) : const Color(0x05000000),
+              color: isSelected ? const Color(0x35D4642C) : const Color(0x05000000),
               blurRadius: 5,
               offset: const Offset(0, 2),
             ),

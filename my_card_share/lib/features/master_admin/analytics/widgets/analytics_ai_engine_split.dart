@@ -46,7 +46,7 @@ class AnalyticsAiEngineSplit extends StatelessWidget {
             name: "Gemini OCR",
             percentageText: "68%",
             ratio: 0.68,
-            color: const Color(0xFF0052FF),
+            color: const Color(0xFFD4642C),
             icon: Icons.document_scanner_rounded,
           ),
 

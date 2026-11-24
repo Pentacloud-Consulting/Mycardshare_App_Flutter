@@ -245,7 +245,7 @@ class EnterpriseTopPerformersBackend extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF0052FF),
+                      color: Color(0xFFD4642C),
                     ),
                   ),
                 ),
@@ -434,7 +434,7 @@ class EnterpriseTopPerformersBackend extends StatelessWidget {
         style: const TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w700,
-          color: Color(0xFF0052FF),
+          color: Color(0xFFD4642C),
         ),
       ),
     );

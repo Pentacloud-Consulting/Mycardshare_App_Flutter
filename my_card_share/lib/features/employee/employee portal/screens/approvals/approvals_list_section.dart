@@ -145,12 +145,12 @@ class ApprovalsListSection extends StatelessWidget {
                               width: 38,
                               height: 38,
                               decoration: const BoxDecoration(
-                                color: Color(0xFFEFF6FF),
+                                color: Color(0xFFFFF7ED),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
                                 Icons.edit_rounded,
-                                color: Color(0xFF0052FF),
+                                color: Color(0xFFD4642C),
                                 size: 19,
                               ),
                             ),
@@ -278,7 +278,7 @@ class ApprovalsListSection extends StatelessWidget {
                                         fontSize: 12.5,
                                         fontWeight: FontWeight.bold,
                                         color: isPending
-                                            ? const Color(0xFF0052FF)
+                                            ? const Color(0xFFD4642C)
                                             : isApproved
                                                 ? const Color(0xFF059669)
                                                 : const Color(0xFFDC2626),

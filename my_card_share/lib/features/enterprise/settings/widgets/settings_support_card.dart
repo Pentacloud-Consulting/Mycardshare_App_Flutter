@@ -44,8 +44,8 @@ class SettingsSupportCard extends StatelessWidget {
               // Row 1: Help & Support (Opens full Help & Support screen)
               _buildSettingRow(
                 icon: Icons.help_outline_rounded,
-                iconColor: const Color(0xFF0052FF),
-                iconBg: const Color(0xFFEFF4FF),
+                iconColor: const Color(0xFFD4642C),
+                iconBg: const Color(0xFFFFF7ED),
                 title: "Help & Support",
                 onTap: onHelpSupportTap ?? () => showHelpSupportPage(context),
               ),
@@ -88,16 +88,16 @@ class SettingsSupportCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEFF4FF),
+                          color: const Color(0xFFFFF7ED),
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: const Color(0xFFDBEAFE), width: 1),
+                          border: Border.all(color: const Color(0xFFFED7AA), width: 1),
                         ),
                         child: const Text(
                           "Contact",
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF0052FF),
+                            color: Color(0xFFD4642C),
                           ),
                         ),
                       ),

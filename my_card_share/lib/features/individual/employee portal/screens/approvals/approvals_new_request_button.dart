@@ -16,12 +16,12 @@ class ApprovalsNewRequestButton extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: const Color(0xFFEFF6FF),
+          color: const Color(0xFFFFF7ED),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF0052FF), width: 1.4),
+          border: Border.all(color: const Color(0xFFD4642C), width: 1.4),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF0052FF).withValues(alpha: 0.08),
+              color: const Color(0xFFD4642C).withValues(alpha: 0.12),
               blurRadius: 10,
               offset: const Offset(0, 3),
             ),
@@ -32,7 +32,7 @@ class ApprovalsNewRequestButton extends StatelessWidget {
           children: [
             Icon(
               Icons.add_rounded,
-              color: Color(0xFF0052FF),
+              color: Color(0xFFD4642C),
               size: 20,
             ),
             SizedBox(width: 8),
@@ -41,7 +41,7 @@ class ApprovalsNewRequestButton extends StatelessWidget {
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF0052FF),
+                color: Color(0xFFD4642C),
                 letterSpacing: -0.2,
               ),
             ),

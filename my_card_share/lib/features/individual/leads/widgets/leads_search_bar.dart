@@ -69,16 +69,16 @@ class LeadsSearchBar extends StatelessWidget {
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              color: isDateFiltered ? const Color(0xFF0052FF) : Colors.white,
+              color: isDateFiltered ? const Color(0xFFD4642C) : Colors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isDateFiltered ? const Color(0xFF0052FF) : const Color(0xFFE2E8F0),
+                color: isDateFiltered ? const Color(0xFFD4642C) : const Color(0xFFE2E8F0),
                 width: 1.2,
               ),
               boxShadow: [
                 BoxShadow(
                   color: isDateFiltered
-                      ? const Color(0xFF0052FF).withValues(alpha: 0.25)
+                      ? const Color(0xFFD4642C).withValues(alpha: 0.25)
                       : const Color(0x06000000),
                   blurRadius: 8,
                   offset: const Offset(0, 3),

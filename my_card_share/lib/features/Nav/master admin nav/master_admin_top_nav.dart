@@ -185,16 +185,16 @@ class MasterAdminTopNav extends StatelessWidget implements PreferredSizeWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
+                      color: const Color(0xFFFFF7ED),
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xFFBFDBFE), width: 1),
+                      border: Border.all(color: const Color(0xFFFED7AA), width: 1),
                     ),
                     child: const Text(
                       "SUPER ADMIN",
                       style: TextStyle(
                         fontSize: 9.5,
                         fontWeight: FontWeight.w900,
-                        color: Color(0xFF1D4ED8),
+                        color: Color(0xFFD4642C),
                         letterSpacing: 0.4,
                       ),
                     ),
@@ -231,7 +231,7 @@ class MasterAdminTopNav extends StatelessWidget implements PreferredSizeWidget {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF2563EB),
+                      color: Color(0xFFD4642C),
                     ),
                   ),
                 )
@@ -255,7 +255,7 @@ class MasterAdminTopNav extends StatelessWidget implements PreferredSizeWidget {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF2563EB),
+                        color: Color(0xFFD4642C),
                       ),
                     ),
                   ),

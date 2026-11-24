@@ -55,8 +55,8 @@ class EnterpriseProfileMenuHub extends ConsumerWidget {
         _buildMenuItem(
           context: context,
           icon: Icons.tune_rounded,
-          iconColor: const Color(0xFF0052FF),
-          bgColor: const Color(0xFFEFF4FF),
+          iconColor: const Color(0xFFD4642C),
+          bgColor: const Color(0xFFFFF7ED),
           title: "Settings & Billing",
           subtitle: "Manage Enterprise Pro plan, workspace domain & security",
           onTap: () => context.push('/enterprise/settings'),
@@ -91,8 +91,8 @@ class EnterpriseProfileMenuHub extends ConsumerWidget {
         _buildMenuItem(
           context: context,
           icon: Icons.person_add_alt_1_rounded,
-          iconColor: const Color(0xFF0066FF),
-          bgColor: const Color(0xFFEFF6FF),
+          iconColor: const Color(0xFFEA580C),
+          bgColor: const Color(0xFFFFEDD5),
           title: "Join Enterprise Requests",
           subtitle: "Review & approve prospective employee join requests",
           onTap: () => context.push('/enterprise/settings/requests'),
@@ -107,15 +107,7 @@ class EnterpriseProfileMenuHub extends ConsumerWidget {
           bgColor: const Color(0xFFECFDF5),
           title: "Security & Access Control",
           subtitle: "Enforce SSO authentication and domain lock policies",
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text("Enterprise SSO & Domain Lock is active"),
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            );
-          },
+          onTap: () => context.push('/enterprise/security'),
         ),
         const SizedBox(height: 10),
 

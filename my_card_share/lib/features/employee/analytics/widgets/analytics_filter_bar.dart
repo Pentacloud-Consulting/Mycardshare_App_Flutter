@@ -51,11 +51,11 @@ class AnalyticsFilterBar extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    color: isSelected ? const Color(0xFF0066FF) : const Color(0xFF0F172A),
+                    color: isSelected ? const Color(0xFFD4642C) : const Color(0xFF0F172A),
                   ),
                 ),
                 trailing: isSelected
-                    ? const Icon(Icons.check_circle_rounded, color: Color(0xFF0066FF), size: 20)
+                    ? const Icon(Icons.check_circle_rounded, color: Color(0xFFD4642C), size: 20)
                     : null,
                 onTap: () {
                   onDateRangeChanged(option);
@@ -149,16 +149,16 @@ class AnalyticsFilterBar extends StatelessWidget {
         height: 42,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF0066FF) : Colors.white,
+          color: isSelected ? const Color(0xFFD4642C) : Colors.white,
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
-            color: isSelected ? const Color(0xFF0066FF) : const Color(0xFFE2E8F0),
+            color: isSelected ? const Color(0xFFD4642C) : const Color(0xFFE2E8F0),
             width: 1.2,
           ),
           boxShadow: isSelected
               ? const [
                   BoxShadow(
-                    color: Color(0x330066FF),
+                    color: Color(0x33D4642C),
                     blurRadius: 8,
                     offset: Offset(0, 3),
                   ),

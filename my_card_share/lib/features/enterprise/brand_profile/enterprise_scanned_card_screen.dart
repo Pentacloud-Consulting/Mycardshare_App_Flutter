@@ -90,6 +90,60 @@ class _EnterpriseScannedCardScreenState
     }
   }
 
+  LinearGradient _getBannerGradient(String templateId) {
+    switch (templateId) {
+      case 'sunset_orange':
+        return const LinearGradient(
+          colors: [Color(0xFFD4642C), Color(0xFFF97316), Color(0xFFFED7AA)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case 'minimal_dark':
+        return const LinearGradient(
+          colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF334155)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case 'corporate_clean':
+        return const LinearGradient(
+          colors: [Color(0xFFF8FAFC), Color(0xFFE2E8F0), Color(0xFFCBD5E1)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case 'luxury_gold':
+        return const LinearGradient(
+          colors: [Color(0xFF18181B), Color(0xFF27272A), Color(0xFFD4AF37)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case 'emerald_executive':
+        return const LinearGradient(
+          colors: [Color(0xFF064E3B), Color(0xFF047857), Color(0xFF10B981)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case 'royal_slate':
+        return const LinearGradient(
+          colors: [Color(0xFF1E1B4B), Color(0xFF312E81), Color(0xFF6366F1)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case 'bold_gradient':
+        return const LinearGradient(
+          colors: [Color(0xFF7C3AED), Color(0xFF9333EA), Color(0xFFEC4899)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case 'modern_glass':
+      default:
+        return const LinearGradient(
+          colors: [Color(0xFFD4642C), Color(0xFFE8824E), Color(0xFFFED7AA)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+    }
+  }
+
   void _showToast(String msg) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -115,7 +169,7 @@ class _EnterpriseScannedCardScreenState
             builder: (context, snap) {
               if (snap.connectionState == ConnectionState.waiting) {
                 return const Center(
-                  child: CircularProgressIndicator(color: Color(0xFF0052FF)),
+                  child: CircularProgressIndicator(color: Color(0xFFD4642C)),
                 );
               }
 
@@ -172,15 +226,7 @@ class _EnterpriseScannedCardScreenState
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(24),
                               gradient: (bannerUrl.isEmpty)
-                                  ? const LinearGradient(
-                                      colors: [
-                                        Color(0xFF0052FF),
-                                        Color(0xFF7C3AED),
-                                        Color(0xFF38BDF8),
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    )
+                                  ? _getBannerGradient(profile.templateId)
                                   : null,
                               image: (bannerUrl.isNotEmpty)
                                   ? DecorationImage(
@@ -297,7 +343,7 @@ class _EnterpriseScannedCardScreenState
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF0052FF),
+                      color: Color(0xFFD4642C),
                     ),
                   ),
                   if (profile.shortBio.isNotEmpty) ...[
@@ -364,16 +410,16 @@ class _EnterpriseScannedCardScreenState
                     child: Container(
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFF0052FF), Color(0xFF0088FF)],
+                          colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
                           begin: Alignment.centerLeft,
                           end: Alignment.centerRight,
                         ),
                         borderRadius: BorderRadius.circular(26),
-                        boxShadow: const [
+                        boxShadow: [
                           BoxShadow(
-                            color: Color(0x350052FF),
+                            color: const Color(0xFFD4642C).withValues(alpha: 0.35),
                             blurRadius: 14,
-                            offset: Offset(0, 6),
+                            offset: const Offset(0, 6),
                           ),
                         ],
                       ),
@@ -423,16 +469,16 @@ class _EnterpriseScannedCardScreenState
                           height: 48,
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [Color(0xFF0052FF), Color(0xFF0088FF)],
+                              colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
                             ),
                             borderRadius: BorderRadius.circular(24),
-                            boxShadow: const [
+                            boxShadow: [
                               BoxShadow(
-                                color: Color(0x300052FF),
+                                color: const Color(0xFFD4642C).withValues(alpha: 0.3),
                                 blurRadius: 10,
-                                offset: Offset(0, 4),
+                                offset: const Offset(0, 4),
                               ),
                             ],
                           ),
@@ -472,16 +518,16 @@ class _EnterpriseScannedCardScreenState
                           height: 48,
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [Color(0xFF0052FF), Color(0xFF0088FF)],
+                              colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
                             ),
                             borderRadius: BorderRadius.circular(24),
-                            boxShadow: const [
+                            boxShadow: [
                               BoxShadow(
-                                color: Color(0x300052FF),
+                                color: const Color(0xFFD4642C).withValues(alpha: 0.3),
                                 blurRadius: 10,
-                                offset: Offset(0, 4),
+                                offset: const Offset(0, 4),
                               ),
                             ],
                           ),
@@ -575,7 +621,7 @@ class _QuickActionPill extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Icon(icon, size: 22, color: const Color(0xFF0052FF)),
+            Icon(icon, size: 22, color: const Color(0xFFD4642C)),
             const SizedBox(height: 5),
             Text(
               label,
@@ -601,14 +647,14 @@ class _InitialsAvatar extends StatelessWidget {
     final initial =
         name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : 'E';
     return Container(
-      color: const Color(0xFFEFF6FF),
+      color: const Color(0xFFFFF7ED),
       alignment: Alignment.center,
       child: Text(
         initial,
         style: const TextStyle(
           fontSize: 34,
           fontWeight: FontWeight.bold,
-          color: Color(0xFF0052FF),
+          color: Color(0xFFD4642C),
         ),
       ),
     );

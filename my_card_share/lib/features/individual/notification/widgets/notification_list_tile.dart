@@ -34,7 +34,7 @@ class NotificationListTile extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isUnread ? const Color(0xFFBFDBFE) : const Color(0xFFF1F5F9),
+          color: isUnread ? const Color(0xFFFED7AA) : const Color(0xFFF1F5F9),
           width: isUnread ? 1.4 : 1.2,
         ),
         boxShadow: const [
@@ -54,14 +54,14 @@ class NotificationListTile extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Row(
               children: [
-                // Unread Blue Dot
+                // Unread Dot
                 Container(
                   width: 8,
                   height: 8,
                   margin: const EdgeInsets.only(right: 10),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: isUnread ? const Color(0xFF0066FF) : Colors.transparent,
+                    color: isUnread ? const Color(0xFFD4642C) : Colors.transparent,
                   ),
                 ),
 

@@ -41,12 +41,12 @@ class GlobalCampaignModel {
 
   static Color _colorForId(String id) {
     final colors = [
-      const Color(0xFF0052FF),
+      const Color(0xFFD4642C),
       const Color(0xFF8B5CF6),
       const Color(0xFFEC4899),
       const Color(0xFF0D9488),
       const Color(0xFFD97706),
-      const Color(0xFF2563EB),
+      const Color(0xFFEA580C),
     ];
     return colors[id.hashCode.abs() % colors.length];
   }

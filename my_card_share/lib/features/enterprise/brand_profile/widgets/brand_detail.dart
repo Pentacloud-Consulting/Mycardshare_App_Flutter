@@ -30,7 +30,7 @@ class _EnterpriseBrandDetailWidgetState extends State<EnterpriseBrandDetailWidge
   final TextEditingController _emirateController = TextEditingController();
   final TextEditingController _bioController = TextEditingController();
 
-  Color _selectedColor = const Color(0xFF0052FF);
+  Color _selectedColor = const Color(0xFFD4642C);
   bool _isLocked = true;
   String _selectedTemplateId = 'modern_glass';
   bool _isSaving = false;
@@ -71,7 +71,8 @@ class _EnterpriseBrandDetailWidgetState extends State<EnterpriseBrandDetailWidge
         _bioController.text = profile.shortBio;
         _selectedTemplateId = profile.templateId;
         try {
-          final colorHex = profile.brandColor.replaceFirst('#', 'FF');
+          var colorHex = profile.brandColor.replaceFirst('#', 'FF');
+          if (colorHex.toUpperCase() == 'FF0052FF') colorHex = 'FFD4642C';
           _selectedColor = Color(int.parse('0x$colorHex'));
         } catch (_) {}
       });
@@ -157,6 +158,12 @@ class _EnterpriseBrandDetailWidgetState extends State<EnterpriseBrandDetailWidge
     }
   }
 
+  void _persistTemplateSelection(String id) {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    EnterpriseProfileStore.instance.updateFields(uid, {'templateId': id});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -216,6 +223,7 @@ class _EnterpriseBrandDetailWidgetState extends State<EnterpriseBrandDetailWidge
               setState(() {
                 _selectedTemplateId = id;
               });
+              _persistTemplateSelection(id);
             },
           ),
         ),
@@ -401,10 +409,10 @@ class _EnterpriseBrandDetailWidgetState extends State<EnterpriseBrandDetailWidge
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: isExpanded ? const Color(0xFFEFF6FF) : const Color(0xFFF8FAFC),
+                    color: isExpanded ? const Color(0xFFFFF7ED) : const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: isExpanded ? const Color(0xFFBAE6FD) : const Color(0xFFE2E8F0),
+                      color: isExpanded ? const Color(0xFFFED7AA) : const Color(0xFFE2E8F0),
                     ),
                   ),
                   child: Row(
@@ -414,7 +422,7 @@ class _EnterpriseBrandDetailWidgetState extends State<EnterpriseBrandDetailWidge
                         style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w700,
-                          color: isExpanded ? const Color(0xFF0052FF) : const Color(0xFF64748B),
+                          color: isExpanded ? const Color(0xFFD4642C) : const Color(0xFF64748B),
                         ),
                       ),
                       const SizedBox(width: 4),
@@ -423,7 +431,7 @@ class _EnterpriseBrandDetailWidgetState extends State<EnterpriseBrandDetailWidge
                             ? Icons.keyboard_arrow_up_rounded
                             : Icons.keyboard_arrow_down_rounded,
                         size: 16,
-                        color: isExpanded ? const Color(0xFF0052FF) : const Color(0xFF64748B),
+                        color: isExpanded ? const Color(0xFFD4642C) : const Color(0xFF64748B),
                       ),
                     ],
                   ),

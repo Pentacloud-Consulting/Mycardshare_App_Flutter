@@ -32,8 +32,8 @@ class _MasterAdminCampaignScreenState extends State<MasterAdminCampaignScreen> {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  const Color(0xFF38BDF8).withValues(alpha: 0.22),
-                  const Color(0xFF0052FF).withValues(alpha: 0.08),
+                  const Color(0xFFD4642C).withValues(alpha: 0.12),
+                  const Color(0xFFD4642C).withValues(alpha: 0.03),
                   Colors.transparent,
                 ],
               ),

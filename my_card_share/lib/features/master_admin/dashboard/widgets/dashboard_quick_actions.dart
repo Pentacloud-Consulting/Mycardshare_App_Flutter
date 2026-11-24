@@ -56,7 +56,7 @@ class DashboardQuickActions extends StatelessWidget {
                     context: context,
                     label: "Manage Companies",
                     icon: Icons.business_rounded,
-                    tintColor: const Color(0xFF0052FF),
+                    tintColor: const Color(0xFFD4642C),
                     route: '/master-admin/company',
                   ),
                   const SizedBox(width: 10),

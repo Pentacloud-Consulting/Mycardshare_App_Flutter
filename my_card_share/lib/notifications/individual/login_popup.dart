@@ -99,7 +99,7 @@ class LoginPopupNotification {
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0066FF),
+                          backgroundColor: const Color(0xFFD4642C),
                           foregroundColor: Colors.white,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -221,7 +221,7 @@ class LoginPopupNotification {
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0066FF),
+                          backgroundColor: const Color(0xFFD4642C),
                           foregroundColor: Colors.white,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 12),

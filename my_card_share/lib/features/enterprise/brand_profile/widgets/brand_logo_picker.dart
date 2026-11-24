@@ -195,7 +195,7 @@ class _BrandLogoPickerState extends State<BrandLogoPicker> {
                       borderRadius: BorderRadius.circular(20),
                       child: Container(
                         decoration: const BoxDecoration(
-                          color: Color(0xFFEFF6FF),
+                          color: Color(0xFFFFF7ED),
                         ),
                         child: _isUploading
                             ? const Center(
@@ -204,7 +204,7 @@ class _BrandLogoPickerState extends State<BrandLogoPicker> {
                                   height: 28,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2.5,
-                                    color: Color(0xFF0052FF),
+                                    color: Color(0xFFD4642C),
                                   ),
                                 ),
                               )
@@ -215,7 +215,7 @@ class _BrandLogoPickerState extends State<BrandLogoPicker> {
                                     fallback: const Center(
                                       child: Icon(
                                         Icons.apartment_rounded,
-                                        color: Color(0xFF0052FF),
+                                        color: Color(0xFFD4642C),
                                         size: 44,
                                       ),
                                     ),
@@ -223,7 +223,7 @@ class _BrandLogoPickerState extends State<BrandLogoPicker> {
                                 : const Center(
                                     child: Icon(
                                       Icons.apartment_rounded,
-                                      color: Color(0xFF0052FF),
+                                      color: Color(0xFFD4642C),
                                       size: 44,
                                     ),
                                   ),
@@ -237,12 +237,12 @@ class _BrandLogoPickerState extends State<BrandLogoPicker> {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0052FF),
+                        color: const Color(0xFFD4642C),
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 3.0),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF0052FF).withValues(alpha: 0.35),
+                            color: const Color(0xFFD4642C).withValues(alpha: 0.35),
                             blurRadius: 8,
                             offset: const Offset(0, 3),
                           ),

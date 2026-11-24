@@ -493,15 +493,18 @@ class IndividualProfileStore extends ChangeNotifier {
     return finalSlug.isEmpty ? 'user-${DateTime.now().millisecondsSinceEpoch % 10000}' : finalSlug;
   }
 
-  /// Helper to get template index integer (0-4) from templateStyle string
+  /// Helper to get template index integer from templateStyle string
   static int getTemplateIndex(String? style) {
     if (style == null || style.isEmpty) return 0;
     final parsed = int.tryParse(style);
-    if (parsed != null && parsed >= 0 && parsed <= 4) return parsed;
+    if (parsed != null && parsed >= 0 && parsed <= 15) return parsed;
+    if (style.contains('Orange') || style.contains('Terracotta') || style == '0') return 0;
     if (style.contains('Purple') || style.contains('Pink') || style == '1') return 1;
     if (style.contains('Teal') || style.contains('Green') || style == '2') return 2;
     if (style.contains('Dark') || style.contains('Slate') || style.contains('Charcoal') || style == '3') return 3;
     if (style.contains('Light') || style.contains('Minimal') || style == '4') return 4;
+    if (style.contains('Blue') || style == '5') return 5;
+    if (style.contains('Gold') || style == '6') return 6;
     return 0;
   }
 

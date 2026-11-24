@@ -52,7 +52,7 @@ class WorkforceTeammatesListSection extends StatelessWidget {
       role: 'Employee',
       department: 'Sales',
       avatarText: 'AJ',
-      avatarBg: Color(0xFF0052FF),
+      avatarBg: Color(0xFFD4642C),
       slug: 'alex-johnson',
     ),
     TeammateModel(
@@ -176,7 +176,7 @@ class WorkforceTeammatesListSection extends StatelessWidget {
                             ? Image.network(
                                 member.avatarUrl!,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Center(
+                                errorBuilder: (ctx, err, stack) => Center(
                                   child: Text(
                                     member.avatarText,
                                     style: TextStyle(
@@ -245,14 +245,14 @@ class WorkforceTeammatesListSection extends StatelessWidget {
 
                       const SizedBox(width: 8),
 
-                      // Role Tag Pill (Purple for Admin, Blue for Employee)
+                      // Role Tag Pill (Purple for Admin, Orange for Employee)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                         decoration: BoxDecoration(
-                          color: isAdmin ? const Color(0xFFF3E8FF) : const Color(0xFFEFF6FF),
+                          color: isAdmin ? const Color(0xFFF3E8FF) : const Color(0xFFFFF7ED),
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
-                            color: isAdmin ? const Color(0xFFDDD6FE) : const Color(0xFFBFDBFE),
+                            color: isAdmin ? const Color(0xFFDDD6FE) : const Color(0xFFFED7AA),
                           ),
                         ),
                         child: Text(
@@ -260,7 +260,7 @@ class WorkforceTeammatesListSection extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
-                            color: isAdmin ? const Color(0xFF7E22CE) : const Color(0xFF0052FF),
+                            color: isAdmin ? const Color(0xFF7E22CE) : const Color(0xFFD4642C),
                           ),
                         ),
                       ),

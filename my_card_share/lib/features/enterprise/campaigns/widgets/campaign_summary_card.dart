@@ -18,13 +18,13 @@ class CampaignSummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         gradient: const LinearGradient(
-          colors: [Color(0xFF0052FF), Color(0xFF38BDF8)],
+          colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0052FF).withValues(alpha: 0.32),
+            color: const Color(0xFFD4642C).withValues(alpha: 0.32),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -47,7 +47,7 @@ class CampaignSummaryCard extends StatelessWidget {
             "$totalScansCount total scans this month",
             style: const TextStyle(
               fontSize: 13.5,
-              color: Color(0xFFE0F2FE),
+              color: Color(0xFFFFEDD5),
               fontWeight: FontWeight.w500,
             ),
           ),

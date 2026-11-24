@@ -78,7 +78,7 @@ class AnalyticsTopCompanies extends StatelessWidget {
                 final rankColor = index == 0
                     ? const Color(0xFFD97706)
                     : (index == 1 ? const Color(0xFF475569) : const Color(0xFFDC2626));
-                const logoBg = Color(0xFF0052FF);
+                const logoBg = Color(0xFFD4642C);
 
                 return Column(
                   children: [

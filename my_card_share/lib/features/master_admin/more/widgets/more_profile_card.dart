@@ -9,7 +9,7 @@ class MoreProfileCard extends StatelessWidget {
   const MoreProfileCard({
     super.key,
     this.adminName = "Platform Admin",
-    this.adminEmail = "admin@mycardshare.com",
+    this.adminEmail = "admin@pentcloud.me",
     this.initials = "MA",
   });
 
@@ -126,7 +126,7 @@ class MoreProfileCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF0052FF),
+                color: Color(0xFFD4642C),
               ),
             ),
           ),

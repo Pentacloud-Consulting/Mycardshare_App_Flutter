@@ -32,7 +32,7 @@ class _MasterAdminApprovalScreenState extends State<MasterAdminApprovalScreen> {
 
             return Stack(
               children: [
-                // Background Top-Right Ambient Soft Baby-Blue Gradient Blob
+                // Background Top-Right Ambient Soft Warm-Orange Gradient Blob
                 Positioned(
                   top: -80,
                   right: -80,
@@ -43,8 +43,8 @@ class _MasterAdminApprovalScreenState extends State<MasterAdminApprovalScreen> {
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          const Color(0xFF38BDF8).withValues(alpha: 0.22),
-                          const Color(0xFF0052FF).withValues(alpha: 0.08),
+                          const Color(0xFFD4642C).withValues(alpha: 0.12),
+                          const Color(0xFFD4642C).withValues(alpha: 0.03),
                           Colors.transparent,
                         ],
                       ),
@@ -55,7 +55,7 @@ class _MasterAdminApprovalScreenState extends State<MasterAdminApprovalScreen> {
                 // Main Pending Approvals Scrollable Content with Pull-to-Refresh
                 RefreshIndicator(
                   onRefresh: () => ApprovalsQueueStore.instance.refreshQueue(),
-                  color: const Color(0xFF0052FF),
+                  color: const Color(0xFFD4642C),
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),

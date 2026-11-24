@@ -70,16 +70,16 @@ class CompanyDetailHeader extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
+                        color: const Color(0xFFFFF7ED),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFBFDBFE)),
+                        border: Border.all(color: const Color(0xFFFED7AA)),
                       ),
                       child: Text(
                         planName,
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF0052FF),
+                          color: Color(0xFFD4642C),
                         ),
                       ),
                     ),

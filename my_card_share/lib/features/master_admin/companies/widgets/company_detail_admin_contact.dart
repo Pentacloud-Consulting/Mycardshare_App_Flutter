@@ -123,7 +123,7 @@ class CompanyDetailAdminContact extends StatelessWidget {
                   ),
                   child: const Icon(
                     Icons.chat_bubble_outline_rounded,
-                    color: Color(0xFF0052FF),
+                    color: Color(0xFFD4642C),
                     size: 18,
                   ),
                 ),

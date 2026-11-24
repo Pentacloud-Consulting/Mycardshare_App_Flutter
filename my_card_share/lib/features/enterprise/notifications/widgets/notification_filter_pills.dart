@@ -39,18 +39,18 @@ class NotificationFilterPills extends StatelessWidget {
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF0052FF) : Colors.white,
+                  color: isSelected ? const Color(0xFFD4642C) : Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isSelected
-                        ? const Color(0xFF0052FF)
+                        ? const Color(0xFFD4642C)
                         : const Color(0xFFE2E8F0),
                     width: 1.2,
                   ),
                   boxShadow: [
                     BoxShadow(
                       color: isSelected
-                          ? const Color(0xFF0052FF).withValues(alpha: 0.25)
+                          ? const Color(0xFFD4642C).withValues(alpha: 0.25)
                           : const Color(0xFF0F172A).withValues(alpha: 0.03),
                       blurRadius: isSelected ? 8 : 4,
                       offset: const Offset(0, 2),

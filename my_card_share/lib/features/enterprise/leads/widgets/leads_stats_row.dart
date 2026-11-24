@@ -19,9 +19,9 @@ class LeadsStatsRow extends StatelessWidget {
         _buildStatChip(
           label: "Total",
           value: "$totalCount",
-          bgColor: const Color(0xFFEFF4FF),
-          borderColor: const Color(0xFFDBEAFE),
-          textColor: const Color(0xFF0052FF),
+          bgColor: const Color(0xFFFFF7ED),
+          borderColor: const Color(0xFFFED7AA),
+          textColor: const Color(0xFFD4642C),
         ),
         const SizedBox(width: 8),
         _buildStatChip(

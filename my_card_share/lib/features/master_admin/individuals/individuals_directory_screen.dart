@@ -226,8 +226,8 @@ class _MasterAdminIndividualsScreenState
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          const Color(0xFFDBEAFE).withValues(alpha: 0.7),
-                          const Color(0xFFEFF6FF).withValues(alpha: 0.2),
+                          const Color(0xFFFED7AA).withValues(alpha: 0.5),
+                          const Color(0xFFFFF7ED).withValues(alpha: 0.2),
                           const Color(0xFFF8FAFD).withValues(alpha: 0.0),
                         ],
                       ),
@@ -238,7 +238,7 @@ class _MasterAdminIndividualsScreenState
                 // Main scrollable content
                 RefreshIndicator(
                   onRefresh: _loadData,
-                  color: const Color(0xFF0052FF),
+                  color: const Color(0xFFD4642C),
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
@@ -296,8 +296,8 @@ class _MasterAdminIndividualsScreenState
                           const Padding(
                             padding: EdgeInsets.symmetric(vertical: 8.0),
                             child: LinearProgressIndicator(
-                              color: Color(0xFF0052FF),
-                              backgroundColor: Color(0xFFEFF6FF),
+                              color: Color(0xFFD4642C),
+                              backgroundColor: Color(0xFFFFF7ED),
                             ),
                           ),
 
@@ -371,7 +371,7 @@ class _MasterAdminIndividualsScreenState
                 // View Digital Card Action (Matching Web View Card)
                 if (user.cardSlug.isNotEmpty)
                   ListTile(
-                    leading: const Icon(Icons.visibility_rounded, color: Color(0xFF0052FF)),
+                    leading: const Icon(Icons.visibility_rounded, color: Color(0xFFD4642C)),
                     title: const Text(
                       "View Digital Card",
                       style: TextStyle(
@@ -601,7 +601,7 @@ class _DeletionRequestsBottomSheetWidgetState
       return const SizedBox(
         height: 250,
         child: Center(
-          child: CircularProgressIndicator(color: Color(0xFF0052FF)),
+          child: CircularProgressIndicator(color: Color(0xFFD4642C)),
         ),
       );
     }

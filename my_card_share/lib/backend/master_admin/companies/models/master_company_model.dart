@@ -34,15 +34,30 @@ class MasterCompanyModel {
   factory MasterCompanyModel.fromMap(String id, Map<String, dynamic> data) {
     final approvalStatus = (data['approvalStatus'] as String? ?? '').toLowerCase().trim();
     final statusStr = (data['status'] as String? ?? '').toLowerCase().trim();
-    final isSuspended = data['isSuspended'] == true || statusStr == 'suspended' || approvalStatus == 'rejected';
+
+    // Priority 1: Explicitly Approved or Active
+    final isApproved = approvalStatus == 'approved' || statusStr == 'active';
+
+    // Priority 2: Explicitly Suspended or Rejected (ONLY if not approved)
+    final isSuspended = !isApproved && (
+      data['isSuspended'] == true ||
+      statusStr == 'suspended' ||
+      approvalStatus == 'rejected' ||
+      statusStr == 'rejected'
+    );
+
+    // Priority 3: Pending
+    final isPending = !isApproved && !isSuspended && (
+      approvalStatus == 'pending' || statusStr == 'pending'
+    );
 
     String resolvedStatus = 'Active';
     if (isSuspended) {
       resolvedStatus = 'Suspended';
-    } else if (approvalStatus == 'approved' || statusStr == 'active') {
-      resolvedStatus = 'Active';
-    } else if (approvalStatus == 'pending' || statusStr == 'pending') {
+    } else if (isPending) {
       resolvedStatus = 'Pending';
+    } else {
+      resolvedStatus = 'Active';
     }
 
     final rawDomain = (data['domain'] ??

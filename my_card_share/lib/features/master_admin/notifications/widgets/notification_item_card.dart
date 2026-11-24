@@ -78,11 +78,11 @@ class NotificationItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: notification.isUnread ? const Color(0xFFF0F7FF) : Colors.white,
+        color: notification.isUnread ? const Color(0xFFFFF7ED) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: notification.isUnread
-              ? const Color(0xFFBFDBFE)
+              ? const Color(0xFFFED7AA)
               : const Color(0xFFE2E8F0),
           width: 1.0,
         ),
@@ -111,7 +111,7 @@ class NotificationItemCard extends StatelessWidget {
                   width: 7,
                   height: 7,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF2563EB),
+                    color: Color(0xFFD4642C),
                     shape: BoxShape.circle,
                   ),
                 )

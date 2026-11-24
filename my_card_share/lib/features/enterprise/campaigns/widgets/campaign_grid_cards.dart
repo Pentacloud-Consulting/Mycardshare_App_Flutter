@@ -20,7 +20,7 @@ class CampaignGridCards extends StatelessWidget {
       "id": "1",
       "title": "Web Summit 2026",
       "tag": "CAMPAIGN",
-      "color": Color(0xFF0052FF),
+      "color": Color(0xFFD4642C),
       "scans": 432,
       "conv": "12%",
       "endsCaption": "Ends in 5 days",
@@ -78,7 +78,7 @@ class CampaignGridCards extends StatelessWidget {
             ? (camp["color"] as Color)
             : (camp["color"] is int
                 ? Color(camp["color"] as int)
-                : const Color(0xFF0052FF));
+                : const Color(0xFFD4642C));
 
         return Container(
           padding: const EdgeInsets.all(14),
@@ -231,7 +231,7 @@ class CampaignGridCards extends StatelessWidget {
       onTap: onNewCampaignTap,
       child: CustomPaint(
         painter: DashedRectPainter(
-          color: const Color(0xFF0052FF).withValues(alpha: 0.4),
+          color: const Color(0xFFD4642C).withValues(alpha: 0.4),
           strokeWidth: 1.5,
           gap: 5.0,
           radius: 16.0,
@@ -239,7 +239,7 @@ class CampaignGridCards extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: const Color(0xFFEFF4FF).withValues(alpha: 0.3),
+            color: const Color(0xFFFFF7ED).withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
@@ -249,12 +249,12 @@ class CampaignGridCards extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: const BoxDecoration(
-                  color: Color(0xFFEFF4FF),
+                  color: Color(0xFFFFF7ED),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.add_rounded,
-                  color: Color(0xFF0052FF),
+                  color: Color(0xFFD4642C),
                   size: 26,
                 ),
               ),
@@ -264,7 +264,7 @@ class CampaignGridCards extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF0052FF),
+                  color: Color(0xFFD4642C),
                 ),
               ),
             ],

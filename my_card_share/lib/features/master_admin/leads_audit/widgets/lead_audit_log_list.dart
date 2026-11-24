@@ -145,7 +145,7 @@ class _LeadAuditLogListState extends State<LeadAuditLogList> {
               Expanded(child: Text("Re-sending lead log for $leadName... Success!")),
             ],
           ),
-          backgroundColor: const Color(0xFF0052FF),
+          backgroundColor: const Color(0xFFD4642C),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
@@ -310,7 +310,7 @@ class _LeadAuditLogListState extends State<LeadAuditLogList> {
                                       text: log['leadName'] as String,
                                       style: const TextStyle(
                                         fontWeight: FontWeight.w700,
-                                        color: Color(0xFF2563EB),
+                                        color: Color(0xFFD4642C),
                                       ),
                                     ),
                                   ],
@@ -382,13 +382,13 @@ class _LeadAuditLogListState extends State<LeadAuditLogList> {
                                   child: Container(
                                     padding: const EdgeInsets.all(4),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF0052FF).withValues(alpha: 0.08),
+                                      color: const Color(0xFFD4642C).withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: const Icon(
                                       Icons.edit_rounded,
                                       size: 13,
-                                      color: Color(0xFF0052FF),
+                                      color: Color(0xFFD4642C),
                                     ),
                                   ),
                                 ),
@@ -407,7 +407,7 @@ class _LeadAuditLogListState extends State<LeadAuditLogList> {
                                   style: TextStyle(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w800,
-                                    color: Color(0xFF0052FF),
+                                    color: Color(0xFFD4642C),
                                   ),
                                 ),
                               ),

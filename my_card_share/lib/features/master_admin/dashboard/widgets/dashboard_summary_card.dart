@@ -18,14 +18,14 @@ class DashboardSummaryCard extends StatelessWidget {
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF0F172A), Color(0xFF0052FF)],
+          colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0052FF).withValues(alpha: 0.28),
+            color: const Color(0xFFD4642C).withValues(alpha: 0.35),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -115,13 +115,13 @@ class DashboardSummaryCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F172A),
+                        color: Color(0xFFD4642C),
                       ),
                     ),
                     SizedBox(width: 5),
                     Icon(
                       Icons.arrow_forward_rounded,
-                      color: Color(0xFF0F172A),
+                      color: Color(0xFFD4642C),
                       size: 14,
                     ),
                   ],

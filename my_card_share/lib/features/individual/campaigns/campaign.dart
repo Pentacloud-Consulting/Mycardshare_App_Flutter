@@ -69,7 +69,7 @@ class _IndividualCampaignScreenState extends State<IndividualCampaignScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0052FF),
+              backgroundColor: const Color(0xFFD4642C),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () async {
@@ -131,7 +131,7 @@ class _IndividualCampaignScreenState extends State<IndividualCampaignScreen> {
       backgroundColor: const Color(0xFFF8FAFD),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openCreateCampaignDialog,
-        backgroundColor: const Color(0xFF0052FF),
+        backgroundColor: const Color(0xFFD4642C),
         icon: const Icon(Icons.add_rounded, color: Colors.white),
         label: const Text("Create Campaign", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
       ),
@@ -151,8 +151,8 @@ class _IndividualCampaignScreenState extends State<IndividualCampaignScreen> {
                       label: "Active Campaigns",
                       value: "$activeCount",
                       icon: Icons.campaign_rounded,
-                      color: const Color(0xFF0052FF),
-                      bg: const Color(0xFFEFF6FF),
+                      color: const Color(0xFFD4642C),
+                      bg: const Color(0xFFFFF7ED),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -210,11 +210,11 @@ class _IndividualCampaignScreenState extends State<IndividualCampaignScreen> {
                     children: [
                       Container(
                         padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFFF7ED),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.campaign_outlined, size: 36, color: Color(0xFF0052FF)),
+                        child: const Icon(Icons.campaign_outlined, size: 36, color: Color(0xFFD4642C)),
                       ),
                       const SizedBox(height: 14),
                       const Text(
@@ -230,8 +230,8 @@ class _IndividualCampaignScreenState extends State<IndividualCampaignScreen> {
                       const SizedBox(height: 18),
                       OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF0052FF),
-                          side: const BorderSide(color: Color(0xFF0052FF)),
+                          foregroundColor: const Color(0xFFD4642C),
+                          side: const BorderSide(color: Color(0xFFD4642C)),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         onPressed: _openCreateCampaignDialog,
@@ -269,10 +269,10 @@ class _IndividualCampaignScreenState extends State<IndividualCampaignScreen> {
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFEFF6FF),
+                              color: const Color(0xFFFFF7ED),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(Icons.qr_code_2_rounded, color: Color(0xFF0052FF), size: 24),
+                            child: const Icon(Icons.qr_code_2_rounded, color: Color(0xFFD4642C), size: 24),
                           ),
                           const SizedBox(width: 14),
                           Expanded(

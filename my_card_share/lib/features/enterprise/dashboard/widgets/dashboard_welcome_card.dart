@@ -19,13 +19,13 @@ class DashboardWelcomeCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         gradient: const LinearGradient(
-          colors: [Color(0xFF0052FF), Color(0xFF38BDF8)],
+          colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0052FF).withValues(alpha: 0.32),
+            color: const Color(0xFFD4642C).withValues(alpha: 0.32),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -48,7 +48,7 @@ class DashboardWelcomeCard extends StatelessWidget {
             "$activeCardsCount active employee cards",
             style: const TextStyle(
               fontSize: 14,
-              color: Color(0xFFE0F2FE),
+              color: Color(0xFFFFEDD5),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -81,14 +81,14 @@ class DashboardWelcomeCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF0052FF),
+                        color: Color(0xFFD4642C),
                       ),
                     ),
                     SizedBox(width: 4),
                     Icon(
                       Icons.arrow_forward_rounded,
                       size: 14,
-                      color: Color(0xFF0052FF),
+                      color: Color(0xFFD4642C),
                     ),
                   ],
                 ),

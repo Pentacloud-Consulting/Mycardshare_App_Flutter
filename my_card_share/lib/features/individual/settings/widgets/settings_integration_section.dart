@@ -122,7 +122,7 @@ class _SettingsIntegrationSectionState
                     ),
                     Switch.adaptive(
                       value: _isIntegrationEnabled,
-                      activeColor: const Color(0xFF0052FF),
+                      activeTrackColor: const Color(0xFFD4642C),
                       onChanged: (val) =>
                           setState(() => _isIntegrationEnabled = val),
                     ),
@@ -160,7 +160,7 @@ class _SettingsIntegrationSectionState
                     child: ElevatedButton(
                       onPressed: _isSaving ? null : _saveIntegration,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF97316),
+                        backgroundColor: const Color(0xFFD4642C),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10)),

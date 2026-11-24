@@ -116,7 +116,7 @@ class _LeadDateFilterSheetState extends State<LeadDateFilterSheet> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF0052FF),
+              primary: Color(0xFFD4642C),
               onPrimary: Colors.white,
               onSurface: Color(0xFF0F172A),
             ),
@@ -171,10 +171,10 @@ class _LeadDateFilterSheetState extends State<LeadDateFilterSheet> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0052FF).withValues(alpha: 0.1),
+                      color: const Color(0xFFD4642C).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.calendar_month_rounded, color: Color(0xFF0052FF), size: 22),
+                    child: const Icon(Icons.calendar_month_rounded, color: Color(0xFFD4642C), size: 22),
                   ),
                   const SizedBox(width: 12),
                   const Text(
@@ -196,7 +196,7 @@ class _LeadDateFilterSheetState extends State<LeadDateFilterSheet> {
                 },
                 child: const Text(
                   "Reset",
-                  style: TextStyle(color: Color(0xFF0052FF), fontWeight: FontWeight.bold),
+                  style: TextStyle(color: Color(0xFFD4642C), fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -245,12 +245,12 @@ class _LeadDateFilterSheetState extends State<LeadDateFilterSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 color: _selectedPreset == LeadDatePreset.custom
-                    ? const Color(0xFF0052FF).withValues(alpha: 0.06)
+                    ? const Color(0xFFD4642C).withValues(alpha: 0.06)
                     : const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: _selectedPreset == LeadDatePreset.custom
-                      ? const Color(0xFF0052FF)
+                      ? const Color(0xFFD4642C)
                       : const Color(0xFFE2E8F0),
                   width: 1.2,
                 ),
@@ -260,7 +260,7 @@ class _LeadDateFilterSheetState extends State<LeadDateFilterSheet> {
                   Icon(
                     Icons.edit_calendar_rounded,
                     color: _selectedPreset == LeadDatePreset.custom
-                        ? const Color(0xFF0052FF)
+                        ? const Color(0xFFD4642C)
                         : const Color(0xFF64748B),
                     size: 20,
                   ),
@@ -288,7 +288,7 @@ class _LeadDateFilterSheetState extends State<LeadDateFilterSheet> {
                     ),
                   ),
                   if (_selectedPreset == LeadDatePreset.custom)
-                    const Icon(Icons.check_circle_rounded, color: Color(0xFF0052FF), size: 20),
+                    const Icon(Icons.check_circle_rounded, color: Color(0xFFD4642C), size: 20),
                 ],
               ),
             ),
@@ -308,7 +308,7 @@ class _LeadDateFilterSheetState extends State<LeadDateFilterSheet> {
                 Navigator.pop(context, result);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0052FF),
+                backgroundColor: const Color(0xFFD4642C),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -347,10 +347,10 @@ class _LeadDateFilterSheetState extends State<LeadDateFilterSheet> {
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF0052FF).withValues(alpha: 0.06) : const Color(0xFFF8FAFC),
+          color: isSelected ? const Color(0xFFD4642C).withValues(alpha: 0.06) : const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? const Color(0xFF0052FF) : const Color(0xFFE2E8F0),
+            color: isSelected ? const Color(0xFFD4642C) : const Color(0xFFE2E8F0),
             width: 1.2,
           ),
         ),
@@ -358,7 +358,7 @@ class _LeadDateFilterSheetState extends State<LeadDateFilterSheet> {
           children: [
             Icon(
               icon,
-              color: isSelected ? const Color(0xFF0052FF) : const Color(0xFF64748B),
+              color: isSelected ? const Color(0xFFD4642C) : const Color(0xFF64748B),
               size: 20,
             ),
             const SizedBox(width: 12),
@@ -371,7 +371,7 @@ class _LeadDateFilterSheetState extends State<LeadDateFilterSheet> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: isSelected ? const Color(0xFF0052FF) : const Color(0xFF0F172A),
+                      color: isSelected ? const Color(0xFFD4642C) : const Color(0xFF0F172A),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -383,7 +383,7 @@ class _LeadDateFilterSheetState extends State<LeadDateFilterSheet> {
               ),
             ),
             if (isSelected)
-              const Icon(Icons.check_circle_rounded, color: Color(0xFF0052FF), size: 20),
+              const Icon(Icons.check_circle_rounded, color: Color(0xFFD4642C), size: 20),
           ],
         ),
       ),

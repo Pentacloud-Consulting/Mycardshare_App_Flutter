@@ -92,16 +92,16 @@ class _CampaignSearchFilterState extends State<CampaignSearchFilter> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: _isFilterVisible ? const Color(0xFFEFF6FF) : Colors.white,
+                  color: _isFilterVisible ? const Color(0xFFFFF7ED) : Colors.white,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: _isFilterVisible ? const Color(0xFF0052FF) : const Color(0xFFE2E8F0),
+                    color: _isFilterVisible ? const Color(0xFFD4642C) : const Color(0xFFE2E8F0),
                     width: _isFilterVisible ? 1.5 : 1.2,
                   ),
                   boxShadow: [
                     BoxShadow(
                       color: _isFilterVisible
-                          ? const Color(0xFF0052FF).withValues(alpha: 0.15)
+                          ? const Color(0xFFD4642C).withValues(alpha: 0.15)
                           : Colors.black.withValues(alpha: 0.03),
                       blurRadius: 10,
                       offset: const Offset(0, 3),
@@ -110,7 +110,7 @@ class _CampaignSearchFilterState extends State<CampaignSearchFilter> {
                 ),
                 child: Icon(
                   Icons.sort_rounded,
-                  color: _isFilterVisible ? const Color(0xFF0052FF) : const Color(0xFF0F172A),
+                  color: _isFilterVisible ? const Color(0xFFD4642C) : const Color(0xFF0F172A),
                   size: 20,
                 ),
               ),
@@ -149,16 +149,16 @@ class _CampaignSearchFilterState extends State<CampaignSearchFilter> {
                                 duration: const Duration(milliseconds: 180),
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                                 decoration: BoxDecoration(
-                                  color: isSelected ? const Color(0xFF0052FF) : Colors.white,
+                                  color: isSelected ? const Color(0xFFD4642C) : Colors.white,
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
-                                    color: isSelected ? const Color(0xFF0052FF) : const Color(0xFFE2E8F0),
+                                    color: isSelected ? const Color(0xFFD4642C) : const Color(0xFFE2E8F0),
                                     width: 1.2,
                                   ),
                                   boxShadow: isSelected
                                       ? [
                                           BoxShadow(
-                                            color: const Color(0xFF0052FF).withValues(alpha: 0.25),
+                                            color: const Color(0xFFD4642C).withValues(alpha: 0.25),
                                             blurRadius: 8,
                                             offset: const Offset(0, 2),
                                           ),

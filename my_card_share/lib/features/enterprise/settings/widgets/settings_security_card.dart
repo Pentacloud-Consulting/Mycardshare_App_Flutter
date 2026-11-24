@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'settings_sso_integration.dart';
+import 'package:go_router/go_router.dart';
 import 'settings_api_access.dart';
 import 'settings_admin_roles.dart';
 
@@ -50,9 +50,9 @@ class _SettingsSecurityCardState extends State<SettingsSecurityCard> {
           ),
           child: Column(
             children: [
-              // Row 1: SSO Integration (Opens coming soon modal on tap or toggle)
+              // Row 1: SSO Integration (Opens real Enterprise Security screen)
               InkWell(
-                onTap: () => showSsoComingSoonPopup(context),
+                onTap: () => context.push('/enterprise/security'),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   child: Row(
@@ -83,10 +83,10 @@ class _SettingsSecurityCardState extends State<SettingsSecurityCard> {
                       ),
                       Switch(
                         value: _ssoEnabled,
-                        activeThumbColor: const Color(0xFF0052FF),
-                        activeTrackColor: const Color(0xFFDBEAFE),
+                        activeThumbColor: const Color(0xFFD4642C),
+                        activeTrackColor: const Color(0xFFFED7AA),
                         onChanged: (val) {
-                          showSsoComingSoonPopup(context);
+                          context.push('/enterprise/security');
                         },
                       ),
                     ],

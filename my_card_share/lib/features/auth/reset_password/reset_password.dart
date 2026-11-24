@@ -99,7 +99,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         backgroundColor: const Color(0xFFF8FAFD),
         body: Stack(
           children: [
-            // Soft baby-blue gradient blob in bottom-right corner
+            // Soft warm gradient blob in bottom-right corner
             Positioned(
               bottom: 0,
               right: -40,
@@ -113,8 +113,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       center: Alignment.center,
                       radius: 0.7,
                       colors: [
-                        const Color(0xFF38BDF8).withValues(alpha: 0.20),
-                        const Color(0xFF38BDF8).withValues(alpha: 0.08),
+                        const Color(0xFFD4642C).withValues(alpha: 0.14),
+                        const Color(0xFFD4642C).withValues(alpha: 0.04),
                         Colors.transparent,
                       ],
                       stops: const [0.0, 0.45, 1.0],
@@ -138,8 +138,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       center: Alignment.center,
                       radius: 0.7,
                       colors: [
-                        const Color(0xFF0052FF).withValues(alpha: 0.14),
-                        const Color(0xFF0052FF).withValues(alpha: 0.04),
+                        const Color(0xFFD4642C).withValues(alpha: 0.12),
+                        const Color(0xFFD4642C).withValues(alpha: 0.03),
                         Colors.transparent,
                       ],
                       stops: const [0.0, 0.45, 1.0],
@@ -157,13 +157,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   children: [
                     const SizedBox(height: 36),
 
-                    // Centered Icon Badge (Blue Gradient Circle with Lock Icon)
+                    // Centered Icon Badge (Matte Orange Gradient Circle with Lock Icon)
                     Container(
                       width: 84,
                       height: 84,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFF0052FF).withValues(alpha: 0.08),
+                        color: Color(0xFFFFF7ED),
                       ),
                       child: Center(
                         child: Container(
@@ -172,13 +172,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             gradient: const LinearGradient(
-                              colors: [Color(0xFF0052FF), Color(0xFF38BDF8)],
+                              colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF0052FF).withValues(alpha: 0.3),
+                                color: const Color(0xFFD4642C).withValues(alpha: 0.35),
                                 blurRadius: 16,
                                 offset: const Offset(0, 6),
                               ),
@@ -235,14 +235,14 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: _emailFocusNode.hasFocus
-                              ? const Color(0xFF0052FF)
+                              ? const Color(0xFFD4642C)
                               : const Color(0xFFE2E8F0),
                           width: _emailFocusNode.hasFocus ? 1.8 : 1.2,
                         ),
                         boxShadow: [
                           BoxShadow(
                             color: _emailFocusNode.hasFocus
-                                ? const Color(0xFF0052FF).withValues(alpha: 0.12)
+                                ? const Color(0xFFD4642C).withValues(alpha: 0.12)
                                 : const Color(0x0A000000),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
@@ -287,7 +287,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                           gradient: (_secondsRemaining > 0)
                               ? null
                               : const LinearGradient(
-                                  colors: [Color(0xFF0052FF), Color(0xFF38BDF8)],
+                                  colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
                                   begin: Alignment.centerLeft,
                                   end: Alignment.centerRight,
                                 ),
@@ -297,7 +297,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                               ? []
                               : [
                                   BoxShadow(
-                                    color: const Color(0xFF0052FF).withValues(alpha: 0.35),
+                                    color: const Color(0xFFD4642C).withValues(alpha: 0.35),
                                     blurRadius: 16,
                                     offset: const Offset(0, 8),
                                   ),
@@ -462,7 +462,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF0052FF),
+                              color: Color(0xFFD4642C),
                             ),
                           ),
                         ),

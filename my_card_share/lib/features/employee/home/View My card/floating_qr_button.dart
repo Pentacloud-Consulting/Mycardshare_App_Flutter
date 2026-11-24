@@ -52,17 +52,17 @@ class _FloatingQrButtonState extends State<FloatingQrButton> {
           decoration: BoxDecoration(
             color: Colors.white,
             shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFF38BDF8), width: 2),
+            border: Border.all(color: const Color(0xFFE8824E), width: 2),
             boxShadow: const [
               BoxShadow(
-                color: Color(0x250066FF),
+                color: Color(0x25D4642C),
                 blurRadius: 16,
                 offset: Offset(0, 6),
               ),
             ],
           ),
           child: IconButton(
-            icon: const Icon(Icons.grid_view_rounded, color: Color(0xFF0052FF), size: 26),
+            icon: const Icon(Icons.grid_view_rounded, color: Color(0xFFD4642C), size: 26),
             onPressed: () => _showQrModal(context),
           ),
         ),

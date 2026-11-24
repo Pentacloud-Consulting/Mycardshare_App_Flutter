@@ -104,7 +104,7 @@ class _ProfileSlugSectionState extends State<ProfileSlugSection> {
                 height: 14,
                 child: CircularProgressIndicator(
                   strokeWidth: 1.8,
-                  color: Color(0xFF0052FF),
+                  color: Color(0xFFD4642C),
                 ),
               )
             else if (_slugError != null)
@@ -166,7 +166,7 @@ class _ProfileSlugSectionState extends State<ProfileSlugSection> {
                       fontSize: 13,
                       color: _slugError != null
                           ? const Color(0xFFDC2626)
-                          : const Color(0xFF0066FF),
+                          : const Color(0xFFD4642C),
                       fontWeight: FontWeight.bold,
                     ),
                     decoration: const InputDecoration(

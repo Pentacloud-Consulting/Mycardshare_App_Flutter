@@ -179,7 +179,7 @@ class SettingsCompanySummaryHeader extends StatelessWidget {
                       gradient: settings.logoUrl != null && settings.logoUrl!.isNotEmpty
                           ? null
                           : const LinearGradient(
-                              colors: [Color(0xFF0052FF), Color(0xFF38BDF8)],
+                              colors: const [Color(0xFFD4642C), Color(0xFFE8824E)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
@@ -246,7 +246,7 @@ class SettingsCompanySummaryHeader extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
+                        color: const Color(0xFFFFF7ED),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Text(
@@ -254,7 +254,7 @@ class SettingsCompanySummaryHeader extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF0052FF),
+                          color: Color(0xFFD4642C),
                         ),
                       ),
                     ),

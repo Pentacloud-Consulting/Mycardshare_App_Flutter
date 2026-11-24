@@ -16,6 +16,8 @@ import 'package:my_card_share/features/auth/font style/font_style.dart';
 import 'package:my_card_share/core/utils/image_cropper_util.dart';
 import 'package:my_card_share/core/utils/image_url_formatter.dart';
 import 'package:my_card_share/backend/number logic/phone_number_service.dart';
+import 'package:my_card_share/core/constants/card_templates.dart';
+import 'package:my_card_share/core/widgets/template_picker_bottom_sheet.dart';
 
 class IndividualOnboardingFormScreen extends StatefulWidget {
   final String? initialFullName;
@@ -74,15 +76,6 @@ class _IndividualOnboardingFormScreenState
   // Slug validation state
   String? _slugError;
   bool _slugChecking = false;
-
-  // Template Theme Color Swatches (Image 4)
-  final List<List<Color>> _colorSwatches = [
-    [const Color(0xFF0052FF), const Color(0xFF38BDF8)],
-    [const Color(0xFF833AB4), const Color(0xFFC13584)],
-    [const Color(0xFF0D9488), const Color(0xFF2DD4BF)],
-    [const Color(0xFF0F172A), const Color(0xFF334155)],
-    [const Color(0xFFF1F5F9), const Color(0xFFE2E8F0)],
-  ];
 
   // Preset 10 Networking Status Options
   final List<String> _networkingStatusOptions = [
@@ -226,10 +219,10 @@ class _IndividualOnboardingFormScreenState
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: const BoxDecoration(
-                      color: Color(0xFFEFF6FF),
+                      color: Color(0xFFFAF6F2),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.photo_library_rounded, color: Color(0xFF0052FF)),
+                    child: const Icon(Icons.photo_library_rounded, color: Color(0xFFD4642C)),
                   ),
                   title: const Text('Choose from Gallery', style: TextStyle(fontWeight: FontWeight.w600)),
                   onTap: () async {
@@ -241,10 +234,10 @@ class _IndividualOnboardingFormScreenState
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: const BoxDecoration(
-                      color: Color(0xFFEFF6FF),
+                      color: Color(0xFFFAF6F2),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.camera_alt_rounded, color: Color(0xFF0052FF)),
+                    child: const Icon(Icons.camera_alt_rounded, color: Color(0xFFD4642C)),
                   ),
                   title: const Text('Take a Photo', style: TextStyle(fontWeight: FontWeight.w600)),
                   onTap: () async {
@@ -346,10 +339,10 @@ class _IndividualOnboardingFormScreenState
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: const BoxDecoration(
-                      color: Color(0xFFEFF6FF),
+                      color: Color(0xFFFAF6F2),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.photo_library_rounded, color: Color(0xFF0052FF)),
+                    child: const Icon(Icons.photo_library_rounded, color: Color(0xFFD4642C)),
                   ),
                   title: const Text('Choose from Gallery', style: TextStyle(fontWeight: FontWeight.w600)),
                   onTap: () async {
@@ -361,10 +354,10 @@ class _IndividualOnboardingFormScreenState
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: const BoxDecoration(
-                      color: Color(0xFFEFF6FF),
+                      color: Color(0xFFFAF6F2),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.camera_alt_rounded, color: Color(0xFF0052FF)),
+                    child: const Icon(Icons.camera_alt_rounded, color: Color(0xFFD4642C)),
                   ),
                   title: const Text('Take a Photo', style: TextStyle(fontWeight: FontWeight.w600)),
                   onTap: () async {
@@ -659,14 +652,14 @@ class _IndividualOnboardingFormScreenState
             height: 52,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF0052FF), Color(0xFF00A3FF)],
+                colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               ),
               borderRadius: BorderRadius.circular(26),
               boxShadow: const [
                 BoxShadow(
-                  color: Color(0x350052FF),
+                  color: Color(0x35D4642C),
                   blurRadius: 16,
                   offset: Offset(0, 6),
                 ),
@@ -722,16 +715,16 @@ class _IndividualOnboardingFormScreenState
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F7FF),
+        color: const Color(0xFFFAF6F2),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFBAE6FD)),
+        border: Border.all(color: const Color(0xFFD4642C).withValues(alpha: 0.25)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: const BoxDecoration(
-              color: Color(0xFF0052FF),
+              color: Color(0xFFD4642C),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -813,11 +806,11 @@ class _IndividualOnboardingFormScreenState
             height: 34,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isActive ? const Color(0xFF0052FF) : const Color(0xFFE2E8F0),
+              color: isActive ? const Color(0xFFD4642C) : const Color(0xFFE2E8F0),
               boxShadow: isActive
                   ? [
                       BoxShadow(
-                        color: const Color(0xFF0052FF).withValues(alpha: 0.3),
+                        color: const Color(0xFFD4642C).withValues(alpha: 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 3),
                       ),
@@ -854,7 +847,7 @@ class _IndividualOnboardingFormScreenState
       width: 24,
       height: 2,
       margin: const EdgeInsets.only(bottom: 18),
-      color: isActive ? const Color(0xFF0052FF) : const Color(0xFFE2E8F0),
+      color: isActive ? const Color(0xFFD4642C) : const Color(0xFFE2E8F0),
     );
   }
 
@@ -902,11 +895,11 @@ class _IndividualOnboardingFormScreenState
                         height: 96,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: const Color(0xFFEFF6FF),
-                          border: Border.all(color: const Color(0xFF0052FF), width: 3),
+                          color: const Color(0xFFFAF6F2),
+                          border: Border.all(color: const Color(0xFFD4642C), width: 3),
                           boxShadow: const [
                             BoxShadow(
-                              color: Color(0x180052FF),
+                              color: Color(0x20D4642C),
                               blurRadius: 12,
                               offset: Offset(0, 4),
                             ),
@@ -945,7 +938,7 @@ class _IndividualOnboardingFormScreenState
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF0052FF),
+                            color: const Color(0xFFD4642C),
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white, width: 2),
                             boxShadow: const [
@@ -971,7 +964,7 @@ class _IndividualOnboardingFormScreenState
                     style: const TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF0052FF),
+                      color: Color(0xFFD4642C),
                     ),
                   ),
                 ],
@@ -1030,14 +1023,14 @@ class _IndividualOnboardingFormScreenState
                   : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: const [
-                        Icon(Icons.add_photo_alternate_rounded, color: Color(0xFF0052FF), size: 22),
+                        Icon(Icons.add_photo_alternate_rounded, color: Color(0xFFD4642C), size: 22),
                         SizedBox(width: 8),
                         Text(
                           "Upload Banner Image (Optional)",
                           style: TextStyle(
                             fontSize: 13.5,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF0052FF),
+                            color: Color(0xFFD4642C),
                           ),
                         ),
                       ],
@@ -1047,70 +1040,125 @@ class _IndividualOnboardingFormScreenState
 
           const SizedBox(height: 20),
 
-          // Template Color Swatches (As shown in Image 4)
+          // Template Color Swatches (With clickable See All and 12+ real templates)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              Text(
+            children: [
+              const Text(
                 'Template Color *',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
               ),
-              Text(
-                'See All',
-                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF0052FF)),
+              GestureDetector(
+                onTap: () async {
+                  final chosen = await TemplatePickerBottomSheet.show(
+                    context,
+                    currentIndex: _selectedColorIndex,
+                    onSelect: (idx) {
+                      setState(() => _selectedColorIndex = idx);
+                    },
+                  );
+                  if (chosen != null) {
+                    setState(() => _selectedColorIndex = chosen);
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFAF6F2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFD4642C).withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Text(
+                        'See All',
+                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFFD4642C)),
+                      ),
+                      SizedBox(width: 3),
+                      Icon(Icons.arrow_forward_ios_rounded, size: 11, color: Color(0xFFD4642C)),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(_colorSwatches.length, (index) {
-              final isSel = _selectedColorIndex == index;
-              return GestureDetector(
-                onTap: () => setState(() => _selectedColorIndex = index),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 58,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: _colorSwatches[index],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isSel ? const Color(0xFF0052FF) : Colors.transparent,
-                      width: isSel ? 2.5 : 1.0,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: isSel ? const Color(0x350052FF) : const Color(0x0A000000),
-                        blurRadius: isSel ? 8 : 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: isSel
-                      ? Center(
-                          child: Container(
-                            width: 18,
-                            height: 18,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF0052FF),
-                              shape: BoxShape.circle,
+          Builder(
+            builder: (context) {
+              final visibleIndices = <int>[0, 1, 2, 3];
+              if (_selectedColorIndex >= 4) {
+                visibleIndices.add(_selectedColorIndex);
+              } else {
+                visibleIndices.add(4);
+              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: visibleIndices.map((templateIndex) {
+                      final isSel = _selectedColorIndex == templateIndex;
+                      final gradient = CardTemplates.getGradient(templateIndex);
+                      final isLight = CardTemplates.isLight(templateIndex);
+                      return GestureDetector(
+                        onTap: () => setState(() => _selectedColorIndex = templateIndex),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: 58,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: gradient,
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
-                            child: const Icon(
-                              Icons.check_rounded,
-                              color: Colors.white,
-                              size: 13,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isSel ? const Color(0xFFD4642C) : (isLight ? const Color(0xFFCBD5E1) : Colors.transparent),
+                              width: isSel ? 2.5 : 1.0,
                             ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: isSel ? const Color(0x35D4642C) : const Color(0x0A000000),
+                                blurRadius: isSel ? 8 : 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
-                        )
-                      : null,
-                ),
+                          child: isSel
+                              ? Center(
+                                  child: Container(
+                                    width: 18,
+                                    height: 18,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFD4642C),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.check_rounded,
+                                      color: Colors.white,
+                                      size: 13,
+                                    ),
+                                  ),
+                                )
+                              : null,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Selected: ${CardTemplates.getTemplate(_selectedColorIndex).name}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ],
               );
-            }),
+            },
           ),
 
           const SizedBox(height: 20),
@@ -1233,7 +1281,7 @@ class _IndividualOnboardingFormScreenState
                           elevation: 8,
                           menuMaxHeight: 300,
                           borderRadius: BorderRadius.circular(16),
-                          icon: const Icon(Icons.arrow_drop_down_rounded, color: Color(0xFF0052FF)),
+                          icon: const Icon(Icons.arrow_drop_down_rounded, color: Color(0xFFD4642C)),
                           items: _platforms.map((p) {
                             final isSel = link.platform == p;
                             return DropdownMenuItem<String>(
@@ -1241,7 +1289,7 @@ class _IndividualOnboardingFormScreenState
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: isSel ? const Color(0xFFEFF6FF) : Colors.transparent,
+                                  color: isSel ? const Color(0xFFFAF6F2) : Colors.transparent,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
@@ -1249,7 +1297,7 @@ class _IndividualOnboardingFormScreenState
                                   style: TextStyle(
                                     fontSize: 13.5,
                                     fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
-                                    color: isSel ? const Color(0xFF0052FF) : const Color(0xFF0F172A),
+                                    color: isSel ? const Color(0xFFD4642C) : const Color(0xFF0F172A),
                                   ),
                                 ),
                               ),
@@ -1310,14 +1358,14 @@ class _IndividualOnboardingFormScreenState
                 _socialLinks.add(SocialLinkItem(platform: 'LinkedIn', url: ''));
               });
             },
-            icon: const Icon(Icons.add_circle_outline_rounded, size: 18, color: Color(0xFF0052FF)),
+            icon: const Icon(Icons.add_circle_outline_rounded, size: 18, color: Color(0xFFD4642C)),
             label: const Text(
               'Add Another Link',
-              style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0052FF)),
+              style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFD4642C)),
             ),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              side: const BorderSide(color: Color(0xFF0052FF), width: 1.5),
+              side: const BorderSide(color: Color(0xFFD4642C), width: 1.5),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
@@ -1420,7 +1468,7 @@ class _IndividualOnboardingFormScreenState
                 elevation: 8,
                 menuMaxHeight: 320,
                 borderRadius: BorderRadius.circular(16),
-                icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF0052FF), size: 24),
+                icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFFD4642C), size: 24),
                 items: _networkingStatusOptions.map((st) {
                   final isSel = _networkingStatus == st;
                   return DropdownMenuItem<String>(
@@ -1428,7 +1476,7 @@ class _IndividualOnboardingFormScreenState
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                       decoration: BoxDecoration(
-                        color: isSel ? const Color(0xFFEFF6FF) : Colors.transparent,
+                        color: isSel ? const Color(0xFFFAF6F2) : Colors.transparent,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
@@ -1436,7 +1484,7 @@ class _IndividualOnboardingFormScreenState
                           Icon(
                             isSel ? Icons.check_circle_rounded : Icons.fiber_manual_record_rounded,
                             size: isSel ? 16 : 10,
-                            color: isSel ? const Color(0xFF0052FF) : const Color(0xFFCBD5E1),
+                            color: isSel ? const Color(0xFFD4642C) : const Color(0xFFCBD5E1),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
@@ -1445,7 +1493,7 @@ class _IndividualOnboardingFormScreenState
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
-                                color: isSel ? const Color(0xFF0052FF) : const Color(0xFF0F172A),
+                                color: isSel ? const Color(0xFFD4642C) : const Color(0xFF0F172A),
                               ),
                             ),
                           ),
@@ -1487,7 +1535,7 @@ class _IndividualOnboardingFormScreenState
             ),
             child: Row(
               children: [
-                const Icon(Icons.link_rounded, color: Color(0xFF0052FF), size: 20),
+                const Icon(Icons.link_rounded, color: Color(0xFFD4642C), size: 20),
                 const SizedBox(width: 8),
                 const Text(
                   'mycardshare.com/card/',
@@ -1524,7 +1572,7 @@ class _IndividualOnboardingFormScreenState
                     },
                     style: TextStyle(
                       fontSize: 14,
-                      color: _slugError != null ? const Color(0xFFDC2626) : const Color(0xFF0052FF),
+                      color: _slugError != null ? const Color(0xFFDC2626) : const Color(0xFFD4642C),
                       fontWeight: FontWeight.bold,
                     ),
                     decoration: const InputDecoration(
@@ -1540,7 +1588,7 @@ class _IndividualOnboardingFormScreenState
                   const SizedBox(
                     width: 16,
                     height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0052FF)),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFD4642C)),
                   )
                 else if (_slugError != null)
                   const Icon(Icons.cancel_rounded, color: Color(0xFFDC2626), size: 18)
@@ -1616,7 +1664,7 @@ class _IndividualOnboardingFormScreenState
             hintStyle: const TextStyle(fontSize: 13.5, color: Color(0xFF94A3B8)),
             prefixIcon: Icon(
               icon,
-              color: errorText != null ? const Color(0xFFDC2626) : const Color(0xFF0052FF),
+              color: errorText != null ? const Color(0xFFDC2626) : const Color(0xFFD4642C),
               size: 20,
             ),
             filled: true,
@@ -1638,7 +1686,7 @@ class _IndividualOnboardingFormScreenState
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide(
-                color: errorText != null ? const Color(0xFFDC2626) : const Color(0xFF0052FF),
+                color: errorText != null ? const Color(0xFFDC2626) : const Color(0xFFD4642C),
                 width: 1.8,
               ),
             ),
@@ -1674,14 +1722,14 @@ class _IndividualOnboardingFormScreenState
     return Container(
       width: 96,
       height: 96,
-      color: const Color(0xFFEFF6FF),
+      color: const Color(0xFFFAF6F2),
       alignment: Alignment.center,
       child: Text(
         _fullName.trim().isNotEmpty ? _fullName.trim()[0].toUpperCase() : 'U',
         style: const TextStyle(
           fontSize: 32,
           fontWeight: FontWeight.bold,
-          color: Color(0xFF0052FF),
+          color: Color(0xFFD4642C),
         ),
       ),
     );

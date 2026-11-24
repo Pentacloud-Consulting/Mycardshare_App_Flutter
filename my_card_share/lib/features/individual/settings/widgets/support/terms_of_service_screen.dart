@@ -31,12 +31,12 @@ class SupportTermsOfServiceScreen extends StatelessWidget {
                           width: 40,
                           height: 40,
                           decoration: const BoxDecoration(
-                            color: Color(0xFFF3E8FF),
+                            color: Color(0xFFFFF7ED),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
                             Icons.description_outlined,
-                            color: Color(0xFF9333EA),
+                            color: Color(0xFFD4642C),
                             size: 22,
                           ),
                         ),

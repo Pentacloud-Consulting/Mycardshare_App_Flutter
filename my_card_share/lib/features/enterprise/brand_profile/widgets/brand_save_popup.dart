@@ -62,14 +62,14 @@ class BrandSavePopup extends StatelessWidget {
               height: 72,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF0052FF), Color(0xFF38BDF8)],
+                  colors: const [Color(0xFFD4642C), Color(0xFFE8824E)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF0052FF).withValues(alpha: 0.3),
+                    color: const Color(0xFFD4642C).withValues(alpha: 0.3),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -118,14 +118,14 @@ class BrandSavePopup extends StatelessWidget {
               child: Container(
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF0052FF), Color(0xFF38BDF8)],
+                    colors: const [Color(0xFFD4642C), Color(0xFFE8824E)],
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                   ),
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF0052FF).withValues(alpha: 0.25),
+                      color: const Color(0xFFD4642C).withValues(alpha: 0.25),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),

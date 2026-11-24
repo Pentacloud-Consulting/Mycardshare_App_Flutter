@@ -201,10 +201,10 @@ class _EditLeadSheetState extends State<EditLeadSheet> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0052FF).withValues(alpha: 0.1),
+                        color: const Color(0xFFD4642C).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.edit_note_rounded, color: Color(0xFF0052FF), size: 22),
+                      child: const Icon(Icons.edit_note_rounded, color: Color(0xFFD4642C), size: 22),
                     ),
                     const SizedBox(width: 12),
                     const Text(
@@ -368,7 +368,7 @@ class _EditLeadSheetState extends State<EditLeadSheet> {
                   child: ElevatedButton(
                     onPressed: _isSaving ? null : _handleSave,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0052FF),
+                      backgroundColor: const Color(0xFFD4642C),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       elevation: 0,
@@ -442,7 +442,7 @@ class _EditLeadSheetState extends State<EditLeadSheet> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF0052FF), width: 1.5),
+              borderSide: const BorderSide(color: Color(0xFFD4642C), width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

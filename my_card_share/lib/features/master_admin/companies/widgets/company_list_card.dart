@@ -126,7 +126,6 @@ class CompanyListCard extends StatelessWidget {
               final statusBg = isSuspended
                   ? const Color(0xFFFEF2F2)
                   : (isPending ? const Color(0xFFFFFBEB) : const Color(0xFFECFDF5));
-              const logoBg = Color(0xFF0052FF);
 
               return Column(
                 children: [

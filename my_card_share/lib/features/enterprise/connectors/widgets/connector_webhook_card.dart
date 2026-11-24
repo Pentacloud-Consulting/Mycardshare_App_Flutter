@@ -240,11 +240,11 @@ class _ConnectorWebhookCardState extends State<ConnectorWebhookCard> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: const Color(0xFFFFF7ED),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFBFDBFE)),
+                  border: Border.all(color: const Color(0xFFFED7AA)),
                 ),
-                child: const Icon(Icons.webhook_rounded, color: Color(0xFF0052FF), size: 20),
+                child: const Icon(Icons.webhook_rounded, color: Color(0xFFD4642C), size: 20),
               ),
               const SizedBox(width: 10),
               const Expanded(
@@ -298,7 +298,7 @@ class _ConnectorWebhookCardState extends State<ConnectorWebhookCard> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.copy_rounded, size: 18, color: Color(0xFF0052FF)),
+                  icon: const Icon(Icons.copy_rounded, size: 18, color: Color(0xFFD4642C)),
                   onPressed: _copyWebhookUrl,
                   tooltip: "Copy Webhook URL",
                 ),
@@ -326,7 +326,7 @@ class _ConnectorWebhookCardState extends State<ConnectorWebhookCard> {
                     style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0052FF),
+                    backgroundColor: const Color(0xFFD4642C),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -341,16 +341,16 @@ class _ConnectorWebhookCardState extends State<ConnectorWebhookCard> {
                       ? const SizedBox(
                           width: 14,
                           height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0052FF)),
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFD4642C)),
                         )
-                      : const Icon(Icons.send_rounded, size: 15, color: Color(0xFF0052FF)),
+                      : const Icon(Icons.send_rounded, size: 15, color: Color(0xFFD4642C)),
                   label: Text(
                     _isTesting ? "Testing..." : "Test Webhook",
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0052FF)),
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFFD4642C)),
                   ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF0052FF),
-                    side: const BorderSide(color: Color(0xFF0052FF), width: 1.2),
+                    foregroundColor: const Color(0xFFD4642C),
+                    side: const BorderSide(color: Color(0xFFD4642C), width: 1.2),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),

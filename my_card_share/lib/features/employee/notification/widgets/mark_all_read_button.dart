@@ -18,7 +18,7 @@ class MarkAllReadButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFFEFF6FF),
+            color: const Color(0xFFFFF7ED),
             borderRadius: BorderRadius.circular(16),
           ),
           child: const Text(
@@ -26,7 +26,7 @@ class MarkAllReadButton extends StatelessWidget {
             style: TextStyle(
               fontSize: 12.5,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF0284C7),
+              color: Color(0xFFD4642C),
             ),
           ),
         ),

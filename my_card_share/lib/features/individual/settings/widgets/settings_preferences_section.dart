@@ -52,12 +52,12 @@ class _SettingsPreferencesSectionState extends State<SettingsPreferencesSection>
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE0F2FE),
+                    color: const Color(0xFFFFF7ED),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.notifications_none_rounded,
-                    color: Color(0xFF0284C7),
+                    color: Color(0xFFD4642C),
                     size: 20,
                   ),
                 ),
@@ -71,7 +71,7 @@ class _SettingsPreferencesSectionState extends State<SettingsPreferencesSection>
                 ),
                 trailing: CupertinoSwitch(
                   value: _notificationsEnabled,
-                  activeTrackColor: const Color(0xFF2563EB),
+                  activeTrackColor: const Color(0xFFD4642C),
                   onChanged: (val) {
                     setState(() => _notificationsEnabled = val);
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -111,7 +111,7 @@ class _SettingsPreferencesSectionState extends State<SettingsPreferencesSection>
                 ),
                 trailing: CupertinoSwitch(
                   value: _darkModeEnabled,
-                  activeTrackColor: const Color(0xFF2563EB),
+                  activeTrackColor: const Color(0xFFD4642C),
                   onChanged: (val) {
                     setState(() => _darkModeEnabled = val);
                     ScaffoldMessenger.of(context).showSnackBar(

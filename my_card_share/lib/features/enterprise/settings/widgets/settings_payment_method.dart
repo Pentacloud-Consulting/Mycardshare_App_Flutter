@@ -255,7 +255,7 @@ class _EnterprisePaymentMethodScreenState extends State<EnterprisePaymentMethodS
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF0052FF),
+                                      color: const Color(0xFFD4642C),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: const Text(

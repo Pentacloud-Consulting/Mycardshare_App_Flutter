@@ -57,37 +57,10 @@ class _CompanyLogoAvatarState extends State<CompanyLogoAvatar> {
   void _buildCandidates() {
     final list = <String>[];
 
-    // 1. Explicit logoUrl (if provided and non-empty)
+    // Only display explicit uploaded logoUrl (Firebase Storage, network URL, base64)
+    // Never auto-fetch arbitrary external company logos from third-party APIs
     if (widget.logoUrl != null && widget.logoUrl!.trim().isNotEmpty) {
       list.add(widget.logoUrl!.trim());
-    }
-
-    // Resolve clean domain
-    String cleanDom = '';
-    if (widget.domain != null && widget.domain!.trim().isNotEmpty) {
-      cleanDom = widget.domain!.trim().toLowerCase();
-      cleanDom = cleanDom.replaceAll(RegExp(r'^https?://'), '');
-      cleanDom = cleanDom.replaceAll(RegExp(r'^www\.'), '');
-      if (cleanDom.contains('/')) cleanDom = cleanDom.split('/').first;
-    }
-
-    // If no explicit domain or it is an internal domain like mycardshare.com
-    if (cleanDom.isEmpty || cleanDom.contains('mycardshare.com')) {
-      final sanitized = widget.companyName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
-      if (sanitized.isNotEmpty && sanitized.length >= 2) {
-        cleanDom = '$sanitized.com';
-      }
-    }
-
-    if (cleanDom.isNotEmpty && !cleanDom.contains('mycardshare.com')) {
-      // 2. High-res Clearbit Logo
-      list.add('https://logo.clearbit.com/$cleanDom');
-
-      // 3. Google High-Res Favicon (Super reliable global CDN)
-      list.add('https://www.google.com/s2/favicons?domain=$cleanDom&sz=128');
-
-      // 4. Unavatar API
-      list.add('https://unavatar.io/$cleanDom');
     }
 
     _candidates = list;
@@ -117,9 +90,8 @@ class _CompanyLogoAvatarState extends State<CompanyLogoAvatar> {
 
   @override
   Widget build(BuildContext context) {
-    const brandBlue = Color(0xFF0052FF);
-    final bgColor = widget.backgroundColor ?? brandBlue.withValues(alpha: 0.12);
-    final txtColor = widget.textColor ?? brandBlue;
+    final bgColor = widget.backgroundColor ?? const Color(0xFFFFF7ED);
+    final txtColor = widget.textColor ?? const Color(0xFFD4642C);
     final initials = _getInitials();
 
     Widget content;
@@ -144,7 +116,7 @@ class _CompanyLogoAvatarState extends State<CompanyLogoAvatar> {
             width: widget.size - 8,
             height: widget.size - 8,
             fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) {
+            errorBuilder: (_, _, _) {
               WidgetsBinding.instance.addPostFrameCallback((_) => _onImageError());
               return _buildInitialsWidget(bgColor, txtColor, initials);
             },
@@ -163,7 +135,7 @@ class _CompanyLogoAvatarState extends State<CompanyLogoAvatar> {
         shape: widget.isCircle ? BoxShape.circle : BoxShape.rectangle,
         borderRadius: widget.isCircle ? null : BorderRadius.circular(widget.borderRadius),
         border: Border.all(
-          color: brandBlue.withValues(alpha: 0.2),
+          color: const Color(0xFFFED7AA),
           width: 1.0,
         ),
         boxShadow: [

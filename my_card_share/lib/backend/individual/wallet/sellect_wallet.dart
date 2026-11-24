@@ -84,12 +84,13 @@ class SelectWalletModal extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: const Color(0xFFFAF6F2),
                   borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFD4642C).withValues(alpha: 0.2)),
                 ),
                 child: const Icon(
                   Icons.account_balance_wallet_rounded,
-                  color: Color(0xFF0052FF),
+                  color: Color(0xFFD4642C),
                   size: 24,
                 ),
               ),
@@ -147,9 +148,9 @@ class SelectWalletModal extends StatelessWidget {
               title: 'Google Wallet',
               subtitle: 'Save pass to Android Google Wallet app',
               icon: Icons.account_balance_wallet_rounded,
-              brandColor: const Color(0xFF4285F4),
+              brandColor: const Color(0xFFD4642C),
               badgeText: 'RECOMMENDED',
-              badgeColor: const Color(0xFF4285F4),
+              badgeColor: const Color(0xFFD4642C),
               onTap: () async {
                 final activeCtx = (parentContext != null && parentContext!.mounted) ? parentContext! : context;
                 Navigator.of(context).pop();

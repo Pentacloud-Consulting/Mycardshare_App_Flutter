@@ -41,14 +41,14 @@ class EnterpriseProfileScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF0052FF), Color(0xFF38BDF8)],
+                      colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF0052FF).withValues(alpha: 0.25),
+                        color: const Color(0xFFD4642C).withValues(alpha: 0.25),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -62,7 +62,7 @@ class EnterpriseProfileScreen extends StatelessWidget {
                         backgroundImage: AppImageHelper.getImageProvider(logoUrl),
                         child: (logoUrl == null || logoUrl.isEmpty)
                             ? const Icon(Icons.business_rounded,
-                                color: Color(0xFF0052FF), size: 30)
+                                color: Color(0xFFD4642C), size: 30)
                             : null,
                       ),
                       const SizedBox(width: 14),
@@ -84,7 +84,7 @@ class EnterpriseProfileScreen extends StatelessWidget {
                               '${plan[0].toUpperCase()}${plan.substring(1)} Plan'
                               '${employeeCount > 0 ? ' · $employeeCount Employee${employeeCount == 1 ? '' : 's'}' : ''}',
                               style: const TextStyle(
-                                  fontSize: 13, color: Color(0xFFE0F2FE)),
+                                  fontSize: 13, color: Color(0xFFFFEDD5)),
                             ),
                           ],
                         ),
@@ -138,10 +138,10 @@ class EnterpriseProfileScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: const [
-                    Icon(Icons.login_rounded, color: Color(0xFFE11D48), size: 20),
+                    Icon(Icons.logout_rounded, color: Color(0xFFE11D48), size: 20),
                     SizedBox(width: 8),
                     Text(
-                      "Log Out to Login Screen",
+                      "Log Out",
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,

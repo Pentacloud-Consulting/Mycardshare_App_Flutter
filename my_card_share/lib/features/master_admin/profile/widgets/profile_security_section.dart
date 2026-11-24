@@ -5,6 +5,7 @@ class ProfileSecuritySection extends StatefulWidget {
   final ValueChanged<bool>? onTwoFactorChanged;
   final VoidCallback? onActiveSessionsTap;
   final bool isTwoFactorEnabled;
+  final String activeSessionsCount;
 
   const ProfileSecuritySection({
     super.key,
@@ -12,6 +13,7 @@ class ProfileSecuritySection extends StatefulWidget {
     this.onTwoFactorChanged,
     this.onActiveSessionsTap,
     this.isTwoFactorEnabled = true,
+    this.activeSessionsCount = "3 devices",
   });
 
   @override
@@ -112,12 +114,12 @@ class _ProfileSecuritySectionState extends State<ProfileSecuritySection> {
                       width: 34,
                       height: 34,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
+                        color: const Color(0xFFFFF7ED),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(
                         Icons.shield_outlined,
-                        color: Color(0xFF2563EB),
+                        color: Color(0xFFD4642C),
                         size: 18,
                       ),
                     ),
@@ -180,9 +182,9 @@ class _ProfileSecuritySectionState extends State<ProfileSecuritySection> {
                           ),
                         ),
                       ),
-                      const Text(
-                        "3 devices",
-                        style: TextStyle(
+                      Text(
+                        widget.activeSessionsCount,
+                        style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF64748B),
                           fontWeight: FontWeight.w500,

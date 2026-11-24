@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_style_widgets.dart';
 import '../../../../core/utils/image_url_formatter.dart';
+import '../../../../core/constants/card_templates.dart';
 
 class DashboardHeroCard extends StatelessWidget {
   final String name;
@@ -134,7 +135,7 @@ class DashboardHeroCard extends StatelessWidget {
   Widget _buildAvatarFallback(String userName) {
     final initial = userName.trim().isNotEmpty ? userName.trim()[0].toUpperCase() : 'U';
     return Container(
-      color: const Color(0xFF0052FF),
+      color: const Color(0xFFD4642C),
       child: Center(
         child: Text(
           initial,
@@ -153,25 +154,13 @@ class DashboardHeroCard extends StatelessWidget {
   }
 
   List<Color> _getGradientForTemplate(int index) {
-    switch (index) {
-      case 1:
-        return const [Color(0xFF833AB4), Color(0xFFC13584)];
-      case 2:
-        return const [Color(0xFF0D9488), Color(0xFF2DD4BF)];
-      case 3:
-        return const [Color(0xFF0F172A), Color(0xFF334155)];
-      case 4:
-        return const [Color(0xFFF1F5F9), Color(0xFFE2E8F0)];
-      case 0:
-      default:
-        return const [Color(0xFF0052FF), Color(0xFF38BDF8)];
-    }
+    return CardTemplates.getGradient(index);
   }
 
   @override
   Widget build(BuildContext context) {
     final gradientColors = _getGradientForTemplate(selectedTemplateIndex);
-    final isLightTemplate = selectedTemplateIndex == 4;
+    final isLightTemplate = CardTemplates.isLight(selectedTemplateIndex);
     final textColor = isLightTemplate ? const Color(0xFF0F172A) : Colors.white;
 
     return Container(
@@ -366,7 +355,7 @@ class DashboardHeroCard extends StatelessWidget {
                       onPressed: onViewMyCardTap,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFF0052FF),
+                        foregroundColor: const Color(0xFFD4642C),
                         elevation: 4,
                         shadowColor: Colors.black12,
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -382,14 +371,14 @@ class DashboardHeroCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF0052FF),
+                              color: Color(0xFFD4642C),
                             ),
                           ),
                           SizedBox(width: 4),
                           Icon(
                             Icons.arrow_forward_rounded,
                             size: 16,
-                            color: Color(0xFF0052FF),
+                            color: Color(0xFFD4642C),
                           ),
                         ],
                       ),

@@ -46,8 +46,8 @@ class _MasterAdminLeadsScreenState extends State<MasterAdminLeadsScreen> {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      const Color(0xFF38BDF8).withValues(alpha: 0.22),
-                      const Color(0xFF0052FF).withValues(alpha: 0.08),
+                      const Color(0xFFD4642C).withValues(alpha: 0.12),
+                      const Color(0xFFD4642C).withValues(alpha: 0.03),
                       Colors.transparent,
                     ],
                   ),
@@ -168,14 +168,14 @@ class _MasterAdminAddLeadFabState extends State<_MasterAdminAddLeadFab>
           padding: const EdgeInsets.symmetric(horizontal: 18),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF1D4ED8), Color(0xFF0052FF)],
+              colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(26),
             boxShadow: const [
               BoxShadow(
-                color: Color(0x500052FF),
+                color: Color(0x50D4642C),
                 blurRadius: 16,
                 spreadRadius: 0,
                 offset: Offset(0, 6),

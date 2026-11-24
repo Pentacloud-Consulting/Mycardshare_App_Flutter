@@ -162,10 +162,10 @@ class _EnterpriseRequestsScreenState extends State<EnterpriseRequestsScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF0052FF) : Colors.white,
+          color: isSelected ? const Color(0xFFD4642C) : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? const Color(0xFF0052FF) : const Color(0xFFCBD5E1),
+            color: isSelected ? const Color(0xFFD4642C) : const Color(0xFFCBD5E1),
             width: 1,
           ),
         ),
@@ -218,13 +218,13 @@ class _EnterpriseRequestsScreenState extends State<EnterpriseRequestsScreen> {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundColor: const Color(0xFFEFF6FF),
+                backgroundColor: const Color(0xFFFFF7ED),
                 child: Text(
                   req.applicantName.isNotEmpty ? req.applicantName[0].toUpperCase() : 'E',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF0052FF),
+                    color: Color(0xFFD4642C),
                   ),
                 ),
               ),
@@ -294,7 +294,7 @@ class _EnterpriseRequestsScreenState extends State<EnterpriseRequestsScreen> {
                   icon: const Icon(Icons.check_rounded, size: 16, color: Colors.white),
                   label: const Text("Approve & Add", style: TextStyle(fontWeight: FontWeight.w700)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0052FF),
+                    backgroundColor: const Color(0xFFD4642C),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -319,13 +319,13 @@ class _EnterpriseRequestsScreenState extends State<EnterpriseRequestsScreen> {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
+                color: const Color(0xFFFFF7ED),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.mark_email_read_rounded,
                 size: 36,
-                color: Color(0xFF0052FF),
+                color: Color(0xFFD4642C),
               ),
             ),
             const SizedBox(height: 16),

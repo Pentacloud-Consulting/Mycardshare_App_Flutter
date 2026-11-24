@@ -88,7 +88,7 @@ class AppViewAuthGate {
       return UserModel(
         id: uid.isNotEmpty ? uid : 'admin_master_${email.hashCode}',
         name: name.isNotEmpty ? name : 'System Master Admin',
-        email: email.isNotEmpty ? email : 'admin@mycardshare.com',
+        email: email.isNotEmpty ? email : 'admin@pentcloud.me',
         role: 'master-admin',
       );
     }

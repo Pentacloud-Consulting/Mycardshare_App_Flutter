@@ -28,8 +28,8 @@ class AnalyticsStatsGrid extends StatelessWidget {
           children: [
             _buildStatCard(
               icon: Icons.visibility_rounded,
-              iconBgColor: const Color(0xFFEFF4FF),
-              iconColor: const Color(0xFF0052FF),
+              iconBgColor: const Color(0xFFFFF7ED),
+              iconColor: const Color(0xFFD4642C),
               badgeText: "+${stats.totalCardViews > 0 ? '18%' : '0%'}",
               value: totalViews,
               label: "Total Views",

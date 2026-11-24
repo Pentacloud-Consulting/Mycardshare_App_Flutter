@@ -62,7 +62,7 @@ class ConnectorFailedSyncWarning extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF0052FF),
+                color: Color(0xFFD4642C),
                 decoration: TextDecoration.underline,
               ),
             ),

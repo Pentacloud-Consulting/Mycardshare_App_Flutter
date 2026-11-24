@@ -21,7 +21,7 @@ class VaultCamera extends StatelessWidget {
         width: 56,
         height: 56,
         decoration: BoxDecoration(
-          color: const Color(0xFF0052FF),
+          color: const Color(0xFFD4642C),
           borderRadius: BorderRadius.circular(18),
           boxShadow: const [
             BoxShadow(

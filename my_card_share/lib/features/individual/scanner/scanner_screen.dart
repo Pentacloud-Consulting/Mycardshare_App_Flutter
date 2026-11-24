@@ -9,15 +9,13 @@ class ScannerScreen extends StatelessWidget {
   const ScannerScreen({super.key});
 
   void _openCameraScan(BuildContext context) {
-    Navigator.push(
-      context,
+    Navigator.of(context, rootNavigator: true).push(
       SmoothPageRoute(page: const CameraScanModal()),
     );
   }
 
   void _openVoiceScan(BuildContext context) {
-    Navigator.push(
-      context,
+    Navigator.of(context, rootNavigator: true).push(
       SmoothPageRoute(page: const VoiceScanModal()),
     );
   }
@@ -50,8 +48,8 @@ class ScannerScreen extends StatelessWidget {
                       subtitle: "Snap a photo of a business card — AI extracts the details instantly",
                       icon: Icons.camera_alt_rounded,
                       gradientColors: const [
-                        Color(0xFF00C6FF),
-                        Color(0xFF0072FF),
+                        Color(0xFFD4642C),
+                        Color(0xFFE8824E),
                       ],
                       onTap: () => _openCameraScan(context),
                     ),
@@ -64,8 +62,8 @@ class ScannerScreen extends StatelessWidget {
                       subtitle: "Just say the details out loud — AI turns it into a contact",
                       icon: Icons.mic_rounded,
                       gradientColors: const [
-                        Color(0xFFA855F7),
-                        Color(0xFFEC4899),
+                        Color(0xFFD4642C),
+                        Color(0xFFE8824E),
                       ],
                       onTap: () => _openVoiceScan(context),
                     ),

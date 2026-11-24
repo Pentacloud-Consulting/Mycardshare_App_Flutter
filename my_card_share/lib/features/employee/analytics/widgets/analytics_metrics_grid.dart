@@ -25,8 +25,8 @@ class AnalyticsMetricsGrid extends StatelessWidget {
                 Expanded(
                   child: _buildMetricCard(
                     icon: Icons.remove_red_eye_rounded,
-                    iconBg: const Color(0xFFE0F2FE),
-                    iconColor: const Color(0xFF0284C7),
+                    iconBg: const Color(0xFFFFF7ED),
+                    iconColor: const Color(0xFFD4642C),
                     value: overviewData.totalViewsFormatted,
                     label: "Total Views",
                     badgeText: overviewData.viewsTrend,

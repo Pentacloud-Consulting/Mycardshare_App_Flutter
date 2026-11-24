@@ -19,9 +19,9 @@ class LeadsMetricsRow extends StatelessWidget {
             Expanded(
               child: _buildMetricCard(
                 icon: Icons.people_alt_rounded,
-                iconBg: const Color(0xFFEFF6FF),
-                iconColor: const Color(0xFF0066FF),
-                cardBg: const Color(0xFFF8FAFC),
+                iconBg: const Color(0xFFFAF6F2),
+                iconColor: const Color(0xFFD4642C),
+                cardBg: const Color(0xFFFAF6F2).withValues(alpha: 0.5),
                 label: "Total",
                 value: totalCount,
               ),

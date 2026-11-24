@@ -59,8 +59,8 @@ class WalletCredentialsSection extends StatelessWidget {
               // Row 2: Google Wallet
               _buildWalletRow(
                 icon: Icons.account_balance_wallet_rounded,
-                iconColor: const Color(0xFF2563EB),
-                iconBgColor: const Color(0xFFEFF6FF),
+                iconColor: const Color(0xFFD4642C),
+                iconBgColor: const Color(0xFFFFF7ED),
                 title: "Google Wallet",
                 onTap: onGoogleWalletTap,
               ),

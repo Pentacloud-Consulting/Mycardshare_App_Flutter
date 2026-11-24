@@ -11,7 +11,7 @@ class MasterAdminMoreMenu extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authProvider).user;
     final adminName = user?.name.isNotEmpty == true ? user!.name : "Master Admin";
-    final adminEmail = user?.email.isNotEmpty == true ? user!.email : "admin@mycardshare.com";
+    final adminEmail = user?.email.isNotEmpty == true ? user!.email : "admin@pentcloud.me";
 
     final menuItems = [
       _MasterMenuItem(
@@ -19,7 +19,7 @@ class MasterAdminMoreMenu extends ConsumerWidget {
         title: 'Platform Lead Audit Logs',
         subtitle: 'Audit trail, lead history & compliance logs',
         route: '/master-admin/leads',
-        color: const Color(0xFF0052FF),
+        color: const Color(0xFFD4642C),
       ),
       _MasterMenuItem(
         icon: Icons.campaign_rounded,
@@ -162,7 +162,7 @@ class MasterAdminMoreMenu extends ConsumerWidget {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF2563EB),
+                                  color: const Color(0xFFD4642C),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: const Text(

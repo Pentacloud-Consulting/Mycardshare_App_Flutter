@@ -170,7 +170,6 @@ class ApprovalCardList extends StatelessWidget {
 
         return Column(
           children: requests.map((req) {
-            final initials = req.initials;
             final isCompany = req.type == 'company';
 
             return Container(
@@ -234,10 +233,10 @@ class ApprovalCardList extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                         decoration: BoxDecoration(
-                          color: isCompany ? const Color(0xFFEFF6FF) : const Color(0xFFF0FDF4),
+                          color: isCompany ? const Color(0xFFFFF7ED) : const Color(0xFFF0FDF4),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: isCompany ? const Color(0xFFBFDBFE) : const Color(0xFFBBF7D0),
+                            color: isCompany ? const Color(0xFFFED7AA) : const Color(0xFFBBF7D0),
                           ),
                         ),
                         child: Text(
@@ -245,7 +244,7 @@ class ApprovalCardList extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 10.5,
                             fontWeight: FontWeight.w800,
-                            color: isCompany ? const Color(0xFF0052FF) : const Color(0xFF16A34A),
+                            color: isCompany ? const Color(0xFFD4642C) : const Color(0xFF16A34A),
                           ),
                         ),
                       ),

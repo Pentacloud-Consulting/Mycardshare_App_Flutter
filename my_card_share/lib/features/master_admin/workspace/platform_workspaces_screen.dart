@@ -60,8 +60,8 @@ class _PlatformWorkspacesScreenState extends State<PlatformWorkspacesScreen> {
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        const Color(0xFFDBEAFE).withValues(alpha: 0.7),
-                        const Color(0xFFEFF6FF).withValues(alpha: 0.2),
+                        const Color(0xFFFED7AA).withValues(alpha: 0.5),
+                        const Color(0xFFFFF7ED).withValues(alpha: 0.2),
                         const Color(0xFFF8FAFD).withValues(alpha: 0.0),
                       ],
                     ),

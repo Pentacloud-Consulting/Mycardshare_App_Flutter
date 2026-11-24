@@ -184,7 +184,7 @@ class VaultContactCard extends StatelessWidget {
           ? const Color(0xFF9333EA)
           : isGreen
               ? const Color(0xFF16A34A)
-              : const Color(0xFF0284C7);
+              : const Color(0xFFD4642C);
 
       return Container(
         width: 48,
@@ -213,7 +213,7 @@ class VaultContactCard extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           gradient: const LinearGradient(
-            colors: [Color(0xFF0052FF), Color(0xFF00A3FF)],
+            colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -242,18 +242,18 @@ class VaultContactCard extends StatelessWidget {
       width: 48,
       height: 48,
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF),
+        color: const Color(0xFFFAF6F2),
         borderRadius: BorderRadius.circular(12),
       ),
       child: const Center(
-        child: Icon(Icons.apartment_rounded, color: Color(0xFF0284C7), size: 22),
+        child: Icon(Icons.apartment_rounded, color: Color(0xFFD4642C), size: 22),
       ),
     );
   }
 
   Widget _buildTagBadge(String tag) {
-    Color bg = const Color(0xFFEFF6FF);
-    Color fg = const Color(0xFF0284C7);
+    Color bg = const Color(0xFFFAF6F2);
+    Color fg = const Color(0xFFD4642C);
 
     if (tag.toLowerCase() == 'voice') {
       bg = const Color(0xFFF3E8FF);

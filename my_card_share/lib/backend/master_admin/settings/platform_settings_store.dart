@@ -115,7 +115,7 @@ class PlatformSettingsStore extends ChangeNotifier {
         final data = doc.data();
         final name = data['name'] ?? data['displayName'] ?? 'Master Admin';
         final email = data['email'] ?? '';
-        final isPrimary = doc.id == 'admin_primary' || email == 'admin@mycardshare.com';
+        final isPrimary = doc.id == 'admin_primary' || email == 'admin@pentcloud.me' || email == 'admin@mycardshare.com';
         return PlatformAdminAccount(
           id: doc.id,
           name: name.toString(),
@@ -129,8 +129,8 @@ class PlatformSettingsStore extends ChangeNotifier {
         _superAdmins = [
           PlatformAdminAccount(
             id: current?.uid ?? 'primary_admin',
-            name: current?.displayName ?? 'System Master Admin',
-            email: current?.email ?? 'admin@mycardshare.com',
+            name: current?.displayName ?? 'Platform Master Admin',
+            email: current?.email ?? 'admin@pentcloud.me',
             isPrimary: true,
           ),
         ];

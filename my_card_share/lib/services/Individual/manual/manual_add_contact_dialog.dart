@@ -248,7 +248,7 @@ class _ManualAddContactDialogState extends ConsumerState<ManualAddContactDialog>
                   child: ElevatedButton(
                     onPressed: _isSaving ? null : _saveContact,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0066FF),
+                      backgroundColor: const Color(0xFFD4642C),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       elevation: 0,
@@ -312,7 +312,7 @@ class _ManualAddContactDialogState extends ConsumerState<ManualAddContactDialog>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF0066FF), width: 1.5),
+          borderSide: const BorderSide(color: Color(0xFFD4642C), width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

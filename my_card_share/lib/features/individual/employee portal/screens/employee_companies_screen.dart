@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../auth/back/smart_back_handler.dart';
 import '../../../auth/font style/font_style.dart';
@@ -50,8 +50,8 @@ class EmployeeCompaniesScreen extends StatelessWidget {
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          const Color(0xFFDBEAFE).withValues(alpha: 0.75),
-                          const Color(0xFFEFF6FF).withValues(alpha: 0.25),
+                          const Color(0xFFFED7AA).withValues(alpha: 0.75),
+                          const Color(0xFFFFF7ED).withValues(alpha: 0.25),
                           Colors.white.withValues(alpha: 0.0),
                         ],
                       ),
@@ -63,70 +63,68 @@ class EmployeeCompaniesScreen extends StatelessWidget {
                   child: DefaultTextStyle(
                     style: AppFontStyle.bodyMedium,
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // 1. Company Profile Card Section
-                          CompanyProfileCardSection(
-                            companyName: companyName,
-                            logoInitials: initials.isNotEmpty ? initials : "EW",
-                            planTag: "Enterprise Member",
-                            employeeCount: "Verified Enterprise",
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 1. Company Profile Card Section
+                        CompanyProfileCardSection(
+                          companyName: companyName,
+                          logoInitials: initials.isNotEmpty ? initials : "AR",
+                          planTag: "Enterprise Pro",
+                          employeeCount: "Verified Enterprise",
+                        ),
+
+                        const SizedBox(height: 18),
+
+                        // 2. 2x2 Info Grid Section
+                        CompanyInfoGridSection(
+                          location: "Corporate Office",
+                          website: "${companyName.toLowerCase().replaceAll(' ', '')}.com",
+                          role: role,
+                          joinedDate: "Active Member",
+                        ),
+
+                        const SizedBox(height: 20),
+
+                    // 3. Your Card Branding Section
+                    const CompanyBrandingCardSection(),
+
+                    const SizedBox(height: 20),
+
+                    // 4. Company Links Section
+                    CompanyLinksCardSection(
+                      onVisitWebsite: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Visiting $companyName portal..."),
+                            behavior: SnackBarBehavior.floating,
                           ),
-
-                          const SizedBox(height: 18),
-
-                          // 2. 2x2 Info Grid Section
-                          CompanyInfoGridSection(
-                            location: "Corporate Workspace",
-                            website: companyName.isNotEmpty && companyName != "Enterprise Workspace"
-                                ? "${companyName.toLowerCase().replaceAll(RegExp(r'[^a-zA-Z0-9]'), '')}.com"
-                                : "mycardshare.com",
-                            role: role,
-                            joinedDate: "Active Member",
+                        );
+                      },
+                      onContactAdmin: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Contacting Enterprise Administrator..."),
+                            behavior: SnackBarBehavior.floating,
                           ),
-
-                          const SizedBox(height: 20),
-
-                          // 3. Your Card Branding Section
-                          const CompanyBrandingCardSection(),
-
-                          const SizedBox(height: 20),
-
-                          // 4. Company Links Section
-                          CompanyLinksCardSection(
-                            onVisitWebsite: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text("Visiting $companyName portal..."),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-                            },
-                            onContactAdmin: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("Contacting Enterprise Administrator..."),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-                            },
-                            onViewWorkforce: () {
-                              context.push('/portal/workforce');
-                            },
-                          ),
-
-                          const SizedBox(height: 24),
-                        ],
-                      ),
+                        );
+                      },
+                      onViewWorkforce: () {
+                        context.push('/portal/workforce');
+                      },
                     ),
-                  ),
+
+                    const SizedBox(height: 24),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-        );
+            ),
+          ],
+        ),
+      ),
+    );
       },
     );
   }

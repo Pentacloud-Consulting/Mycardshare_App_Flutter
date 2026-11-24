@@ -32,7 +32,7 @@ class DashboardStatsGrid extends StatelessWidget {
                 child: _buildStatCard(
                   context: context,
                   icon: Icons.business_rounded,
-                  iconColor: const Color(0xFF0052FF),
+                  iconColor: const Color(0xFFD4642C),
                   value: totalCompanies,
                   label: "Total Companies",
                   badgeText: "+12 this month",

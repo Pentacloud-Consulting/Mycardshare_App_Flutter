@@ -70,16 +70,16 @@ class LeadsSearchFilter extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: isDateFiltered ? const Color(0xFF0052FF) : Colors.white,
+              color: isDateFiltered ? const Color(0xFFD4642C) : Colors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isDateFiltered ? const Color(0xFF0052FF) : const Color(0xFFE2E8F0),
+                color: isDateFiltered ? const Color(0xFFD4642C) : const Color(0xFFE2E8F0),
                 width: 1.2,
               ),
               boxShadow: [
                 BoxShadow(
                   color: isDateFiltered
-                      ? const Color(0xFF0052FF).withValues(alpha: 0.25)
+                      ? const Color(0xFFD4642C).withValues(alpha: 0.25)
                       : const Color(0xFF0F172A).withValues(alpha: 0.03),
                   blurRadius: 10,
                   offset: const Offset(0, 3),
@@ -93,7 +93,7 @@ class LeadsSearchFilter extends StatelessWidget {
                   Center(
                     child: Icon(
                       Icons.calendar_today_rounded,
-                      color: isDateFiltered ? Colors.white : const Color(0xFF0052FF),
+                      color: isDateFiltered ? Colors.white : const Color(0xFFD4642C),
                       size: 19,
                     ),
                   ),
@@ -105,7 +105,7 @@ class LeadsSearchFilter extends StatelessWidget {
                         width: 7,
                         height: 7,
                         decoration: const BoxDecoration(
-                          color: Color(0xFF38BDF8),
+                          color: Color(0xFFD4642C),
                           shape: BoxShape.circle,
                         ),
                       ),

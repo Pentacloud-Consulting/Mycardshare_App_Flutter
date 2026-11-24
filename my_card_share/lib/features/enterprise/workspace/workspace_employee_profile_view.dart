@@ -165,8 +165,8 @@ class _WorkspaceEmployeeProfileViewState
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFF38BDF8).withValues(alpha: 0.16),
-                    const Color(0xFF0052FF).withValues(alpha: 0.04),
+                    const Color(0xFFD4642C).withValues(alpha: 0.16),
+                    const Color(0xFFD4642C).withValues(alpha: 0.04),
                     Colors.transparent,
                   ],
                 ),
@@ -185,11 +185,11 @@ class _WorkspaceEmployeeProfileViewState
                   child: _isLoading && _profileData == null
                       ? const Center(
                           child: CircularProgressIndicator(
-                            color: Color(0xFF0052FF),
+                            color: Color(0xFFD4642C),
                           ),
                         )
                       : RefreshIndicator(
-                          color: const Color(0xFF0052FF),
+                          color: const Color(0xFFD4642C),
                           onRefresh: _loadProfileData,
                           child: SingleChildScrollView(
                             physics: const AlwaysScrollableScrollPhysics(),
@@ -388,7 +388,7 @@ class _WorkspaceEmployeeProfileViewState
                     const SnackBar(
                       content: Text("Card link copied to clipboard!"),
                       behavior: SnackBarBehavior.floating,
-                      backgroundColor: Color(0xFF0052FF),
+                      backgroundColor: Color(0xFFD4642C),
                     ),
                   );
                 }
@@ -462,7 +462,7 @@ class _WorkspaceEmployeeProfileViewState
                     SnackBar(
                       content: Text("Invitation resent to ${data.email}!"),
                       behavior: SnackBarBehavior.floating,
-                      backgroundColor: const Color(0xFF0052FF),
+                      backgroundColor: const Color(0xFFD4642C),
                     ),
                   );
                 }
@@ -474,7 +474,7 @@ class _WorkspaceEmployeeProfileViewState
                 child: Row(
                   children: [
                     Icon(Icons.visibility_rounded,
-                        color: Color(0xFF0052FF), size: 18),
+                        color: Color(0xFFD4642C), size: 18),
                     SizedBox(width: 10),
                     Text("View Public Card"),
                   ],
@@ -499,7 +499,7 @@ class _WorkspaceEmployeeProfileViewState
                       _profileData?.isBannerLocked == true
                           ? Icons.lock_open_rounded
                           : Icons.lock_rounded,
-                      color: const Color(0xFF0052FF),
+                      color: const Color(0xFFD4642C),
                       size: 18,
                     ),
                     const SizedBox(width: 10),
@@ -719,7 +719,7 @@ class _WorkspaceEmployeeProfileViewState
                             decoration: BoxDecoration(
                               color: profile.isAdmin
                                   ? const Color(0xFFF3E8FF)
-                                  : const Color(0xFFEFF6FF),
+                                  : const Color(0xFFFFF7ED),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
@@ -729,7 +729,7 @@ class _WorkspaceEmployeeProfileViewState
                                 fontWeight: FontWeight.w700,
                                 color: profile.isAdmin
                                     ? const Color(0xFF9333EA)
-                                    : const Color(0xFF0052FF),
+                                    : const Color(0xFFD4642C),
                               ),
                             ),
                           ),
@@ -809,7 +809,7 @@ class _WorkspaceEmployeeProfileViewState
           fontWeight: FontWeight.w900,
           color: profile.isAdmin
               ? const Color(0xFF9333EA)
-              : const Color(0xFF0052FF),
+              : const Color(0xFFD4642C),
         ),
       ),
     );
@@ -842,7 +842,7 @@ class _WorkspaceEmployeeProfileViewState
         return const [Color(0xFF64748B), Color(0xFF94A3B8)];
       case 0:
       default:
-        return const [Color(0xFF0052FF), Color(0xFF38BDF8)];
+        return const [Color(0xFFD4642C), Color(0xFFD4642C)];
     }
   }
 
@@ -858,7 +858,7 @@ class _WorkspaceEmployeeProfileViewState
             height: 50,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF0052FF), Color(0xFF00A3FF)],
+                colors: [Color(0xFFD4642C), Color(0xFF00A3FF)],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               ),
@@ -911,7 +911,7 @@ class _WorkspaceEmployeeProfileViewState
             height: 50,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF38BDF8), Color(0xFF0284C7)],
+                colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               ),
@@ -934,7 +934,7 @@ class _WorkspaceEmployeeProfileViewState
                     SnackBar(
                       content: Text("Copied card link for ${profile.name}!"),
                       behavior: SnackBarBehavior.floating,
-                      backgroundColor: const Color(0xFF0284C7),
+                      backgroundColor: const Color(0xFFE8824E),
                     ),
                   );
                 }
@@ -1162,7 +1162,7 @@ class _WorkspaceEmployeeProfileViewState
                   child: const Center(
                     child: Icon(
                       Icons.edit_note_rounded,
-                      color: Color(0xFF0284C7),
+                      color: Color(0xFFE8824E),
                       size: 22,
                     ),
                   ),
@@ -1217,7 +1217,7 @@ class _WorkspaceEmployeeProfileViewState
               child: Row(
                 children: [
                   const Icon(Icons.email_outlined,
-                      size: 16, color: Color(0xFF0284C7)),
+                      size: 16, color: Color(0xFFE8824E)),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -1372,8 +1372,8 @@ class _WorkspaceEmployeeProfileViewState
             title: "Views",
             value: "${profile.views}",
             icon: Icons.visibility_rounded,
-            iconColor: const Color(0xFF0052FF),
-            bgColor: const Color(0xFFEFF6FF),
+            iconColor: const Color(0xFFD4642C),
+            bgColor: const Color(0xFFFFF7ED),
           ),
         ),
         const SizedBox(width: 10),
@@ -1584,7 +1584,7 @@ class _WorkspaceEmployeeProfileViewState
                     : "No email provided",
                 actionWidget: profile.email.isNotEmpty
                     ? const Icon(Icons.arrow_outward_rounded,
-                        size: 16, color: Color(0xFF0052FF))
+                        size: 16, color: Color(0xFFD4642C))
                     : null,
               ),
             ),
@@ -1606,7 +1606,7 @@ class _WorkspaceEmployeeProfileViewState
                       isPlaceholder: !profile.hasPhone,
                       actionWidget: profile.hasPhone
                           ? const Icon(Icons.call_rounded,
-                              size: 16, color: Color(0xFF0052FF))
+                              size: 16, color: Color(0xFFD4642C))
                           : null,
                     ),
                   ),
@@ -1624,7 +1624,7 @@ class _WorkspaceEmployeeProfileViewState
                       isPlaceholder: !profile.hasWebsite,
                       actionWidget: profile.hasWebsite
                           ? const Icon(Icons.open_in_new_rounded,
-                              size: 16, color: Color(0xFF0052FF))
+                              size: 16, color: Color(0xFFD4642C))
                           : null,
                     ),
                   ),
@@ -1705,7 +1705,7 @@ class _WorkspaceEmployeeProfileViewState
   }
 
   Widget _buildSocialPill(SocialLinkItem item) {
-    Widget iconWidget = const Icon(Icons.link_rounded, size: 14, color: Color(0xFF0052FF));
+    Widget iconWidget = const Icon(Icons.link_rounded, size: 14, color: Color(0xFFD4642C));
 
     final platform = item.platform.toLowerCase();
     if (platform.contains('linkedin')) {
@@ -1776,7 +1776,7 @@ class _WorkspaceEmployeeProfileViewState
             Row(
               children: [
                 const Icon(Icons.link_rounded,
-                    size: 20, color: Color(0xFF0052FF)),
+                    size: 20, color: Color(0xFFD4642C)),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
@@ -1796,7 +1796,7 @@ class _WorkspaceEmployeeProfileViewState
                         style: const TextStyle(
                           fontSize: 13.5,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF0052FF),
+                          color: Color(0xFFD4642C),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -1840,7 +1840,7 @@ class _WorkspaceEmployeeProfileViewState
               height: 36,
               decoration: BoxDecoration(
                 color: profile.isBannerLocked
-                    ? const Color(0xFFEFF6FF)
+                    ? const Color(0xFFFFF7ED)
                     : const Color(0xFFF1F5F9),
                 shape: BoxShape.circle,
               ),
@@ -1850,7 +1850,7 @@ class _WorkspaceEmployeeProfileViewState
                       ? Icons.lock_rounded
                       : Icons.lock_open_rounded,
                   color: profile.isBannerLocked
-                      ? const Color(0xFF0052FF)
+                      ? const Color(0xFFD4642C)
                       : const Color(0xFF64748B),
                   size: 18,
                 ),
@@ -1877,7 +1877,7 @@ class _WorkspaceEmployeeProfileViewState
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       color: profile.isBannerLocked
-                          ? const Color(0xFF0052FF)
+                          ? const Color(0xFFD4642C)
                           : const Color(0xFF64748B),
                     ),
                   ),
@@ -1886,7 +1886,7 @@ class _WorkspaceEmployeeProfileViewState
             ),
             Switch(
               value: profile.isBannerLocked,
-              activeThumbColor: const Color(0xFF0052FF),
+              activeThumbColor: const Color(0xFFD4642C),
               onChanged: (val) async {
                 await WorkspaceEmployeeViewService.instance.toggleBannerLock(
                   enterpriseUid: profile.enterpriseUid,
@@ -1939,11 +1939,11 @@ class _WorkspaceEmployeeProfileViewState
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
           color:
-              isExpanded ? const Color(0xFFEFF6FF) : const Color(0xFFF8FAFC),
+              isExpanded ? const Color(0xFFFFF7ED) : const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color:
-                isExpanded ? const Color(0xFFBFDBFE) : const Color(0xFFE2E8F0),
+                isExpanded ? const Color(0xFFFED7AA) : const Color(0xFFE2E8F0),
             width: 1,
           ),
         ),
@@ -1956,7 +1956,7 @@ class _WorkspaceEmployeeProfileViewState
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
                 color: isExpanded
-                    ? const Color(0xFF0052FF)
+                    ? const Color(0xFFD4642C)
                     : const Color(0xFF64748B),
               ),
             ),
@@ -1966,7 +1966,7 @@ class _WorkspaceEmployeeProfileViewState
                   ? Icons.keyboard_arrow_up_rounded
                   : Icons.keyboard_arrow_down_rounded,
               color: isExpanded
-                  ? const Color(0xFF0052FF)
+                  ? const Color(0xFFD4642C)
                   : const Color(0xFF64748B),
               size: 15,
             ),
@@ -1988,7 +1988,7 @@ class _WorkspaceEmployeeProfileViewState
       crossAxisAlignment:
           isMultiLine ? CrossAxisAlignment.start : CrossAxisAlignment.center,
       children: [
-        Icon(icon, size: 20, color: const Color(0xFF0052FF)),
+        Icon(icon, size: 20, color: const Color(0xFFD4642C)),
         const SizedBox(width: 14),
         Expanded(
           child: Column(

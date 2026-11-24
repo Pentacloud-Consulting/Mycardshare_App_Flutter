@@ -23,9 +23,9 @@ class IndividualsStatChipsSection extends StatelessWidget {
           _buildStatChip(
             label: "Total",
             count: _formatNumber(totalCount),
-            bgColor: const Color(0xFFEFF6FF), // Blue tint
-            textColor: const Color(0xFF1D4ED8),
-            borderColor: const Color(0xFFBFDBFE),
+            bgColor: const Color(0xFFFFF7ED), // Warm Cream tint
+            textColor: const Color(0xFFD4642C),
+            borderColor: const Color(0xFFFED7AA),
           ),
           const SizedBox(width: 8),
 

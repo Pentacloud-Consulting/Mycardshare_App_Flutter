@@ -22,14 +22,50 @@ class _EmployeeWorkforceScreenState extends State<EmployeeWorkforceScreen> {
   String _searchQuery = "";
   String _selectedFilter = "All";
 
+  @override
+  void initState() {
+    super.initState();
+    // Listen for changes from EmployeeHomeBackendService so that when
+    // enterpriseUid is resolved (possibly after an async Firestore load),
+    // the workforce stream is rebuilt and teammates appear.
+    EmployeeHomeBackendService.instance.addListener(_onBackendChanged);
+    // Trigger a data load in case enterpriseUid isn't set yet.
+    if (EmployeeHomeBackendService.instance.enterpriseUid == null ||
+        EmployeeHomeBackendService.instance.enterpriseUid!.isEmpty) {
+      EmployeeHomeBackendService.instance.loadEmployeeHomeData();
+    }
+  }
+
+  @override
+  void dispose() {
+    EmployeeHomeBackendService.instance.removeListener(_onBackendChanged);
+    super.dispose();
+  }
+
+  void _onBackendChanged() {
+    if (mounted) setState(() {});
+  }
+
   Stream<List<TeammateModel>> _getRealTeammatesStream() {
     final empBackend = EmployeeHomeBackendService.instance;
     final user = FirebaseAuth.instance.currentUser;
+
+    // Prefer the enterpriseUid stored in EmployeeHomeBackendService — this is
+    // the UID of the *enterprise workspace*, not the logged-in employee's own UID.
+    // Only fall back to EnterpriseProfileStore (admin path) or the current user's
+    // UID when the backend hasn't resolved the enterprise yet.
     final entUid = (empBackend.enterpriseUid != null && empBackend.enterpriseUid!.trim().isNotEmpty)
         ? empBackend.enterpriseUid!.trim()
-        : (EnterpriseProfileStore.instance.currentProfile?.uid ?? user?.uid ?? '');
+        : EnterpriseProfileStore.instance.currentProfile?.uid ?? '';
 
     if (entUid.isEmpty) {
+      // Enterprise UID not yet loaded — trigger a reload in background and
+      // return an empty stream so the UI shows the loading/empty state.
+      if (user != null) {
+        Future.microtask(() async {
+          await empBackend.loadEmployeeHomeData();
+        });
+      }
       return const Stream.empty();
     }
 
@@ -41,7 +77,7 @@ class _EmployeeWorkforceScreenState extends State<EmployeeWorkforceScreen> {
         .map((snapshot) {
       final List<TeammateModel> list = [];
       const colors = [
-        Color(0xFF0052FF),
+        Color(0xFFD4642C),
         Color(0xFF8B5CF6),
         Color(0xFF0D9488),
         Color(0xFFD97706),
@@ -142,8 +178,8 @@ class _EmployeeWorkforceScreenState extends State<EmployeeWorkforceScreen> {
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          const Color(0xFFDBEAFE).withValues(alpha: 0.75),
-                          const Color(0xFFEFF6FF).withValues(alpha: 0.25),
+                          const Color(0xFFFED7AA).withValues(alpha: 0.75),
+                          const Color(0xFFFFF7ED).withValues(alpha: 0.25),
                           Colors.white.withValues(alpha: 0.0),
                         ],
                       ),
@@ -195,7 +231,7 @@ class _EmployeeWorkforceScreenState extends State<EmployeeWorkforceScreen> {
                                   behavior: SnackBarBehavior.floating,
                                   action: SnackBarAction(
                                     label: "Open Card",
-                                    textColor: const Color(0xFF38BDF8),
+                                    textColor: const Color(0xFFD4642C),
                                     onPressed: () {
                                       context.push('/card/${member.slug}');
                                     },

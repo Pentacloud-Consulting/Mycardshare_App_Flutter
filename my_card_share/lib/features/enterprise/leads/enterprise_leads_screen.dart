@@ -17,27 +17,8 @@ import '../../../backend/enterprise/home_backend/leads_service.dart';
 class EnterpriseLeadsScreen extends StatefulWidget {
   const EnterpriseLeadsScreen({super.key});
 
-  @override
-  State<EnterpriseLeadsScreen> createState() => _EnterpriseLeadsScreenState();
-}
-
-class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = "";
-  String _selectedFilter = "All";
-  DateTimeRange? _selectedDateRange;
-
-  @override
-  void initState() {
-    super.initState();
-    // Dual-sync: pull web-captured MongoDB leads in the background
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null) {
-      EnterpriseLeadsService.instance.syncLeadsFromApi(uid);
-    }
-  }
-
-  Future<void> _exportCsv() async {
+  /// Static export method triggered from the Top Nav or within the screen
+  static Future<void> exportLeadsCsv(BuildContext context) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
@@ -50,7 +31,6 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
           .get();
 
       if (snap.docs.isEmpty) {
-        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("No leads available to export."),
@@ -87,13 +67,32 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
       );
       await Share.shareXFiles([xFile], text: 'Exported Enterprise Leads');
     } catch (e) {
-      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Failed to export leads: $e"),
           behavior: SnackBarBehavior.floating,
         ),
       );
+    }
+  }
+
+  @override
+  State<EnterpriseLeadsScreen> createState() => _EnterpriseLeadsScreenState();
+}
+
+class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = "";
+  String _selectedFilter = "All";
+  DateTimeRange? _selectedDateRange;
+
+  @override
+  void initState() {
+    super.initState();
+    // Dual-sync: pull web-captured MongoDB leads in the background
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      EnterpriseLeadsService.instance.syncLeadsFromApi(uid);
     }
   }
 
@@ -120,14 +119,14 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF0052FF),
+              primary: Color(0xFFD4642C),
               onPrimary: Colors.white,
               surface: Colors.white,
               onSurface: Color(0xFF0F172A),
             ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF0052FF),
+                foregroundColor: const Color(0xFFD4642C),
                 textStyle: const TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
@@ -211,21 +210,21 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0052FF).withValues(alpha: 0.1),
+                        color: const Color(0xFFFFF7ED),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFF0052FF).withValues(alpha: 0.3)),
+                        border: Border.all(color: const Color(0xFFFED7AA)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: const [
-                          Icon(Icons.edit_rounded, size: 14, color: Color(0xFF0052FF)),
+                          Icon(Icons.edit_rounded, size: 14, color: Color(0xFFD4642C)),
                           SizedBox(width: 4),
                           Text(
                             "Edit",
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF0052FF),
+                              color: Color(0xFFD4642C),
                             ),
                           ),
                         ],
@@ -282,8 +281,8 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
                       icon: const Icon(Icons.edit_outlined, size: 18),
                       label: const Text("Edit Lead"),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF0052FF),
-                        side: const BorderSide(color: Color(0xFF0052FF)),
+                        foregroundColor: const Color(0xFFD4642C),
+                        side: const BorderSide(color: Color(0xFFD4642C)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -301,7 +300,7 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
                       icon: const Icon(Icons.sync_rounded, size: 18),
                       label: const Text("Push to CRM"),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0052FF),
+                        backgroundColor: const Color(0xFFD4642C),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
@@ -356,7 +355,7 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
                 // 2. Primary "+ Add Lead" Floating Action Button
                 FloatingActionButton.extended(
                   heroTag: "enterprise_add_lead_fab",
-                  backgroundColor: const Color(0xFF0052FF),
+                  backgroundColor: const Color(0xFFD4642C),
                   foregroundColor: Colors.white,
                   elevation: 4,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -378,7 +377,7 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
       ),
       body: Stack(
         children: [
-          // Top-Right Soft Baby-Blue Gradient Blob
+          // Top-Right Ambient Warm Orange Gradient Blob
           Positioned(
             top: -60,
             right: -60,
@@ -389,8 +388,8 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFF38BDF8).withValues(alpha: 0.18),
-                    const Color(0xFF0052FF).withValues(alpha: 0.05),
+                    const Color(0xFFFED7AA).withValues(alpha: 0.35),
+                    const Color(0xFFFFF7ED).withValues(alpha: 0.15),
                     Colors.transparent,
                   ],
                 ),
@@ -405,36 +404,6 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header Row: Title & Download CSV
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        "Lead Center",
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: "Export CSV",
-                        onPressed: _exportCsv,
-                        style: IconButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: const Color(0xFF0052FF),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            side: const BorderSide(color: Color(0xFFE2E8F0)),
-                          ),
-                        ),
-                        icon: const Icon(Icons.file_download_outlined, size: 20),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-
                   // 1. Real Lead Stats Row (Total, This Week, Sync Failed)
                   StreamBuilder<EnterpriseLeadStats>(
                     stream: EnterpriseLeadsService.instance.streamLeadStats(uid, _selectedDateRange),
@@ -474,21 +443,21 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFF4FF),
+                        color: const Color(0xFFFFF7ED),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFBFDBFE), width: 1.2),
+                        border: Border.all(color: const Color(0xFFFED7AA), width: 1.2),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.date_range_rounded, size: 16, color: Color(0xFF0052FF)),
+                          const Icon(Icons.date_range_rounded, size: 16, color: Color(0xFFD4642C)),
                           const SizedBox(width: 8),
                           Text(
                             "${_formatDate(_selectedDateRange!.start)} – ${_formatDate(_selectedDateRange!.end)}",
                             style: const TextStyle(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF0052FF),
+                              color: Color(0xFFD4642C),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -498,10 +467,10 @@ class _EnterpriseLeadsScreenState extends State<EnterpriseLeadsScreen> {
                             child: Container(
                               padding: const EdgeInsets.all(2),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF0052FF).withValues(alpha: 0.12),
+                                color: const Color(0xFFD4642C).withValues(alpha: 0.12),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.close_rounded, size: 14, color: Color(0xFF0052FF)),
+                              child: const Icon(Icons.close_rounded, size: 14, color: Color(0xFFD4642C)),
                             ),
                           ),
                         ],

@@ -62,12 +62,12 @@ class SubscriptionBillingToggle extends StatelessWidget {
                 duration: const Duration(milliseconds: 200),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: isAnnual ? const Color(0xFF0066FF) : Colors.transparent,
+                  color: isAnnual ? const Color(0xFFD4642C) : Colors.transparent,
                   borderRadius: BorderRadius.circular(22),
                   boxShadow: isAnnual
                       ? const [
                           BoxShadow(
-                            color: Color(0x330066FF),
+                            color: Color(0x33D4642C),
                             blurRadius: 8,
                             offset: Offset(0, 3),
                           ),

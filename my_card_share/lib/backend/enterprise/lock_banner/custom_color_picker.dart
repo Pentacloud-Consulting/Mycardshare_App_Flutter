@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 /// Returns the selected [Color] or `null` if cancelled.
 Future<Color?> showCustomColorPicker(
   BuildContext context, {
-  Color initialColor = const Color(0xFF0052FF),
+  Color initialColor = const Color(0xFFD4642C),
 }) {
   return showModalBottomSheet<Color>(
     context: context,
@@ -30,7 +30,7 @@ class _CustomColorPickerSheetState extends State<_CustomColorPickerSheet> {
   late TextEditingController _hexController;
 
   static const List<Color> _presetSwatches = [
-    Color(0xFF0052FF), // Electric Blue
+    Color(0xFFD4642C), // Electric Blue
     Color(0xFF7C3AED), // Purple Accent
     Color(0xFF0D9488), // Teal Modern
     Color(0xFF059669), // Emerald Green
@@ -355,7 +355,7 @@ class _CustomColorPickerSheetState extends State<_CustomColorPickerSheet> {
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: const BorderSide(
-                                color: Color(0xFF0052FF),
+                                color: Color(0xFFD4642C),
                                 width: 2,
                               ),
                             ),
@@ -378,7 +378,7 @@ class _CustomColorPickerSheetState extends State<_CustomColorPickerSheet> {
                       child: ElevatedButton(
                         onPressed: () => Navigator.of(context).pop(_currentColor),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0052FF),
+                          backgroundColor: const Color(0xFFD4642C),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(

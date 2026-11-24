@@ -16,7 +16,7 @@ class LeadsFilterChips extends StatelessWidget {
       {"label": "All", "dotColor": null, "hasChevron": false},
       {"label": "By Employee", "dotColor": null, "hasChevron": true},
       {"label": "New", "dotColor": const Color(0xFF10B981), "hasChevron": false},
-      {"label": "CRM Synced", "dotColor": const Color(0xFF0052FF), "hasChevron": false},
+      {"label": "CRM Synced", "dotColor": const Color(0xFFD4642C), "hasChevron": false},
       {"label": "Failed", "dotColor": const Color(0xFFEF4444), "hasChevron": false},
     ];
 
@@ -35,7 +35,7 @@ class LeadsFilterChips extends StatelessWidget {
               margin: const EdgeInsets.only(right: 8),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFF0052FF) : Colors.white,
+                color: isSelected ? const Color(0xFFD4642C) : Colors.white,
                 borderRadius: BorderRadius.circular(20),
                 border: isSelected
                     ? null
@@ -43,7 +43,7 @@ class LeadsFilterChips extends StatelessWidget {
                 boxShadow: isSelected
                     ? [
                         BoxShadow(
-                          color: const Color(0xFF0052FF).withValues(alpha: 0.3),
+                          color: const Color(0xFFD4642C).withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),

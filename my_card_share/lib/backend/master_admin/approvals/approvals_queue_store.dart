@@ -62,7 +62,6 @@ class ApprovalsQueueStore extends ChangeNotifier {
           .toList();
 
   final Set<String> _locallyResolvedIds = {};
-  final Set<String> _locallyResolvedTitles = {};
   bool _initializedPrefs = false;
 
   ApprovalsQueueStore._internal() {
@@ -305,6 +304,45 @@ class ApprovalsQueueStore extends ChangeNotifier {
         final adminUid = (entData['adminUid'] ?? entData['uid'] ?? entData['userId'] ?? item.id).toString();
         final adminEmail = (entData['adminEmail'] ?? entData['email'] ?? item.email).toString().trim().toLowerCase();
 
+        // 0. Persist immediately to SharedPreferences for same-device instant approval
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          final resolved = prefs.getStringList('master_admin_resolved_ids') ?? [];
+          if (!resolved.contains(item.id)) resolved.add(item.id);
+          if (adminUid.isNotEmpty && !resolved.contains(adminUid)) resolved.add(adminUid);
+          await prefs.setStringList('master_admin_resolved_ids', resolved);
+
+          final appEmails = prefs.getStringList('master_admin_approved_emails') ?? [];
+          if (adminEmail.isNotEmpty && !appEmails.contains(adminEmail)) appEmails.add(adminEmail);
+          final itemEmail = item.email.trim().toLowerCase();
+          if (itemEmail.isNotEmpty && !appEmails.contains(itemEmail)) appEmails.add(itemEmail);
+          await prefs.setStringList('master_admin_approved_emails', appEmails);
+
+          final appUids = prefs.getStringList('master_admin_approved_uids') ?? [];
+          if (!appUids.contains(item.id)) appUids.add(item.id);
+          if (adminUid.isNotEmpty && !appUids.contains(adminUid)) appUids.add(adminUid);
+          await prefs.setStringList('master_admin_approved_uids', appUids);
+        } catch (_) {}
+
+        // 0b. Universally persist to platform_config/approved_enterprises
+        try {
+          final emailsToAdd = <String>[
+            if (adminEmail.isNotEmpty) adminEmail,
+            if (item.email.trim().isNotEmpty) item.email.trim().toLowerCase(),
+          ];
+          final uidsToAdd = <String>[
+            item.id,
+            if (adminUid.isNotEmpty) adminUid,
+          ];
+          await _firestore.collection('platform_config').doc('approved_enterprises').set({
+            'approvedUids': FieldValue.arrayUnion(uidsToAdd),
+            'approvedEmails': FieldValue.arrayUnion(emailsToAdd),
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        } catch (e) {
+          debugPrint('[ApprovalsQueueStore] platform_config/approved_enterprises write note: $e');
+        }
+
         // 1. Unlock enterprise in Firestore enterprises collection
         try {
           await _firestore.collection('enterprises').doc(item.id).set({
@@ -438,11 +476,36 @@ class ApprovalsQueueStore extends ChangeNotifier {
           debugPrint('[ApprovalsQueueStore] users doc update note: $e');
         }
 
+        // 3b. Register in approved_organizations collection (guaranteed global lookup)
+        try {
+          if (adminEmail.isNotEmpty) {
+            await _firestore.collection('approved_organizations').doc(adminEmail).set({
+              'approved': true,
+              'status': 'active',
+              'approvalStatus': 'approved',
+              'adminEmail': adminEmail,
+              'companyId': item.id,
+              'companyName': item.title,
+              'approvedAt': FieldValue.serverTimestamp(),
+            }, SetOptions(merge: true));
+          }
+          await _firestore.collection('approved_organizations').doc(item.id).set({
+            'approved': true,
+            'status': 'active',
+            'approvalStatus': 'approved',
+            'adminEmail': adminEmail,
+            'companyId': item.id,
+            'companyName': item.title,
+            'approvedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        } catch (_) {}
+
         // 4. Notify Next.js live backend sync API (/api/sync/master-admin)
         try {
           await MasterApprovalSyncService.approveCompany(
             companyId: item.id,
             action: 'approve',
+            adminUserId: adminUid,
           );
         } catch (apiErr) {
           debugPrint('[ApprovalsQueueStore] MasterApprovalSyncService error: $apiErr');

@@ -65,9 +65,9 @@ class _AnalyticsDailyChartState extends State<AnalyticsDailyChart> {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _buildLegendItem(color: const Color(0xFF0066FF), label: "Views"),
+                      _buildLegendItem(color: const Color(0xFFD4642C), label: "Views"),
                       const SizedBox(width: 12),
-                      _buildLegendItem(color: const Color(0xFF60A5FA), label: "Leads"),
+                      _buildLegendItem(color: const Color(0xFFFB923C), label: "Leads"),
                     ],
                   ),
                 ],
@@ -175,18 +175,18 @@ class _AnalyticsDailyChartState extends State<AnalyticsDailyChart> {
                                                       width: 7,
                                                       height: viewsH,
                                                       decoration: BoxDecoration(
-                                                        color: isHovered ? const Color(0xFF1D4ED8) : const Color(0xFF0066FF),
+                                                        color: isHovered ? const Color(0xFFC05621) : const Color(0xFFD4642C),
                                                         borderRadius: BorderRadius.circular(4),
                                                       ),
                                                     ),
                                                     const SizedBox(width: 2),
-                                                    // Leads Bar (Lighter Blue)
+                                                    // Leads Bar (Warm Amber)
                                                     AnimatedContainer(
                                                       duration: const Duration(milliseconds: 300),
                                                       width: 7,
                                                       height: leadsH,
                                                       decoration: BoxDecoration(
-                                                        color: isHovered ? const Color(0xFF3B82F6) : const Color(0xFF60A5FA),
+                                                        color: isHovered ? const Color(0xFFF97316) : const Color(0xFFFB923C),
                                                         borderRadius: BorderRadius.circular(4),
                                                       ),
                                                     ),

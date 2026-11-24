@@ -31,12 +31,12 @@ class SupportPrivacyPolicyScreen extends StatelessWidget {
                           width: 40,
                           height: 40,
                           decoration: const BoxDecoration(
-                            color: Color(0xFFDCFCE7),
+                            color: Color(0xFFFFF7ED),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
                             Icons.verified_user_outlined,
-                            color: Color(0xFF16A34A),
+                            color: Color(0xFFD4642C),
                             size: 22,
                           ),
                         ),
@@ -56,7 +56,7 @@ class SupportPrivacyPolicyScreen extends StatelessWidget {
                               SizedBox(height: 2),
                               Text(
                                 "GDPR & CCPA Compliant • Last Updated: Sept 2026",
-                                style: TextStyle(fontSize: 11.5, color: Color(0xFF16A34A), fontWeight: FontWeight.bold),
+                                style: TextStyle(fontSize: 11.5, color: Color(0xFFD4642C), fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),

@@ -42,7 +42,9 @@ class MasterApprovalSyncService {
         await firestore.collection('enterprises').doc(companyId).set({
           'approvalStatus': newStatus,
           'status': newEnterpriseStatus,
+          'isSuspended': action == 'approve' ? false : true,
           'updatedAt': FieldValue.serverTimestamp(),
+          if (action == 'approve') 'approvedAt': FieldValue.serverTimestamp(),
           if (reason != null && reason.isNotEmpty) 'rejectionReason': reason,
         }, SetOptions(merge: true));
 
@@ -50,9 +52,21 @@ class MasterApprovalSyncService {
         await firestore.collection('companies').doc(companyId).set({
           'approvalStatus': newStatus,
           'status': newEnterpriseStatus,
+          'isSuspended': action == 'approve' ? false : true,
           'updatedAt': FieldValue.serverTimestamp(),
+          if (action == 'approve') 'approvedAt': FieldValue.serverTimestamp(),
           if (reason != null && reason.isNotEmpty) 'rejectionReason': reason,
         }, SetOptions(merge: true));
+
+        // Also update users collection
+        try {
+          await firestore.collection('users').doc(companyId).set({
+            'approvalStatus': newStatus,
+            'status': newEnterpriseStatus,
+            'isSuspended': action == 'approve' ? false : true,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        } catch (_) {}
 
         debugPrint('[MasterApprovalSyncService] ✅ Firestore $action applied to $companyId');
       } catch (fsErr) {

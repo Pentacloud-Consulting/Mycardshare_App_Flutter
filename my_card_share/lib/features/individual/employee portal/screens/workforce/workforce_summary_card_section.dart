@@ -37,14 +37,14 @@ class WorkforceSummaryCardSection extends StatelessWidget {
             height: 44,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF0052FF), Color(0xFF38BDF8)],
+                colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF0052FF).withValues(alpha: 0.25),
+                  color: const Color(0xFFD4642C).withValues(alpha: 0.25),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -95,16 +95,16 @@ class WorkforceSummaryCardSection extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
+              color: const Color(0xFFFFF7ED),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFBFDBFE)),
+              border: Border.all(color: const Color(0xFFFED7AA)),
             ),
             child: const Text(
               "DIRECTORY",
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF0052FF),
+                color: Color(0xFFD4642C),
                 letterSpacing: 0.5,
               ),
             ),

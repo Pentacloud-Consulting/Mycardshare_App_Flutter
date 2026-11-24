@@ -16,12 +16,12 @@ class SubscriptionPricingCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F7FF),
+        color: const Color(0xFFFFF9F5),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFF0066FF), width: 1.6),
+        border: Border.all(color: const Color(0xFFD4642C), width: 1.6),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x120066FF),
+            color: Color(0x18D4642C),
             blurRadius: 14,
             offset: Offset(0, 4),
           ),
@@ -77,12 +77,12 @@ class SubscriptionPricingCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF3B82F6), Color(0xFF2563EB)],
+                  colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
                 ),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x202563EB),
+                    color: Color(0x25D4642C),
                     blurRadius: 6,
                     offset: Offset(0, 2),
                   ),

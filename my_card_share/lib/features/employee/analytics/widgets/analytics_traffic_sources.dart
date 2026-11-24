@@ -7,7 +7,7 @@ class AnalyticsTrafficSources extends StatelessWidget {
     {
       'name': 'qr_scan',
       'percentage': 72,
-      'color': Color(0xFF0066FF),
+      'color': Color(0xFFD4642C),
     },
     {
       'name': 'Direct Link',

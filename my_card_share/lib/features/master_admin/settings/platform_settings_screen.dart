@@ -101,7 +101,7 @@ class _PlatformSettingsScreenState extends State<PlatformSettingsScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0052FF),
+              backgroundColor: const Color(0xFFD4642C),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () {
@@ -166,7 +166,7 @@ class _PlatformSettingsScreenState extends State<PlatformSettingsScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0052FF),
+              backgroundColor: const Color(0xFFD4642C),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () async {
@@ -212,7 +212,7 @@ class _PlatformSettingsScreenState extends State<PlatformSettingsScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0052FF),
+              backgroundColor: const Color(0xFFD4642C),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () async {
@@ -267,8 +267,8 @@ class _PlatformSettingsScreenState extends State<PlatformSettingsScreen> {
                         shape: BoxShape.circle,
                         gradient: RadialGradient(
                           colors: [
-                            const Color(0xFFDBEAFE).withValues(alpha: 0.7),
-                            const Color(0xFFEFF6FF).withValues(alpha: 0.2),
+                            const Color(0xFFFED7AA).withValues(alpha: 0.5),
+                            const Color(0xFFFFF7ED).withValues(alpha: 0.2),
                             const Color(0xFFF8FAFD).withValues(alpha: 0.0),
                           ],
                         ),

@@ -22,7 +22,7 @@ class MoreSystemCard extends StatelessWidget {
       {
         'title': 'API Keys — Gemini, Firebase, HuggingFace',
         'icon': Icons.extension_rounded,
-        'color': const Color(0xFF2563EB),
+        'color': const Color(0xFFD4642C),
         'route': null,
       },
     ];

@@ -439,7 +439,7 @@ class _EnterpriseCustomDomainScreenState extends State<EnterpriseCustomDomainScr
                   height: 48,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0052FF),
+                      backgroundColor: const Color(0xFFD4642C),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     onPressed: _isVerifying ? null : _handleVerifyDNS,

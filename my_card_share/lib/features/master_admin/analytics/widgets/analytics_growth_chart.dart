@@ -122,7 +122,7 @@ class AnalyticsGrowthChart extends StatelessWidget {
               Text("Thu", style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8), fontWeight: FontWeight.w600)),
               Text("Fri", style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8), fontWeight: FontWeight.w600)),
               Text("Sat", style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8), fontWeight: FontWeight.w600)),
-              Text("Sun", style: TextStyle(fontSize: 11, color: Color(0xFF0052FF), fontWeight: FontWeight.w800)),
+              Text("Sun", style: TextStyle(fontSize: 11, color: Color(0xFFD4642C), fontWeight: FontWeight.w800)),
             ],
           ),
         ],
@@ -210,7 +210,7 @@ class _GrowthChartPainter extends CustomPainter {
         ? const Color(0xFF10B981)
         : activeTab == "Storage"
             ? const Color(0xFFF59E0B)
-            : const Color(0xFF0052FF);
+            : const Color(0xFFD4642C);
 
     final fillGradient = LinearGradient(
       begin: Alignment.topCenter,

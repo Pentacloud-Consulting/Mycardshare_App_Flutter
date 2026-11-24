@@ -25,12 +25,12 @@ class NotificationEmptyState extends StatelessWidget {
             width: 72,
             height: 72,
             decoration: const BoxDecoration(
-              color: Color(0xFFEFF6FF),
+              color: Color(0xFFFFF7ED),
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.notifications_off_rounded,
-              color: Color(0xFF0052FF),
+              color: Color(0xFFD4642C),
               size: 34,
             ),
           ),

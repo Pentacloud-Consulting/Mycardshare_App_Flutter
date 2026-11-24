@@ -293,10 +293,10 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
+                      color: const Color(0xFFFAF6F2),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.camera_alt_rounded, color: Color(0xFF0052FF)),
+                    child: const Icon(Icons.camera_alt_rounded, color: Color(0xFFD4642C)),
                   ),
                   title: const Text("Take Photo", style: TextStyle(fontWeight: FontWeight.w600)),
                   subtitle: const Text("Use camera to take a photo"),
@@ -497,7 +497,7 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
                         ),
                         TextButton(
                           onPressed: () => Navigator.pop(ctx),
-                          child: const Text("Done", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0052FF))),
+                          child: const Text("Done", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFD4642C))),
                         ),
                       ],
                     ),
@@ -545,7 +545,7 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
                                 }(),
                                 dropdownColor: Colors.white,
                                 borderRadius: BorderRadius.circular(14),
-                                icon: const Icon(Icons.arrow_drop_down_rounded, color: Color(0xFF0052FF)),
+                                icon: const Icon(Icons.arrow_drop_down_rounded, color: Color(0xFFD4642C)),
                                 items: const [
                                   'LinkedIn',
                                   'Instagram',
@@ -610,14 +610,14 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
                         });
                         setState(() {});
                       },
-                      icon: const Icon(Icons.add_circle_outline_rounded, size: 18, color: Color(0xFF0052FF)),
+                      icon: const Icon(Icons.add_circle_outline_rounded, size: 18, color: Color(0xFFD4642C)),
                       label: const Text(
                         'Add Another Link',
-                        style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0052FF)),
+                        style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFD4642C)),
                       ),
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 46),
-                        side: const BorderSide(color: Color(0xFF0052FF), width: 1.5),
+                        side: const BorderSide(color: Color(0xFFD4642C), width: 1.5),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
@@ -911,7 +911,7 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Icon(Icons.check_rounded, color: Color(0xFF0052FF), size: 28),
+                      : const Icon(Icons.check_rounded, color: Color(0xFFD4642C), size: 28),
                   onPressed: _isSaving ? null : _saveChanges,
                 ),
               ],
@@ -938,6 +938,7 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
                     profilePhoto: _profileImagePath,
                     bannerPhoto: _bannerImagePath,
                     isPublished: PublishUnpublishService.instance.isPublished,
+                    showCameraIcon: true,
                     onAvatarEditTap: _pickProfileImage,
                   );
                 },
@@ -959,9 +960,9 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFEFF6FF),
+                              color: const Color(0xFFFAF6F2),
                               borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: const Color(0xFFBFDBFE), width: 1.2),
+                              border: Border.all(color: const Color(0xFFD4642C).withValues(alpha: 0.3), width: 1.2),
                               boxShadow: const [
                                 BoxShadow(
                                   color: Color(0x06000000),
@@ -973,14 +974,14 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: const [
-                                Icon(Icons.camera_alt_outlined, color: Color(0xFF0052FF), size: 18),
+                                Icon(Icons.camera_alt_outlined, color: Color(0xFFD4642C), size: 18),
                                 SizedBox(width: 6),
                                 Text(
                                   "Change Photo",
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF0052FF),
+                                    color: Color(0xFFD4642C),
                                   ),
                                 ),
                               ],
@@ -1143,14 +1144,14 @@ class _ProfileEditorScreenState extends State<ProfileEditorScreen> {
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF0052FF), Color(0xFF00A3FF)],
+                      colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                     ),
                     borderRadius: BorderRadius.circular(26),
                     boxShadow: const [
                       BoxShadow(
-                        color: Color(0x350052FF),
+                        color: Color(0x35D4642C),
                         blurRadius: 14,
                         offset: Offset(0, 6),
                       ),

@@ -43,12 +43,12 @@ class SettingsAdminRolesRow extends StatelessWidget {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFF4FF),
+                    color: const Color(0xFFFFF7ED),
                     borderRadius: BorderRadius.circular(9),
                   ),
                   child: const Icon(
                     Icons.admin_panel_settings_rounded,
-                    color: Color(0xFF0052FF),
+                    color: Color(0xFFD4642C),
                     size: 17,
                   ),
                 ),
@@ -146,7 +146,7 @@ class _EnterpriseAdminRolesScreenState extends State<EnterpriseAdminRolesScreen>
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
             return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF0052FF)),
+              child: CircularProgressIndicator(color: Color(0xFFD4642C)),
             );
           }
 
@@ -236,7 +236,7 @@ class _EnterpriseAdminRolesScreenState extends State<EnterpriseAdminRolesScreen>
                   height: 48,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0052FF),
+                      backgroundColor: const Color(0xFFD4642C),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     onPressed: () => _openAssignAdminModal(context),
@@ -281,7 +281,7 @@ class _EnterpriseAdminRolesScreenState extends State<EnterpriseAdminRolesScreen>
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: admin.isOwner ? const Color(0xFFEFF4FF) : const Color(0xFFF3E8FF),
+                  color: admin.isOwner ? const Color(0xFFFFF7ED) : const Color(0xFFF3E8FF),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -290,7 +290,7 @@ class _EnterpriseAdminRolesScreenState extends State<EnterpriseAdminRolesScreen>
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
-                      color: admin.isOwner ? const Color(0xFF0052FF) : const Color(0xFF7C3AED),
+                      color: admin.isOwner ? const Color(0xFFD4642C) : const Color(0xFF7C3AED),
                     ),
                   ),
                 ),
@@ -323,7 +323,7 @@ class _EnterpriseAdminRolesScreenState extends State<EnterpriseAdminRolesScreen>
                           decoration: BoxDecoration(
                             color: admin.isOwner
                                 ? const Color(0xFFDCFCE7)
-                                : const Color(0xFFEFF4FF),
+                                : const Color(0xFFFFF7ED),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -333,7 +333,7 @@ class _EnterpriseAdminRolesScreenState extends State<EnterpriseAdminRolesScreen>
                               fontWeight: FontWeight.w700,
                               color: admin.isOwner
                                   ? const Color(0xFF16A34A)
-                                  : const Color(0xFF0052FF),
+                                  : const Color(0xFFD4642C),
                             ),
                           ),
                         ),
@@ -545,7 +545,7 @@ class _AssignAdminRoleModalState extends State<AssignAdminRoleModal> {
                 decoration: InputDecoration(
                   labelText: "Company email",
                   hintText: "admin@yourcompany.com",
-                  prefixIcon: const Icon(Icons.mail_outline_rounded, color: Color(0xFF0052FF)),
+                  prefixIcon: const Icon(Icons.mail_outline_rounded, color: Color(0xFFD4642C)),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 ),
@@ -585,7 +585,7 @@ class _AssignAdminRoleModalState extends State<AssignAdminRoleModal> {
                 height: 48,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0052FF),
+                    backgroundColor: const Color(0xFFD4642C),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: _isSaving ? null : _handleSave,

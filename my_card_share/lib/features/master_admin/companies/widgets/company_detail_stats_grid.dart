@@ -35,7 +35,7 @@ class CompanyDetailStatsGrid extends StatelessWidget {
                     value: progress,
                     minHeight: 4,
                     backgroundColor: const Color(0xFFE2E8F0),
-                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0052FF)),
+                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFD4642C)),
                   ),
                 ),
               ),

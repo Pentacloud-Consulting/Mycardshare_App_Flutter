@@ -843,9 +843,9 @@ class EnterpriseStatsPillsWidget extends StatelessWidget {
                 label: "Total",
                 count: stats.totalCount,
                 isSelected: selectedFilter == 'All',
-                bgColor: const Color(0xFFEFF6FF),
-                textColor: const Color(0xFF0052FF),
-                borderColor: const Color(0xFFBFDBFE),
+                bgColor: const Color(0xFFFFF7ED),
+                textColor: const Color(0xFFD4642C),
+                borderColor: const Color(0xFFFED7AA),
                 onTap: () => onFilterSelected?.call('All'),
               ),
               const SizedBox(width: 10),
@@ -960,7 +960,7 @@ class EnterpriseEmployeeListBackend extends StatelessWidget {
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(24.0),
-              child: CircularProgressIndicator(color: Color(0xFF0052FF)),
+              child: CircularProgressIndicator(color: Color(0xFFD4642C)),
             ),
           );
         }
@@ -1135,7 +1135,7 @@ class EnterpriseEmployeeListBackend extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: isAdmin
                             ? const Color(0xFFF3E8FF)
-                            : const Color(0xFFEFF6FF),
+                            : const Color(0xFFFFF7ED),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -1145,7 +1145,7 @@ class EnterpriseEmployeeListBackend extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           color: isAdmin
                               ? const Color(0xFF9333EA)
-                              : const Color(0xFF0052FF),
+                              : const Color(0xFFD4642C),
                         ),
                       ),
                     ),
@@ -1202,14 +1202,14 @@ class EnterpriseEmployeeListBackend extends StatelessWidget {
                     if (emp.isBannerLocked) ...[
                       const SizedBox(width: 8),
                       const Icon(Icons.lock_rounded,
-                          size: 12, color: Color(0xFF0052FF)),
+                          size: 12, color: Color(0xFFD4642C)),
                       const SizedBox(width: 2),
                       const Text(
                         "Banner Locked",
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF0052FF),
+                          color: Color(0xFFD4642C),
                         ),
                       ),
                     ],
@@ -1379,13 +1379,13 @@ class EnterpriseEmployeeListBackend extends StatelessWidget {
                     Icon(
                       Icons.person_rounded,
                       size: 18,
-                      color: Color(0xFF0052FF),
+                      color: Color(0xFFD4642C),
                     ),
                     SizedBox(width: 8),
                     Text(
                       "View Profile",
                       style: TextStyle(
-                        color: Color(0xFF0052FF),
+                        color: Color(0xFFD4642C),
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -1439,7 +1439,7 @@ class EnterpriseEmployeeListBackend extends StatelessWidget {
                     Icon(
                       emp.isBannerLocked ? Icons.lock_open_rounded : Icons.lock_rounded,
                       size: 18,
-                      color: const Color(0xFF0052FF),
+                      color: const Color(0xFFD4642C),
                     ),
                     const SizedBox(width: 8),
                     Text(emp.isBannerLocked ? "Unlock Banner" : "Lock Brand Banner"),
@@ -1492,7 +1492,7 @@ class EnterpriseEmployeeListBackend extends StatelessWidget {
               ? const Color(0xFF9333EA)
               : isPending
                   ? const Color(0xFFCA8A04)
-                  : const Color(0xFF0052FF),
+                  : const Color(0xFFD4642C),
         ),
       ),
     );

@@ -62,7 +62,7 @@ class SettingsUserProfileCard extends StatelessWidget {
   Widget _buildAvatarFallback(String userName) {
     final initial = userName.trim().isNotEmpty ? userName.trim()[0].toUpperCase() : 'U';
     return Container(
-      color: const Color(0xFF0052FF),
+      color: const Color(0xFFD4642C),
       child: Center(
         child: Text(
           initial,
@@ -100,7 +100,7 @@ class SettingsUserProfileCard extends StatelessWidget {
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
-                colors: [Color(0xFF60A5FA), Color(0xFF2563EB)],
+                colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
               ),
             ),
             child: SizedBox(
@@ -154,7 +154,7 @@ class SettingsUserProfileCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14.5,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF2563EB),
+                color: Color(0xFFD4642C),
               ),
             ),
           ),

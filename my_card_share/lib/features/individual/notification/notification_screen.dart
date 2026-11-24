@@ -150,7 +150,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF2563EB),
+                                  color: Color(0xFFD4642C),
                                 ),
                               ),
                             ),
@@ -194,13 +194,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           Container(
                             padding: const EdgeInsets.all(18),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF0052FF).withValues(alpha: 0.08),
+                              color: const Color(0xFFD4642C).withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
                               Icons.notifications_none_rounded,
                               size: 44,
-                              color: Color(0xFF0052FF),
+                              color: Color(0xFFD4642C),
                             ),
                           ),
                           const SizedBox(height: 16),

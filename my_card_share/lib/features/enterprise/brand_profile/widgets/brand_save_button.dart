@@ -16,13 +16,13 @@ class BrandSaveButton extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         gradient: const LinearGradient(
-          colors: [Color(0xFF0052FF), Color(0xFF38BDF8)],
+          colors: const [Color(0xFFD4642C), Color(0xFFE8824E)],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0052FF).withValues(alpha: 0.35),
+            color: const Color(0xFFD4642C).withValues(alpha: 0.35),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),

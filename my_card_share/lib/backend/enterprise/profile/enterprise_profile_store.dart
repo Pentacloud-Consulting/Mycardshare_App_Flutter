@@ -41,7 +41,7 @@ class EnterpriseProfileData {
     this.shortBio = '',
     this.plan = 'free',
     this.employeeCount = 0,
-    this.brandColor = '#0052FF',
+    this.brandColor = '#D4642C',
     this.templateId = 'modern_glass',
     this.cardSlug = '',
     this.resumeUrl,
@@ -134,7 +134,9 @@ class EnterpriseProfileData {
       shortBio: data['shortBio'] ?? data['bio'] ?? '',
       plan: data['plan'] ?? 'free',
       employeeCount: (data['employeeCount'] as num?)?.toInt() ?? 0,
-      brandColor: data['brandColor'] ?? '#0052FF',
+      brandColor: (data['brandColor'] == null || data['brandColor'] == '#0052FF')
+          ? '#D4642C'
+          : data['brandColor'],
       templateId: data['templateId'] ?? 'modern_glass',
       cardSlug: data['cardSlug'] ?? '',
       resumeUrl: data['resumeUrl'] as String?,

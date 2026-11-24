@@ -63,12 +63,12 @@ class _HelpAndSupportScreenState extends State<HelpAndSupportScreen> {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF0066FF), Color(0xFF2563EB)],
+                    colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
                   ),
                   borderRadius: BorderRadius.circular(22),
                   boxShadow: const [
                     BoxShadow(
-                      color: Color(0x260066FF),
+                      color: Color(0x26D4642C),
                       blurRadius: 14,
                       offset: Offset(0, 4),
                     ),
@@ -88,7 +88,7 @@ class _HelpAndSupportScreenState extends State<HelpAndSupportScreen> {
                     const SizedBox(height: 6),
                     const Text(
                       "Our support team is available 24/7 to assist with your digital card & lead workflows.",
-                      style: TextStyle(fontSize: 13, color: Color(0xFFDBEAFE), height: 1.4),
+                      style: TextStyle(fontSize: 13, color: Color(0xFFFFF7ED), height: 1.4),
                     ),
                     const SizedBox(height: 16),
                     Row(
@@ -100,8 +100,8 @@ class _HelpAndSupportScreenState extends State<HelpAndSupportScreen> {
                                 const SnackBar(content: Text("Email client opened: support@mycardshare.com")),
                               );
                             },
-                            icon: const Icon(Icons.email_outlined, size: 18, color: Color(0xFF2563EB)),
-                            label: const Text("Email Support", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
+                            icon: const Icon(Icons.email_outlined, size: 18, color: Color(0xFFD4642C)),
+                            label: const Text("Email Support", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFFD4642C))),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
                               elevation: 0,
@@ -179,7 +179,7 @@ class _HelpAndSupportScreenState extends State<HelpAndSupportScreen> {
                     child: ExpansionTile(
                       collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      iconColor: const Color(0xFF2563EB),
+                      iconColor: const Color(0xFFD4642C),
                       title: Text(
                         faq['question']!,
                         style: const TextStyle(

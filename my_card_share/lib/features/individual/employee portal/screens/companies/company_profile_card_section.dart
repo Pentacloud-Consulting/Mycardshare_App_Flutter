@@ -42,7 +42,7 @@ class CompanyProfileCardSection extends StatelessWidget {
                 width: double.infinity,
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFF0052FF), Color(0xFF8B5CF6)],
+                    colors: [Color(0xFFD4642C), Color(0xFFE8824E), Color(0xFFFED7AA)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -58,7 +58,7 @@ class CompanyProfileCardSection extends StatelessWidget {
                   height: 68,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFF0052FF),
+                    color: const Color(0xFFD4642C),
                     border: Border.all(color: Colors.white, width: 3.5),
                     boxShadow: [
                       BoxShadow(
@@ -103,16 +103,16 @@ class CompanyProfileCardSection extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
+              color: const Color(0xFFFFF7ED),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFBFDBFE)),
+              border: Border.all(color: const Color(0xFFFED7AA)),
             ),
             child: Text(
               planTag.toUpperCase(),
               style: const TextStyle(
                 fontSize: 10.5,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF0052FF),
+                color: Color(0xFFD4642C),
                 letterSpacing: 0.5,
               ),
             ),

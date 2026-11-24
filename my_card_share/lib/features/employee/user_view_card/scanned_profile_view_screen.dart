@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../backend/individual/profile/individual_profile_store.dart';
@@ -528,11 +529,8 @@ class _BannerSection extends StatelessWidget {
                           _GradientBanner(themeColor: themeColor),
                     ),
                     // Frosted overlay for readability
-                    BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 0, sigmaY: 0),
-                      child: Container(
-                        color: themeColor.withAlpha(50),
-                      ),
+                    Container(
+                      color: themeColor.withAlpha(50),
                     ),
                   ],
                 )
@@ -657,18 +655,28 @@ class _GlassButton extends StatelessWidget {
       onTap: onTap,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.black.withAlpha(60),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Icon(icon, color: Colors.white, size: 18),
-          ),
-        ),
+        child: kIsWeb
+            ? Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.black.withAlpha(90),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Icon(icon, color: Colors.white, size: 18),
+              )
+            : BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withAlpha(60),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Icon(icon, color: Colors.white, size: 18),
+                ),
+              ),
       ),
     );
   }

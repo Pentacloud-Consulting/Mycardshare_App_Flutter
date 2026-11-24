@@ -298,8 +298,11 @@ class _CameraScanModalState extends State<CameraScanModal>
                                 size: 32),
                           ),
 
-                          // Center hint (only when no image captured yet)
-                          if (_previewFile == null && !_isScanning)
+                          // Center hint (only when camera is active and no image captured yet)
+                          if (_previewFile == null &&
+                              !_isScanning &&
+                              _cameraController != null &&
+                              _cameraController!.value.isInitialized)
                             Center(
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,

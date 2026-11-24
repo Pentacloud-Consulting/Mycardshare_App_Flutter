@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../profile/enterprise_profile_store.dart';
 import '../multiple_store/enterprise_multi_store.dart';
+import 'workspace_invite_share_modal.dart';
 
 /// Real-time unique workspace and individual employee invite link service for Enterprise teams.
 /// Connected with Firestore, EnterpriseProfileStore, EnterpriseMultiStore, and EnterpriseAuthService.
@@ -224,24 +225,21 @@ class EnterpriseInviteLinkService {
     );
   }
 
-  /// Shares the unique workspace link with native share UI feedback.
-  void shareInviteLink(BuildContext context, String linkUrl) {
-    final fullUrl = linkUrl.startsWith('http') ? linkUrl : 'https://$linkUrl';
-    Clipboard.setData(ClipboardData(text: fullUrl));
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Row(
-          children: [
-            Icon(Icons.share_rounded, color: Colors.white, size: 20),
-            SizedBox(width: 8),
-            Text("Workspace invite link copied to share!"),
-          ],
-        ),
-        backgroundColor: const Color(0xFF0052FF),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        duration: const Duration(seconds: 2),
+  /// Shares the unique workspace invite across multiple platforms via dedicated modal sheet.
+  void shareInviteLink(
+    BuildContext context,
+    String linkUrl, {
+    String? inviteCode,
+    String? companyName,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => WorkspaceInviteShareModal(
+        linkUrl: linkUrl,
+        inviteCode: inviteCode,
+        companyName: companyName,
       ),
     );
   }
@@ -326,11 +324,11 @@ class EnterpriseInviteLinkWidget extends StatelessWidget {
                   if (showShareButton)
                     GestureDetector(
                       onTap: () => EnterpriseInviteLinkService.instance
-                          .shareInviteLink(context, inviteLink),
+                          .shareInviteLink(context, inviteLink, inviteCode: inviteCode),
                       child: const Icon(
                         Icons.share_outlined,
                         size: 18,
-                        color: Color(0xFF0052FF),
+                        color: Color(0xFFD4642C),
                       ),
                     ),
                 ],
@@ -350,7 +348,7 @@ class EnterpriseInviteLinkWidget extends StatelessWidget {
                     const Icon(
                       Icons.confirmation_number_outlined,
                       size: 18,
-                      color: Color(0xFF0052FF),
+                      color: Color(0xFFD4642C),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -379,11 +377,11 @@ class EnterpriseInviteLinkWidget extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0052FF),
+                          color: const Color(0xFFD4642C),
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF0052FF).withValues(alpha: 0.25),
+                              color: const Color(0xFFD4642C).withValues(alpha: 0.25),
                               blurRadius: 6,
                               offset: const Offset(0, 2),
                             ),

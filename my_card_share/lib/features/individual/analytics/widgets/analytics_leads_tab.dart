@@ -49,12 +49,12 @@ class AnalyticsLeadsTab extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
+                            color: const Color(0xFFFFF7ED),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
                             "${item['count']} leads",
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0284C7)),
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFD4642C)),
                           ),
                         ),
                       ],

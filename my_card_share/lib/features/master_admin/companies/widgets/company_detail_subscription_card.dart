@@ -87,7 +87,7 @@ class CompanyDetailSubscriptionCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
+                      color: const Color(0xFFFFF7ED),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Text(
@@ -95,7 +95,7 @@ class CompanyDetailSubscriptionCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w900,
-                        color: Color(0xFF0052FF),
+                        color: Color(0xFFD4642C),
                         letterSpacing: 0.4,
                       ),
                     ),
@@ -119,21 +119,21 @@ class CompanyDetailSubscriptionCard extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
+                    color: const Color(0xFFFFF7ED),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFF0052FF), width: 1.2),
+                    border: Border.all(color: const Color(0xFFD4642C), width: 1.2),
                   ),
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.autorenew_rounded, color: Color(0xFF0052FF), size: 18),
+                      Icon(Icons.autorenew_rounded, color: Color(0xFFD4642C), size: 18),
                       SizedBox(width: 8),
                       Text(
                         "Extend Subscription",
                         style: TextStyle(
                           fontSize: 13.5,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF0052FF),
+                          color: Color(0xFFD4642C),
                         ),
                       ),
                     ],

@@ -51,8 +51,8 @@ class SettingsWorkspaceCard extends StatelessWidget {
             children: [
               _buildSettingRow(
                 icon: Icons.domain_rounded,
-                iconColor: const Color(0xFF0052FF),
-                iconBg: const Color(0xFFEFF4FF),
+                iconColor: const Color(0xFFD4642C),
+                iconBg: const Color(0xFFFFF7ED),
                 title: "Company Profile",
                 onTap: onCompanyProfileTap,
               ),

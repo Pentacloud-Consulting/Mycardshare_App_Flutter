@@ -77,7 +77,7 @@ class _EmployeeWorkforceScreenState extends State<EmployeeWorkforceScreen> {
         .map((snapshot) {
       final List<TeammateModel> list = [];
       const colors = [
-        Color(0xFF0052FF),
+        Color(0xFFD4642C),
         Color(0xFF8B5CF6),
         Color(0xFF0D9488),
         Color(0xFFD97706),
@@ -178,8 +178,8 @@ class _EmployeeWorkforceScreenState extends State<EmployeeWorkforceScreen> {
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          const Color(0xFFDBEAFE).withValues(alpha: 0.75),
-                          const Color(0xFFEFF6FF).withValues(alpha: 0.25),
+                          const Color(0xFFFED7AA).withValues(alpha: 0.75),
+                          const Color(0xFFFFF7ED).withValues(alpha: 0.25),
                           Colors.white.withValues(alpha: 0.0),
                         ],
                       ),
@@ -231,7 +231,7 @@ class _EmployeeWorkforceScreenState extends State<EmployeeWorkforceScreen> {
                                   behavior: SnackBarBehavior.floating,
                                   action: SnackBarAction(
                                     label: "Open Card",
-                                    textColor: const Color(0xFF38BDF8),
+                                    textColor: const Color(0xFFD4642C),
                                     onPressed: () {
                                       context.push('/card/${member.slug}');
                                     },

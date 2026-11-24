@@ -129,9 +129,9 @@ class _EnterpriseProfileViewScreenState
                                   gradient: (bannerUrl == null || bannerUrl.isEmpty)
                                       ? const LinearGradient(
                                           colors: [
-                                            Color(0xFF0052FF),
-                                            Color(0xFF7C3AED),
-                                            Color(0xFF38BDF8),
+                                            Color(0xFFD4642C),
+                                            Color(0xFFE8824E),
+                                            Color(0xFFFED7AA),
                                           ],
                                           begin: Alignment.topLeft,
                                           end: Alignment.bottomRight,
@@ -227,19 +227,19 @@ class _EnterpriseProfileViewScreenState
                                             width: 70,
                                             height: 70,
                                             fallback: Container(
-                                              color: const Color(0xFFEFF6FF),
+                                              color: const Color(0xFFFFF7ED),
                                               child: const Icon(
                                                 Icons.apartment_rounded,
-                                                color: Color(0xFF0052FF),
+                                                color: Color(0xFFD4642C),
                                                 size: 38,
                                               ),
                                             ),
                                           )
                                         : Container(
-                                            color: const Color(0xFFEFF6FF),
+                                            color: const Color(0xFFFFF7ED),
                                             child: const Icon(
                                               Icons.apartment_rounded,
-                                              color: Color(0xFF0052FF),
+                                              color: Color(0xFFD4642C),
                                               size: 38,
                                             ),
                                           ),
@@ -272,7 +272,7 @@ class _EnterpriseProfileViewScreenState
                                   style: const TextStyle(
                                     fontSize: 13.5,
                                     fontWeight: FontWeight.w600,
-                                    color: Color(0xFF0052FF),
+                                    color: Color(0xFFD4642C),
                                   ),
                                 ),
                                 const SizedBox(height: 6),
@@ -283,7 +283,7 @@ class _EnterpriseProfileViewScreenState
                                           horizontal: 10, vertical: 4),
                                       decoration: BoxDecoration(
                                         color: isPublished
-                                            ? const Color(0xFFEFF4FF)
+                                            ? const Color(0xFFFFF7ED)
                                             : const Color(0xFFFEF3C7),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
@@ -295,7 +295,7 @@ class _EnterpriseProfileViewScreenState
                                           fontSize: 12,
                                           fontWeight: FontWeight.w700,
                                           color: isPublished
-                                              ? const Color(0xFF0052FF)
+                                              ? const Color(0xFFD4642C)
                                               : const Color(0xFFB45309),
                                         ),
                                       ),
@@ -333,7 +333,7 @@ class _EnterpriseProfileViewScreenState
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: isPublished
-                                    ? [const Color(0xFF0052FF), const Color(0xFF38BDF8)]
+                                    ? [const Color(0xFFD4642C), const Color(0xFFE8824E)]
                                     : [const Color(0xFFD97706), const Color(0xFFF59E0B)],
                                 begin: Alignment.centerLeft,
                                 end: Alignment.centerRight,
@@ -342,7 +342,7 @@ class _EnterpriseProfileViewScreenState
                               boxShadow: [
                                 BoxShadow(
                                   color: isPublished
-                                      ? const Color(0xFF0052FF).withValues(alpha: 0.25)
+                                      ? const Color(0xFFD4642C).withValues(alpha: 0.25)
                                       : const Color(0xFFD97706).withValues(alpha: 0.25),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
@@ -376,7 +376,7 @@ class _EnterpriseProfileViewScreenState
                                       value: true,
                                       child: Row(
                                         children: [
-                                          Icon(Icons.public_rounded, color: Color(0xFF0052FF), size: 20),
+                                          Icon(Icons.public_rounded, color: Color(0xFFD4642C), size: 20),
                                           SizedBox(width: 8),
                                           Text('Publish (Active)', style: TextStyle(fontWeight: FontWeight.bold)),
                                         ],
@@ -407,7 +407,7 @@ class _EnterpriseProfileViewScreenState
                                         content: Text(
                                           value ? "Enterprise card is now Active & Published!" : "Enterprise card is now Inactive & Unpublished!",
                                         ),
-                                        backgroundColor: value ? const Color(0xFF0052FF) : const Color(0xFFD97706),
+                                        backgroundColor: value ? const Color(0xFFD4642C) : const Color(0xFFD97706),
                                         behavior: SnackBarBehavior.floating,
                                         duration: const Duration(seconds: 2),
                                       ),
@@ -446,7 +446,7 @@ class _EnterpriseProfileViewScreenState
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                  color: const Color(0xFF0052FF), width: 1.5),
+                                  color: const Color(0xFFD4642C), width: 1.5),
                             ),
                             child: ElevatedButton.icon(
                               onPressed: () {
@@ -461,13 +461,13 @@ class _EnterpriseProfileViewScreenState
                                 );
                               },
                               icon: const Icon(Icons.visibility_rounded,
-                                  color: Color(0xFF0052FF), size: 18),
+                                  color: Color(0xFFD4642C), size: 18),
                               label: const Text(
                                 "View Card",
                                 style: TextStyle(
                                   fontSize: 14.5,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF0052FF),
+                                  color: Color(0xFFD4642C),
                                 ),
                               ),
                               style: ElevatedButton.styleFrom(
@@ -499,13 +499,13 @@ class _EnterpriseProfileViewScreenState
                         ),
                         TextButton.icon(
                           onPressed: () => context.push('/enterprise/brand-profile'),
-                          icon: const Icon(Icons.edit_rounded, size: 15, color: Color(0xFF0052FF)),
+                          icon: const Icon(Icons.edit_rounded, size: 15, color: Color(0xFFD4642C)),
                           label: const Text(
                             "Edit",
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF0052FF),
+                              color: Color(0xFFD4642C),
                             ),
                           ),
                         ),
@@ -707,10 +707,10 @@ class _EnterpriseProfileViewScreenState
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: const [
-                              Icon(Icons.login_rounded, color: Color(0xFFE11D48), size: 20),
+                              Icon(Icons.logout_rounded, color: Color(0xFFE11D48), size: 20),
                               SizedBox(width: 8),
                               Text(
-                                "Log Out to Login Screen",
+                                "Log Out",
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
@@ -762,14 +762,14 @@ class _EnterpriseProfileViewScreenState
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.add_circle_outline_rounded,
-                      color: Color(0xFF0052FF), size: 18),
+                      color: Color(0xFFD4642C), size: 18),
                   SizedBox(width: 8),
                   Text(
                     "Add Official Enterprise Social Profiles",
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF0052FF),
+                      color: Color(0xFFD4642C),
                     ),
                   ),
                 ],
@@ -786,7 +786,7 @@ class _EnterpriseProfileViewScreenState
             final url = entry.value;
 
             dynamic icon = FontAwesomeIcons.globe;
-            Color color = const Color(0xFF0052FF);
+            Color color = const Color(0xFFD4642C);
 
             if (key.contains('linkedin')) {
               icon = FontAwesomeIcons.linkedin;
@@ -854,7 +854,7 @@ class _EnterpriseProfileViewScreenState
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isExpanded ? const Color(0xFFEFF6FF) : const Color(0xFFF8FAFC),
+        color: isExpanded ? const Color(0xFFFFF7ED) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -866,7 +866,7 @@ class _EnterpriseProfileViewScreenState
               fontSize: 11.5,
               fontWeight: FontWeight.w700,
               color: isExpanded
-                  ? const Color(0xFF0052FF)
+                  ? const Color(0xFFD4642C)
                   : const Color(0xFF64748B),
             ),
           ),
@@ -876,7 +876,7 @@ class _EnterpriseProfileViewScreenState
                 : Icons.keyboard_arrow_down_rounded,
             size: 16,
             color: isExpanded
-                ? const Color(0xFF0052FF)
+                ? const Color(0xFFD4642C)
                 : const Color(0xFF64748B),
           ),
         ],
@@ -890,7 +890,7 @@ class _EnterpriseProfileViewScreenState
       crossAxisAlignment:
           isMultiLine ? CrossAxisAlignment.start : CrossAxisAlignment.center,
       children: [
-        Icon(icon, size: 20, color: const Color(0xFF0052FF)),
+        Icon(icon, size: 20, color: const Color(0xFFD4642C)),
         const SizedBox(width: 14),
         Expanded(
           child: Column(

@@ -99,7 +99,7 @@ class DashboardHeader extends StatelessWidget {
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         fontStyle: FontStyle.italic,
-                        color: Color(0xFF0066FF),
+                        color: Color(0xFFD4642C),
                       ),
                     ),
                   ),
@@ -112,16 +112,16 @@ class DashboardHeader extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
+                          color: const Color(0xFFFFF7ED),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFBFDBFE), width: 1),
+                          border: Border.all(color: const Color(0xFFFED7AA), width: 1),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(
                               Icons.domain_rounded,
-                              color: Color(0xFF0066FF),
+                              color: Color(0xFFD4642C),
                               size: 12,
                             ),
                             const SizedBox(width: 3),
@@ -133,7 +133,7 @@ class DashboardHeader extends StatelessWidget {
                                 style: const TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF0066FF),
+                                  color: Color(0xFFD4642C),
                                 ),
                               ),
                             ),

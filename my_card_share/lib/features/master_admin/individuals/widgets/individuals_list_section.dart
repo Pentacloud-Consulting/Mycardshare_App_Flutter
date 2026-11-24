@@ -105,7 +105,7 @@ class IndividualsListSection extends StatelessWidget {
                       gradient: LinearGradient(
                         colors: item.isDeactivated
                             ? [const Color(0xFF94A3B8), const Color(0xFF64748B)]
-                            : [const Color(0xFF0F172A), const Color(0xFF2563EB)],
+                            : [const Color(0xFFD4642C), const Color(0xFFE8824E)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -231,9 +231,9 @@ class IndividualsListSection extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-          color: const Color(0xFFEFF6FF), // Blue background
+          color: const Color(0xFFFFF7ED), // Warm cream background
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFBFDBFE), width: 1.0),
+          border: Border.all(color: const Color(0xFFFED7AA), width: 1.0),
         ),
         child: const Row(
           mainAxisSize: MainAxisSize.min,
@@ -241,7 +241,7 @@ class IndividualsListSection extends StatelessWidget {
             Icon(
               Icons.workspace_premium_rounded,
               size: 12,
-              color: Color(0xFF2563EB),
+              color: Color(0xFFD4642C),
             ),
             SizedBox(width: 3),
             Text(
@@ -249,7 +249,7 @@ class IndividualsListSection extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF2563EB),
+                color: Color(0xFFD4642C),
               ),
             ),
           ],

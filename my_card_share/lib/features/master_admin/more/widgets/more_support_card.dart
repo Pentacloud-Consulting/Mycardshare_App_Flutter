@@ -41,12 +41,12 @@ class MoreSupportCard extends StatelessWidget {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0052FF).withValues(alpha: 0.1),
+                    color: const Color(0xFFD4642C).withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.help_outline_rounded,
-                    color: Color(0xFF0052FF),
+                    color: Color(0xFFD4642C),
                     size: 19,
                   ),
                 ),

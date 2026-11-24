@@ -33,8 +33,8 @@ class CompanyInfoGridSection extends StatelessWidget {
             Expanded(
               child: _buildTile(
                 icon: Icons.language_rounded,
-                iconColor: const Color(0xFF0052FF),
-                iconBg: const Color(0xFFEFF6FF),
+                iconColor: const Color(0xFFD4642C),
+                iconBg: const Color(0xFFFFF7ED),
                 label: "Website",
                 value: website,
               ),

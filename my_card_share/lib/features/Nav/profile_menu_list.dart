@@ -18,28 +18,28 @@ class ProfileMenuList extends ConsumerWidget {
         title: 'Analytics',
         subtitle: 'Views, scans & lead insights',
         route: '/portal/analytics',
-        color: const Color(0xFF0052FF),
+        color: const Color(0xFFD4642C),
       ),
       _MenuItem(
         icon: Icons.campaign_outlined,
         title: 'Campaign Tracking',
         subtitle: 'QR campaigns & analytics',
         route: '/portal/campaign',
-        color: const Color(0xFF8B5CF6),
+        color: const Color(0xFFD4642C),
       ),
       _MenuItem(
         icon: Icons.extension_outlined,
         title: 'Connectors',
         subtitle: 'CRM & webhook integrations',
         route: '/portal/connectors',
-        color: const Color(0xFF0D9488),
+        color: const Color(0xFFD4642C),
       ),
       _MenuItem(
         icon: Icons.settings_outlined,
         title: 'Account Settings',
         subtitle: 'Password, security & preferences',
         route: '/portal/settings',
-        color: const Color(0xFF475569),
+        color: const Color(0xFFD4642C),
       ),
       if (isEmployee) ...[
         _MenuItem(
@@ -47,7 +47,7 @@ class ProfileMenuList extends ConsumerWidget {
           title: 'Request Approvals',
           subtitle: 'Company card approval requests',
           route: '/portal/approvals',
-          color: const Color(0xFFD97706),
+          color: const Color(0xFFD4642C),
           isEmployeeOnly: true,
         ),
         _MenuItem(
@@ -55,7 +55,7 @@ class ProfileMenuList extends ConsumerWidget {
           title: 'Associated Companies',
           subtitle: 'Workspaces & organization info',
           route: '/portal/companies',
-          color: const Color(0xFF2563EB),
+          color: const Color(0xFFD4642C),
           isEmployeeOnly: true,
         ),
         _MenuItem(
@@ -63,7 +63,7 @@ class ProfileMenuList extends ConsumerWidget {
           title: 'Team Workforce',
           subtitle: 'Team members & digital directories',
           route: '/portal/workforce',
-          color: const Color(0xFF059669),
+          color: const Color(0xFFD4642C),
           isEmployeeOnly: true,
         ),
       ],
@@ -82,9 +82,9 @@ class ProfileMenuList extends ConsumerWidget {
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: const Color(0xFFFFFBEB),
+            color: const Color(0xFFFFF7ED),
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFFDE68A), width: 1.2),
+            border: Border.all(color: const Color(0xFFFED7AA), width: 1.2),
           ),
           child: Row(
             children: [
@@ -92,7 +92,7 @@ class ProfileMenuList extends ConsumerWidget {
                 width: 38,
                 height: 38,
                 decoration: const BoxDecoration(
-                  color: Color(0xFFFEF3C7),
+                  color: Color(0xFFFFEDD5),
                   shape: BoxShape.circle,
                 ),
                 child: const Center(
@@ -109,7 +109,7 @@ class ProfileMenuList extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF92400E),
+                        color: Color(0xFF9A3412),
                       ),
                     ),
                     SizedBox(height: 2),
@@ -117,7 +117,7 @@ class ProfileMenuList extends ConsumerWidget {
                       "Unlimited cards, custom branding & analytics",
                       style: TextStyle(
                         fontSize: 11.5,
-                        color: Color(0xFFB45309),
+                        color: Color(0xFFC2410C),
                       ),
                     ),
                   ],
@@ -126,7 +126,7 @@ class ProfileMenuList extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF59E0B),
+                  color: const Color(0xFFD4642C),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Text(
@@ -172,11 +172,11 @@ class ProfileMenuList extends ConsumerWidget {
                 leading: Container(
                   width: 40,
                   height: 40,
-                  decoration: BoxDecoration(
-                    color: item.color.withValues(alpha: 0.1),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFFF7ED),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(item.icon, color: item.color, size: 20),
+                  child: Icon(item.icon, color: const Color(0xFFD4642C), size: 20),
                 ),
                 title: Row(
                   children: [
@@ -196,7 +196,7 @@ class ProfileMenuList extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFEF3C7),
+                          color: const Color(0xFFFFF7ED),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: const Text(
@@ -204,7 +204,7 @@ class ProfileMenuList extends ConsumerWidget {
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFFD97706),
+                            color: Color(0xFFD4642C),
                           ),
                         ),
                       ),

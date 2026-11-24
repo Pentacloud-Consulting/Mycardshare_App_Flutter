@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -23,15 +24,22 @@ class MobileBottomButtons extends StatelessWidget {
             right: 0,
             child: ClipPath(
               clipper: _GlassyBarClipper(),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: Container(
-                  height: 100, // Height encompasses the bump now (0 to 100)
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15), // Light frosted glass fill
-                  ),
-                ),
-              ),
+              child: kIsWeb
+                  ? Container(
+                      height: 100,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.85),
+                      ),
+                    )
+                  : BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                      child: Container(
+                        height: 100, // Height encompasses the bump now (0 to 100)
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15), // Light frosted glass fill
+                        ),
+                      ),
+                    ),
             ),
           ),
           

@@ -109,7 +109,7 @@ class CardSocialRow extends StatelessWidget {
     } else if (p.contains('portfolio')) {
       return const Icon(Icons.folder_shared_rounded, color: Color(0xFF8B5CF6), size: 22);
     } else {
-      return const FaIcon(FontAwesomeIcons.globe, color: Color(0xFF0284C7), size: 20);
+      return const FaIcon(FontAwesomeIcons.globe, color: Color(0xFFD4642C), size: 20);
     }
   }
 

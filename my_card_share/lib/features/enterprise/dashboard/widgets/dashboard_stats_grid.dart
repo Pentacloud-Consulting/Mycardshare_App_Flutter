@@ -26,8 +26,8 @@ class DashboardStatsGrid extends StatelessWidget {
       children: [
         _buildStatCard(
           icon: Icons.groups_rounded,
-          iconBgColor: const Color(0xFFEFF4FF),
-          iconColor: const Color(0xFF0052FF),
+          iconBgColor: const Color(0xFFFFF7ED),
+          iconColor: const Color(0xFFD4642C),
           badgeText: "+3 this month",
           badgeBgColor: const Color(0xFFDCFCE7),
           badgeTextColor: const Color(0xFF10B981),
@@ -36,8 +36,8 @@ class DashboardStatsGrid extends StatelessWidget {
         ),
         _buildStatCard(
           icon: Icons.visibility_rounded,
-          iconBgColor: const Color(0xFFF3E8FF),
-          iconColor: const Color(0xFF7C3AED),
+          iconBgColor: const Color(0xFFFFEDD5),
+          iconColor: const Color(0xFFEA580C),
           badgeText: "+18%",
           badgeBgColor: const Color(0xFFDCFCE7),
           badgeTextColor: const Color(0xFF10B981),

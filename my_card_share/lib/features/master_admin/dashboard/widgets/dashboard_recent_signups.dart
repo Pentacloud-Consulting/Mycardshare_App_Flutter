@@ -32,7 +32,7 @@ class DashboardRecentSignups extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF0052FF),
+                  color: Color(0xFFD4642C),
                 ),
               ),
             ),
@@ -81,7 +81,7 @@ class DashboardRecentSignups extends StatelessWidget {
                 final statusBg = isSuspended
                     ? const Color(0xFFFEF2F2)
                     : (isPending ? const Color(0xFFFFFBEB) : const Color(0xFFECFDF5));
-                const logoBg = Color(0xFF0052FF);
+                const logoBg = Color(0xFFD4642C);
 
                 return GestureDetector(
                   onTap: () {

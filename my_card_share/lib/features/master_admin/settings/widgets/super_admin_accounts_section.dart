@@ -183,7 +183,7 @@ class SuperAdminAccountsSection extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   child: CustomPaint(
                     painter: _DashedRectPainter(
-                      color: const Color(0xFF60A5FA),
+                      color: const Color(0xFFFED7AA),
                       strokeWidth: 1.2,
                       gap: 4.0,
                       radius: 12.0,
@@ -192,7 +192,7 @@ class SuperAdminAccountsSection extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF0F7FF).withValues(alpha: 0.5),
+                        color: const Color(0xFFFFF7ED).withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Row(
@@ -200,7 +200,7 @@ class SuperAdminAccountsSection extends StatelessWidget {
                         children: [
                           Icon(
                             Icons.add_rounded,
-                            color: Color(0xFF2563EB),
+                            color: Color(0xFFD4642C),
                             size: 18,
                           ),
                           SizedBox(width: 6),
@@ -209,7 +209,7 @@ class SuperAdminAccountsSection extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF2563EB),
+                              color: Color(0xFFD4642C),
                             ),
                           ),
                         ],

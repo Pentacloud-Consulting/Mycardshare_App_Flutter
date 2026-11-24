@@ -55,7 +55,7 @@ class AnalyticsViewsChart extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFF4FF),
+                      color: const Color(0xFFFFF7ED),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -63,7 +63,7 @@ class AnalyticsViewsChart extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF0052FF),
+                        color: Color(0xFFD4642C),
                       ),
                     ),
                   ),
@@ -108,8 +108,8 @@ class AnalyticsViewsChart extends StatelessWidget {
                                   colors: totalViews == 0
                                       ? [const Color(0xFFE2E8F0), const Color(0xFFCBD5E1)]
                                       : isPeak
-                                          ? [const Color(0xFF0052FF), const Color(0xFF38BDF8)]
-                                          : [const Color(0xFF3B82F6), const Color(0xFF93C5FD)],
+                                          ? [const Color(0xFFD4642C), const Color(0xFFE8824E)]
+                                          : [const Color(0xFFE8824E), const Color(0xFFFED7AA)],
                                   begin: Alignment.bottomCenter,
                                   end: Alignment.topCenter,
                                 ),

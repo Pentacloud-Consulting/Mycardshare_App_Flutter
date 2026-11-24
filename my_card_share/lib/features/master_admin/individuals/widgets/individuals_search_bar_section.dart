@@ -67,16 +67,16 @@ class IndividualsSearchBarSection extends StatelessWidget {
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              color: isFilterActive ? const Color(0xFFEFF6FF) : Colors.white,
+              color: isFilterActive ? const Color(0xFFFFF7ED) : Colors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: isFilterActive ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0),
+                color: isFilterActive ? const Color(0xFFD4642C) : const Color(0xFFE2E8F0),
                 width: isFilterActive ? 1.4 : 1.0,
               ),
               boxShadow: [
                 BoxShadow(
                   color: isFilterActive
-                      ? const Color(0xFF2563EB).withValues(alpha: 0.12)
+                      ? const Color(0xFFD4642C).withValues(alpha: 0.12)
                       : const Color(0xFF0F172A).withValues(alpha: 0.04),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
@@ -85,7 +85,7 @@ class IndividualsSearchBarSection extends StatelessWidget {
             ),
             child: Icon(
               Icons.tune_rounded,
-              color: isFilterActive ? const Color(0xFF2563EB) : const Color(0xFF475569),
+              color: isFilterActive ? const Color(0xFFD4642C) : const Color(0xFF475569),
               size: 20,
             ),
           ),

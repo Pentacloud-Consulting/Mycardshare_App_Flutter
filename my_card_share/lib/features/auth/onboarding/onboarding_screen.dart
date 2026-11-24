@@ -79,7 +79,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     final slide = _slides[_currentPage];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFD),
+      backgroundColor: const Color(0xFFFAF6F2),
       body: Stack(
         children: [
           // Background ambient gradient glows
@@ -93,7 +93,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFF0066FF).withValues(alpha: 0.12),
+                    const Color(0xFFD4642C).withValues(alpha: 0.12),
                     Colors.transparent,
                   ],
                 ),
@@ -110,7 +110,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFF38B6FF).withValues(alpha: 0.15),
+                    const Color(0xFFE8824E).withValues(alpha: 0.15),
                     Colors.transparent,
                   ],
                 ),
@@ -163,7 +163,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                             TextSpan(
                               text: slide["title_highlight"],
                               style: const TextStyle(
-                                color: Color(0xFF0066FF),
+                                color: Color(0xFFD4642C),
                               ),
                             ),
                           ],
@@ -220,7 +220,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                             width: 7,
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? const Color(0xFF0066FF)
+                                  ? const Color(0xFFD4642C)
                                   : const Color(0xFFCBD5E1),
                               borderRadius: BorderRadius.circular(4),
                             ),
@@ -238,13 +238,13 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(28),
                             gradient: const LinearGradient(
-                              colors: [Color(0xFF0052FF), Color(0xFF00A2FF)],
+                              colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF0066FF).withValues(alpha: 0.35),
+                                color: const Color(0xFFD4642C).withValues(alpha: 0.35),
                                 blurRadius: 16,
                                 offset: const Offset(0, 8),
                               ),
@@ -313,7 +313,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     border: Border.all(color: const Color(0xFFCBD5E1), width: 2.5),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF0066FF).withValues(alpha: 0.15),
+                        color: const Color(0xFFD4642C).withValues(alpha: 0.15),
                         blurRadius: 28,
                         offset: const Offset(0, 12),
                       ),
@@ -414,7 +414,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         border: Border.all(color: const Color(0xFF0F172A), width: 3),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF0066FF).withValues(alpha: 0.18),
+                            color: const Color(0xFFD4642C).withValues(alpha: 0.18),
                             blurRadius: 18,
                             offset: const Offset(0, 6),
                           ),
@@ -437,12 +437,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                 width: 42,
                                 height: 42,
                                 decoration: const BoxDecoration(
-                                  color: Color(0xFFE0F2FE),
+                                  color: Color(0xFFFDEEE6),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
                                   Icons.wifi_tethering,
-                                  color: Color(0xFF0066FF),
+                                  color: Color(0xFFD4642C),
                                   size: 22,
                                 ),
                               ),
@@ -504,7 +504,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF0066FF).withValues(alpha: 0.18),
+                              color: const Color(0xFFD4642C).withValues(alpha: 0.18),
                               blurRadius: 18,
                               offset: const Offset(0, 6),
                             ),
@@ -524,7 +524,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                 Container(
                                   padding: const EdgeInsets.all(3),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF0066FF),
+                                    color: const Color(0xFFD4642C),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: const Icon(Icons.style, color: Colors.white, size: 11),
@@ -567,13 +567,13 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF0066FF).withValues(alpha: 0.15),
+                color: const Color(0xFFD4642C).withValues(alpha: 0.15),
                 blurRadius: 14,
                 offset: const Offset(0, 5),
               ),
             ],
           ),
-          child: Icon(icon, color: const Color(0xFF0066FF), size: 22),
+          child: Icon(icon, color: const Color(0xFFD4642C), size: 22),
         ),
         const SizedBox(height: 3),
         Text(
@@ -608,7 +608,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 borderRadius: BorderRadius.circular(22),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF0066FF).withValues(alpha: 0.15),
+                    color: const Color(0xFFD4642C).withValues(alpha: 0.15),
                     blurRadius: 30,
                     offset: const Offset(0, 12),
                   ),
@@ -626,7 +626,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                           Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF0066FF),
+                              color: const Color(0xFFD4642C),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(Icons.account_balance_wallet, color: Colors.white, size: 14),
@@ -701,11 +701,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       ),
                       Row(
                         children: const [
-                          Icon(Icons.circle, size: 6, color: Color(0xFF0066FF)),
+                          Icon(Icons.circle, size: 6, color: Color(0xFFD4642C)),
                           SizedBox(width: 3),
                           Text("Views", style: TextStyle(fontSize: 7, color: Color(0xFF64748B))),
                           SizedBox(width: 8),
-                          Icon(Icons.circle, size: 6, color: Color(0xFF78C7FF)),
+                          Icon(Icons.circle, size: 6, color: Color(0xFFF3A278)),
                           SizedBox(width: 3),
                           Text("Leads", style: TextStyle(fontSize: 7, color: Color(0xFF64748B))),
                         ],
@@ -806,12 +806,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF0F7FF),
+                            color: const Color(0xFFFDEEE6),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Column(
                             children: const [
-                              Icon(Icons.trending_up, color: Color(0xFF0066FF), size: 18),
+                              Icon(Icons.trending_up, color: Color(0xFFD4642C), size: 18),
                               SizedBox(height: 4),
                               Text(
                                 "More\nConnections\nBrighter\nOpportunities",
@@ -819,7 +819,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                 style: TextStyle(
                                   fontSize: 7,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0066FF),
+                                  color: Color(0xFFD4642C),
                                   height: 1.2,
                                 ),
                               ),
@@ -849,7 +849,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 12, color: const Color(0xFF0066FF)),
+          Icon(icon, size: 12, color: const Color(0xFFD4642C)),
           const SizedBox(height: 2),
           Text(title, style: const TextStyle(fontSize: 7, color: Color(0xFF64748B))),
           const SizedBox(height: 1),
@@ -874,7 +874,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               height: 145 * heightFactor1,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF0052FF), Color(0xFF0077FF)],
+                  colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
                 ),
@@ -886,7 +886,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               width: 9,
               height: 145 * heightFactor2,
               decoration: BoxDecoration(
-                color: const Color(0xFF78C7FF),
+                color: const Color(0xFFF3A278),
                 borderRadius: BorderRadius.circular(3),
               ),
             ),
@@ -919,7 +919,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 value: factor,
                 minHeight: 5,
                 backgroundColor: const Color(0xFFE2E8F0),
-                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0066FF)),
+                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFD4642C)),
               ),
             ),
           ),
@@ -939,7 +939,7 @@ class DashedNodeCirclePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFF0066FF).withValues(alpha: 0.4)
+      ..color = const Color(0xFFD4642C).withValues(alpha: 0.4)
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
 
@@ -1004,7 +1004,7 @@ class _MockIndividualCardScreen extends StatelessWidget {
                     center: Alignment.center,
                     radius: 0.7,
                     colors: [
-                      const Color(0xFF38BDF8).withValues(alpha: 0.18),
+                      const Color(0xFFE8824E).withValues(alpha: 0.18),
                       Colors.transparent,
                     ],
                   ),
@@ -1088,13 +1088,13 @@ class _OnboardingSampleHeaderBanner extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF0052FF), Color(0xFF6366F1), Color(0xFF38BDF8)],
+                    colors: [Color(0xFFD4642C), Color(0xFFE8824E), Color(0xFFF59E0B)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   boxShadow: const [
                     BoxShadow(
-                      color: Color(0x1A0052FF),
+                      color: Color(0x1AD4642C),
                       blurRadius: 14,
                       offset: Offset(0, 6),
                     ),
@@ -1119,7 +1119,7 @@ class _OnboardingSampleHeaderBanner extends StatelessWidget {
                       ),
                     ),
 
-                    // Soft Blue Gradient Mask to preserve left text legibility
+                    // Soft Matte Orange Gradient Mask to preserve left text legibility
                     Positioned.fill(
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
@@ -1127,9 +1127,9 @@ class _OnboardingSampleHeaderBanner extends StatelessWidget {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                const Color(0xFF0052FF).withValues(alpha: 0.90),
-                                const Color(0xFF0052FF).withValues(alpha: 0.65),
-                                const Color(0xFF0038A8).withValues(alpha: 0.25),
+                                const Color(0xFFD4642C).withValues(alpha: 0.90),
+                                const Color(0xFFD4642C).withValues(alpha: 0.65),
+                                const Color(0xFFA34517).withValues(alpha: 0.25),
                               ],
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
@@ -1208,7 +1208,7 @@ class _OnboardingSampleHeaderBanner extends StatelessWidget {
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 0.5,
-                                color: Color(0xFF0066FF),
+                                color: Color(0xFFD4642C),
                               ),
                             ),
                           ],
@@ -1276,7 +1276,7 @@ class _OnboardingSampleHeaderBanner extends StatelessWidget {
           style: const TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF0066FF),
+            color: Color(0xFFD4642C),
           ),
         ),
         const SizedBox(height: 3),
@@ -1371,7 +1371,7 @@ class _OnboardingSampleBioQuoteCard extends StatelessWidget {
         children: const [
           Icon(
             Icons.format_quote_rounded,
-            color: Color(0xFF93C5FD),
+            color: Color(0xFFF3A278),
             size: 28,
           ),
           SizedBox(height: 2),
@@ -1462,14 +1462,14 @@ class _OnboardingSampleFooterActions extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF0052FF), Color(0xFF0088FF)],
+                colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               ),
               borderRadius: BorderRadius.circular(26),
               boxShadow: const [
                 BoxShadow(
-                  color: Color(0x350052FF),
+                  color: Color(0x35D4642C),
                   blurRadius: 14,
                   offset: Offset(0, 6),
                 ),
@@ -1507,12 +1507,12 @@ class _OnboardingSampleFooterActions extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(25),
-                      border: Border.all(color: const Color(0xFF0066FF), width: 1.5),
+                      border: Border.all(color: const Color(0xFFD4642C), width: 1.5),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: const [
-                        Icon(Icons.account_balance_wallet_rounded, color: Color(0xFF0066FF), size: 18),
+                        Icon(Icons.account_balance_wallet_rounded, color: Color(0xFFD4642C), size: 18),
                         SizedBox(width: 6),
                         Flexible(
                           child: Text(
@@ -1522,7 +1522,7 @@ class _OnboardingSampleFooterActions extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 13.5,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF0066FF),
+                              color: Color(0xFFD4642C),
                             ),
                           ),
                         ),
@@ -1537,12 +1537,12 @@ class _OnboardingSampleFooterActions extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(25),
-                      border: Border.all(color: const Color(0xFF0066FF), width: 1.5),
+                      border: Border.all(color: const Color(0xFFD4642C), width: 1.5),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: const [
-                        Icon(Icons.people_alt_rounded, color: Color(0xFF0066FF), size: 18),
+                        Icon(Icons.people_alt_rounded, color: Color(0xFFD4642C), size: 18),
                         SizedBox(width: 6),
                         Flexible(
                           child: Text(
@@ -1552,7 +1552,7 @@ class _OnboardingSampleFooterActions extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 13.5,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF0066FF),
+                              color: Color(0xFFD4642C),
                             ),
                           ),
                         ),
@@ -1568,11 +1568,11 @@ class _OnboardingSampleFooterActions extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFF38BDF8), width: 2.0),
+                border: Border.all(color: const Color(0xFFE8824E), width: 2.0),
               ),
               child: const Icon(
                 Icons.grid_view_rounded,
-                color: Color(0xFF0066FF),
+                color: Color(0xFFD4642C),
                 size: 22,
               ),
             ),

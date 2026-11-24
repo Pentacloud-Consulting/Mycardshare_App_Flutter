@@ -43,12 +43,12 @@ class SettingsSupportSection extends StatelessWidget {
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE0F2FE),
+                    color: const Color(0xFFFFF7ED),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.help_outline_rounded,
-                    color: Color(0xFF0284C7),
+                    color: Color(0xFFD4642C),
                     size: 20,
                   ),
                 ),
@@ -75,12 +75,12 @@ class SettingsSupportSection extends StatelessWidget {
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF3E8FF),
+                    color: const Color(0xFFFFF7ED),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.description_outlined,
-                    color: Color(0xFF9333EA),
+                    color: Color(0xFFD4642C),
                     size: 20,
                   ),
                 ),
@@ -107,12 +107,12 @@ class SettingsSupportSection extends StatelessWidget {
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFDCFCE7),
+                    color: const Color(0xFFFFF7ED),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.verified_user_outlined,
-                    color: Color(0xFF16A34A),
+                    color: Color(0xFFD4642C),
                     size: 20,
                   ),
                 ),
@@ -139,12 +139,12 @@ class SettingsSupportSection extends StatelessWidget {
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE0F2FE),
+                    color: const Color(0xFFFFF7ED),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.info_outline_rounded,
-                    color: Color(0xFF0284C7),
+                    color: Color(0xFFD4642C),
                     size: 20,
                   ),
                 ),

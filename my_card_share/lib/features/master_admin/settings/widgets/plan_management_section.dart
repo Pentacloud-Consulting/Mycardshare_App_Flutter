@@ -40,7 +40,7 @@ class PlanManagementSection extends StatelessWidget {
             children: [
               const Row(
                 children: [
-                  Icon(Icons.credit_card_rounded, size: 20, color: Color(0xFF0052FF)),
+                  Icon(Icons.credit_card_rounded, size: 20, color: Color(0xFFD4642C)),
                   SizedBox(width: 8),
                   Text(
                     "Plan Management",
@@ -58,21 +58,21 @@ class PlanManagementSection extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
+                    color: const Color(0xFFFFF7ED),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFBFDBFE)),
+                    border: Border.all(color: const Color(0xFFFED7AA)),
                   ),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.add_rounded, size: 14, color: Color(0xFF0052FF)),
+                      Icon(Icons.add_rounded, size: 14, color: Color(0xFFD4642C)),
                       SizedBox(width: 4),
                       Text(
                         "Add Plan",
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF0052FF),
+                          color: Color(0xFFD4642C),
                         ),
                       ),
                     ],

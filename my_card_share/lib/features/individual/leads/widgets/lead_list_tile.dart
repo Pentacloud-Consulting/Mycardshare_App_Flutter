@@ -139,16 +139,16 @@ class LeadListTile extends StatelessWidget {
                         width: 24,
                         height: 24,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
+                          color: const Color(0xFFFAF6F2),
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: const Color(0xFFDBEAFE),
+                            color: const Color(0xFFE8824E).withValues(alpha: 0.35),
                             width: 0.8,
                           ),
                         ),
                         child: const Icon(
                           Icons.phone_rounded,
-                          color: Color(0xFF0066FF),
+                          color: Color(0xFFD4642C),
                           size: 12,
                         ),
                       ),
@@ -161,16 +161,16 @@ class LeadListTile extends StatelessWidget {
                         width: 24,
                         height: 24,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
+                          color: const Color(0xFFFAF6F2),
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: const Color(0xFFDBEAFE),
+                            color: const Color(0xFFE8824E).withValues(alpha: 0.35),
                             width: 0.8,
                           ),
                         ),
                         child: const Icon(
                           Icons.mail_outline_rounded,
-                          color: Color(0xFF0066FF),
+                          color: Color(0xFFD4642C),
                           size: 12,
                         ),
                       ),
@@ -186,8 +186,8 @@ class LeadListTile extends StatelessWidget {
   }
 
   Widget _buildAvatar() {
-    Color bg = const Color(0xFFE0F2FE);
-    Color fg = const Color(0xFF0284C7);
+    Color bg = const Color(0xFFFAF6F2);
+    Color fg = const Color(0xFFD4642C);
 
     if (initials == 'PS') {
       bg = const Color(0xFFF3E8FF);
@@ -233,7 +233,7 @@ class LeadListTile extends StatelessWidget {
       fg = const Color(0xFFA16207);
       dot = const Color(0xFFEAB308);
     } else if (status.toLowerCase() == 'qualified') {
-      bg = const Color(0xFFEFF6FF);
+      bg = const Color(0xFFFAF6F2);
       fg = const Color(0xFF1D4ED8);
       dot = const Color(0xFF3B82F6);
     } else if (status.toLowerCase() == 'lost') {

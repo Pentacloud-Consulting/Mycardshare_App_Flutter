@@ -2,11 +2,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../profile/enterprise_profile_store.dart';
 import '../../../models/user_model.dart';
 import 'enterprise_google_auth_sync_service.dart';
-import '../../master_admin/companies/company_management_store.dart';
 import '../../master_admin/master_admin_global_service.dart';
 import '../../master_admin/master_approval_service.dart';
 import '../../individual/profile/individual_profile_store.dart';
@@ -92,7 +92,7 @@ class EnterpriseAuthService {
         'role': 'enterprise',
         'status': 'pending',
         'approvalStatus': 'pending',
-        'isSuspended': true,
+        'isSuspended': false,
         'cardSlug': slug,
         'plan': 'free',
         'createdAt': FieldValue.serverTimestamp(),
@@ -114,7 +114,9 @@ class EnterpriseAuthService {
       final enterpriseMap = profileData.toFirestore();
       enterpriseMap['status'] = 'Pending';
       enterpriseMap['approvalStatus'] = 'pending';
-      enterpriseMap['isSuspended'] = true;
+      enterpriseMap['isSuspended'] = false;
+      enterpriseMap['adminUid'] = uid;
+      enterpriseMap['adminEmail'] = email.trim().toLowerCase();
 
       await _firestore
           .collection('enterprises')
@@ -128,12 +130,15 @@ class EnterpriseAuthService {
         'companyId': uid,
         'companyName': companyName.trim(),
         'adminUid': uid,
+        'adminUserId': uid,
         'adminEmail': email.trim().toLowerCase(),
+        'email': email.trim().toLowerCase(),
         'adminName': companyName.trim(),
         'voucherCode': voucherCode,
         'memberCount': 1,
         'status': 'pending',
         'approvalStatus': 'pending',
+        'isSuspended': false,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
@@ -233,6 +238,38 @@ class EnterpriseAuthService {
     String? resolvedCompanyId;
     final userEmail = user.email?.trim().toLowerCase();
 
+    // 0. Check SharedPreferences for instant local Master Admin approval on this device
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final resolvedIds = prefs.getStringList('master_admin_resolved_ids') ?? [];
+      final approvedEmails = prefs.getStringList('master_admin_approved_emails') ?? [];
+      final approvedUids = prefs.getStringList('master_admin_approved_uids') ?? [];
+
+      if (resolvedIds.contains(user.uid) ||
+          approvedUids.contains(user.uid) ||
+          (userEmail != null && approvedEmails.contains(userEmail))) {
+        isExplicitlyApproved = true;
+        isExplicitlyPending = false;
+        isExplicitlyRejected = false;
+      }
+    } catch (_) {}
+
+    // 0b. Check platform_config/approved_enterprises (cloud master admin approval registry)
+    try {
+      final platSnap = await _firestore.collection('platform_config').doc('approved_enterprises').get();
+      if (platSnap.exists && platSnap.data() != null) {
+        final pData = platSnap.data()!;
+        final List approvedUids = (pData['approvedUids'] as List?) ?? [];
+        final List approvedEmails = (pData['approvedEmails'] as List?) ?? [];
+        if (approvedUids.contains(user.uid) ||
+            (userEmail != null && approvedEmails.contains(userEmail))) {
+          isExplicitlyApproved = true;
+          isExplicitlyPending = false;
+          isExplicitlyRejected = false;
+        }
+      }
+    } catch (_) {}
+
     // 1. Check users/{user.uid}
     try {
       final userDoc = await _firestore.collection('users').doc(user.uid).get();
@@ -303,6 +340,49 @@ class EnterpriseAuthService {
           }
           if (approvalStatus == 'approved' || status == 'active') {
             isExplicitlyApproved = true;
+            isExplicitlyPending = false;
+            isExplicitlyRejected = false;
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 3b. Universal check: approved_organizations collection
+    if (userEmail != null && userEmail.isNotEmpty) {
+      try {
+        final orgSnap = await _firestore.collection('approved_organizations').doc(userEmail).get();
+        if (orgSnap.exists && orgSnap.data()?['approved'] == true) {
+          isExplicitlyApproved = true;
+          isExplicitlyPending = false;
+          isExplicitlyRejected = false;
+        }
+      } catch (_) {}
+    }
+    try {
+      final orgByUid = await _firestore.collection('approved_organizations').doc(user.uid).get();
+      if (orgByUid.exists && orgByUid.data()?['approved'] == true) {
+        isExplicitlyApproved = true;
+        isExplicitlyPending = false;
+        isExplicitlyRejected = false;
+      }
+    } catch (_) {}
+
+    // 3c. Query companies by email directly if not yet approved
+    if (userEmail != null && userEmail.isNotEmpty && !isExplicitlyApproved) {
+      try {
+        final compByEmailSnap = await _firestore
+            .collection('companies')
+            .where('adminEmail', isEqualTo: userEmail)
+            .get();
+        for (final doc in compByEmailSnap.docs) {
+          final cData = doc.data();
+          final status = (cData['status'] as String? ?? '').toLowerCase();
+          final approvalStatus = (cData['approvalStatus'] as String? ?? '').toLowerCase();
+          if (approvalStatus == 'approved' || status == 'active') {
+            isExplicitlyApproved = true;
+            isExplicitlyPending = false;
+            isExplicitlyRejected = false;
+            break;
           }
         }
       } catch (_) {}
@@ -331,12 +411,15 @@ class EnterpriseAuthService {
     }
 
     // ─── Final approval resolution ────────────────────────────────────────────
-    // Priority: rejected > pending > explicitly approved
-    // IMPORTANT: pending companies must NOT be auto-approved here.
-    // Auto-heal only runs when Master Admin has already approved the company.
-    if (isExplicitlyRejected) {
+    // Priority: explicitly approved > explicitly rejected > pending > legacy allow
+    if (isExplicitlyApproved) {
+      // Master Admin has approved this company! Unlock login immediately!
+      isApproved = true;
+      isExplicitlyPending = false;
+      isExplicitlyRejected = false;
+    } else if (isExplicitlyRejected) {
       isApproved = false;
-    } else if (isExplicitlyPending && !isExplicitlyApproved) {
+    } else if (isExplicitlyPending) {
       // Still awaiting Master Admin approval — do NOT auto-heal
       isApproved = false;
     } else {

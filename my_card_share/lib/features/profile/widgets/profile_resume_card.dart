@@ -14,7 +14,7 @@ class DashedRectPainter extends CustomPainter {
   final double radius;
 
   DashedRectPainter({
-    this.color = const Color(0xFF93C5FD),
+    this.color = const Color(0xFFE8824E),
     this.strokeWidth = 1.2,
     this.gap = 4.0,
     this.dash = 6.0,
@@ -536,13 +536,13 @@ class _ProfileResumeCardState extends State<ProfileResumeCard> {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: const Color(0xFFFAF6F2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
                   Icons.description_rounded,
                   size: 16,
-                  color: Color(0xFF2563EB),
+                  color: Color(0xFFD4642C),
                 ),
               ),
               const SizedBox(width: 8),
@@ -586,14 +586,14 @@ class _ProfileResumeCardState extends State<ProfileResumeCard> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
+                      color: const Color(0xFFFAF6F2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Center(
                       child: Icon(
                         Icons.folder_open_rounded,
                         size: 22,
-                        color: Color(0xFF2563EB),
+                        color: Color(0xFFD4642C),
                       ),
                     ),
                   ),
@@ -759,12 +759,12 @@ class _ProfileResumeCardState extends State<ProfileResumeCard> {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: const Color(0xFFFAF6F2),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFDBEAFE), width: 0.8),
+                  border: Border.all(color: const Color(0xFFD4642C).withValues(alpha: 0.25), width: 0.8),
                 ),
                 child: Center(
-                  child: Icon(icon, color: const Color(0xFF2563EB), size: 22),
+                  child: Icon(icon, color: const Color(0xFFD4642C), size: 22),
                 ),
               ),
               const SizedBox(width: 12),
@@ -857,7 +857,7 @@ class _ProfileResumeCardState extends State<ProfileResumeCard> {
                   height: 14,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2563EB)),
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFD4642C)),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -865,7 +865,7 @@ class _ProfileResumeCardState extends State<ProfileResumeCard> {
                   'Uploading document, please wait...',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF2563EB),
+                    color: Color(0xFFD4642C),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -876,8 +876,8 @@ class _ProfileResumeCardState extends State<ProfileResumeCard> {
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
                 value: uploadProgress > 0 ? uploadProgress : null,
-                backgroundColor: const Color(0xFFDBEAFE),
-                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF2563EB)),
+                backgroundColor: const Color(0xFFFAF6F2),
+                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFD4642C)),
                 minHeight: 4,
               ),
             ),
@@ -894,8 +894,8 @@ class _ProfileResumeCardState extends State<ProfileResumeCard> {
                     icon: const Icon(Icons.open_in_new_rounded, size: 14),
                     label: const Text('View', style: TextStyle(fontSize: 12)),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF2563EB),
-                      side: const BorderSide(color: Color(0xFFDBEAFE)),
+                      foregroundColor: const Color(0xFFD4642C),
+                      side: BorderSide(color: const Color(0xFFD4642C).withValues(alpha: 0.35)),
                       padding: const EdgeInsets.symmetric(vertical: 7),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8)),
@@ -928,19 +928,19 @@ class _ProfileResumeCardState extends State<ProfileResumeCard> {
               width: double.infinity,
               child: CustomPaint(
                 painter: DashedRectPainter(
-                  color: const Color(0xFF93C5FD),
+                  color: const Color(0xFFE8824E),
                   strokeWidth: 1.4,
                 ),
                 child: TextButton.icon(
                   onPressed: onUpload,
                   icon: const Icon(Icons.upload_rounded,
-                      size: 16, color: Color(0xFF2563EB)),
+                      size: 16, color: Color(0xFFD4642C)),
                   label: Text(
                     uploadButtonText,
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF2563EB),
+                      color: Color(0xFFD4642C),
                     ),
                   ),
                   style: TextButton.styleFrom(

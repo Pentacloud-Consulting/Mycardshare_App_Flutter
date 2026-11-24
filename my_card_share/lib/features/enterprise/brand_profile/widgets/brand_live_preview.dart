@@ -17,22 +17,57 @@ class BrandLivePreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color cardBgPrimary = selectedColor;
-    Color cardBgSecondary = selectedColor.withValues(alpha: 0.7);
+    final effectiveBrandColor =
+        (selectedColor == const Color(0xFF0052FF) || selectedColor == const Color(0xFF0F172A) && selectedTemplateId == "modern_glass")
+            ? const Color(0xFFD4642C)
+            : selectedColor;
+
+    Color cardBgPrimary = effectiveBrandColor;
+    Color cardBgSecondary = effectiveBrandColor.withValues(alpha: 0.75);
     Color cardTextColor = Colors.white;
 
-    if (selectedTemplateId == "minimal_dark") {
-      cardBgPrimary = const Color(0xFF0F172A);
-      cardBgSecondary = const Color(0xFF1E293B);
-      cardTextColor = Colors.white;
-    } else if (selectedTemplateId == "corporate_clean") {
-      cardBgPrimary = Colors.white;
-      cardBgSecondary = const Color(0xFFF1F5F9);
-      cardTextColor = const Color(0xFF0F172A);
-    } else if (selectedTemplateId == "bold_gradient") {
-      cardBgPrimary = const Color(0xFF7C3AED);
-      cardBgSecondary = const Color(0xFFEC4899);
-      cardTextColor = Colors.white;
+    switch (selectedTemplateId) {
+      case "sunset_orange":
+        cardBgPrimary = const Color(0xFFD4642C);
+        cardBgSecondary = const Color(0xFFF97316);
+        cardTextColor = Colors.white;
+        break;
+      case "minimal_dark":
+        cardBgPrimary = const Color(0xFF0F172A);
+        cardBgSecondary = const Color(0xFF1E293B);
+        cardTextColor = Colors.white;
+        break;
+      case "corporate_clean":
+        cardBgPrimary = Colors.white;
+        cardBgSecondary = const Color(0xFFF1F5F9);
+        cardTextColor = const Color(0xFF0F172A);
+        break;
+      case "luxury_gold":
+        cardBgPrimary = const Color(0xFF18181B);
+        cardBgSecondary = const Color(0xFF27272A);
+        cardTextColor = const Color(0xFFFFD700);
+        break;
+      case "emerald_executive":
+        cardBgPrimary = const Color(0xFF064E3B);
+        cardBgSecondary = const Color(0xFF059669);
+        cardTextColor = Colors.white;
+        break;
+      case "royal_slate":
+        cardBgPrimary = const Color(0xFF1E1B4B);
+        cardBgSecondary = const Color(0xFF312E81);
+        cardTextColor = Colors.white;
+        break;
+      case "bold_gradient":
+        cardBgPrimary = const Color(0xFF7C3AED);
+        cardBgSecondary = const Color(0xFFEC4899);
+        cardTextColor = Colors.white;
+        break;
+      case "modern_glass":
+      default:
+        cardBgPrimary = effectiveBrandColor;
+        cardBgSecondary = const Color(0xFFE8824E);
+        cardTextColor = Colors.white;
+        break;
     }
 
     // Read real company name from EnterpriseProfileStore or passed controller parameter
@@ -62,9 +97,9 @@ class BrandLivePreview extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFFF0F6FF),
+            color: const Color(0xFFFFF7ED),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFDBEAFE), width: 1.2),
+            border: Border.all(color: const Color(0xFFFED7AA), width: 1.2),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,7 +191,7 @@ class BrandLivePreview extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.all(2),
                             decoration: BoxDecoration(
-                              color: selectedColor,
+                              color: effectiveBrandColor,
                               shape: BoxShape.circle,
                               border: Border.all(color: Colors.white, width: 1.5),
                             ),

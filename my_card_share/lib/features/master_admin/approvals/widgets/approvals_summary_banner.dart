@@ -17,15 +17,15 @@ class ApprovalsSummaryBanner extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBEB),
+        color: const Color(0xFFFFF7ED),
         borderRadius: borderRadius,
         border: Border.all(
-          color: const Color(0xFFFDE68A),
+          color: const Color(0xFFFED7AA),
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+            color: const Color(0xFFD4642C).withValues(alpha: 0.12),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -41,24 +41,24 @@ class ApprovalsSummaryBanner extends StatelessWidget {
               bottom: 0,
               width: 4.5,
               child: Container(
-                color: const Color(0xFFF59E0B),
+                color: const Color(0xFFD4642C),
               ),
             ),
             Padding(
               padding: const EdgeInsets.only(left: 20, top: 14, right: 16, bottom: 14),
               child: Row(
                 children: [
-                  // Amber Clock Icon Circle
+                  // Warm Orange Clock Icon Circle
                   Container(
                     width: 42,
                     height: 42,
                     decoration: const BoxDecoration(
-                      color: Color(0xFFFEF3C7),
+                      color: Color(0xFFFFEDD5),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
                       Icons.access_time_filled_rounded,
-                      color: Color(0xFFD97706),
+                      color: Color(0xFFD4642C),
                       size: 22,
                     ),
                   ),

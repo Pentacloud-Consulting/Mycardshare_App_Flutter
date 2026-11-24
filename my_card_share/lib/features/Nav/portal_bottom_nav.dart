@@ -146,11 +146,11 @@ class _PortalBottomNavState extends State<PortalBottomNav> {
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0052FF),
+                          color: const Color(0xFFD4642C),
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF0052FF).withValues(alpha: selectedIndex == 2 ? 0.45 : 0.25),
+                              color: const Color(0xFFD4642C).withValues(alpha: selectedIndex == 2 ? 0.45 : 0.25),
                               blurRadius: selectedIndex == 2 ? 14 : 10,
                               offset: const Offset(0, 3),
                             ),
@@ -170,7 +170,7 @@ class _PortalBottomNavState extends State<PortalBottomNav> {
                         fontSize: 10.5,
                         fontWeight: selectedIndex == 2 ? FontWeight.w700 : FontWeight.w500,
                         color: selectedIndex == 2
-                            ? const Color(0xFF0052FF)
+                            ? const Color(0xFFD4642C)
                             : const Color(0xFF64748B),
                         letterSpacing: -0.1,
                       ),
@@ -208,7 +208,7 @@ class _PortalBottomNavState extends State<PortalBottomNav> {
     required String label,
   }) {
     final isSelected = selectedIndex == index;
-    const activeColor = Color(0xFF0052FF);
+    const activeColor = Color(0xFFD4642C);
     const inactiveColor = Color(0xFF94A3B8);
 
     return InkWell(

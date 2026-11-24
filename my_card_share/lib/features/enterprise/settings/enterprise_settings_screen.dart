@@ -86,8 +86,8 @@ class _EnterpriseSettingsScreenState extends State<EnterpriseSettingsScreen> {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFF38BDF8).withValues(alpha: 0.18),
-                    const Color(0xFF0052FF).withValues(alpha: 0.05),
+                    const Color(0xFFD4642C).withValues(alpha: 0.18),
+                    const Color(0xFFD4642C).withValues(alpha: 0.05),
                     Colors.transparent,
                   ],
                 ),

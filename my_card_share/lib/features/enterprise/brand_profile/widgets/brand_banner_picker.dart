@@ -151,9 +151,9 @@ class _BrandBannerPickerState extends State<BrandBannerPicker> {
                       gradient: (liveBannerUrl == null || liveBannerUrl.isEmpty)
                           ? const LinearGradient(
                               colors: [
-                                Color(0xFF0052FF),
-                                Color(0xFF7C3AED),
-                                Color(0xFF38BDF8),
+                                Color(0xFFD4642C),
+                                Color(0xFFE8824E),
+                                Color(0xFFFED7AA),
                               ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
@@ -161,7 +161,7 @@ class _BrandBannerPickerState extends State<BrandBannerPicker> {
                           : null,
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF0052FF).withValues(alpha: 0.15),
+                          color: const Color(0xFFD4642C).withValues(alpha: 0.15),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -275,7 +275,7 @@ class _BrandBannerPickerState extends State<BrandBannerPicker> {
                         ),
                         child: const Icon(
                           Icons.camera_alt_rounded,
-                          color: Color(0xFF0052FF),
+                          color: Color(0xFFD4642C),
                           size: 15,
                         ),
                       ),
@@ -353,7 +353,7 @@ class _BrandBannerPickerState extends State<BrandBannerPicker> {
                     ),
                     Switch.adaptive(
                       value: _isLocked,
-                      activeTrackColor: const Color(0xFF0052FF),
+                      activeTrackColor: const Color(0xFFD4642C),
                       onChanged: _handleLockToggle,
                     ),
                   ],

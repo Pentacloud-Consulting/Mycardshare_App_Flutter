@@ -255,7 +255,7 @@ class EnterpriseInvitePopupModal extends StatelessWidget {
                       children: [
                         const Icon(
                           Icons.confirmation_number_outlined,
-                          color: Color(0xFF0052FF),
+                          color: Color(0xFFD4642C),
                           size: 20,
                         ),
                         const SizedBox(width: 12),
@@ -283,7 +283,7 @@ class EnterpriseInvitePopupModal extends StatelessWidget {
                           height: 46,
                           child: ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF0052FF),
+                              backgroundColor: const Color(0xFFD4642C),
                               elevation: 0,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -326,23 +326,28 @@ class EnterpriseInvitePopupModal extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                           ),
                           onPressed: () {
-                            EnterpriseInviteLinkService.instance.shareInviteLink(
-                              context,
-                              "Join my workspace on My Card Share with invite code: $inviteCode",
-                            );
                             Navigator.pop(context);
+                            Future.microtask(() {
+                              if (context.mounted) {
+                                EnterpriseInviteLinkService.instance.shareInviteLink(
+                                  context,
+                                  inviteLink,
+                                  inviteCode: inviteCode,
+                                );
+                              }
+                            });
                           },
                           icon: const Icon(
                             Icons.share_outlined,
                             size: 18,
-                            color: Color(0xFF0052FF),
+                            color: Color(0xFFD4642C),
                           ),
                           label: const Text(
                             "Share",
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF0052FF),
+                              color: Color(0xFFD4642C),
                             ),
                           ),
                         ),

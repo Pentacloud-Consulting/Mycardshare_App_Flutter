@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../backend/master_admin/companies/company_management_store.dart';
 import '../../../backend/master_admin/companies/models/master_company_model.dart';
 import '../../../backend/master_admin/approvals/approvals_queue_store.dart';
@@ -37,6 +38,69 @@ class _MasterAdminCompanyDetailScreenState extends State<MasterAdminCompanyDetai
     setState(() => _isApproving = true);
 
     try {
+      // ⚡ Instant direct unlock in Firestore
+      try {
+        final fs = FirebaseFirestore.instance;
+        await fs.collection('enterprises').doc(companyId).set({
+          'approvalStatus': 'approved',
+          'status': 'Active',
+          'isSuspended': false,
+          'approvedAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
+        await fs.collection('companies').doc(companyId).set({
+          'approvalStatus': 'approved',
+          'status': 'active',
+          'isSuspended': false,
+          'approvedAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
+        // Save to SharedPreferences for instant local access
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          final res = prefs.getStringList('master_admin_resolved_ids') ?? [];
+          if (!res.contains(companyId)) res.add(companyId);
+          await prefs.setStringList('master_admin_resolved_ids', res);
+
+          final appEmails = prefs.getStringList('master_admin_approved_emails') ?? [];
+          final cEmail = adminEmail.trim().toLowerCase();
+          if (cEmail.isNotEmpty && !appEmails.contains(cEmail)) appEmails.add(cEmail);
+          await prefs.setStringList('master_admin_approved_emails', appEmails);
+
+          final appUids = prefs.getStringList('master_admin_approved_uids') ?? [];
+          if (!appUids.contains(companyId)) appUids.add(companyId);
+          await prefs.setStringList('master_admin_approved_uids', appUids);
+        } catch (_) {}
+
+        // Universally persist to platform_config/approved_enterprises
+        try {
+          await fs.collection('platform_config').doc('approved_enterprises').set({
+            'approvedUids': FieldValue.arrayUnion([companyId]),
+            if (adminEmail.trim().isNotEmpty)
+              'approvedEmails': FieldValue.arrayUnion([adminEmail.trim().toLowerCase()]),
+          }, SetOptions(merge: true));
+        } catch (_) {}
+
+        if (companyName.isNotEmpty) {
+          final q1 = await fs.collection('enterprises').where('companyName', isEqualTo: companyName).get();
+          for (final d in q1.docs) {
+            await d.reference.set({'approvalStatus': 'approved', 'status': 'Active', 'isSuspended': false}, SetOptions(merge: true));
+          }
+          final q2 = await fs.collection('companies').where('companyName', isEqualTo: companyName).get();
+          for (final d in q2.docs) {
+            await d.reference.set({'approvalStatus': 'approved', 'status': 'active', 'isSuspended': false}, SetOptions(merge: true));
+          }
+          final q3 = await fs.collection('users').where('companyName', isEqualTo: companyName).get();
+          for (final d in q3.docs) {
+            await d.reference.set({'approvalStatus': 'approved', 'status': 'active', 'isSuspended': false}, SetOptions(merge: true));
+          }
+        }
+      } catch (e) {
+        debugPrint('[CompanyDetail] Direct approve write note: $e');
+      }
+
       final item = MasterApprovalItem(
         id: companyId,
         title: companyName,
@@ -284,29 +348,40 @@ class _MasterAdminCompanyDetailScreenState extends State<MasterAdminCompanyDetai
         final firestoreStatus = (data['status'] as String? ?? '').toLowerCase().trim();
         final cachedStatus = (cachedCompany?.status ?? '').toLowerCase().trim();
 
-        // If explicitly approved or active, it is NOT pending
+        // Priority 1: If explicitly approved or active, it is Active
         final isApproved = firestoreApproval == 'approved' ||
             firestoreStatus == 'active' ||
-            (firestoreApproval != 'pending' && firestoreStatus != 'pending' && cachedStatus == 'active');
+            cachedStatus == 'active';
 
-        final isSuspended = data['isSuspended'] == true ||
+        // Priority 2: Suspended ONLY if NOT approved
+        final isSuspended = !isApproved && (
+            data['isSuspended'] == true ||
             firestoreStatus == 'suspended' ||
             firestoreApproval == 'rejected' ||
-            cachedStatus == 'suspended';
+            cachedStatus == 'suspended'
+        );
 
         final isPending = !isApproved && !isSuspended && (
           firestoreApproval == 'pending' ||
           firestoreStatus == 'pending' ||
-          (cachedStatus == 'pending' && firestoreApproval.isEmpty && firestoreStatus.isEmpty)
+          cachedStatus == 'pending' ||
+          (firestoreApproval.isEmpty && firestoreStatus.isEmpty && cachedStatus != 'active')
         );
 
-        final statusText = isSuspended
-            ? 'Suspended'
-            : (isApproved
-                ? 'Active'
+        final statusText = isApproved
+            ? 'Active'
+            : (isSuspended
+                ? 'Suspended'
                 : (isPending
                     ? 'Pending'
                     : (firestoreStatus.isNotEmpty ? firestoreStatus.capitalizeFirst() : 'Active')));
+
+        if (isApproved && data['isSuspended'] == true) {
+          Future.microtask(() {
+            FirebaseFirestore.instance.collection('enterprises').doc(effectiveId).set({'isSuspended': false}, SetOptions(merge: true));
+            FirebaseFirestore.instance.collection('companies').doc(effectiveId).set({'isSuspended': false}, SetOptions(merge: true));
+          });
+        }
 
         final sinceText = data['createdAt'] != null
             ? "Since ${(data['createdAt'] is Timestamp ? (data['createdAt'] as Timestamp).toDate().year : '2026')}"
@@ -357,8 +432,8 @@ class _MasterAdminCompanyDetailScreenState extends State<MasterAdminCompanyDetai
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      const Color(0xFF38BDF8).withValues(alpha: 0.22),
-                      const Color(0xFF0052FF).withValues(alpha: 0.08),
+                      const Color(0xFFD4642C).withValues(alpha: 0.12),
+                      const Color(0xFFD4642C).withValues(alpha: 0.03),
                       Colors.transparent,
                     ],
                   ),

@@ -22,10 +22,17 @@ class BrandTemplateSelector extends StatelessWidget {
 
   static const List<CardTemplateOption> templates = [
     CardTemplateOption(
+      id: "sunset_orange",
+      name: "Sunset Orange",
+      primaryColor: Color(0xFFD4642C),
+      secondaryColor: Color(0xFFF97316),
+      textColor: Colors.white,
+    ),
+    CardTemplateOption(
       id: "modern_glass",
       name: "Modern Glass",
-      primaryColor: Color(0xFF0052FF),
-      secondaryColor: Color(0xFF38BDF8),
+      primaryColor: Color(0xFFE05615),
+      secondaryColor: Color(0xFFFED7AA),
       textColor: Colors.white,
     ),
     CardTemplateOption(
@@ -41,6 +48,27 @@ class BrandTemplateSelector extends StatelessWidget {
       primaryColor: Color(0xFFF8FAFC),
       secondaryColor: Color(0xFFE2E8F0),
       textColor: Color(0xFF0F172A),
+    ),
+    CardTemplateOption(
+      id: "luxury_gold",
+      name: "Luxury Gold",
+      primaryColor: Color(0xFF18181B),
+      secondaryColor: Color(0xFFD4AF37),
+      textColor: Color(0xFFFFD700),
+    ),
+    CardTemplateOption(
+      id: "emerald_executive",
+      name: "Emerald Exec",
+      primaryColor: Color(0xFF064E3B),
+      secondaryColor: Color(0xFF059669),
+      textColor: Colors.white,
+    ),
+    CardTemplateOption(
+      id: "royal_slate",
+      name: "Royal Slate",
+      primaryColor: Color(0xFF1E1B4B),
+      secondaryColor: Color(0xFF312E81),
+      textColor: Colors.white,
     ),
     CardTemplateOption(
       id: "bold_gradient",
@@ -103,14 +131,14 @@ class BrandTemplateSelector extends StatelessWidget {
                               ),
                               border: Border.all(
                                 color: isSelected
-                                    ? const Color(0xFF0052FF)
+                                    ? const Color(0xFFD4642C)
                                     : const Color(0xFFE2E8F0),
                                 width: isSelected ? 2.5 : 1,
                               ),
                               boxShadow: [
                                 BoxShadow(
                                   color: isSelected
-                                      ? const Color(0xFF0052FF).withValues(alpha: 0.2)
+                                      ? const Color(0xFFD4642C).withValues(alpha: 0.2)
                                       : const Color(0xFF0F172A).withValues(alpha: 0.05),
                                   blurRadius: isSelected ? 12 : 6,
                                   offset: const Offset(0, 3),
@@ -175,7 +203,7 @@ class BrandTemplateSelector extends StatelessWidget {
                               child: Container(
                                 padding: const EdgeInsets.all(3),
                                 decoration: const BoxDecoration(
-                                  color: Color(0xFF0052FF),
+                                  color: Color(0xFFD4642C),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
@@ -194,7 +222,7 @@ class BrandTemplateSelector extends StatelessWidget {
                           fontSize: 12,
                           fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                           color: isSelected
-                              ? const Color(0xFF0052FF)
+                              ? const Color(0xFFD4642C)
                               : const Color(0xFF475569),
                         ),
                         textAlign: TextAlign.center,

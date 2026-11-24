@@ -7,11 +7,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../auth/back/smart_back_handler.dart';
 import '../../auth/font style/font_style.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'widgets/profile_avatar_section.dart';
 import 'widgets/profile_form_section.dart';
 import 'widgets/profile_security_section.dart';
 import 'widgets/profile_activity_section.dart';
 import 'widgets/profile_logout_button.dart';
+import 'widgets/active_sessions_sheet.dart';
 import '../../individual/settings/widgets/change_password_dialog.dart';
 import '../../../backend/Cloud Image Upload/cloud_upload_service.dart';
 import '../../../backend/app view/app_view_auth_gate.dart';
@@ -30,6 +32,31 @@ class _MasterAdminProfileScreenState extends ConsumerState<MasterAdminProfileScr
   final TextEditingController _phoneController = TextEditingController();
   String? _avatarUrl;
   bool _isUploading = false;
+  int _activeSessionCount = 3;
+
+  String _formatLastLogin(DateTime? dt) {
+    if (dt == null) return "Last login: Active now";
+    final now = DateTime.now();
+    final timeStr =
+        "${dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour)}:${dt.minute.toString().padLeft(2, '0')} ${dt.hour >= 12 ? 'PM' : 'AM'}";
+    if (dt.year == now.year && dt.month == now.month && dt.day == now.day) {
+      return "Last login: Today, $timeStr";
+    }
+    final diff = now.difference(dt);
+    if (diff.inDays == 1 || (dt.day == now.day - 1 && dt.month == now.month)) {
+      return "Last login: Yesterday, $timeStr";
+    }
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return "Last login: ${months[dt.month - 1]} ${dt.day}, $timeStr";
+  }
+
+  String _formatLocationInfo() {
+    if (kIsWeb) return "Session: Web Console · Active secure session";
+    if (Platform.isAndroid) return "Session: Android Device · Active session";
+    if (Platform.isIOS) return "Session: iOS Mobile · Active session";
+    if (Platform.isWindows) return "Session: Windows Workstation · Active session";
+    return "Session: Secure Admin Workstation";
+  }
 
   @override
   void initState() {
@@ -38,17 +65,21 @@ class _MasterAdminProfileScreenState extends ConsumerState<MasterAdminProfileScr
   }
 
   void _loadProfile() {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      _emailController.text = user.email ?? "admin@mycardshare.com";
-      _nameController.text = user.displayName ?? "System Master Admin";
-      _avatarUrl = user.photoURL;
-      _phoneController.text = user.phoneNumber ?? "+1 (555) 019-2834";
-    } else {
-      _nameController.text = "System Master Admin";
-      _emailController.text = "admin@mycardshare.com";
-      _phoneController.text = "+1 (555) 019-2834";
-    }
+    final authUser = ref.read(authProvider).user;
+    final fbUser = FirebaseAuth.instance.currentUser;
+    final email = (authUser?.email.isNotEmpty == true)
+        ? authUser!.email
+        : ((fbUser?.email?.isNotEmpty == true) ? fbUser!.email! : "admin@pentcloud.me");
+    final name = (authUser?.name.isNotEmpty == true)
+        ? authUser!.name
+        : ((fbUser?.displayName?.isNotEmpty == true) ? fbUser!.displayName! : "Platform Master Admin");
+    final phone = fbUser?.phoneNumber ?? "+1 (555) 019-2834";
+    final avatar = fbUser?.photoURL;
+
+    _emailController.text = email;
+    _nameController.text = name;
+    _avatarUrl = avatar;
+    _phoneController.text = phone;
   }
 
   @override
@@ -171,8 +202,8 @@ class _MasterAdminProfileScreenState extends ConsumerState<MasterAdminProfileScr
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFFDBEAFE).withValues(alpha: 0.7),
-                    const Color(0xFFEFF6FF).withValues(alpha: 0.2),
+                    const Color(0xFFFED7AA).withValues(alpha: 0.5),
+                    const Color(0xFFFFF7ED).withValues(alpha: 0.2),
                     const Color(0xFFF8FAFD).withValues(alpha: 0.0),
                   ],
                 ),
@@ -206,6 +237,8 @@ class _MasterAdminProfileScreenState extends ConsumerState<MasterAdminProfileScr
 
               // 3. Security Section
               ProfileSecuritySection(
+                activeSessionsCount:
+                    "$_activeSessionCount ${_activeSessionCount == 1 ? 'device' : 'devices'}",
                 onChangePasswordTap: () {
                   showDialog(
                     context: context,
@@ -222,18 +255,25 @@ class _MasterAdminProfileScreenState extends ConsumerState<MasterAdminProfileScr
                   );
                 },
                 onActiveSessionsTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Viewing active sessions (3 devices)"),
-                      behavior: SnackBarBehavior.floating,
-                    ),
+                  ActiveSessionsSheet.show(
+                    context,
+                    onSessionsUpdated: () {
+                      if (mounted) {
+                        setState(() {
+                          _activeSessionCount = 1;
+                        });
+                      }
+                    },
                   );
                 },
               ),
               const SizedBox(height: 24),
 
               // 4. Activity Section
-              const ProfileActivitySection(),
+              ProfileActivitySection(
+                lastLogin: _formatLastLogin(FirebaseAuth.instance.currentUser?.metadata.lastSignInTime),
+                locationInfo: _formatLocationInfo(),
+              ),
               const SizedBox(height: 28),
 
               // 5. Log Out Button

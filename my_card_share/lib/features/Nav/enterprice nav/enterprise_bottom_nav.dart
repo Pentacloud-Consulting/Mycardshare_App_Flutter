@@ -117,7 +117,7 @@ class _EnterpriseBottomNavState extends State<EnterpriseBottomNav> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? const Color(0xFFEFF4FF) : Colors.transparent,
+          color: isActive ? const Color(0xFFFFF7ED) : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
@@ -126,7 +126,7 @@ class _EnterpriseBottomNavState extends State<EnterpriseBottomNav> {
           children: [
             Icon(
               icon,
-              color: isActive ? const Color(0xFF0052FF) : const Color(0xFF64748B),
+              color: isActive ? const Color(0xFFD4642C) : const Color(0xFF64748B),
               size: 22,
             ),
             const SizedBox(height: 2),
@@ -135,7 +135,7 @@ class _EnterpriseBottomNavState extends State<EnterpriseBottomNav> {
               style: TextStyle(
                 fontSize: 10.5,
                 fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                color: isActive ? const Color(0xFF0052FF) : const Color(0xFF64748B),
+                color: isActive ? const Color(0xFFD4642C) : const Color(0xFF64748B),
               ),
             ),
           ],

@@ -55,12 +55,12 @@ class _SubscriptionActionButtonsState extends State<SubscriptionActionButtons> {
               height: 56,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF0066FF), Color(0xFF2563EB)],
+                  colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
                 ),
                 borderRadius: BorderRadius.circular(28),
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x330066FF),
+                    color: Color(0x33D4642C),
                     blurRadius: 16,
                     offset: Offset(0, 6),
                   ),

@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
@@ -54,12 +52,12 @@ class SettingsAccountSection extends StatelessWidget {
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE0F2FE),
+                    color: const Color(0xFFFFF7ED),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.lock_outline_rounded,
-                    color: Color(0xFF0284C7),
+                    color: Color(0xFFD4642C),
                     size: 20,
                   ),
                 ),
@@ -91,12 +89,12 @@ class SettingsAccountSection extends StatelessWidget {
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE0F2FE),
+                    color: const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.mail_outline_rounded,
-                    color: Color(0xFF0284C7),
+                    color: Color(0xFF475569),
                     size: 20,
                   ),
                 ),
@@ -146,7 +144,7 @@ class SettingsAccountSection extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
+                        color: const Color(0xFFFEF3C7),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Text(
@@ -154,7 +152,7 @@ class SettingsAccountSection extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF0284C7),
+                          color: Color(0xFFB45309),
                         ),
                       ),
                     ),

@@ -82,12 +82,12 @@ class ProfileAvatarSection extends StatelessWidget {
                     width: 28,
                     height: 28,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2563EB),
+                      color: const Color(0xFFD4642C),
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 2),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF2563EB).withValues(alpha: 0.3),
+                          color: const Color(0xFFD4642C).withValues(alpha: 0.35),
                           blurRadius: 6,
                           offset: const Offset(0, 2),
                         ),
@@ -105,13 +105,13 @@ class ProfileAvatarSection extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          // Purple Super Admin Badge Pill
+          // Warm Cream & Orange Super Admin Badge Pill
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFFF3E8FF), // Light purple
+              color: const Color(0xFFFFF7ED),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFE9D5FF), width: 1),
+              border: Border.all(color: const Color(0xFFFED7AA), width: 1),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -120,7 +120,7 @@ class ProfileAvatarSection extends StatelessWidget {
                   width: 6,
                   height: 6,
                   decoration: const BoxDecoration(
-                    color: Color(0xFFA855F7),
+                    color: Color(0xFFD4642C),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -130,7 +130,7 @@ class ProfileAvatarSection extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF7E22CE), // Purple text
+                    color: Color(0xFFD4642C),
                     letterSpacing: 0.5,
                   ),
                 ),

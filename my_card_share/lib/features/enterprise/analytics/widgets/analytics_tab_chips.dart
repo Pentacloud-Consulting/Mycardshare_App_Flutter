@@ -26,7 +26,7 @@ class AnalyticsTabChips extends StatelessWidget {
               margin: const EdgeInsets.only(right: 8),
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFF0052FF) : Colors.white,
+                color: isSelected ? const Color(0xFFD4642C) : Colors.white,
                 borderRadius: BorderRadius.circular(20),
                 border: isSelected
                     ? null
@@ -34,7 +34,7 @@ class AnalyticsTabChips extends StatelessWidget {
                 boxShadow: isSelected
                     ? [
                         BoxShadow(
-                          color: const Color(0xFF0052FF).withValues(alpha: 0.3),
+                          color: const Color(0xFFD4642C).withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),

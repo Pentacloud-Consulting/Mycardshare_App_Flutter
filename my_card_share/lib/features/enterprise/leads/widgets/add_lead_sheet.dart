@@ -193,13 +193,13 @@ class _EnterpriseAddLeadSheetState extends State<EnterpriseAddLeadSheet> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFF4FF),
+                      color: const Color(0xFFFFF7ED),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Center(
                       child: Icon(
                         Icons.person_add_alt_1_rounded,
-                        color: Color(0xFF0052FF),
+                        color: Color(0xFFD4642C),
                         size: 22,
                       ),
                     ),
@@ -373,7 +373,7 @@ class _EnterpriseAddLeadSheetState extends State<EnterpriseAddLeadSheet> {
                 child: ElevatedButton(
                   onPressed: _isSubmitting ? null : _handleSave,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0052FF),
+                    backgroundColor: const Color(0xFFD4642C),
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
@@ -468,7 +468,7 @@ class _EnterpriseAddLeadSheetState extends State<EnterpriseAddLeadSheet> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF0052FF), width: 1.5),
+        borderSide: const BorderSide(color: Color(0xFFD4642C), width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

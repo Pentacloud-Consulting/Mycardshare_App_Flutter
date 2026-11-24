@@ -29,16 +29,16 @@ class AnalyticsTabsHeader extends StatelessWidget {
                 duration: const Duration(milliseconds: 180),
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF0052FF) : Colors.white,
+                  color: isSelected ? const Color(0xFFD4642C) : Colors.white,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isSelected ? const Color(0xFF0052FF) : const Color(0xFFE2E8F0),
+                    color: isSelected ? const Color(0xFFD4642C) : const Color(0xFFE2E8F0),
                     width: 1.2,
                   ),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: const Color(0xFF0052FF).withValues(alpha: 0.25),
+                            color: const Color(0xFFD4642C).withValues(alpha: 0.25),
                             blurRadius: 8,
                             offset: const Offset(0, 3),
                           ),

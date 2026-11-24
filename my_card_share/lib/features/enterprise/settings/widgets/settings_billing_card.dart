@@ -82,16 +82,16 @@ class SettingsBillingCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEFF4FF),
+                          color: const Color(0xFFFFF7ED),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFDBEAFE), width: 1),
+                          border: Border.all(color: const Color(0xFFFED7AA), width: 1),
                         ),
                         child: const Text(
                           "Enterprise Pro",
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF0052FF),
+                            color: Color(0xFFD4642C),
                           ),
                         ),
                       ),

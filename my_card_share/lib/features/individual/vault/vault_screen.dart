@@ -235,14 +235,14 @@ class _ManualEntryFabState extends State<_ManualEntryFab>
           height: 56,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF1D4ED8), Color(0xFF0052FF)],
+              colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(18),
             boxShadow: const [
               BoxShadow(
-                color: Color(0x500052FF),
+                color: Color(0x4CD4642C),
                 blurRadius: 18,
                 spreadRadius: 0,
                 offset: Offset(0, 6),

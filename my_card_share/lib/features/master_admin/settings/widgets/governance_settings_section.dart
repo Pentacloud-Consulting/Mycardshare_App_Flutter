@@ -29,7 +29,7 @@ class GovernanceSettingsSection extends StatelessWidget {
           // Section Title
           const Row(
             children: [
-              Icon(Icons.shield_outlined, size: 20, color: Color(0xFF0052FF)),
+              Icon(Icons.shield_outlined, size: 20, color: Color(0xFFD4642C)),
               SizedBox(width: 8),
               Text(
                 "Governance & Notifications",
@@ -163,7 +163,7 @@ class GovernanceSettingsSection extends StatelessWidget {
         ),
         Switch.adaptive(
           value: value,
-          activeColor: const Color(0xFF0052FF),
+          activeTrackColor: const Color(0xFFD4642C),
           onChanged: onChanged,
         ),
       ],

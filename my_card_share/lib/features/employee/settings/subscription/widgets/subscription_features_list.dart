@@ -24,7 +24,7 @@ class SubscriptionFeaturesList extends StatelessWidget {
                 width: 24,
                 height: 24,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF0066FF),
+                  color: Color(0xFFD4642C),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(

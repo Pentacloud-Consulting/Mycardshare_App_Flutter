@@ -36,7 +36,7 @@ class ProfileFormSection extends StatelessWidget {
             size: 16,
             color: Color(0xFF94A3B8),
           ),
-          hint: "admin@mycardshare.com",
+          hint: "admin@pentcloud.me",
         ),
         const SizedBox(height: 12),
 

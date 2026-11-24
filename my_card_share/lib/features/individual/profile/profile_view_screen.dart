@@ -116,14 +116,14 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                       height: 52,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFF0052FF), Color(0xFF00A3FF)],
+                          colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
                           begin: Alignment.centerLeft,
                           end: Alignment.centerRight,
                         ),
                         borderRadius: BorderRadius.circular(26),
                         boxShadow: const [
                           BoxShadow(
-                            color: Color(0x350052FF),
+                            color: Color(0x35D4642C),
                             blurRadius: 12,
                             offset: Offset(0, 4),
                           ),
@@ -156,7 +156,7 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                                 value: true,
                                 child: Row(
                                   children: [
-                                    Icon(Icons.public_rounded, color: Color(0xFF0052FF), size: 20),
+                                    Icon(Icons.public_rounded, color: Color(0xFFD4642C), size: 20),
                                     SizedBox(width: 8),
                                     Text('Publish', style: TextStyle(fontWeight: FontWeight.bold)),
                                   ],
@@ -187,7 +187,7 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                                   content: Text(
                                     value ? "Card published successfully!" : "Card unpublished successfully!",
                                   ),
-                                  backgroundColor: value ? const Color(0xFF0052FF) : const Color(0xFF475569),
+                                  backgroundColor: value ? const Color(0xFFD4642C) : const Color(0xFF475569),
                                   behavior: SnackBarBehavior.floating,
                                   duration: const Duration(seconds: 2),
                                 ),
@@ -218,14 +218,14 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                       height: 52,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFF38BDF8), Color(0xFF0284C7)],
+                          colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
                           begin: Alignment.centerLeft,
                           end: Alignment.centerRight,
                         ),
                         borderRadius: BorderRadius.circular(26),
                         boxShadow: const [
                           BoxShadow(
-                            color: Color(0x350284C7),
+                            color: Color(0x35D4642C),
                             blurRadius: 12,
                             offset: Offset(0, 4),
                           ),
@@ -285,7 +285,7 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                     ),
                     child: IconButton(
                       padding: EdgeInsets.zero,
-                      icon: const Icon(Icons.edit_rounded, color: Color(0xFF0052FF), size: 20),
+                      icon: const Icon(Icons.edit_rounded, color: Color(0xFFD4642C), size: 20),
                       onPressed: () async {
                         await Navigator.of(context, rootNavigator: true).push(
                           MaterialPageRoute(builder: (_) => const ProfileEditorScreen()),
@@ -486,10 +486,10 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: const [
-                        Icon(Icons.login_rounded, color: Color(0xFFE11D48), size: 20),
+                        Icon(Icons.logout_rounded, color: Color(0xFFE11D48), size: 20),
                         SizedBox(width: 8),
                         Text(
-                          "Log Out to Login Screen",
+                          "Log Out",
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
@@ -543,10 +543,10 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
         decoration: BoxDecoration(
-          color: isExpanded ? const Color(0xFFEFF6FF) : const Color(0xFFF8FAFC),
+          color: isExpanded ? const Color(0xFFFAF6F2) : const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isExpanded ? const Color(0xFFBAE6FD) : const Color(0xFFE2E8F0),
+            color: isExpanded ? const Color(0xFFD4642C).withValues(alpha: 0.3) : const Color(0xFFE2E8F0),
             width: 1,
           ),
         ),
@@ -558,13 +558,13 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: isExpanded ? const Color(0xFF0052FF) : const Color(0xFF64748B),
+                color: isExpanded ? const Color(0xFFD4642C) : const Color(0xFF64748B),
               ),
             ),
             const SizedBox(width: 2),
             Icon(
               isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
-              color: isExpanded ? const Color(0xFF0052FF) : const Color(0xFF64748B),
+              color: isExpanded ? const Color(0xFFD4642C) : const Color(0xFF64748B),
               size: 15,
             ),
           ],
@@ -577,7 +577,7 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
     return Row(
       crossAxisAlignment: isMultiLine ? CrossAxisAlignment.start : CrossAxisAlignment.center,
       children: [
-        Icon(icon, size: 20, color: const Color(0xFF0052FF)),
+        Icon(icon, size: 20, color: const Color(0xFFD4642C)),
         const SizedBox(width: 16),
         Expanded(
           child: Column(

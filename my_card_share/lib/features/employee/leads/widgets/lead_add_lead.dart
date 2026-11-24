@@ -254,12 +254,12 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
+                    color: const Color(0xFFFAF6F2),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: const Icon(
                     Icons.person_add_alt_1_rounded,
-                    color: Color(0xFF0052FF),
+                    color: Color(0xFFD4642C),
                     size: 24,
                   ),
                 ),
@@ -348,7 +348,7 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
                       if (_isLoadingUsers)
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 8),
-                          child: LinearProgressIndicator(color: Color(0xFF0052FF)),
+                          child: LinearProgressIndicator(color: Color(0xFFD4642C)),
                         )
                       else if (_isMultiUserMode)
                         _buildMultiUserSelector()
@@ -441,7 +441,7 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
                       spacing: 8,
                       children: _statuses.map((status) {
                         final isSelected = _selectedStatus == status;
-                        Color statusColor = const Color(0xFF0052FF);
+                        Color statusColor = const Color(0xFFD4642C);
                         if (status == 'Qualified') statusColor = const Color(0xFF10B981);
                         if (status == 'Contacted') statusColor = const Color(0xFFF59E0B);
                         if (status == 'Lost') statusColor = const Color(0xFF64748B);
@@ -491,16 +491,16 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
                           onSelected: (val) {
                             if (val) setState(() => _selectedSource = src);
                           },
-                          selectedColor: const Color(0xFFEFF6FF),
+                          selectedColor: const Color(0xFFFAF6F2),
                           labelStyle: TextStyle(
                             fontSize: 12.5,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                            color: isSelected ? const Color(0xFF0052FF) : const Color(0xFF64748B),
+                            color: isSelected ? const Color(0xFFD4642C) : const Color(0xFF64748B),
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                             side: BorderSide(
-                              color: isSelected ? const Color(0xFF0052FF) : const Color(0xFFE2E8F0),
+                              color: isSelected ? const Color(0xFFD4642C) : const Color(0xFFE2E8F0),
                             ),
                           ),
                           backgroundColor: Colors.white,
@@ -532,7 +532,7 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
               child: ElevatedButton(
                 onPressed: _isSubmitting ? null : _handleSubmit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0052FF),
+                  backgroundColor: const Color(0xFFD4642C),
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -604,7 +604,7 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
           style: TextStyle(
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            color: isSelected ? const Color(0xFF0052FF) : const Color(0xFF64748B),
+            color: isSelected ? const Color(0xFFD4642C) : const Color(0xFF64748B),
           ),
         ),
       ),
@@ -624,8 +624,8 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
           children: [
             CircleAvatar(
               radius: 12,
-              backgroundColor: Color(0xFFEFF6FF),
-              child: Icon(Icons.person, size: 14, color: Color(0xFF0052FF)),
+              backgroundColor: Color(0xFFFAF6F2),
+              child: Icon(Icons.person, size: 14, color: Color(0xFFD4642C)),
             ),
             SizedBox(width: 10),
             Expanded(
@@ -668,13 +668,13 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
                 children: [
                   CircleAvatar(
                     radius: 12,
-                    backgroundColor: const Color(0xFF0052FF).withValues(alpha: 0.12),
+                    backgroundColor: const Color(0xFFD4642C).withValues(alpha: 0.12),
                     child: Text(
                       initial,
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF0052FF),
+                        color: Color(0xFFD4642C),
                       ),
                     ),
                   ),
@@ -721,7 +721,7 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0052FF),
+                  color: Color(0xFFD4642C),
                 ),
               ),
               GestureDetector(
@@ -792,7 +792,7 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
                                 ? Icons.check_box_rounded
                                 : Icons.check_box_outline_blank_rounded,
                             size: 18,
-                            color: isChecked ? const Color(0xFF0052FF) : const Color(0xFF94A3B8),
+                            color: isChecked ? const Color(0xFFD4642C) : const Color(0xFF94A3B8),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -892,7 +892,7 @@ class _LeadAddLeadSheetState extends State<LeadAddLeadSheet> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF0052FF), width: 1.5),
+              borderSide: const BorderSide(color: Color(0xFFD4642C), width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

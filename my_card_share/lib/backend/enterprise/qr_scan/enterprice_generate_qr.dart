@@ -75,11 +75,11 @@ class EnterpriseGenerateQR extends StatelessWidget {
                     size: 180.0,
                     eyeStyle: const QrEyeStyle(
                       eyeShape: QrEyeShape.square,
-                      color: Color(0xFF0052FF),
+                      color: Color(0xFFD4642C),
                     ),
                     dataModuleStyle: const QrDataModuleStyle(
                       dataModuleShape: QrDataModuleShape.square,
-                      color: Color(0xFF0052FF),
+                      color: Color(0xFFD4642C),
                     ),
                   ),
                 ),
@@ -100,25 +100,42 @@ class EnterpriseGenerateQR extends StatelessWidget {
 
               const SizedBox(height: 20),
 
-              // Done Primary Blue Button
+              // Done Primary Matte Orange Button
               SizedBox(
                 width: double.infinity,
                 height: 48,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.of(ctx).pop(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0052FF),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
                     ),
-                    elevation: 0,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x35D4642C),
+                        blurRadius: 10,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  child: const Text(
-                    "Done",
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                    ),
+                    child: const Text(
+                      "Done",
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -142,11 +159,11 @@ class EnterpriseGenerateQR extends StatelessWidget {
       size: size,
       eyeStyle: const QrEyeStyle(
         eyeShape: QrEyeShape.square,
-        color: Color(0xFF0052FF),
+        color: Color(0xFFD4642C),
       ),
       dataModuleStyle: const QrDataModuleStyle(
         dataModuleShape: QrDataModuleShape.square,
-        color: Color(0xFF0052FF),
+        color: Color(0xFFD4642C),
       ),
     );
   }

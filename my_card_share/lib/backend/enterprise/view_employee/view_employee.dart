@@ -109,7 +109,7 @@ class EnterpriseTeamOverviewWidget extends StatelessWidget {
                   const Row(
                     children: [
                       Icon(Icons.group_rounded,
-                          color: Color(0xFF0052FF), size: 20),
+                          color: Color(0xFFD4642C), size: 20),
                       SizedBox(width: 8),
                       Text(
                         "Team Members",
@@ -126,17 +126,17 @@ class EnterpriseTeamOverviewWidget extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 5),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFF4FF),
+                      color: const Color(0xFFFFF7ED),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                          color: const Color(0xFFBFDBFE), width: 1),
+                          color: const Color(0xFFFED7AA), width: 1),
                     ),
                     child: Text(
                       "${stats.totalCount} Total",
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF0052FF),
+                        color: Color(0xFFD4642C),
                       ),
                     ),
                   ),
@@ -149,7 +149,7 @@ class EnterpriseTeamOverviewWidget extends StatelessWidget {
               Row(
                 children: [
                   _statPill(stats.totalCount, "Total",
-                      const Color(0xFF0052FF), const Color(0xFFEFF4FF)),
+                      const Color(0xFFD4642C), const Color(0xFFFFF7ED)),
                   const SizedBox(width: 10),
                   _statPill(stats.activeCount, "Active",
                       const Color(0xFF16A34A), const Color(0xFFDCFCE7)),
@@ -213,7 +213,7 @@ class EnterpriseTeamOverviewWidget extends StatelessWidget {
                                   width: 38,
                                   height: 38,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF0052FF),
+                                    color: const Color(0xFFD4642C),
                                     shape: BoxShape.circle,
                                     border: Border.all(
                                         color: Colors.white, width: 2.5),
@@ -246,7 +246,7 @@ class EnterpriseTeamOverviewWidget extends StatelessWidget {
                             "${stats.totalCount - 3} more member${stats.totalCount - 3 == 1 ? '' : 's'} in workspace",
                             style: const TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF0052FF),
+                              color: Color(0xFFD4642C),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -304,7 +304,7 @@ class EnterpriseTeamOverviewWidget extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(color: Colors.white, width: 2.5),
-        color: const Color(0xFF0052FF),
+        color: const Color(0xFFD4642C),
       ),
       child: emp.avatarUrl != null && emp.avatarUrl!.isNotEmpty
           ? ClipOval(
@@ -350,7 +350,7 @@ class EnterpriseTeamOverviewWidget extends StatelessWidget {
             height: 32,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF0052FF).withValues(alpha: 0.12),
+              color: const Color(0xFFD4642C).withValues(alpha: 0.12),
             ),
             child: emp.avatarUrl != null && emp.avatarUrl!.isNotEmpty
                 ? ClipOval(
@@ -362,7 +362,7 @@ class EnterpriseTeamOverviewWidget extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF0052FF),
+                        color: Color(0xFFD4642C),
                       ),
                     ),
                   ),

@@ -158,8 +158,8 @@ class _ConnectorCardsListState extends State<ConnectorCardsList> {
               if (isConnected)
                 Switch(
                   value: true,
-                  activeThumbColor: const Color(0xFF0052FF),
-                  activeTrackColor: const Color(0xFFDBEAFE),
+                  activeThumbColor: const Color(0xFFD4642C),
+                  activeTrackColor: const Color(0xFFFED7AA),
                   onChanged: (val) {
                     setState(() {
                       _connectionStates[name] = val;
@@ -177,8 +177,8 @@ class _ConnectorCardsListState extends State<ConnectorCardsList> {
                     });
                   },
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF0052FF),
-                    side: const BorderSide(color: Color(0xFF0052FF), width: 1.2),
+                    foregroundColor: const Color(0xFFD4642C),
+                    side: const BorderSide(color: Color(0xFFD4642C), width: 1.2),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),

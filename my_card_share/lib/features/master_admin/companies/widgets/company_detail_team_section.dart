@@ -138,16 +138,16 @@ class CompanyDetailTeamSection extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
+                    color: const Color(0xFFFFF7ED),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFBFDBFE), width: 1),
+                    border: Border.all(color: const Color(0xFFFED7AA), width: 1),
                   ),
                   child: Text(
                     "$count Members",
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF0052FF),
+                      color: Color(0xFFD4642C),
                     ),
                   ),
                 ),
@@ -167,7 +167,7 @@ class CompanyDetailTeamSection extends StatelessWidget {
                   child: SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0052FF)),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFD4642C)),
                   ),
                 ),
               )
@@ -231,7 +231,7 @@ class CompanyDetailTeamSection extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         padding: EdgeInsets.zero,
         itemCount: employees.length,
-        separatorBuilder: (_, __) => const Divider(
+        separatorBuilder: (_, _) => const Divider(
           height: 1,
           thickness: 1,
           color: Color(0xFFF1F5F9),
@@ -264,25 +264,25 @@ class CompanyDetailTeamSection extends StatelessWidget {
                   height: 42,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFFE0E7FF), Color(0xFFEFF6FF)],
+                      colors: [Color(0xFFFED7AA), Color(0xFFFFF7ED)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFC7D2FE), width: 1),
+                    border: Border.all(color: const Color(0xFFFED7AA), width: 1),
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: avatarUrl != null && avatarUrl.trim().isNotEmpty
                       ? Image.network(
                           avatarUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Center(
+                          errorBuilder: (_, _, _) => Center(
                             child: Text(
                               initials,
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w800,
-                                color: Color(0xFF4338CA),
+                                color: Color(0xFFD4642C),
                               ),
                             ),
                           ),
@@ -293,7 +293,7 @@ class CompanyDetailTeamSection extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFF4338CA),
+                              color: Color(0xFFD4642C),
                             ),
                           ),
                         ),
@@ -321,7 +321,7 @@ class CompanyDetailTeamSection extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFEFF6FF),
+                              color: const Color(0xFFFFF7ED),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -329,7 +329,7 @@ class CompanyDetailTeamSection extends StatelessWidget {
                               style: const TextStyle(
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF0052FF),
+                                color: Color(0xFFD4642C),
                               ),
                             ),
                           ),

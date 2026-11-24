@@ -68,12 +68,12 @@ class IndividualsFilterChipsSection extends StatelessWidget {
               ),
               selected: isSelected,
               onSelected: (_) => onFilterSelected(filter),
-              selectedColor: const Color(0xFF2563EB),
+              selectedColor: const Color(0xFFD4642C),
               backgroundColor: Colors.white,
               elevation: isSelected ? 2 : 0,
               pressElevation: 0,
               side: BorderSide(
-                color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0),
+                color: isSelected ? const Color(0xFFD4642C) : const Color(0xFFE2E8F0),
                 width: 1.0,
               ),
               shape: RoundedRectangleBorder(

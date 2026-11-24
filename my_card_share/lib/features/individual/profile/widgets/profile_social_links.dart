@@ -50,7 +50,7 @@ class ProfileSocialLinks extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF0052FF),
+                    color: Color(0xFFD4642C),
                   ),
                 ),
               ),
@@ -72,14 +72,14 @@ class ProfileSocialLinks extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const [
-                  Icon(Icons.add_circle_outline_rounded, color: Color(0xFF0052FF), size: 20),
+                  Icon(Icons.add_circle_outline_rounded, color: Color(0xFFD4642C), size: 20),
                   SizedBox(width: 8),
                   Text(
                     "Add Your Social Links",
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0052FF),
+                      color: Color(0xFFD4642C),
                     ),
                   ),
                 ],
@@ -316,7 +316,7 @@ class ProfileSocialLinks extends StatelessWidget {
     } else {
       return _PlatformStyle(
         icon: const Icon(Icons.language_rounded, color: Colors.white, size: 16),
-        backgroundColor: const Color(0xFF0052FF),
+        backgroundColor: const Color(0xFFD4642C),
       );
     }
   }

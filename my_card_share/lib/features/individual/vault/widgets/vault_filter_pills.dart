@@ -57,15 +57,15 @@ class VaultFilterPills extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF0052FF) : Colors.white,
+          color: isSelected ? const Color(0xFFD4642C) : Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isSelected ? const Color(0xFF0052FF) : const Color(0xFFE2E8F0),
+            color: isSelected ? const Color(0xFFD4642C) : const Color(0xFFE2E8F0),
             width: 1.0,
           ),
           boxShadow: [
             BoxShadow(
-              color: isSelected ? const Color(0x200052FF) : const Color(0x06000000),
+              color: isSelected ? const Color(0x35D4642C) : const Color(0x06000000),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),

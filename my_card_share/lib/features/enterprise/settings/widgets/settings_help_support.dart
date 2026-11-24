@@ -156,10 +156,10 @@ class _EnterpriseHelpSupportScreenState extends State<EnterpriseHelpSupportScree
                               Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: const BoxDecoration(
-                                  color: Color(0xFFEFF4FF),
+                                  color: Color(0xFFFFF7ED),
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.add_task_rounded, color: Color(0xFF0052FF), size: 18),
+                                child: const Icon(Icons.add_task_rounded, color: Color(0xFFD4642C), size: 18),
                               ),
                               SizedBox(height: 12),
                               Text(
@@ -214,7 +214,7 @@ class _EnterpriseHelpSupportScreenState extends State<EnterpriseHelpSupportScree
                               _expandedFaqIndex = val ? index : null;
                             });
                           },
-                          leading: const Icon(Icons.help_outline_rounded, color: Color(0xFF0052FF), size: 20),
+                          leading: const Icon(Icons.help_outline_rounded, color: Color(0xFFD4642C), size: 20),
                           title: Text(
                             faq['question']!,
                             style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
@@ -297,12 +297,12 @@ class _EnterpriseHelpSupportScreenState extends State<EnterpriseHelpSupportScree
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFEFF4FF),
+                                    color: const Color(0xFFFFF7ED),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
                                     t.category,
-                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF0052FF)),
+                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFFD4642C)),
                                   ),
                                 ),
                                 Container(
@@ -502,7 +502,7 @@ class _CreateSupportTicketModalState extends State<CreateSupportTicketModal> {
                 height: 48,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0052FF),
+                    backgroundColor: const Color(0xFFD4642C),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: _isSubmitting ? null : _handleSubmit,

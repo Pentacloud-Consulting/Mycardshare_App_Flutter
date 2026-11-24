@@ -76,11 +76,11 @@ class _SettingsCardLinkSectionState extends State<SettingsCardLinkSection> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
+                    color: const Color(0xFFFFF7ED),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(Icons.link_rounded,
-                      color: Color(0xFF0052FF), size: 18),
+                      color: Color(0xFFD4642C), size: 18),
                 ),
                 const SizedBox(width: 10),
                 const Text(
@@ -143,7 +143,7 @@ class _SettingsCardLinkSectionState extends State<SettingsCardLinkSection> {
                         child: ElevatedButton(
                           onPressed: _isSaving ? null : _saveSlug,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0052FF),
+                            backgroundColor: const Color(0xFFD4642C),
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10)),
@@ -224,7 +224,7 @@ class _SettingsCardLinkSectionState extends State<SettingsCardLinkSection> {
                           icon: const Icon(Icons.edit_rounded, size: 16),
                           label: const Text('Edit Slug'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0052FF),
+                            backgroundColor: const Color(0xFFD4642C),
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10)),

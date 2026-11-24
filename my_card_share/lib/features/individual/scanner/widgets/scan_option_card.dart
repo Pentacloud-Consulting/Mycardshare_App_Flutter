@@ -95,7 +95,7 @@ class ScanOptionCard extends StatelessWidget {
                           ),
                           const Icon(
                             Icons.chevron_right_rounded,
-                            color: Color(0xFF0066FF),
+                            color: Color(0xFFD4642C),
                             size: 22,
                           ),
                         ],

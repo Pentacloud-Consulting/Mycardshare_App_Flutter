@@ -115,13 +115,13 @@ class WorkspaceListSection extends StatelessWidget {
                     width: 38,
                     height: 38,
                     decoration: const BoxDecoration(
-                      color: Color(0xFFEFF6FF),
+                      color: Color(0xFFFFF7ED),
                       shape: BoxShape.circle,
                     ),
                     child: const Center(
                       child: Icon(
                         Icons.apartment_rounded,
-                        color: Color(0xFF2563EB),
+                        color: Color(0xFFD4642C),
                         size: 20,
                       ),
                     ),

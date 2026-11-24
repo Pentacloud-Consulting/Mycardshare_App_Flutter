@@ -52,7 +52,7 @@ class AnalyticsStatsGrid extends StatelessWidget {
                 Expanded(
                   child: _buildStatCard(
                     icon: Icons.memory_rounded,
-                    iconColor: const Color(0xFF0052FF),
+                    iconColor: const Color(0xFFD4642C),
                     value: "4.8M",
                     label: "Tokens Processed",
                     badgeText: "+24%",
@@ -100,7 +100,7 @@ class AnalyticsStatsGrid extends StatelessWidget {
                 Expanded(
                   child: _buildStatCard(
                     icon: Icons.image_rounded,
-                    iconColor: const Color(0xFF0052FF),
+                    iconColor: const Color(0xFFD4642C),
                     value: "98 GB",
                     label: "Card Media Assets",
                     badgeText: "+18%",
@@ -163,7 +163,7 @@ class AnalyticsStatsGrid extends StatelessWidget {
                   Expanded(
                     child: _buildStatCard(
                       icon: Icons.visibility_rounded,
-                      iconColor: const Color(0xFF0052FF),
+                      iconColor: const Color(0xFFD4642C),
                       value: "${(store.totalIndividuals * 12 + 100)}",
                       label: "Total Card Views",
                       badgeText: "+14%",

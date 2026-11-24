@@ -46,7 +46,7 @@ class NotificationItemCard extends StatelessWidget {
         color: item.isUnread ? const Color(0xFFF0F6FF) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: item.isUnread ? const Color(0xFFBFDBFE) : const Color(0xFFE2E8F0),
+          color: item.isUnread ? const Color(0xFFFED7AA) : const Color(0xFFE2E8F0),
           width: 1.2,
         ),
         boxShadow: [
@@ -88,7 +88,7 @@ class NotificationItemCard extends StatelessWidget {
                             height: 8,
                             margin: const EdgeInsets.only(right: 6),
                             decoration: const BoxDecoration(
-                              color: Color(0xFF0052FF),
+                              color: Color(0xFFD4642C),
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -149,16 +149,16 @@ class NotificationItemCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
+                      color: const Color(0xFFFFF7ED),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFDBEAFE), width: 1),
+                      border: Border.all(color: const Color(0xFFFED7AA), width: 1),
                     ),
                     child: Text(
                       item.actionLabel!,
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF0052FF),
+                        color: Color(0xFFD4642C),
                       ),
                     ),
                   ),

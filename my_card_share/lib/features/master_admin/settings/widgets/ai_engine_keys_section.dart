@@ -54,12 +54,12 @@ class AiEngineKeysSection extends StatelessWidget {
                       width: 34,
                       height: 34,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
+                        color: const Color(0xFFFFF7ED),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(
                         Icons.smart_toy_outlined,
-                        color: Color(0xFF2563EB),
+                        color: Color(0xFFD4642C),
                         size: 18,
                       ),
                     ),
@@ -95,7 +95,7 @@ class AiEngineKeysSection extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF2563EB),
+                          color: Color(0xFFD4642C),
                         ),
                       ),
                     ),
@@ -205,7 +205,7 @@ class AiEngineKeysSection extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF2563EB),
+                          color: Color(0xFFD4642C),
                         ),
                       ),
                     ),

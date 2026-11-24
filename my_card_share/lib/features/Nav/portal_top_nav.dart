@@ -281,7 +281,7 @@ class PortalTopNav extends ConsumerWidget implements PreferredSizeWidget {
                                         style: const TextStyle(
                                           fontStyle: FontStyle.italic,
                                           fontWeight: FontWeight.w800,
-                                          color: Color(0xFF0066FF),
+                                          color: Color(0xFFD4642C),
                                         ),
                                       ),
                                     ],
@@ -295,14 +295,14 @@ class PortalTopNav extends ConsumerWidget implements PreferredSizeWidget {
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFEFF6FF),
+                                      color: const Color(0xFFFFF7ED),
                                       borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(color: const Color(0xFFBFDBFE), width: 0.8),
+                                      border: Border.all(color: const Color(0xFFFED7AA), width: 0.8),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Icon(Icons.domain_rounded, size: 10.5, color: Color(0xFF0066FF)),
+                                        const Icon(Icons.domain_rounded, size: 10.5, color: Color(0xFFD4642C)),
                                         const SizedBox(width: 3),
                                         Flexible(
                                           child: Text(
@@ -312,7 +312,7 @@ class PortalTopNav extends ConsumerWidget implements PreferredSizeWidget {
                                             style: const TextStyle(
                                               fontSize: 9.5,
                                               fontWeight: FontWeight.w700,
-                                              color: Color(0xFF0066FF),
+                                              color: Color(0xFFD4642C),
                                             ),
                                           ),
                                         ),

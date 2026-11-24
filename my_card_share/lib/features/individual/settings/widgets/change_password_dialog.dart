@@ -72,11 +72,6 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
               blurRadius: 24,
               offset: Offset(0, 10),
             ),
-            BoxShadow(
-              color: Color(0x90FFFFFF),
-              blurRadius: 12,
-              offset: Offset(-4, -4),
-            ),
           ],
         ),
         padding: const EdgeInsets.all(22.0),
@@ -182,7 +177,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: const [
                     BoxShadow(
-                      color: Color(0x380052FF),
+                      color: Color(0x38D4642C),
                       blurRadius: 14,
                       offset: Offset(0, 5),
                     ),
@@ -191,7 +186,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _savePassword,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0052FF),
+                    backgroundColor: const Color(0xFFD4642C),
                     elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
@@ -270,7 +265,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Color(0xFF0052FF), width: 1.5),
+            borderSide: const BorderSide(color: Color(0xFFD4642C), width: 1.5),
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../backend/enterprise/home_backend/company.dart';
+import '../../enterprise/leads/enterprise_leads_screen.dart';
 
 class EnterpriseTopNav extends StatelessWidget implements PreferredSizeWidget {
   const EnterpriseTopNav({super.key});
@@ -26,7 +27,8 @@ class EnterpriseTopNav extends StatelessWidget implements PreferredSizeWidget {
     final isAnalytics = currentPath.startsWith('/enterprise/analytics');
     final isConnectors = currentPath.startsWith('/enterprise/connectors');
     final isRequests = currentPath.contains('requests');
-    final isSettings = currentPath.startsWith('/enterprise/settings') && !isRequests;
+    final isSecurity = currentPath.contains('security');
+    final isSettings = currentPath.startsWith('/enterprise/settings') && !isRequests && !isSecurity;
     final isNotifications = currentPath.startsWith('/enterprise/notifications');
     final isProfileView = currentPath.startsWith('/enterprise/profile-view');
     final isBrandProfile = currentPath.startsWith('/enterprise/brand-profile');
@@ -62,13 +64,15 @@ class EnterpriseTopNav extends StatelessWidget implements PreferredSizeWidget {
               ),
             )
           else ...[
-            if (context.canPop() || isRequests || isNotifications || isProfileView) ...[
+            if (context.canPop() || isRequests || isNotifications || isProfileView || isSecurity) ...[
               GestureDetector(
                 onTap: () {
                   if (context.canPop()) {
                     context.pop();
                   } else if (isRequests) {
                     context.go('/enterprise/settings');
+                  } else if (isSecurity) {
+                    context.go('/enterprise/profile');
                   } else {
                     context.go('/enterprise/dashboard');
                   }
@@ -92,12 +96,14 @@ class EnterpriseTopNav extends StatelessWidget implements PreferredSizeWidget {
             ],
             Expanded(
               child: Text(
-                isRequests
-                    ? "Join Enterprise Requests"
+                isSecurity
+                    ? "Security & Access Control"
+                    : isRequests
+                        ? "Join Enterprise Requests"
                     : isWorkspace
                         ? "Workspace"
                         : isLeads
-                            ? "Leads"
+                            ? "Lead Center"
                             : isCampaigns
                                 ? "Campaigns"
                                 : isAnalytics
@@ -131,7 +137,26 @@ class EnterpriseTopNav extends StatelessWidget implements PreferredSizeWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               // Page-specific action buttons
-              if (isBrandProfile) ...[
+              if (isLeads) ...[
+                GestureDetector(
+                  onTap: () => EnterpriseLeadsScreen.exportLeadsCsv(context),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF7ED),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0xFFFED7AA), width: 1),
+                    ),
+                    child: const Icon(
+                      Icons.file_download_outlined,
+                      color: Color(0xFFD4642C),
+                      size: 19,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ] else if (isBrandProfile) ...[
                 GestureDetector(
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -159,7 +184,7 @@ class EnterpriseTopNav extends StatelessWidget implements PreferredSizeWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
+                      color: const Color(0xFFFFF7ED),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Text(
@@ -167,7 +192,7 @@ class EnterpriseTopNav extends StatelessWidget implements PreferredSizeWidget {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF0052FF),
+                        color: Color(0xFFD4642C),
                       ),
                     ),
                   ),
@@ -184,7 +209,7 @@ class EnterpriseTopNav extends StatelessWidget implements PreferredSizeWidget {
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.calendar_today_rounded, color: Color(0xFF0052FF), size: 13),
+                      Icon(Icons.calendar_today_rounded, color: Color(0xFFD4642C), size: 13),
                       SizedBox(width: 5),
                       Text(
                         "Last 30d",

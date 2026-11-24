@@ -204,13 +204,13 @@ class _ProfileBrochureCardState extends State<ProfileBrochureCard> {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: const Color(0xFFFAF6F2),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFDBEAFE)),
+                  border: Border.all(color: const Color(0xFFD4642C).withValues(alpha: 0.25)),
                 ),
                 child: const Icon(
                   Icons.menu_book_rounded,
-                  color: Color(0xFF0052FF),
+                  color: Color(0xFFD4642C),
                   size: 20,
                 ),
               ),
@@ -264,7 +264,7 @@ class _ProfileBrochureCardState extends State<ProfileBrochureCard> {
                 value: _uploadProgress,
                 backgroundColor: const Color(0xFFE2E8F0),
                 valueColor:
-                    const AlwaysStoppedAnimation<Color>(Color(0xFF0052FF)),
+                    const AlwaysStoppedAnimation<Color>(Color(0xFFD4642C)),
                 minHeight: 5,
               ),
             ),
@@ -284,8 +284,8 @@ class _ProfileBrochureCardState extends State<ProfileBrochureCard> {
                 Expanded(
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF0052FF),
-                      side: const BorderSide(color: Color(0xFF0052FF)),
+                      foregroundColor: const Color(0xFFD4642C),
+                      side: const BorderSide(color: Color(0xFFD4642C)),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -353,7 +353,7 @@ class _ProfileBrochureCardState extends State<ProfileBrochureCard> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0052FF),
+                  backgroundColor: const Color(0xFFD4642C),
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(

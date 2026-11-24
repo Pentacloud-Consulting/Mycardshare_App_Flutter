@@ -10,7 +10,7 @@ class MorePlatformManagementCard extends StatelessWidget {
       {
         'title': 'Lead Audit Logs',
         'icon': Icons.receipt_long_rounded,
-        'color': const Color(0xFF0052FF),
+        'color': const Color(0xFFD4642C),
         'route': '/master-admin/leads',
       },
       {

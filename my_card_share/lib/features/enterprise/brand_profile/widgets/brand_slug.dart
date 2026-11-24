@@ -116,7 +116,7 @@ class _EnterpriseBrandSlugWidgetState extends State<EnterpriseBrandSlugWidget> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("✓ Card URL updated: mycardshare.com/card/$newSlug"),
-            backgroundColor: const Color(0xFF0052FF),
+            backgroundColor: const Color(0xFFD4642C),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
@@ -210,14 +210,14 @@ class _EnterpriseBrandSlugWidgetState extends State<EnterpriseBrandSlugWidget> {
                     icon: Icon(
                       _isEditing ? Icons.close_rounded : Icons.edit_rounded,
                       size: 15,
-                      color: const Color(0xFF0052FF),
+                      color: const Color(0xFFD4642C),
                     ),
                     label: Text(
                       _isEditing ? "Cancel" : "Edit Slug",
                       style: const TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF0052FF),
+                        color: Color(0xFFD4642C),
                       ),
                     ),
                   ),
@@ -279,7 +279,7 @@ class _EnterpriseBrandSlugWidgetState extends State<EnterpriseBrandSlugWidget> {
                           height: 16,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Color(0xFF0052FF),
+                            color: Color(0xFFD4642C),
                           ),
                         ),
                       )
@@ -292,7 +292,7 @@ class _EnterpriseBrandSlugWidgetState extends State<EnterpriseBrandSlugWidget> {
                                     ? _saveSlug
                                     : null,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF0052FF),
+                                  backgroundColor: const Color(0xFFD4642C),
                                   disabledBackgroundColor:
                                       const Color(0xFF94A3B8),
                                   shape: RoundedRectangleBorder(
@@ -322,7 +322,7 @@ class _EnterpriseBrandSlugWidgetState extends State<EnterpriseBrandSlugWidget> {
                             : ElevatedButton(
                                 onPressed: () => _copyCardLink(currentSlug),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF0052FF),
+                                  backgroundColor: const Color(0xFFD4642C),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),

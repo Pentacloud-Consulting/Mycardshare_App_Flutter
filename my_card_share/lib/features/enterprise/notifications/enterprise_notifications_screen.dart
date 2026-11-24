@@ -66,7 +66,7 @@ class _EnterpriseNotificationsScreenState
         return const Color(0xFFD97706);
       case 'leads':
       default:
-        return const Color(0xFF0052FF);
+        return const Color(0xFFD4642C);
     }
   }
 
@@ -80,7 +80,7 @@ class _EnterpriseNotificationsScreenState
         return const Color(0xFFFEF3C7);
       case 'leads':
       default:
-        return const Color(0xFFEFF6FF);
+        return const Color(0xFFFFF7ED);
     }
   }
 
@@ -145,8 +145,8 @@ class _EnterpriseNotificationsScreenState
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      const Color(0xFF38BDF8).withValues(alpha: 0.18),
-                      const Color(0xFF0052FF).withValues(alpha: 0.03),
+                      const Color(0xFFD4642C).withValues(alpha: 0.18),
+                      const Color(0xFFD4642C).withValues(alpha: 0.03),
                       Colors.transparent,
                     ],
                   ),

@@ -18,7 +18,6 @@ class EmployeeApprovalsScreen extends StatefulWidget {
 
 class _EmployeeApprovalsScreenState extends State<EmployeeApprovalsScreen> {
   List<ApprovalRequestItem> _requests = [];
-  bool _isLoading = true;
 
   @override
   void initState() {
@@ -28,10 +27,7 @@ class _EmployeeApprovalsScreenState extends State<EmployeeApprovalsScreen> {
 
   Future<void> _loadApprovals() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) {
-      if (mounted) setState(() => _isLoading = false);
-      return;
-    }
+    if (uid == null) return;
     try {
       final snap = await FirebaseFirestore.instance
           .collection('users')
@@ -53,12 +49,9 @@ class _EmployeeApprovalsScreenState extends State<EmployeeApprovalsScreen> {
               adminNote: data['adminNote'] as String?,
             );
           }).toList();
-          _isLoading = false;
         });
       }
-    } catch (e) {
-      if (mounted) setState(() => _isLoading = false);
-    }
+    } catch (_) {}
   }
 
   Future<void> _submitRequest(String type, String fromVal, String toVal) async {
@@ -155,9 +148,14 @@ class _EmployeeApprovalsScreenState extends State<EmployeeApprovalsScreen> {
               const SizedBox(height: 6),
               TextField(
                 controller: typeController,
+                cursorColor: const Color(0xFFD4642C),
                 style: TextStyle(fontFamily: AppFontStyle.fontFamily),
                 decoration: InputDecoration(
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFD4642C), width: 1.6),
+                  ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 ),
               ),
@@ -169,10 +167,15 @@ class _EmployeeApprovalsScreenState extends State<EmployeeApprovalsScreen> {
               const SizedBox(height: 6),
               TextField(
                 controller: fromController,
+                cursorColor: const Color(0xFFD4642C),
                 style: TextStyle(fontFamily: AppFontStyle.fontFamily),
                 decoration: InputDecoration(
                   hintText: "e.g. Sales Associate",
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFD4642C), width: 1.6),
+                  ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 ),
               ),
@@ -184,10 +187,15 @@ class _EmployeeApprovalsScreenState extends State<EmployeeApprovalsScreen> {
               const SizedBox(height: 6),
               TextField(
                 controller: toController,
+                cursorColor: const Color(0xFFD4642C),
                 style: TextStyle(fontFamily: AppFontStyle.fontFamily),
                 decoration: InputDecoration(
                   hintText: "e.g. Senior Sales Associate",
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFD4642C), width: 1.6),
+                  ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 ),
               ),
@@ -215,8 +223,15 @@ class _EmployeeApprovalsScreenState extends State<EmployeeApprovalsScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0052FF),
+                    color: const Color(0xFFD4642C),
                     borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFD4642C).withValues(alpha: 0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: Center(
                     child: Text(
@@ -263,8 +278,8 @@ class _EmployeeApprovalsScreenState extends State<EmployeeApprovalsScreen> {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      const Color(0xFFDBEAFE).withValues(alpha: 0.75),
-                      const Color(0xFFEFF6FF).withValues(alpha: 0.25),
+                      const Color(0xFFFED7AA).withValues(alpha: 0.65),
+                      const Color(0xFFFFF7ED).withValues(alpha: 0.25),
                       Colors.white.withValues(alpha: 0.0),
                     ],
                   ),

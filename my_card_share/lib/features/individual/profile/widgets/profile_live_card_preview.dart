@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../backend/individual/profile/individual_profile_store.dart';
 import '../../../../core/utils/image_url_formatter.dart';
+import '../../../../core/constants/card_templates.dart';
 
 class ProfileLiveCardPreview extends StatelessWidget {
   final String name;
@@ -15,6 +16,7 @@ class ProfileLiveCardPreview extends StatelessWidget {
   final String? profilePhoto;
   final String? bannerPhoto;
   final VoidCallback? onAvatarEditTap;
+  final bool showCameraIcon;
   final bool isPublished;
 
   const ProfileLiveCardPreview({
@@ -27,23 +29,12 @@ class ProfileLiveCardPreview extends StatelessWidget {
     this.profilePhoto,
     this.bannerPhoto,
     this.onAvatarEditTap,
+    this.showCameraIcon = false,
     this.isPublished = true,
   });
 
   List<Color> _getGradientForTemplate(int index) {
-    switch (index) {
-      case 1:
-        return const [Color(0xFF833AB4), Color(0xFFC13584)];
-      case 2:
-        return const [Color(0xFF0D9488), Color(0xFF2DD4BF)];
-      case 3:
-        return const [Color(0xFF0F172A), Color(0xFF334155)];
-      case 4:
-        return const [Color(0xFFF1F5F9), Color(0xFFE2E8F0)];
-      case 0:
-      default:
-        return const [Color(0xFF0052FF), Color(0xFF38BDF8)];
-    }
+    return CardTemplates.getGradient(index);
   }
 
   Widget _buildImageWidget(String? photo, {required Widget fallback}) {
@@ -121,14 +112,14 @@ class ProfileLiveCardPreview extends StatelessWidget {
   Widget _buildAvatarFallback() {
     final initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
     return Container(
-      color: const Color(0xFFEFF6FF),
+      color: const Color(0xFFFAF6F2),
       child: Center(
         child: Text(
           initial,
           style: const TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF0052FF),
+            color: Color(0xFFD4642C),
           ),
         ),
       ),
@@ -230,24 +221,25 @@ class ProfileLiveCardPreview extends StatelessWidget {
                               child: _buildAvatarWidget(),
                             ),
                           ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              width: 26,
-                              height: 26,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF0052FF),
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2),
-                              ),
-                              child: const Icon(
-                                Icons.camera_alt_rounded,
-                                color: Colors.white,
-                                size: 13,
+                          if (showCameraIcon)
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: Container(
+                                width: 26,
+                                height: 26,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFD4642C),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 2),
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt_rounded,
+                                  color: Colors.white,
+                                  size: 13,
+                                ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                     ),
@@ -279,7 +271,7 @@ class ProfileLiveCardPreview extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF0066FF),
+                    color: Color(0xFFD4642C),
                   ),
                 ),
                 const SizedBox(height: 1),

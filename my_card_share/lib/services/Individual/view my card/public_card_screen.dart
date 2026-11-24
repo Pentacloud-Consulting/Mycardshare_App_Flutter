@@ -137,20 +137,20 @@ class _IndividualCardScreenState extends State<IndividualCardScreen> {
 
         if (_isLoading) {
           return const Scaffold(
-            backgroundColor: Color(0xFFF8FAFD),
+            backgroundColor: Color(0xFFFAF6F2),
             body: Center(
-              child: CircularProgressIndicator(color: Color(0xFF0052FF)),
+              child: CircularProgressIndicator(color: Color(0xFFD4642C)),
             ),
           );
         }
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF8FAFD),
+          backgroundColor: const Color(0xFFFAF6F2),
           appBar: widget.showBottomNav ? PortalTopNav(userName: name.split(' ').first) : null,
           bottomNavigationBar: widget.showBottomNav ? const PortalBottomNav() : null,
           body: Stack(
             children: [
-              // Soft baby-blue gradient ambient glow top right
+              // Soft warm terracotta ambient glow top right
               Positioned(
                 top: -50,
                 right: -50,
@@ -164,7 +164,7 @@ class _IndividualCardScreenState extends State<IndividualCardScreen> {
                         center: Alignment.center,
                         radius: 0.7,
                         colors: [
-                          const Color(0xFF38BDF8).withValues(alpha: 0.18),
+                          const Color(0xFFE8824E).withValues(alpha: 0.15),
                           Colors.transparent,
                         ],
                       ),
@@ -229,7 +229,7 @@ class _IndividualCardScreenState extends State<IndividualCardScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.location_on_rounded, size: 14, color: Color(0xFF0284C7)),
+                              const Icon(Icons.location_on_rounded, size: 14, color: Color(0xFFD4642C)),
                               const SizedBox(width: 6),
                               Text(
                                 city.toUpperCase(),

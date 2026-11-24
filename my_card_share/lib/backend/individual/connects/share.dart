@@ -148,7 +148,7 @@ class _ShareCardModalSheet extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message ?? "✓ Card link copied to clipboard!"),
-        backgroundColor: const Color(0xFF0052FF),
+        backgroundColor: const Color(0xFFD4642C),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
@@ -194,10 +194,10 @@ class _ShareCardModalSheet extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: const Color(0xFFFFF7ED),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(Icons.ios_share_rounded, color: Color(0xFF0052FF), size: 24),
+                child: const Icon(Icons.ios_share_rounded, color: Color(0xFFD4642C), size: 24),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -264,7 +264,7 @@ class _ShareCardModalSheet extends StatelessWidget {
               _ShareTile(
                 icon: Icons.link_rounded,
                 label: 'Copy Link',
-                color: const Color(0xFF0052FF),
+                color: const Color(0xFFD4642C),
                 onTap: () => _copyToClipboard(context),
               ),
             ],

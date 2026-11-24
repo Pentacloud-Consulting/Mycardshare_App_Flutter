@@ -129,21 +129,21 @@ class _LeadDetailSheetState extends State<LeadDetailSheet> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0052FF).withValues(alpha: 0.1),
+                      color: const Color(0xFFD4642C).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFF0052FF).withValues(alpha: 0.3)),
+                      border: Border.all(color: const Color(0xFFD4642C).withValues(alpha: 0.3)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: const [
-                        Icon(Icons.edit_rounded, size: 14, color: Color(0xFF0052FF)),
+                        Icon(Icons.edit_rounded, size: 14, color: Color(0xFFD4642C)),
                         SizedBox(width: 4),
                         Text(
                           "Edit",
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF0052FF),
+                            color: Color(0xFFD4642C),
                           ),
                         ),
                       ],
@@ -185,8 +185,8 @@ class _LeadDetailSheetState extends State<LeadDetailSheet> {
                 _buildQuickActionButton(
                   icon: Icons.message_rounded,
                   label: "Message",
-                  bg: const Color(0xFFEFF6FF),
-                  fg: const Color(0xFF2563EB),
+                  bg: const Color(0xFFFAF6F2),
+                  fg: const Color(0xFFD4642C),
                   onTap: () => LeadActionHelper.messageLead(context, name: lead.name, phone: lead.phone),
                 ),
                 _buildQuickActionButton(

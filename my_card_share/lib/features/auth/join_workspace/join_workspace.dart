@@ -163,12 +163,12 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
+                          color: const Color(0xFFFFF7ED),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(
                           Icons.mark_email_read_rounded,
-                          color: Color(0xFF0066FF),
+                          color: Color(0xFFD4642C),
                           size: 24,
                         ),
                       ),
@@ -221,7 +221,7 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
                       decoration: const InputDecoration(
                         hintText: "Enterprise Email (e.g. admin@islamicweb.com)",
                         hintStyle: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
-                        prefixIcon: Icon(Icons.business_rounded, color: Color(0xFF0066FF), size: 20),
+                        prefixIcon: Icon(Icons.business_rounded, color: Color(0xFFD4642C), size: 20),
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       ),
@@ -301,7 +301,7 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
                               }
                             },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0066FF),
+                        backgroundColor: const Color(0xFFD4642C),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
                       ),
@@ -440,7 +440,7 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
         backgroundColor: const Color(0xFFF8FAFD),
         body: Stack(
           children: [
-            // Background Top-Left Ambient Blue Circle Glow
+            // Background Top-Left Ambient Orange Circle Glow
             Positioned(
               top: -120,
               left: -100,
@@ -451,7 +451,7 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      const Color(0xFF38B6FF).withValues(alpha: 0.18),
+                      const Color(0xFFD4642C).withValues(alpha: 0.12),
                       Colors.transparent,
                     ],
                   ),
@@ -468,7 +468,7 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
                 height: 24,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFF38B6FF).withValues(alpha: 0.15),
+                  color: const Color(0xFFD4642C).withValues(alpha: 0.12),
                 ),
               ),
             ),
@@ -516,8 +516,8 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
                     Container(
                       width: 76,
                     height: 76,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0066FF).withValues(alpha: 0.08),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFFF7ED),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
@@ -525,11 +525,15 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
                         width: 60,
                         height: 60,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0066FF),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF0066FF).withValues(alpha: 0.35),
+                              color: const Color(0xFFD4642C).withValues(alpha: 0.35),
                               blurRadius: 16,
                               offset: const Offset(0, 6),
                             ),
@@ -628,9 +632,9 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
                             key: const ValueKey("loaded_banner"),
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF0F7FF),
+                              color: const Color(0xFFFFF7ED),
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: const Color(0xFFBAE6FD), width: 1.5),
+                              border: Border.all(color: const Color(0xFFFED7AA), width: 1.5),
                             ),
                             child: Row(
                               children: [
@@ -695,7 +699,7 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
                                           const SizedBox(width: 3),
                                           const Icon(
                                             Icons.verified_rounded,
-                                            color: Color(0xFF0066FF),
+                                            color: Color(0xFFD4642C),
                                             size: 15,
                                           ),
                                         ],
@@ -938,14 +942,14 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
                     child: Container(
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFF0066FF), Color(0xFF0099FF)],
+                          colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
                           begin: Alignment.centerLeft,
                           end: Alignment.centerRight,
                         ),
                         borderRadius: BorderRadius.circular(28),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF0066FF).withValues(alpha: 0.35),
+                            color: const Color(0xFFD4642C).withValues(alpha: 0.35),
                             blurRadius: 16,
                             offset: const Offset(0, 8),
                           ),
@@ -1019,7 +1023,7 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
                           Icon(
                             Icons.arrow_back_rounded,
                             size: 16,
-                            color: Color(0xFF0066FF),
+                            color: Color(0xFFD4642C),
                           ),
                           SizedBox(width: 6),
                           Text(
@@ -1027,7 +1031,7 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF0066FF),
+                              color: Color(0xFFD4642C),
                             ),
                           ),
                         ],
@@ -1053,9 +1057,9 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
       width: 48,
       height: 48,
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF),
+        color: const Color(0xFFFFF7ED),
         shape: BoxShape.circle,
-        border: Border.all(color: const Color(0xFFDBEAFE), width: 1),
+        border: Border.all(color: const Color(0xFFFED7AA), width: 1),
       ),
       child: Center(
         child: initial.isNotEmpty
@@ -1064,12 +1068,12 @@ class _JoinWorkspaceScreenState extends ConsumerState<JoinWorkspaceScreen> {
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF2563EB),
+                  color: Color(0xFFD4642C),
                 ),
               )
             : const Icon(
                 Icons.business_rounded,
-                color: Color(0xFF2563EB),
+                color: Color(0xFFD4642C),
                 size: 24,
               ),
       ),

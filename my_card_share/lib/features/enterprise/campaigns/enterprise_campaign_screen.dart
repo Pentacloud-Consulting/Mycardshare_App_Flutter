@@ -167,7 +167,7 @@ class _EnterpriseCampaignsScreenState extends State<EnterpriseCampaignsScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0052FF),
+              backgroundColor: const Color(0xFFD4642C),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -333,7 +333,7 @@ class _EnterpriseCampaignsScreenState extends State<EnterpriseCampaignsScreen> {
                       if (budget.isNotEmpty) ...[
                         const Icon(Icons.account_balance_wallet_outlined, size: 16, color: Color(0xFF64748B)),
                         const SizedBox(width: 4),
-                        Text("AED $budget", style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF0052FF))),
+                        Text("AED $budget", style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFFD4642C))),
                       ],
                     ],
                   ),
@@ -408,7 +408,7 @@ class _EnterpriseCampaignsScreenState extends State<EnterpriseCampaignsScreen> {
       ),
       child: Column(
         children: [
-          Icon(icon, size: 18, color: const Color(0xFF0052FF)),
+          Icon(icon, size: 18, color: const Color(0xFFD4642C)),
           const SizedBox(height: 4),
           Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
           const SizedBox(height: 2),
@@ -435,8 +435,8 @@ class _EnterpriseCampaignsScreenState extends State<EnterpriseCampaignsScreen> {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFF38BDF8).withValues(alpha: 0.18),
-                    const Color(0xFF0052FF).withValues(alpha: 0.05),
+                    const Color(0xFFFED7AA).withValues(alpha: 0.35),
+                    const Color(0xFFFFF7ED).withValues(alpha: 0.15),
                     Colors.transparent,
                   ],
                 ),

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/utils/image_url_formatter.dart';
+import '../../../../core/constants/card_templates.dart';
 import '../../../../backend/employee_join/banner fetch/banner fetch.dart';
 
 class CardHeaderBanner extends StatelessWidget {
@@ -33,19 +34,7 @@ class CardHeaderBanner extends StatelessWidget {
   });
 
   List<Color> _getGradientForTemplate(int index) {
-    switch (index) {
-      case 1:
-        return const [Color(0xFF833AB4), Color(0xFFC13584)];
-      case 2:
-        return const [Color(0xFF0D9488), Color(0xFF2DD4BF)];
-      case 3:
-        return const [Color(0xFF0F172A), Color(0xFF334155)];
-      case 4:
-        return const [Color(0xFFF1F5F9), Color(0xFFE2E8F0)];
-      case 0:
-      default:
-        return const [Color(0xFF0052FF), Color(0xFF38BDF8)];
-    }
+    return CardTemplates.getGradient(index);
   }
 
   Widget _buildImageWidget(String? photo, {required Widget fallback}) {

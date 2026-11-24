@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'app_theme.dart';
 
@@ -134,27 +135,38 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cardContent = Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: kIsWeb
+            ? Colors.white.withValues(alpha: 0.9)
+            : Colors.white.withValues(alpha: opacity),
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(
+            color: Colors.white.withValues(alpha: 0.4), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: child,
+    );
+
+    if (kIsWeb) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: cardContent,
+      );
+    }
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-        child: Container(
-          padding: padding,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: opacity),
-            borderRadius: BorderRadius.circular(radius),
-            border: Border.all(
-                color: Colors.white.withValues(alpha: 0.4), width: 1.2),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.08),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: child,
-        ),
+        child: cardContent,
       ),
     );
   }
@@ -171,37 +183,50 @@ class GlassPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final pillContent = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: kIsWeb
+            ? Colors.white.withValues(alpha: 0.85)
+            : Colors.white.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: dotColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: AppTextStyles.textTheme.bodySmall?.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (kIsWeb) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(999),
+        child: pillContent,
+      );
+    }
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(999),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 6,
-                height: 6,
-                decoration:
-                    BoxDecoration(color: dotColor, shape: BoxShape.circle),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: AppTextStyles.textTheme.bodySmall?.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
+        child: pillContent,
       ),
     );
   }

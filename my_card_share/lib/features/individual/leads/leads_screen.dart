@@ -143,21 +143,21 @@ class _LeadsScreenState extends State<LeadsScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF0052FF).withValues(alpha: 0.1),
+                            color: const Color(0xFFD4642C).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFF0052FF).withValues(alpha: 0.3)),
+                            border: Border.all(color: const Color(0xFFD4642C).withValues(alpha: 0.3)),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.filter_alt_rounded, size: 13, color: Color(0xFF0052FF)),
+                              const Icon(Icons.filter_alt_rounded, size: 13, color: Color(0xFFD4642C)),
                               const SizedBox(width: 4),
                               Text(
                                 "Date: ${_dateFilter.label}",
                                 style: const TextStyle(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0052FF),
+                                  color: Color(0xFFD4642C),
                                 ),
                               ),
                               const SizedBox(width: 6),
@@ -167,7 +167,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                                     _dateFilter = const LeadDateFilterResult(preset: LeadDatePreset.allTime);
                                   });
                                 },
-                                child: const Icon(Icons.close_rounded, size: 14, color: Color(0xFF0052FF)),
+                                child: const Icon(Icons.close_rounded, size: 14, color: Color(0xFFD4642C)),
                               ),
                             ],
                           ),
@@ -200,13 +200,14 @@ class _LeadsScreenState extends State<LeadsScreen> {
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF0052FF).withValues(alpha: 0.08),
+                                color: const Color(0xFFFAF6F2),
                                 shape: BoxShape.circle,
+                                border: Border.all(color: const Color(0xFFD4642C).withValues(alpha: 0.2)),
                               ),
                               child: const Icon(
                                 Icons.group_outlined,
                                 size: 36,
-                                color: Color(0xFF0052FF),
+                                color: Color(0xFFD4642C),
                               ),
                             ),
                             const SizedBox(height: 14),
@@ -224,8 +225,8 @@ class _LeadsScreenState extends State<LeadsScreen> {
                               icon: const Icon(Icons.add_rounded, size: 18),
                               label: const Text("Add New Lead"),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF0052FF),
-                                side: const BorderSide(color: Color(0xFF0052FF)),
+                                foregroundColor: const Color(0xFFD4642C),
+                                side: const BorderSide(color: Color(0xFFD4642C)),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -327,14 +328,14 @@ class _AddLeadFabState extends State<_AddLeadFab>
           height: 56,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF1D4ED8), Color(0xFF0052FF)],
+              colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(18),
             boxShadow: const [
               BoxShadow(
-                color: Color(0x500052FF),
+                color: Color(0x4CD4642C),
                 blurRadius: 18,
                 spreadRadius: 0,
                 offset: Offset(0, 6),

@@ -8,7 +8,7 @@ class AnalyticsTemplatePerformance extends StatelessWidget {
       "name": "Modern Glass",
       "percentage": "68%",
       "value": 0.68,
-      "color": Color(0xFF0052FF),
+      "color": Color(0xFFD4642C),
     },
     {
       "name": "Minimal Dark",

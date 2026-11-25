@@ -400,10 +400,6 @@ class EmployeeHomeBackendService extends ChangeNotifier {
       if (currentUid.isNotEmpty) {
         await _firestore.collection('users').doc(currentUid).set(updateData, SetOptions(merge: true));
       }
-      if (currentEmail.isNotEmpty) {
-        final docId = currentEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-        await _firestore.collection('users').doc(docId).set(updateData, SetOptions(merge: true));
-      }
 
       if (_enterpriseUid != null && _enterpriseUid!.isNotEmpty && currentEmail.isNotEmpty) {
         final empSnap = await _firestore

@@ -119,18 +119,27 @@ class EnterpriseTopPerformanceService {
         final data = Map<String, dynamic>.from(doc.data());
         data['_id'] = doc.id;
 
-        final empName = (data['name'] ?? data['fullName'] ?? '').toString().trim().toLowerCase();
+        final role = (data['role'] ?? data['roleTitle'] ?? '').toString().toLowerCase();
         final empEmail = (data['email'] ?? '').toString().trim().toLowerCase();
         final empUid = (data['uid'] ?? '').toString().trim();
+
+        // Strictly exclude enterprise admin / workspace owner from employee leaderboard
+        if (role == 'enterprise' ||
+            role == 'admin' ||
+            role == 'super_admin' ||
+            doc.id == targetUid ||
+            empUid == targetUid ||
+            (currentUserEmail.isNotEmpty && empEmail == currentUserEmail)) {
+          continue;
+        }
 
         int views = (data['views'] as num?)?.toInt() ?? 0;
         int leads = (data['leads'] as num?)?.toInt() ?? 0;
 
-        // Bridge active session views/leads (e.g. 13 views from Image 2) if matching
+        // Bridge active session views/leads if current user is this employee
         final isUserMatch = (empUid.isNotEmpty && empUid == currentAuthUid) ||
             (doc.id == currentAuthUid) ||
-            (empEmail.isNotEmpty && currentUserEmail.isNotEmpty && empEmail == currentUserEmail) ||
-            (empName.isNotEmpty && (empName == 'zuhaib' || empName == currentUserName || (currentUserName.isNotEmpty && empName.contains(currentUserName))));
+            (empEmail.isNotEmpty && currentUserEmail.isNotEmpty && empEmail == currentUserEmail);
 
         if (isUserMatch) {
           if (activeViews > views) {
@@ -280,7 +289,7 @@ class EnterpriseTopPerformersBackend extends StatelessWidget {
 
                 return InkWell(
                   onTap: () {
-                    Navigator.of(context).push(
+                    Navigator.of(context, rootNavigator: true).push(
                       MaterialPageRoute(
                         builder: (_) => WorkspaceEmployeeProfileView(
                           employeeId: performer.id,

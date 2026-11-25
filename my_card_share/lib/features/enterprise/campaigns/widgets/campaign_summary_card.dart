@@ -6,8 +6,8 @@ class CampaignSummaryCard extends StatelessWidget {
 
   const CampaignSummaryCard({
     super.key,
-    this.activeCampaignsCount = 4,
-    this.totalScansCount = "1,447",
+    this.activeCampaignsCount = 0,
+    this.totalScansCount = "0",
   });
 
   @override

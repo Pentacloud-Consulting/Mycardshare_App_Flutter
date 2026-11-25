@@ -9,6 +9,12 @@ import '../profile/enterprise_profile_store.dart';
 import '../lock_banner/lock_banner.dart';
 import '../multiple_store/enterprise_multi_store.dart';
 import '../../../features/enterprise/workspace/workspace_employee_profile_view.dart';
+import '../../../core/utils/image_url_formatter.dart';
+
+/// Converts a relative avatar path (e.g. /api/uploads/...) to a valid loadable URL.
+String? _resolveAvatarUrl(String? url) {
+  return ImageUrlFormatter.format(url);
+}
 
 /// Data model representing an Enterprise Employee.
 class EnterpriseEmployeeModel {
@@ -56,7 +62,7 @@ class EnterpriseEmployeeModel {
       roleTitle: data['roleTitle'] ?? data['jobTitle'] ?? 'Employee',
       role: data['role'] ?? 'Employee',
       status: data['status'] ?? 'Active',
-      avatarUrl: (data['avatarUrl'] ?? data['profilePhoto'] ?? data['avatar']) as String?,
+      avatarUrl: _resolveAvatarUrl((data['avatarUrl'] ?? data['profilePhoto'] ?? data['avatar']) as String?),
       views: (data['views'] as num?)?.toInt() ?? 0,
       leads: (data['leads'] as num?)?.toInt() ?? 0,
       isBannerLocked: data['isBannerLocked'] ?? false,
@@ -177,7 +183,7 @@ class EnterpriseEmployeesService {
               final isPub = uData['isPublished'] as bool?;
               final cStatus = (uData['cardStatus'] as String?)?.toLowerCase();
               final uStatus = (uData['status'] as String?)?.toLowerCase();
-              final realAvatar = (uData['avatarUrl'] ?? uData['profilePhoto']) as String?;
+              final realAvatar = _resolveAvatarUrl((uData['avatarUrl'] ?? uData['profilePhoto']) as String?);
 
               // Mark inactive only if user doc explicitly says so
               final shouldBeInactive = isPub == false ||
@@ -259,13 +265,15 @@ class EnterpriseEmployeesService {
         for (final uDoc in usersSnap.docs) {
           final uData = uDoc.data();
           final uEmail = (uData['email'] as String? ?? '').trim();
+          final uRole = (uData['role'] as String? ?? '').trim().toLowerCase();
+          // Skip enterprise owners — they must never appear as employees
+          if (uRole == 'enterprise' || uDoc.id == targetUid) continue;
           if (uEmail.isNotEmpty && !existingEmails.contains(uEmail.toLowerCase())) {
             existingEmails.add(uEmail.toLowerCase());
             final uName = (uData['fullName'] ?? uData['name'] as String?)?.trim();
             final name = (uName != null && uName.isNotEmpty) ? uName : uEmail.split('@').first;
-            final uAvatar = (uData['avatarUrl'] ?? uData['profilePhoto']) as String?;
+            final uAvatar = _resolveAvatarUrl((uData['avatarUrl'] ?? uData['profilePhoto']) as String?);
             final uStatus = (uData['status'] as String?)?.trim() ?? 'Active';
-            final uRole = (uData['role'] as String?)?.trim() ?? 'Employee';
 
             list.add(EnterpriseEmployeeModel(
               id: uDoc.id,
@@ -293,6 +301,9 @@ class EnterpriseEmployeesService {
           for (final uDoc in companyIdSnap.docs) {
             final uData = uDoc.data();
             final uEmail = (uData['email'] as String? ?? '').trim();
+            final uRoleCheck = (uData['role'] as String? ?? '').trim().toLowerCase();
+            // Skip enterprise owners — they must never appear as employees
+            if (uRoleCheck == 'enterprise' || uDoc.id == targetUid) continue;
             if (uEmail.isNotEmpty && !existingEmails.contains(uEmail.toLowerCase())) {
               existingEmails.add(uEmail.toLowerCase());
               final uName = (uData['fullName'] ?? uData['name'] as String?)?.trim();
@@ -302,9 +313,9 @@ class EnterpriseEmployeesService {
                 name: name,
                 email: uEmail,
                 roleTitle: uData['jobTitle'] as String? ?? 'Employee',
-                role: (uData['role'] as String? ?? 'Employee').toLowerCase() == 'admin' ? 'Admin' : 'Employee',
+                role: uRoleCheck == 'admin' ? 'Admin' : 'Employee',
                 status: uData['status'] as String? ?? 'Active',
-                avatarUrl: (uData['avatarUrl'] ?? uData['profilePhoto']) as String?,
+                avatarUrl: _resolveAvatarUrl((uData['avatarUrl'] ?? uData['profilePhoto']) as String?),
                 views: (uData['views'] as num?)?.toInt() ?? 0,
                 leads: (uData['leads'] as num?)?.toInt() ?? 0,
               ));
@@ -328,7 +339,7 @@ class EnterpriseEmployeesService {
               existingEmails.add(uEmail.toLowerCase());
               final uName = (uData['fullName'] ?? uData['name'] as String?)?.trim();
               final name = (uName != null && uName.isNotEmpty) ? uName : uEmail.split('@').first;
-              final uAvatar = (uData['avatarUrl'] ?? uData['profilePhoto']) as String?;
+              final uAvatar = _resolveAvatarUrl((uData['avatarUrl'] ?? uData['profilePhoto']) as String?);
               final uStatus = (uData['status'] as String?)?.trim() ?? 'Active';
 
               list.add(EnterpriseEmployeeModel(
@@ -999,15 +1010,26 @@ class EnterpriseEmployeeListBackend extends StatelessWidget {
         }
 
         return Container(
+          clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+            border: Border.all(
+              color: const Color(0xFFE2E8F0),
+              width: 1.0,
+            ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF0F172A).withValues(alpha: 0.03),
-                blurRadius: 12,
-                offset: const Offset(0, 2),
+                color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                blurRadius: 16,
+                spreadRadius: 0,
+                offset: const Offset(0, 4),
+              ),
+              BoxShadow(
+                color: const Color(0xFF0F172A).withValues(alpha: 0.02),
+                blurRadius: 6,
+                spreadRadius: 0,
+                offset: const Offset(0, 1),
               ),
             ],
           ),
@@ -1040,7 +1062,7 @@ class EnterpriseEmployeeListBackend extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: () {
-          Navigator.of(context).push(
+          Navigator.of(context, rootNavigator: true).push(
             MaterialPageRoute(
               builder: (_) => WorkspaceEmployeeProfileView(
                 employee: emp,
@@ -1062,13 +1084,21 @@ class EnterpriseEmployeeListBackend extends StatelessWidget {
                   ? const Color(0xFFF3E8FF)
                   : isPending
                       ? const Color(0xFFFEF9C3)
-                      : const Color(0xFFE0F2FE),
+                      : const Color(0xFFFFF7ED),
               shape: BoxShape.circle,
+              border: Border.all(
+                color: isAdmin
+                    ? const Color(0xFFE9D5FF)
+                    : isPending
+                        ? const Color(0xFFFDE68A)
+                        : const Color(0xFFFED7AA),
+                width: 1.2,
+              ),
             ),
             child: ClipOval(
               child: Builder(
                 builder: (context) {
-                  final av = emp.avatarUrl?.trim();
+                  final av = ImageUrlFormatter.format(emp.avatarUrl);
                   Widget? imageWidget;
 
                   if (av != null && av.isNotEmpty) {
@@ -1083,20 +1113,25 @@ class EnterpriseEmployeeListBackend extends StatelessWidget {
                               _buildFallbackInitialWidget(emp, isAdmin, isPending),
                         );
                       } catch (_) {}
-                    } else if (av.startsWith('http')) {
+                    } else if (av.startsWith('http://') || av.startsWith('https://')) {
                       imageWidget = Image.network(
                         av,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) =>
                             _buildFallbackInitialWidget(emp, isAdmin, isPending),
                       );
-                    } else if (File(av).existsSync()) {
-                      imageWidget = Image.file(
-                        File(av),
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            _buildFallbackInitialWidget(emp, isAdmin, isPending),
-                      );
+                    } else {
+                      try {
+                        final localFile = File(av);
+                        if (localFile.existsSync()) {
+                          imageWidget = Image.file(
+                            localFile,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                _buildFallbackInitialWidget(emp, isAdmin, isPending),
+                          );
+                        }
+                      } catch (_) {}
                     }
                   }
 
@@ -1234,7 +1269,7 @@ class EnterpriseEmployeeListBackend extends StatelessWidget {
               if (enterpriseUid == null || enterpriseUid.isEmpty) return;
 
               if (action == 'view_profile') {
-                Navigator.of(context).push(
+                Navigator.of(context, rootNavigator: true).push(
                   MaterialPageRoute(
                     builder: (_) => WorkspaceEmployeeProfileView(
                       employee: emp,

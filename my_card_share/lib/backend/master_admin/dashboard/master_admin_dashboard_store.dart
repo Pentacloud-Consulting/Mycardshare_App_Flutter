@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../core/master_admin_api_client.dart';
 import '../core/master_admin_endpoints.dart';
 import '../approvals/approvals_queue_store.dart';
-import '../../Global User Directory/global_auth_sync_service.dart';
 
 /// State and live metrics for Master Admin Dashboard.
 /// Synchronizes across Firestore and Next.js /api/sync/master-admin.
@@ -44,12 +43,14 @@ class MasterAdminDashboardStore extends ChangeNotifier {
 
     try {
       // 0. Try Next.js platform dashboard endpoint (Parallel-optimized web endpoint)
+      bool hasPlatData = false;
       try {
         final platData = await MasterAdminApiClient.get(MasterAdminEndpoints.platformDashboard);
         if (platData != null && platData is Map<String, dynamic>) {
           final payload = platData['data'] is Map<String, dynamic> ? platData['data'] : platData;
           final stats = payload['stats'] is Map<String, dynamic> ? payload['stats'] : null;
           if (stats != null) {
+            hasPlatData = true;
             if (stats['totalCompanies'] != null) _totalCompanies = (stats['totalCompanies'] as num).toInt();
             if (stats['pendingApprovals'] != null) _pendingApprovals = (stats['pendingApprovals'] as num).toInt();
             if (stats['approvedCompanies'] != null) _approvedCompanies = (stats['approvedCompanies'] as num).toInt();
@@ -64,86 +65,54 @@ class MasterAdminDashboardStore extends ChangeNotifier {
         }
       } catch (_) {}
 
-      // 1. Try Next.js platform sync endpoint
-      final syncData = await MasterAdminApiClient.get(MasterAdminEndpoints.masterAdminSync);
-      if (syncData != null && syncData is Map<String, dynamic>) {
-        if (syncData['totalCompanies'] != null && _totalCompanies == 0) {
-          _totalCompanies = (syncData['totalCompanies'] as num).toInt();
-        }
-        if (syncData['totalIndividuals'] != null && _totalIndividuals == 0) {
-          _totalIndividuals = (syncData['totalIndividuals'] as num).toInt();
-        }
-        if (syncData['totalLeads'] != null && _totalLeads == 0) {
-          _totalLeads = (syncData['totalLeads'] as num).toInt();
-        }
-        if (syncData['pendingApprovals'] != null && _pendingApprovals == 0) {
-          _pendingApprovals = (syncData['pendingApprovals'] as num).toInt();
-        }
-        if (syncData['mrr'] != null) {
-          _mrr = syncData['mrr'].toString();
-        }
-      }
-
-      // 2. Fetch global directory metrics (Firestore + MongoDB users & counts)
-      try {
-        final globalData = await GlobalAuthSyncService.fetchAllGlobalUsers();
-        final counts = globalData['counts'];
-        if (counts != null && counts is Map<String, dynamic>) {
-          if (counts['individuals'] != null) {
-            _totalIndividuals = (counts['individuals'] as num).toInt();
-          }
-          if (counts['enterprises'] != null) {
-            _totalCompanies = (counts['enterprises'] as num).toInt();
-          }
-        }
-      } catch (_) {}
-
-      // 3. Query Firestore real counts to guarantee live accuracy fallback
-      try {
-        final entSnap = await _firestore.collection('enterprises').get();
-        final compSnap = await _firestore.collection('companies').get();
-        final Set<String> companyIds = {};
-        for (final d in entSnap.docs) {
-          companyIds.add(d.id);
-        }
-        for (final d in compSnap.docs) {
-          companyIds.add(d.id);
-        }
-        if (companyIds.isNotEmpty) {
-          _totalCompanies = companyIds.length;
-        }
-      } catch (_) {
-        if (_totalCompanies == 0) {
-          final compSnap = await _firestore.collection('enterprises').count().get();
-          _totalCompanies = compSnap.count ?? _totalCompanies;
-        }
-      }
-
-      if (_totalIndividuals == 0) {
+      // 1. If not fetched from platform API, query Firestore authoritative collections (matching Web)
+      if (!hasPlatData) {
         try {
-          final userSnap = await _firestore
-              .collection('users')
-              .where('role', isEqualTo: 'individual')
-              .count()
-              .get();
-          int indCount = userSnap.count ?? 0;
-          if (indCount == 0) {
-            final allUsersSnap = await _firestore.collection('users').get();
-            indCount = allUsersSnap.docs.where((d) {
-              final r = (d.data()['role'] ?? '').toString().toLowerCase();
-              return r != 'enterprise' && r != 'company' && !r.contains('admin') && r != 'employee';
+          final compSnap = await _firestore.collection('companies').get();
+          if (compSnap.docs.isNotEmpty) {
+            _totalCompanies = compSnap.size;
+            _pendingApprovals = compSnap.docs.where((d) {
+              final data = d.data();
+              final appStatus = (data['approvalStatus'] ?? 'pending').toString().toLowerCase().trim();
+              final status = (data['status'] ?? '').toString().toLowerCase().trim();
+              if (appStatus == 'approved' || status == 'active' || appStatus == 'rejected' || status == 'rejected') {
+                return false;
+              }
+              return true;
             }).length;
-          }
-          if (indCount > 0) {
-            _totalIndividuals = indCount;
+            _approvedCompanies = compSnap.docs.where((d) {
+              final data = d.data();
+              return (data['approvalStatus'] ?? '').toString().toLowerCase().trim() == 'approved' ||
+                     (data['status'] ?? '').toString().toLowerCase().trim() == 'active';
+            }).length;
+            _suspendedCompanies = compSnap.docs.where((d) => d.data()['isSuspended'] == true).length;
           }
         } catch (_) {}
       }
 
-      // Pending join requests & company approvals via ApprovalsQueueStore
-      await ApprovalsQueueStore.instance.streamPendingQueue().first.then((items) {
-        _pendingApprovals = items.length;
-      }).catchError((_) {});
+      // 2. Fetch users metrics (matching Web totalUsers and totalIndividuals)
+      try {
+        final allUsersSnap = await _firestore.collection('users').get();
+        if (_totalUsers == 0) {
+          _totalUsers = allUsersSnap.size;
+        }
+        _totalIndividuals = allUsersSnap.docs.where((d) {
+          final data = d.data();
+          final companyId = (data['companyId'] ?? '').toString().trim();
+          if (companyId.isNotEmpty) return false;
+          final r = (data['role'] ?? '').toString().toLowerCase().trim();
+          if (['master_admin', 'platform_admin', 'super_admin'].contains(r)) return false;
+          if (data['deleted'] == true || data['isDeleted'] == true || data['status'] == 'DELETED') return false;
+          return true;
+        }).length;
+      } catch (_) {}
+
+      // 3. Pending join requests & company approvals via ApprovalsQueueStore (if pendingApprovals is 0)
+      if (_pendingApprovals == 0) {
+        await ApprovalsQueueStore.instance.streamPendingQueue().first.then((items) {
+          _pendingApprovals = items.length;
+        }).catchError((_) {});
+      }
 
       // Real calculated MRR based on company count
       if (_mrr == "\$0" || _mrr.isEmpty) {

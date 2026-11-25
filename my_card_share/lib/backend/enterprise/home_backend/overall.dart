@@ -106,17 +106,37 @@ class EnterpriseOverallService {
         }
       } catch (_) {}
 
-      // Total card views is the real sum of enterprise card views and employee card views
-      int totalViewsSum = entProfileViews > 0 ? entProfileViews : employeeViewsSum;
+      // Total card views is the real maximum or sum of enterprise card views and employee card views
+      int totalViewsSum = math.max(entProfileViews, employeeViewsSum);
 
       // Dual-sync: Query MongoDB live metrics from /api/company/stats
       try {
         final apiStats = await IndividualApiService.get('/api/company/stats');
         if (apiStats != null) {
-          final apiViews = (apiStats['totalViews'] as num?)?.toInt() ?? 0;
-          final apiLeads = (apiStats['leadsCount'] as num?)?.toInt() ?? 0;
-          final apiEmployees = (apiStats['employeeCount'] as num?)?.toInt() ?? 0;
-          final apiActive = (apiStats['activeCards'] as num?)?.toInt() ?? 0;
+          final rawData = apiStats['data'] is Map<String, dynamic>
+              ? apiStats['data'] as Map<String, dynamic>
+              : apiStats;
+          final innerStats = rawData['stats'] is Map<String, dynamic>
+              ? rawData['stats'] as Map<String, dynamic>
+              : null;
+
+          final apiViews = (rawData['totalViews'] as num?)?.toInt() ??
+              (innerStats?['totalViews'] as num?)?.toInt() ??
+              (innerStats?['engagement'] as num?)?.toInt() ??
+              (apiStats['totalViews'] as num?)?.toInt() ??
+              0;
+          final apiLeads = (rawData['leadsCount'] as num?)?.toInt() ??
+              (innerStats?['totalLeads'] as num?)?.toInt() ??
+              (apiStats['leadsCount'] as num?)?.toInt() ??
+              0;
+          final apiEmployees = (rawData['employeeCount'] as num?)?.toInt() ??
+              (innerStats?['totalWorkforce'] as num?)?.toInt() ??
+              (apiStats['employeeCount'] as num?)?.toInt() ??
+              0;
+          final apiActive = (rawData['activeCards'] as num?)?.toInt() ??
+              (innerStats?['activeCards'] as num?)?.toInt() ??
+              (apiStats['activeCards'] as num?)?.toInt() ??
+              0;
 
           if (apiViews > totalViewsSum) totalViewsSum = apiViews;
           if (apiLeads > leadsSum) leadsSum = apiLeads;

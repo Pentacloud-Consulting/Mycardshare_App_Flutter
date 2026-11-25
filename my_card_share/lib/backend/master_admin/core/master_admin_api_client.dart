@@ -9,7 +9,8 @@ import 'master_admin_endpoints.dart';
 class MasterAdminApiClient {
   MasterAdminApiClient._();
 
-  static const List<String> _hosts = [
+  static List<String> get _hosts => [
+    if (kDebugMode && kIsWeb) 'http://localhost:3000',
     MasterAdminEndpoints.baseUrl,
     'https://mycardshare.com',
   ];

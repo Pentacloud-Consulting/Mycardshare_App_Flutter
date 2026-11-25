@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../view_employee/view_employee_enterprice.dart';
 import '../enployee_leads/employee_save_leads.dart';
 import '../../../backend/individual/profile/individual_profile_store.dart';
+import '../../../core/utils/image_url_formatter.dart';
 
 /// Data model representing an enterprise employee's full profile state
 /// with complete real backend information and onboarding/filling flags.
@@ -153,8 +154,10 @@ class WorkspaceEmployeeProfileData {
     final netStatus = (u['networkingStatus'] ?? 'ACTIVELY NETWORKING').toString().trim();
 
     // Photos
-    final avatar = (u['profilePhoto'] ?? u['avatarUrl'] ?? empData['avatarUrl']) as String?;
-    final banner = (u['bannerPhoto'] ?? u['bannerUrl'] ?? empData['lockedBannerUrl']) as String?;
+    final rawAvatar = (u['profilePhoto'] ?? u['avatarUrl'] ?? empData['avatarUrl']) as String?;
+    final String? avatar = ImageUrlFormatter.format(rawAvatar);
+    final rawBanner = (u['bannerPhoto'] ?? u['bannerUrl'] ?? empData['lockedBannerUrl']) as String?;
+    final String? banner = ImageUrlFormatter.format(rawBanner);
 
     // Card Slug
     final rawSlug = (u['cardSlug'] ?? empData['cardSlug'] ?? '').toString().trim();

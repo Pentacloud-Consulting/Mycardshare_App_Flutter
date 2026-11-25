@@ -62,7 +62,9 @@ class _MasterAdminDashboardScreenState extends State<MasterAdminDashboardScreen>
                     // 1. Summary Card Section with Live Counts
                     DashboardSummaryCard(
                       companyCount: store.totalCompanies.toString(),
-                      userCount: store.totalIndividuals.toString(),
+                      userCount: store.totalUsers > 0
+                          ? store.totalUsers.toString()
+                          : store.totalIndividuals.toString(),
                     ),
 
                     const SizedBox(height: 20),
@@ -70,7 +72,9 @@ class _MasterAdminDashboardScreenState extends State<MasterAdminDashboardScreen>
                     // 2. Grid of Stat Cards Section (6 Platform KPIs)
                     DashboardStatsGrid(
                       totalCompanies: store.totalCompanies.toString(),
-                      totalIndividuals: store.totalIndividuals.toString(),
+                      totalIndividuals: store.totalIndividuals > 0
+                          ? store.totalIndividuals.toString()
+                          : (store.totalUsers > 0 ? store.totalUsers.toString() : "0"),
                       totalLeads: store.totalLeads.toString(),
                       pendingApprovals: store.pendingApprovals.toString(),
                       suspendedCompanies: store.suspendedCompanies.toString(),

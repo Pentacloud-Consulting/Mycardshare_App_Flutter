@@ -150,20 +150,15 @@ class MasterIndividualsService {
 
     final endpoints = [
       if (kIsWeb) ...[
+        Uri.parse('http://localhost:3000/api/platform/individuals').replace(queryParameters: queryParams),
+        Uri.parse('http://127.0.0.1:3000/api/platform/individuals').replace(queryParameters: queryParams),
         Uri.parse('http://localhost:3000/api/sync/master-admin-individuals').replace(queryParameters: queryParams),
         Uri.parse('http://127.0.0.1:3000/api/sync/master-admin-individuals').replace(queryParameters: queryParams),
       ],
-      Uri.parse('https://mycardshare.com/api/sync/global-directory').replace(queryParameters: {
-        'role': 'individual',
-        if (search.isNotEmpty) 'query': search,
-      }),
+      Uri.parse('https://mycardshare.com/api/platform/individuals').replace(queryParameters: queryParams),
       Uri.parse('https://mycardshare.com/api/sync/master-admin-individuals').replace(queryParameters: queryParams),
       Uri.parse(platformUrl).replace(queryParameters: queryParams),
-      Uri.parse('https://mycardshare.com/api/sync/master-admin-individuals').replace(queryParameters: queryParams),
-      Uri.parse('https://mycardshare.com/api/platform/individuals').replace(queryParameters: queryParams),
     ];
-
-    http.Response? lastResponse;
 
     for (final uri in endpoints) {
       try {
@@ -174,8 +169,6 @@ class MasterIndividualsService {
             if (actualToken.isNotEmpty) 'Authorization': 'Bearer $actualToken',
           },
         ).timeout(const Duration(seconds: 6));
-
-        lastResponse = response;
 
         if (response.statusCode == 200) {
           final decoded = json.decode(response.body);
@@ -222,23 +215,15 @@ class MasterIndividualsService {
       for (final doc in snap.docs) {
         final data = doc.data();
         final role = (data['role'] ?? data['userRole'] ?? data['accountType'] ?? '').toString().toLowerCase().trim();
-        final isMasterAdmin = data['isMasterAdmin'] == true ||
-            role == 'master-admin' ||
-            role == 'admin' ||
-            role == 'superadmin' ||
-            role.contains('admin');
 
-        final isEnterprise = role == 'enterprise' ||
-            role == 'company' ||
-            role == 'organization' ||
-            data['isEnterprise'] == true ||
-            (data['approvalStatus'] != null && role != 'individual');
+        // 1. Exclude members belonging to corporate enterprises
+        final companyId = (data['companyId'] ?? '').toString().trim();
+        if (companyId.isNotEmpty) continue;
 
-        final isEmployee = role == 'employee' ||
-            (data['enterpriseUid'] != null && data['enterpriseUid'].toString().trim().isNotEmpty && role != 'individual');
+        // 2. Exclude system admins
+        if (['master_admin', 'platform_admin', 'super_admin'].contains(role)) continue;
 
-        if (isMasterAdmin || isEnterprise || isEmployee) continue;
-
+        // 3. Exclude permanently deleted accounts
         final status = (data['status'] ?? '').toString().toUpperCase();
         if (status == 'DELETED' || data['isDeleted'] == true || data['deleted'] == true) continue;
 
@@ -282,8 +267,7 @@ class MasterIndividualsService {
           createdAt: data['createdAt']?.toString() ?? '',
         );
 
-        final key = email.isNotEmpty ? email.toLowerCase() : doc.id;
-        map[key] = userModel;
+        map[doc.id] = userModel;
       }
     } catch (e) {
       debugPrint('[MasterIndividualsService] Fallback Firestore read note: $e');

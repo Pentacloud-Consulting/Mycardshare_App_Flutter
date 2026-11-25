@@ -331,7 +331,7 @@ class EnterpriseTeamOverviewWidget extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        Navigator.of(context).push(
+        Navigator.of(context, rootNavigator: true).push(
           MaterialPageRoute(
             builder: (_) => WorkspaceEmployeeProfileView(
               employee: emp,

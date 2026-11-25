@@ -57,182 +57,522 @@ class _EnterpriseCampaignsScreenState extends State<EnterpriseCampaignsScreen> {
     final descController = TextEditingController();
     final areaController = TextEditingController();
     final budgetController = TextEditingController();
-    final daysController = TextEditingController(text: "14");
+    DateTime? startDate;
+    DateTime? endDate;
+    String dateError = "";
+
+    String formatDate(DateTime d) =>
+        "${d.day.toString().padLeft(2, '0')}-${d.month.toString().padLeft(2, '0')}-${d.year}";
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          "Create New Campaign 📢",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF0F172A)),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "Launch a dynamic QR marketing campaign for your workspace to track scans, leads, and ROI.",
-                style: TextStyle(fontSize: 12.5, color: Color(0xFF64748B)),
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  labelText: "Campaign Name *",
-                  hintText: "e.g. GITEX Dubai 2026",
-                  filled: true,
-                  fillColor: const Color(0xFFF8FAFC),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: areaController,
-                decoration: InputDecoration(
-                  labelText: "Target Area / Emirate",
-                  hintText: "e.g. Downtown Dubai / Abu Dhabi",
-                  filled: true,
-                  fillColor: const Color(0xFFF8FAFC),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Row(
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return Dialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: budgetController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: InputDecoration(
-                        labelText: "Budget (AED)",
-                        hintText: "e.g. 5000",
-                        filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  // Header: Title + Close (X)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Create Campaign",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 20,
+                          color: Color(0xFF0F172A),
+                          letterSpacing: -0.3,
                         ),
+                      ),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(ctx),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFF1F5F9),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close_rounded,
+                            size: 18,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 22),
+
+                  // 1. CAMPAIGN NAME *
+                  const Text(
+                    "CAMPAIGN NAME *",
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF64748B),
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  const SizedBox(height: 7),
+                  TextField(
+                    controller: nameController,
+                    style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
+                    decoration: InputDecoration(
+                      hintText: "e.g. Summer Launch",
+                      hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF94A3B8)),
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: Color(0xFFD4642C), width: 1.5),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextField(
-                      controller: daysController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: "Duration (Days)",
-                        hintText: "14",
-                        filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                        ),
+                  const SizedBox(height: 18),
+
+                  // 2. DESCRIPTION
+                  const Text(
+                    "DESCRIPTION",
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF64748B),
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  const SizedBox(height: 7),
+                  TextField(
+                    controller: descController,
+                    minLines: 2,
+                    maxLines: 3,
+                    style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
+                    decoration: InputDecoration(
+                      hintText: "What is this campaign about?",
+                      hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF94A3B8)),
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: Color(0xFFD4642C), width: 1.5),
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // 3. Two Columns: AREA / EMIRATE & BUDGET (AED)
+                  Row(
+                    children: [
+                      // Area / Emirate
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "AREA / EMIRATE",
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF64748B),
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                            const SizedBox(height: 7),
+                            TextField(
+                              controller: areaController,
+                              style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
+                              decoration: InputDecoration(
+                                hintText: "Dubai",
+                                hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF94A3B8)),
+                                filled: true,
+                                fillColor: const Color(0xFFF8FAFC),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: const BorderSide(color: Color(0xFFD4642C), width: 1.5),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+
+                      // Budget (AED)
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "BUDGET (AED)",
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF64748B),
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                            const SizedBox(height: 7),
+                            TextField(
+                              controller: budgetController,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
+                              decoration: InputDecoration(
+                                hintText: "50000",
+                                hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF94A3B8)),
+                                filled: true,
+                                fillColor: const Color(0xFFF8FAFC),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  borderSide: const BorderSide(color: Color(0xFFD4642C), width: 1.5),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+
+                  // 4. Two Columns: START DATE & END DATE
+                  Row(
+                    children: [
+                      // Start Date
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "START DATE",
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF64748B),
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                            const SizedBox(height: 7),
+                            InkWell(
+                              onTap: () async {
+                                final now = DateTime.now();
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: startDate ?? now,
+                                  firstDate: DateTime(now.year - 1),
+                                  lastDate: DateTime(now.year + 10),
+                                );
+                                if (picked != null) {
+                                  setDialogState(() {
+                                    startDate = picked;
+                                    if (endDate != null && endDate!.isBefore(startDate!)) {
+                                      dateError = "End date cannot be earlier than start date.";
+                                    } else {
+                                      dateError = "";
+                                    }
+                                  });
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(14),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      startDate != null ? formatDate(startDate!) : "dd-mm-yyyy",
+                                      style: TextStyle(
+                                        fontSize: 13.5,
+                                        fontWeight: startDate != null ? FontWeight.w600 : FontWeight.w400,
+                                        color: startDate != null ? const Color(0xFF0F172A) : const Color(0xFF94A3B8),
+                                      ),
+                                    ),
+                                    const Icon(
+                                      Icons.calendar_today_outlined,
+                                      size: 16,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+
+                      // End Date
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "END DATE",
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF64748B),
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                            const SizedBox(height: 7),
+                            InkWell(
+                              onTap: () async {
+                                final now = DateTime.now();
+                                final initial = endDate ?? (startDate?.add(const Duration(days: 14)) ?? now.add(const Duration(days: 14)));
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: initial,
+                                  firstDate: DateTime(now.year - 1),
+                                  lastDate: DateTime(now.year + 10),
+                                );
+                                if (picked != null) {
+                                  setDialogState(() {
+                                    endDate = picked;
+                                    if (startDate != null && endDate!.isBefore(startDate!)) {
+                                      dateError = "End date cannot be earlier than start date.";
+                                    } else {
+                                      dateError = "";
+                                    }
+                                  });
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(14),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      endDate != null ? formatDate(endDate!) : "dd-mm-yyyy",
+                                      style: TextStyle(
+                                        fontSize: 13.5,
+                                        fontWeight: endDate != null ? FontWeight.w600 : FontWeight.w400,
+                                        color: endDate != null ? const Color(0xFF0F172A) : const Color(0xFF94A3B8),
+                                      ),
+                                    ),
+                                    const Icon(
+                                      Icons.calendar_today_outlined,
+                                      size: 16,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  if (dateError.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF2F2),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFFECACA)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline_rounded, size: 14, color: Color(0xFFDC2626)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              dateError,
+                              style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFFDC2626)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 28),
+
+                  // Bottom Action Buttons (Pill buttons matching Web Image 3)
+                  Row(
+                    children: [
+                      // Cancel Button
+                      Expanded(
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text(
+                            "CANCEL",
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF64748B),
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+
+                      // Create Campaign Button
+                      Expanded(
+                        flex: 1,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFE8824E),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          onPressed: () async {
+                            final name = nameController.text.trim();
+                            if (name.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Campaign name is required.")),
+                              );
+                              return;
+                            }
+                            if (dateError.isNotEmpty) return;
+
+                            Navigator.pop(ctx);
+
+                            ScaffoldMessenger.of(context).clearSnackBars();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Row(
+                                  children: [
+                                    SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                    ),
+                                    SizedBox(width: 12),
+                                    Text("Creating campaign... ⏳"),
+                                  ],
+                                ),
+                                duration: Duration(milliseconds: 1500),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+
+                            final budget = double.tryParse(budgetController.text.trim());
+                            final durationDays = (startDate != null && endDate != null)
+                                ? endDate!.difference(startDate!).inDays.clamp(1, 365)
+                                : 14;
+
+                            final res = await UnifiedCampaignService.createCampaign(
+                              isEnterprise: true,
+                              name: name,
+                              description: descController.text.trim(),
+                              area: areaController.text.trim(),
+                              budget: budget,
+                              durationDays: durationDays,
+                              startDate: startDate,
+                              endDate: endDate,
+                            );
+
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).clearSnackBars();
+                              if (res["success"] == true) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    backgroundColor: const Color(0xFF16A34A),
+                                    behavior: SnackBarBehavior.floating,
+                                    content: Text("🎉 Campaign '$name' created successfully!"),
+                                  ),
+                                );
+                                _loadCampaignData();
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    backgroundColor: const Color(0xFFDC2626),
+                                    behavior: SnackBarBehavior.floating,
+                                    content: Text("Failed to create campaign: ${res['error'] ?? 'Unknown error'}"),
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.add_rounded, size: 16, color: Colors.white),
+                              SizedBox(width: 4),
+                              Text(
+                                "CREATE CAMPAIGN",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: descController,
-                maxLines: 2,
-                decoration: InputDecoration(
-                  labelText: "Description / Objective",
-                  hintText: "Campaign notes or goal...",
-                  filled: true,
-                  fillColor: const Color(0xFFF8FAFC),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel", style: TextStyle(color: Color(0xFF64748B))),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFD4642C),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             ),
-            onPressed: () async {
-              final name = nameController.text.trim();
-              if (name.isEmpty) return;
-              Navigator.pop(ctx);
-
-              ScaffoldMessenger.of(context).clearSnackBars();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Row(
-                    children: [
-                      SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      ),
-                      SizedBox(width: 12),
-                      Text("Creating marketing campaign... ⏳"),
-                    ],
-                  ),
-                  duration: Duration(milliseconds: 1500),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-
-              final budget = double.tryParse(budgetController.text.trim());
-              final durationDays = int.tryParse(daysController.text.trim()) ?? 14;
-
-              final res = await UnifiedCampaignService.createCampaign(
-                isEnterprise: true,
-                name: name,
-                description: descController.text.trim(),
-                area: areaController.text.trim(),
-                budget: budget,
-                durationDays: durationDays,
-              );
-
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).clearSnackBars();
-                if (res["success"] == true) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      backgroundColor: const Color(0xFF16A34A),
-                      behavior: SnackBarBehavior.floating,
-                      content: Text("🎉 Campaign '$name' created successfully!"),
-                    ),
-                  );
-                  _loadCampaignData();
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      backgroundColor: const Color(0xFFDC2626),
-                      behavior: SnackBarBehavior.floating,
-                      content: Text(res["error"] ?? "Failed to create campaign"),
-                    ),
-                  );
-                }
-              }
-            },
-            child: const Text("Create Campaign", style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

@@ -1,0 +1,48 @@
+{
+  "name": "dbc2-platform",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:3001": "node scripts/dev.mjs --from 3001",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "generate:invite": "node scripts/generate-invitation-code.mjs"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "clsx": "^2.1.1",
+    "firebase": "^10.8.0",
+    "firebase-admin": "^13.8.0",
+    "framer-motion": "^12.29.0",
+    "google-auth-library": "^10.6.2",
+    "html5-qrcode": "^2.3.8",
+    "jsonwebtoken": "^9.0.3",
+    "lucide-react": "^0.563.0",
+    "mongodb": "^7.1.1",
+    "next": "^15.3.1",
+    "nodemailer": "^10.6.0",
+    "qrcode": "^1.5.4",
+    "react": "^19.0.0",
+    "react-color": "^2.19.3",
+    "react-dom": "^19.0.0",
+    "react-dropzone": "^15.0.0",
+    "react-easy-crop": "^5.5.7",
+    "react-webcam": "^7.2.0",
+    "recharts": "^3.8.1",
+    "ssh2": "^1.17.0",
+    "tailwind-merge": "^3.3.0",
+    "tesseract.js": "^5.1.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.4",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "tailwindcss": "^4.1.4",
+    "typescript": "^5.9.3"
+  }
+}

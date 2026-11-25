@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../backend/enterprise/home_backend/employees_page.dart';
 import '../../../backend/enterprise/workspace/workspace_employee_view.dart';
 import '../../../backend/individual/profile/individual_profile_store.dart';
+import '../../../core/utils/image_url_formatter.dart';
 import '../../public_card/public_card_screen.dart';
 
 /// Full Frontend Screen for viewing any particular enterprise employee profile.
@@ -193,55 +194,55 @@ class _WorkspaceEmployeeProfileViewState
                           onRefresh: _loadProfileData,
                           child: SingleChildScrollView(
                             physics: const AlwaysScrollableScrollPhysics(),
-                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 // Hero Card Preview
                                 _buildHeroCardPreview(_profileData!),
 
-                                const SizedBox(height: 18),
+                                const SizedBox(height: 16),
 
                                 // Quick Action Buttons (View Card & Share Card)
                                 _buildActionButtonsRow(_profileData!),
 
-                                const SizedBox(height: 20),
+                                const SizedBox(height: 16),
 
                                 // CRITICAL: Dynamic Status & Onboarding Alert Banner
                                 // Handles: Not signed in, Signed in but filled nothing, or Profile filled
                                 _buildEmployeeStatusBanner(_profileData!),
 
-                                const SizedBox(height: 20),
+                                const SizedBox(height: 16),
 
                                 // Live Metrics Row (Views & Leads)
                                 _buildLiveMetricsRow(_profileData!),
 
-                                const SizedBox(height: 20),
+                                const SizedBox(height: 16),
 
                                 // Basic Information Section
                                 _buildBasicInfoSection(_profileData!),
 
-                                const SizedBox(height: 20),
+                                const SizedBox(height: 16),
 
                                 // Contact Details Section
                                 _buildContactDetailsSection(_profileData!),
 
-                                const SizedBox(height: 20),
+                                const SizedBox(height: 16),
 
                                 // Social Links Section
                                 _buildSocialLinksSection(_profileData!),
 
-                                const SizedBox(height: 20),
+                                const SizedBox(height: 16),
 
                                 // Digital Card Link Section (Slug)
                                 _buildCardSlugSection(_profileData!),
 
-                                const SizedBox(height: 20),
+                                const SizedBox(height: 16),
 
                                 // Enterprise Brand Banner Management
                                 _buildBrandBannerSection(_profileData!),
 
-                                const SizedBox(height: 20),
+                                const SizedBox(height: 16),
                               ],
                             ),
                           ),
@@ -267,7 +268,9 @@ class _WorkspaceEmployeeProfileViewState
           // Circular Back Button matching Image 1
           GestureDetector(
             onTap: () {
-              if (Navigator.of(context).canPop()) {
+              if (Navigator.of(context, rootNavigator: true).canPop()) {
+                Navigator.of(context, rootNavigator: true).pop();
+              } else if (Navigator.of(context).canPop()) {
                 Navigator.of(context).pop();
               } else {
                 try {
@@ -574,14 +577,15 @@ class _WorkspaceEmployeeProfileViewState
 
     return Container(
       width: double.infinity,
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0C0F172A),
-            blurRadius: 16,
+            blurRadius: 18,
             offset: Offset(0, 6),
           ),
         ],
@@ -609,7 +613,7 @@ class _WorkspaceEmployeeProfileViewState
                   ClipRRect(
                     borderRadius:
                         const BorderRadius.vertical(top: Radius.circular(22)),
-                    child: _buildBannerImage(profile.bannerUrl!),
+                    child: _buildBannerImage(profile.bannerUrl!, gradientColors),
                   ),
 
                 // Top right status badge
@@ -781,17 +785,17 @@ class _WorkspaceEmployeeProfileViewState
   }
 
   Widget _buildAvatarContent(WorkspaceEmployeeProfileData profile) {
-    if (profile.avatarUrl != null && profile.avatarUrl!.trim().isNotEmpty) {
-      final p = profile.avatarUrl!.trim();
-      if (p.startsWith('data:image')) {
+    final avatarUrl = ImageUrlFormatter.format(profile.avatarUrl);
+    if (avatarUrl != null && avatarUrl.isNotEmpty) {
+      if (avatarUrl.startsWith('data:image')) {
         try {
-          final commaIdx = p.indexOf(',');
-          final b64 = commaIdx != -1 ? p.substring(commaIdx + 1) : p;
+          final commaIdx = avatarUrl.indexOf(',');
+          final b64 = commaIdx != -1 ? avatarUrl.substring(commaIdx + 1) : avatarUrl;
           return Image.memory(base64Decode(b64), fit: BoxFit.cover);
         } catch (_) {}
-      } else if (p.startsWith('http')) {
+      } else if (avatarUrl.startsWith('http')) {
         return Image.network(
-          p,
+          avatarUrl,
           fit: BoxFit.cover,
           errorBuilder: (ctx, err, stack) => _buildFallbackInitials(profile),
         );
@@ -815,19 +819,47 @@ class _WorkspaceEmployeeProfileViewState
     );
   }
 
-  Widget _buildBannerImage(String url) {
-    if (url.startsWith('data:image')) {
-      try {
-        final commaIdx = url.indexOf(',');
-        final b64 = commaIdx != -1 ? url.substring(commaIdx + 1) : url;
-        return Image.memory(base64Decode(b64),
-            width: double.infinity, height: 110, fit: BoxFit.cover);
-      } catch (_) {}
-    } else if (url.startsWith('http')) {
-      return Image.network(url,
-          width: double.infinity, height: 110, fit: BoxFit.cover);
+  Widget _buildBannerImage(String rawUrl, List<Color> fallbackGradient) {
+    final bannerUrl = ImageUrlFormatter.format(rawUrl);
+    if (bannerUrl != null && bannerUrl.isNotEmpty) {
+      if (bannerUrl.startsWith('data:image')) {
+        try {
+          final commaIdx = bannerUrl.indexOf(',');
+          final b64 = commaIdx != -1 ? bannerUrl.substring(commaIdx + 1) : bannerUrl;
+          return Image.memory(base64Decode(b64),
+              width: double.infinity, height: 110, fit: BoxFit.cover);
+        } catch (_) {}
+      } else if (bannerUrl.startsWith('http')) {
+        return Image.network(
+          bannerUrl,
+          width: double.infinity,
+          height: 110,
+          fit: BoxFit.cover,
+          errorBuilder: (ctx, err, stack) => Container(
+            width: double.infinity,
+            height: 110,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: fallbackGradient,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
+        );
+      }
     }
-    return const SizedBox();
+    return Container(
+      width: double.infinity,
+      height: 110,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: fallbackGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+    );
   }
 
   List<Color> _getTemplateGradient(int templateIndex) {
@@ -842,7 +874,7 @@ class _WorkspaceEmployeeProfileViewState
         return const [Color(0xFF64748B), Color(0xFF94A3B8)];
       case 0:
       default:
-        return const [Color(0xFFD4642C), Color(0xFFD4642C)];
+        return const [Color(0xFFD4642C), Color(0xFFEA580C)];
     }
   }
 
@@ -852,20 +884,20 @@ class _WorkspaceEmployeeProfileViewState
   Widget _buildActionButtonsRow(WorkspaceEmployeeProfileData profile) {
     return Row(
       children: [
-        // View Card Button
+        // View Card Button - Premium brand orange (no blue!)
         Expanded(
           child: Container(
             height: 50,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFFD4642C), Color(0xFF00A3FF)],
+                colors: [Color(0xFFD4642C), Color(0xFFEA580C)],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               ),
               borderRadius: BorderRadius.circular(25),
               boxShadow: const [
                 BoxShadow(
-                  color: Color(0x300052FF),
+                  color: Color(0x35D4642C),
                   blurRadius: 10,
                   offset: Offset(0, 4),
                 ),
@@ -911,14 +943,14 @@ class _WorkspaceEmployeeProfileViewState
             height: 50,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFFD4642C), Color(0xFFE8824E)],
+                colors: [Color(0xFFE8824E), Color(0xFFD4642C)],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               ),
               borderRadius: BorderRadius.circular(25),
               boxShadow: const [
                 BoxShadow(
-                  color: Color(0x300284C7),
+                  color: Color(0x30D4642C),
                   blurRadius: 10,
                   offset: Offset(0, 4),
                 ),

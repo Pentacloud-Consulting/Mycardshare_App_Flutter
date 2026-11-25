@@ -15,6 +15,7 @@ class _MasterAdminApprovalScreenState extends State<MasterAdminApprovalScreen> {
   @override
   void initState() {
     super.initState();
+    ApprovalsQueueStore.instance.refreshQueue();
     CompanyManagementStore.instance.loadGlobalCompanies();
   }
 

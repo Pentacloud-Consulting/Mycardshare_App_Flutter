@@ -31,7 +31,7 @@ class EnterpriseInviteLinkService {
     return codeNum.toString();
   }
 
-  /// Generates a unique, per-enterprise workspace invite URL with 8-digit code.
+  /// Generates a unique, per-enterprise workspace invite URL with 8-digit code and voucher code.
   /// If [inviteeEmail] is provided, generates an individual-specific invite link for that employee.
   String buildInviteUrl({
     required String uid,
@@ -39,15 +39,19 @@ class EnterpriseInviteLinkService {
     String? cardSlug,
     String? inviteeEmail,
     String? custom8DigitCode,
+    String? voucherCode,
   }) {
     final code = custom8DigitCode ?? generate8DigitCode(uid);
+    final voucherParam = (voucherCode != null && voucherCode.trim().isNotEmpty)
+        ? "&voucher=${voucherCode.trim().toUpperCase()}"
+        : "";
 
     if (inviteeEmail != null && inviteeEmail.trim().isNotEmpty) {
       final cleanEmail = Uri.encodeComponent(inviteeEmail.trim().toLowerCase());
-      return "mycardshare.com/join-workspace?enterpriseId=$uid&code=$code&invitee=$cleanEmail";
+      return "mycardshare.com/join-workspace?enterpriseId=$uid&code=$code$voucherParam&invitee=$cleanEmail";
     }
 
-    return "mycardshare.com/join-workspace?enterpriseId=$uid&code=$code";
+    return "mycardshare.com/join-workspace?enterpriseId=$uid&code=$code$voucherParam";
   }
 
   /// Streams the real-time unique 8-digit invite link URL for a specific enterprise UID.
@@ -72,9 +76,10 @@ class EnterpriseInviteLinkService {
           ? (doc.data()!['cardSlug'] as String? ?? profile?.cardSlug)
           : profile?.cardSlug;
 
-      // Check existing 8-digit code and expiration (15 minutes)
+      // Check existing 8-digit code, expiration (15 minutes), and voucher code
       final existingCode = doc.data()?['inviteCode']?.toString().trim();
       final codeCreatedAtTs = doc.data()?['inviteCodeCreatedAt'] as Timestamp?;
+      final voucherCode = doc.data()?['voucherCode']?.toString().trim() ?? '';
       final now = DateTime.now();
 
       String active8DigitCode;
@@ -97,6 +102,7 @@ class EnterpriseInviteLinkService {
         cardSlug: cardSlug,
         inviteeEmail: inviteeEmail,
         custom8DigitCode: active8DigitCode,
+        voucherCode: voucherCode,
       );
 
       // Persist fresh 8-digit invite URL & timestamp to Firestore asynchronously if rotated
@@ -107,6 +113,7 @@ class EnterpriseInviteLinkService {
           'inviteCodeCreatedAt': FieldValue.serverTimestamp(),
           'companyName': companyName,
           'cardSlug': cardSlug ?? '',
+          if (voucherCode.isNotEmpty) 'voucherCode': voucherCode,
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
       }
@@ -275,12 +282,19 @@ class EnterpriseInviteLinkWidget extends StatelessWidget {
       builder: (context, snapshot) {
         final inviteLink = snapshot.data ?? "mycardshare.com/join-workspace";
         
-        // Extract Invite Code from link or build real dynamic code
+        // Extract Invite Code and Voucher Code from link or build real dynamic code
         String inviteCode = "";
+        String voucherCode = "";
         if (inviteLink.contains('code=')) {
           final parts = inviteLink.split('code=');
           if (parts.length > 1) {
             inviteCode = parts[1].split('&').first;
+          }
+        }
+        if (inviteLink.contains('voucher=')) {
+          final vParts = inviteLink.split('voucher=');
+          if (vParts.length > 1) {
+            voucherCode = vParts[1].split('&').first;
           }
         }
 
@@ -400,6 +414,90 @@ class EnterpriseInviteLinkWidget extends StatelessWidget {
                   ],
                 ),
               ),
+
+              if (voucherCode.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Master Voucher Code",
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.only(left: 12, right: 4, top: 4, bottom: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.card_membership_rounded,
+                        size: 18,
+                        color: Color(0xFF10B981),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          voucherCode,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      GestureDetector(
+                        onTap: () {
+                          Clipboard.setData(ClipboardData(text: voucherCode));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Voucher code $voucherCode copied!"),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                          if (onCopied != null) onCopied!();
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981),
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF10B981).withValues(alpha: 0.25),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Text(
+                            "Copy Voucher",
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
 
               // Done - Code only as requested!
             ],

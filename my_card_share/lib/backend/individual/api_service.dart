@@ -12,7 +12,10 @@ class IndividualApiService {
   static final IndividualApiService instance = IndividualApiService._internal();
 
   /// Production base URL — matches the spec in Individual_Auth_Integration.md
-  static const String baseUrl = 'https://mycardshare.com';
+  static String get baseUrl {
+    if (kDebugMode && kIsWeb) return 'http://localhost:3000';
+    return 'https://mycardshare.com';
+  }
 
   // ─── Token Helper ─────────────────────────────────────────────────────────
 

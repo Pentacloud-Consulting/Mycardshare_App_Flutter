@@ -1,5 +1,24 @@
 # Ignore reference copies and temporary working directories
 DBC_Revamp - Copy/
 DBC_Revamp*/
-
 *.zip
+
+# Deploy test & debug logs
+deploy_test/
+**/deploy_test/
+*.log
+.cursor/
+**/.cursor/
+
+# Secrets, Service Accounts, and Private Keys
+*firebase*.json*
+*adminsdk*.json*
+*.pem
+.env*
+*.key
+
+# Diagnostic and deployment scripts with credentials
+*.cjs
+MYcardshare_theme_orange/*.cjs
+MYcardshare_theme_orange/test*.js
+test*.js

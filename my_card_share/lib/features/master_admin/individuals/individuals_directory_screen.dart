@@ -89,31 +89,25 @@ class _MasterAdminIndividualsScreenState
             final storeUsers = snapshot.data ?? IndividualsDirectoryStore.instance.users;
 
             // Merge storeUsers (Firestore real-time & merged deletions) with backendData
-            // ⚡ KEY BY NORMALIZED EMAIL OR ID TO GUARANTEE ZERO DUPLICATES!
+            // ⚡ KEY BY UNIQUE USER ID TO ENSURE ZERO MISSING ACCOUNTS!
             final Map<String, MasterIndividualModel> mergedUsersMap = {};
             for (final u in storeUsers) {
-              final cleanEmail = u.email.trim().toLowerCase();
-              final key = cleanEmail.isNotEmpty ? cleanEmail : u.id;
-              if (key.isEmpty) continue;
+              if (u.id.isEmpty) continue;
               if (!_locallyDeletedIds.contains(u.id) &&
-                  (cleanEmail.isEmpty || !_locallyDeletedIds.contains(cleanEmail)) &&
                   u.status.toUpperCase() != 'DELETED') {
-                mergedUsersMap[key] = u;
+                mergedUsersMap[u.id] = u;
               }
             }
             if (_backendData != null && _backendData!.individuals.isNotEmpty) {
               for (final u in _backendData!.individuals) {
-                final cleanEmail = u.email.trim().toLowerCase();
-                final key = cleanEmail.isNotEmpty ? cleanEmail : u.userId;
-                if (key.isEmpty) continue;
-                if (_locallyDeletedIds.contains(u.userId) ||
-                    (cleanEmail.isNotEmpty && _locallyDeletedIds.contains(cleanEmail))) {
+                if (u.userId.isEmpty) continue;
+                if (_locallyDeletedIds.contains(u.userId)) {
                   continue;
                 }
                 final model = MasterIndividualModel.fromIndividualUserModel(u);
-                if (!mergedUsersMap.containsKey(key)) {
-                  mergedUsersMap[key] = model;
-                } else if (mergedUsersMap[key]!.isDeactivated) {
+                if (!mergedUsersMap.containsKey(u.userId)) {
+                  mergedUsersMap[u.userId] = model;
+                } else if (mergedUsersMap[u.userId]!.isDeactivated) {
                   continue; // Preserve deactivated & deletion pending state
                 }
               }
@@ -123,7 +117,6 @@ class _MasterAdminIndividualsScreenState
             List<MasterIndividualModel> displayUsers = mergedUsersMap.values
                 .where((u) =>
                     !_locallyDeletedIds.contains(u.id) &&
-                    (u.email.isEmpty || !_locallyDeletedIds.contains(u.email.toLowerCase())) &&
                     u.status.toUpperCase() != 'DELETED')
                 .toList();
 

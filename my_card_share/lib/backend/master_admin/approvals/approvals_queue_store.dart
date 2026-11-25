@@ -111,18 +111,24 @@ class ApprovalsQueueStore extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   Future<void> refreshQueue() async {
+    _locallyResolvedIds.clear();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('master_admin_resolved_ids');
+      await prefs.remove('master_admin_resolved_titles');
+    } catch (_) {}
     await CompanyManagementStore.instance.loadGlobalCompanies();
     notifyListeners();
   }
 
   /// Combined real-time stream of pending companies + pending join requests
   Stream<List<MasterApprovalItem>> streamPendingQueue() {
-    // Listen to enterprises collection for pending / approvalStatus == pending / isSuspended
-    return _firestore.collection('enterprises').snapshots().asyncMap((companySnap) async {
+    // Listen to companies collection as authoritative source, merged with enterprises
+    return _firestore.collection('companies').snapshots().asyncMap((companySnap) async {
       await _loadPersistedResolved();
       final List<MasterApprovalItem> items = [];
 
-      // 1. Pending Enterprises
+      // 1. Pending Companies
       for (final doc in companySnap.docs) {
         if (_locallyResolvedIds.contains(doc.id)) continue;
 
@@ -132,9 +138,6 @@ class ApprovalsQueueStore extends ChangeNotifier {
         final isSuspended = data['isSuspended'] == true;
         final title = (data['companyName'] ?? data['name'] ?? '').toString().trim();
 
-        // Check if explicitly pending
-        final bool isPending = status == 'pending' || approvalStatus == 'pending';
-
         // If explicitly approved or rejected, it is NOT pending!
         if (approvalStatus == 'approved' ||
             status == 'active' ||
@@ -143,45 +146,42 @@ class ApprovalsQueueStore extends ChangeNotifier {
           continue;
         }
 
-        // If suspended and not pending approval, skip
-        if (!isPending && (status == 'suspended' || isSuspended)) {
+        // If suspended, skip
+        if (status == 'suspended' || isSuspended) {
           continue;
         }
 
-        if (isPending) {
-          DateTime created = DateTime.now();
-          if (data['createdAt'] is Timestamp) {
-            created = (data['createdAt'] as Timestamp).toDate();
-          }
-
-          items.add(
-            MasterApprovalItem(
-              id: doc.id,
-              title: title.isNotEmpty ? title : 'Pending Enterprise',
-              email: data['email'] ?? '',
-              type: 'company',
-              domain: data['domain'] ?? data['customDomain'] ?? '${doc.id.toLowerCase()}.mycardshare.com',
-              logoUrl: data['logoUrl'],
-              status: approvalStatus.isNotEmpty ? approvalStatus : (status.isNotEmpty ? status : 'pending'),
-              createdAt: created,
-            ),
-          );
+        DateTime created = DateTime.now();
+        if (data['createdAt'] is Timestamp) {
+          created = (data['createdAt'] as Timestamp).toDate();
         }
+
+        items.add(
+          MasterApprovalItem(
+            id: doc.id,
+            title: title.isNotEmpty ? title : 'Pending Enterprise',
+            email: data['email'] ?? data['adminEmail'] ?? '',
+            type: 'company',
+            domain: data['domain'] ?? data['customDomain'] ?? '${doc.id.toLowerCase()}.mycardshare.com',
+            logoUrl: data['logoUrl'] ?? data['companyLogo'],
+            status: approvalStatus.isNotEmpty ? approvalStatus : (status.isNotEmpty ? status : 'pending'),
+            createdAt: created,
+          ),
+        );
       }
 
-      // 1b. Check companies collection across all documents for pending status
+      // 1b. Check enterprises collection across all documents for pending status
       try {
-        final compPendingSnap = await _firestore.collection('companies').get();
-        for (final doc in compPendingSnap.docs) {
+        final entPendingSnap = await _firestore.collection('enterprises').get();
+        for (final doc in entPendingSnap.docs) {
           if (_locallyResolvedIds.contains(doc.id)) continue;
+          if (items.any((it) => it.id == doc.id)) continue;
 
           final data = doc.data();
           final status = (data['status'] as String? ?? '').toLowerCase().trim();
           final approvalStatus = (data['approvalStatus'] as String? ?? '').toLowerCase().trim();
           final isSuspended = data['isSuspended'] == true;
           final title = (data['companyName'] ?? data['name'] ?? '').toString().trim();
-
-          final bool isPending = status == 'pending' || approvalStatus == 'pending';
 
           if (approvalStatus == 'approved' ||
               status == 'active' ||
@@ -190,34 +190,29 @@ class ApprovalsQueueStore extends ChangeNotifier {
             continue;
           }
 
-          if (!isPending && (status == 'suspended' || isSuspended)) {
+          if (status == 'suspended' || isSuspended) {
             continue;
           }
 
-          if (isPending) {
-            // Deduplicate by ID only — not by title
-            if (!items.any((it) => it.id == doc.id)) {
-              DateTime created = DateTime.now();
-              if (data['createdAt'] is Timestamp) {
-                created = (data['createdAt'] as Timestamp).toDate();
-              }
-              items.add(
-                MasterApprovalItem(
-                  id: doc.id,
-                  title: title.isNotEmpty ? title : 'Pending Enterprise',
-                  email: data['email'] ?? data['adminEmail'] ?? '',
-                  type: 'company',
-                  domain: data['domain'] ?? data['customDomain'] ?? '${doc.id.toLowerCase()}.mycardshare.com',
-                  logoUrl: data['logoUrl'],
-                  status: 'pending',
-                  createdAt: created,
-                ),
-              );
-            }
+          DateTime created = DateTime.now();
+          if (data['createdAt'] is Timestamp) {
+            created = (data['createdAt'] as Timestamp).toDate();
           }
+          items.add(
+            MasterApprovalItem(
+              id: doc.id,
+              title: title.isNotEmpty ? title : 'Pending Enterprise',
+              email: data['email'] ?? data['adminEmail'] ?? '',
+              type: 'company',
+              domain: data['domain'] ?? data['customDomain'] ?? '${doc.id.toLowerCase()}.mycardshare.com',
+              logoUrl: data['logoUrl'] ?? data['companyLogo'],
+              status: approvalStatus.isNotEmpty ? approvalStatus : (status.isNotEmpty ? status : 'pending'),
+              createdAt: created,
+            ),
+          );
         }
       } catch (e) {
-        debugPrint('[ApprovalsQueueStore] companies collection scan note: $e');
+        debugPrint('[ApprovalsQueueStore] enterprises collection scan note: $e');
       }
 
       // 1c. Cross-reference CompanyManagementStore.instance.companies (Global Sync)

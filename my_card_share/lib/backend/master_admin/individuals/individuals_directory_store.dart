@@ -2,8 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'models/master_individual_model.dart';
 import '../master_individuals_service.dart';
-import '../../individual/multiple_store/individual_multi_store.dart';
-import '../../individual/profile/individual_profile_store.dart';
 
 /// State store managing real individual card users directory for Master Admin
 /// Seamlessly synchronizes across Firestore and Next.js /api/sync/master-admin-individuals
@@ -72,37 +70,23 @@ class IndividualsDirectoryStore extends ChangeNotifier {
       for (final doc in snap.docs) {
         final data = doc.data();
 
-        // 1. Resolve role
+        // 1. Exclude members belonging to corporate enterprises
+        final companyId = (data['companyId'] ?? '').toString().trim();
+        if (companyId.isNotEmpty) continue;
+
+        // 2. Exclude system admins
         final role = (data['role'] ?? data['userRole'] ?? data['accountType'] ?? '').toString().toLowerCase().trim();
-        final isMasterAdmin = data['isMasterAdmin'] == true ||
-            role == 'master-admin' ||
-            role == 'admin' ||
-            role == 'superadmin' ||
-            role.contains('admin');
-
-        // Only explicitly registered enterprise/company accounts are enterprises!
-        // NOTE: An individual user entering their workplace 'companyName' on their card does NOT make them an enterprise!
-        final isEnterprise = role == 'enterprise' ||
-            role == 'company' ||
-            role == 'organization' ||
-            data['isEnterprise'] == true ||
-            (data['approvalStatus'] != null && role != 'individual');
-
-        // Employees are accounts specifically attached to an enterprise
-        final isEmployee = role == 'employee' ||
-            (data['enterpriseUid'] != null && data['enterpriseUid'].toString().trim().isNotEmpty && role != 'individual');
-
-        if (isMasterAdmin || isEnterprise || isEmployee) {
-          continue; // 🚫 Strict block: Never show Enterprise, Employee, or Master Admin here
+        if (['master_admin', 'platform_admin', 'super_admin'].contains(role)) {
+          continue;
         }
 
-        // 2. Exclude permanently deleted accounts (keep deactivated/pending deletion)
+        // 3. Exclude permanently deleted accounts (keep deactivated/pending deletion)
         final status = (data['status'] ?? '').toString().toUpperCase();
         if (status == 'DELETED' || data['isDeleted'] == true || data['deleted'] == true) {
           continue;
         }
 
-        // 3. Resolve email or identifier
+        // 4. Resolve email or identifier
         String email = (data['email'] ??
                 data['userEmail'] ??
                 data['emailAddress'] ??
@@ -126,21 +110,8 @@ class IndividualsDirectoryStore extends ChangeNotifier {
           if (email.isEmpty) 'email': resolvedEmail,
         });
 
-        // 4. Deduplicate by email or doc.id
-        final key = email.isNotEmpty ? email : doc.id;
-        if (!byKey.containsKey(key)) {
-          byKey[key] = model;
-        } else {
-          final existing = byKey[key]!;
-          final isExistingSanitized = existing.id == key.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-          final isNewDocUid = doc.id != key.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
-
-          if (isExistingSanitized && isNewDocUid) {
-            byKey[key] = model;
-          } else if (model.avatarUrl != null && existing.avatarUrl == null) {
-            byKey[key] = model;
-          }
-        }
+        // Key by doc.id so that every individual user is captured without collision
+        byKey[doc.id] = model;
       }
 
 

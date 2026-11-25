@@ -5,7 +5,10 @@ import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 
 class EnterpriseInviteLinkService {
-  static const String baseUrl = "https://mycardshare.com";
+  static String get baseUrl {
+    if (kDebugMode && kIsWeb) return "http://localhost:3000";
+    return "https://mycardshare.com";
+  }
 
   static Future<Map<String, String>> _getHeaders() async {
     final user = FirebaseAuth.instance.currentUser;

@@ -15,47 +15,89 @@ class CampaignGridCards extends StatelessWidget {
     this.onCampaignTap,
   });
 
-  static const List<Map<String, dynamic>> _campaigns = [
-    {
-      "id": "1",
-      "title": "Web Summit 2026",
-      "tag": "CAMPAIGN",
-      "color": Color(0xFFD4642C),
-      "scans": 432,
-      "conv": "12%",
-      "endsCaption": "Ends in 5 days",
-      "status": "Active",
-    },
-    {
-      "id": "2",
-      "title": "Q3 Sales Offsite",
-      "tag": "CAMPAIGN",
-      "color": Color(0xFF7C3AED),
-      "scans": 125,
-      "conv": "24%",
-      "endsCaption": "Ends in 12 days",
-      "status": "Active",
-    },
-    {
-      "id": "3",
-      "title": "TechCrunch Disrupt",
-      "tag": "CAMPAIGN",
-      "color": Color(0xFFEC4899),
-      "scans": 890,
-      "conv": "8%",
-      "endsCaption": "Ends in 2 days",
-      "status": "Active",
-    },
-  ];
-
   @override
   Widget build(BuildContext context) {
-    final list = (campaigns != null && campaigns!.isNotEmpty) ? campaigns! : _campaigns;
+    final list = campaigns ?? [];
     final filtered = list.where((c) {
-      if (selectedFilter == "Active" && c["status"] != "Active") return false;
-      if (selectedFilter == "Ended" && c["status"] != "Ended") return false;
+      final status = (c["status"] ?? "Active").toString();
+      if (selectedFilter == "Active" && status.toLowerCase() != "active") return false;
+      if (selectedFilter == "Ended" && status.toLowerCase() != "ended" && status.toLowerCase() != "inactive") return false;
       return true;
     }).toList();
+
+    if (filtered.isEmpty) {
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(top: 8),
+        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 58,
+              height: 58,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF7ED),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(
+                Icons.mark_email_unread_outlined,
+                color: Color(0xFFD4642C),
+                size: 30,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "NO CAMPAIGNS CREATED",
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF94A3B8),
+                letterSpacing: 0.8,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              "Launch a dynamic QR marketing campaign for your workspace to track scans, leads, and ROI.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: Color(0xFF64748B),
+                height: 1.35,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: onNewCampaignTap,
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: const Text(
+                "Create Campaign",
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFD4642C),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                elevation: 0,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return GridView.builder(
       shrinkWrap: true,

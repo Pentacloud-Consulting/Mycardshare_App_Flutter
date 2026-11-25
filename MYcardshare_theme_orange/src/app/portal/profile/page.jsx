@@ -124,7 +124,7 @@ function isDataUrl(value) {
  * into canonical full URLs (e.g. "@zuhaib" -> "https://instagram.com/zuhaib",
  * "https://zuhaib-port" -> "https://instagram.com/zuhaib-port", "facebook.com/user" -> "https://facebook.com/user")
  */
-export function autoCorrectSocialInput(name, rawValue) {
+function autoCorrectSocialInput(name, rawValue) {
   if (!rawValue) return "";
   let val = String(rawValue).trim();
   if (!val) return "";

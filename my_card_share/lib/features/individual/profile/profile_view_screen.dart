@@ -30,14 +30,13 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
     final fbUser = FirebaseAuth.instance.currentUser;
     if (fbUser != null && fbUser.uid.isNotEmpty) {
       PublishUnpublishService.instance.loadPublishStatus(fbUser.uid);
-      final active = IndividualProfileStore.instance.activeProfile;
-      if (active == null || (active.uid != fbUser.uid && active.email.toLowerCase() != (fbUser.email ?? '').toLowerCase())) {
-        IndividualProfileStore.instance.loadProfile(
-          fbUser.uid,
-          fbUser.email ?? '',
-          fbUser.displayName ?? '',
-        );
-      }
+      // Always reload fresh from Firestore on screen entry so template,
+      // avatar, and banner reflect the latest saved values after editing.
+      IndividualProfileStore.instance.loadProfile(
+        fbUser.uid,
+        fbUser.email ?? '',
+        fbUser.displayName ?? '',
+      );
     }
   }
 
@@ -290,6 +289,15 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                         await Navigator.of(context, rootNavigator: true).push(
                           MaterialPageRoute(builder: (_) => const ProfileEditorScreen()),
                         );
+                        // Force fresh reload from Firestore after editor closes
+                        final fbUser = FirebaseAuth.instance.currentUser;
+                        if (fbUser != null && fbUser.uid.isNotEmpty) {
+                          IndividualProfileStore.instance.loadProfile(
+                            fbUser.uid,
+                            fbUser.email ?? '',
+                            fbUser.displayName ?? '',
+                          );
+                        }
                         setState(() {});
                       },
                     ),
@@ -408,12 +416,22 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                   await Navigator.of(context, rootNavigator: true).push(
                     MaterialPageRoute(builder: (_) => const ProfileEditorScreen()),
                   );
+                  final fbUser = FirebaseAuth.instance.currentUser;
+                  if (fbUser != null && fbUser.uid.isNotEmpty) {
+                    IndividualProfileStore.instance.loadProfile(
+                      fbUser.uid, fbUser.email ?? '', fbUser.displayName ?? '');
+                  }
                   setState(() {});
                 },
                 onAddMoreTap: () async {
                   await Navigator.of(context, rootNavigator: true).push(
                     MaterialPageRoute(builder: (_) => const ProfileEditorScreen()),
                   );
+                  final fbUser = FirebaseAuth.instance.currentUser;
+                  if (fbUser != null && fbUser.uid.isNotEmpty) {
+                    IndividualProfileStore.instance.loadProfile(
+                      fbUser.uid, fbUser.email ?? '', fbUser.displayName ?? '');
+                  }
                   setState(() {});
                 },
               ),

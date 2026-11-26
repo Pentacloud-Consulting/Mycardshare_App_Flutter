@@ -3,6 +3,7 @@ import { connectDB } from "../config/db";
 import { ObjectId } from "mongodb";
 import { AppError } from "../utils/api-adapter";
 import storageService from "./storage.service";
+import nodemailer from "nodemailer";
 
 const companyService = {
   /**
@@ -770,7 +771,7 @@ const companyService = {
   },
 
   /**
-   * Record an invitation for a company and (in production) dispatch an email.
+   * Record an invitation for a company and dispatch an invite email via Resend SMTP.
    * Persists to Firestore so admins can see pending invites even without
    * an email provider configured.
    */
@@ -778,6 +779,16 @@ const companyService = {
     const normalizedEmail = String(email || "").trim().toLowerCase();
     if (!normalizedEmail) throw new Error("EMAIL_REQUIRED");
 
+    // 1. Fetch company details for the email template
+    const company = await this.getCompany(companyId);
+    const companyName = company?.companyName || "Your Organization";
+    const voucherCode = company?.voucherCode || "";
+    const inviteCode = company?.inviteCode || "";
+    const brandColor = company?.brandColor || "#D4642C";
+    const joinUrl = `https://mycardshare.com/join-workspace?enterpriseId=${companyId}&code=${inviteCode || voucherCode}`;
+    const signupUrl = `https://mycardshare.com/signup?voucher=${encodeURIComponent(voucherCode)}&enterpriseId=${companyId}`;
+
+    // 2. Persist invitation record to Firestore
     await firestoreDb
       .collection("companies")
       .doc(companyId)
@@ -794,7 +805,7 @@ const companyService = {
         { merge: true },
       );
 
-    // Also update invitedEmails array on both enterprises and companies
+    // 3. Update invitedEmails array on both enterprises and companies collections
     try {
       await firestoreDb.collection("enterprises").doc(companyId).set({
         invitedEmails: admin.firestore.FieldValue.arrayUnion(normalizedEmail),
@@ -809,10 +820,115 @@ const companyService = {
       }, { merge: true });
     } catch (_) {}
 
-    // Hook for email transport (SendGrid/SES/Resend) — no-op if unconfigured.
-    console.log(
-      `[company.service] Invitation recorded for ${normalizedEmail} @ ${companyId}`,
-    );
+    // 4. Send email via Resend SMTP (or nodemailer-compatible SMTP)
+    const resendApiKey = process.env.RESEND_API_KEY;
+    const fromEmail = process.env.RESEND_FROM_EMAIL || "invite@mycardshare.com";
+
+    if (resendApiKey) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: "smtp.resend.com",
+          port: 465,
+          secure: true,
+          auth: {
+            user: "resend",
+            pass: resendApiKey,
+          },
+        });
+
+        const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="margin:0;padding:0;background:#f4f1ee;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f1ee;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+          <!-- Header -->
+          <tr>
+            <td style="background:${brandColor};padding:36px 40px;text-align:center;">
+              <div style="font-size:28px;font-weight:900;color:#ffffff;letter-spacing:-0.5px;">MyCardShare</div>
+              <div style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:4px;">Digital Business Card Platform</div>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding:40px 40px 32px;">
+              <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#1a1a1a;">You're invited! 🎉</h1>
+              <p style="margin:0 0 24px;font-size:15px;color:#555;line-height:1.6;">
+                <strong>${companyName}</strong> has invited you to join their workspace on MyCardShare — the professional digital business card platform.
+              </p>
+
+              <!-- Invite Code Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf6f2;border:1px solid #ecddd0;border-radius:12px;margin-bottom:24px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.15em;color:${brandColor};margin-bottom:8px;">Your Workspace Invite Code</div>
+                    <div style="font-size:32px;font-weight:900;letter-spacing:0.2em;color:#1a1a1a;font-family:monospace;">${inviteCode || voucherCode}</div>
+                    <div style="font-size:12px;color:#888;margin-top:8px;">Enter this code in the MyCardShare app or web portal to join ${companyName}.</div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                <tr>
+                  <td align="center">
+                    <a href="${signupUrl}" style="display:inline-block;padding:14px 36px;background:${brandColor};color:#ffffff;font-size:15px;font-weight:800;text-decoration:none;border-radius:50px;letter-spacing:0.03em;">
+                      Join ${companyName} →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 8px;font-size:13px;color:#888;text-align:center;">Or paste this link in your browser:</p>
+              <p style="margin:0 0 24px;font-size:12px;color:${brandColor};text-align:center;word-break:break-all;">
+                <a href="${joinUrl}" style="color:${brandColor};">${joinUrl}</a>
+              </p>
+
+              <hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+              <p style="margin:0;font-size:12px;color:#aaa;line-height:1.6;text-align:center;">
+                If you weren't expecting this invite, you can safely ignore this email.<br/>
+                MyCardShare · mycardshare.com
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+        await transporter.sendMail({
+          from: `"${companyName} via MyCardShare" <${fromEmail}>`,
+          to: normalizedEmail,
+          subject: `You're invited to join ${companyName} on MyCardShare`,
+          html: htmlBody,
+          text: `You're invited to join ${companyName} on MyCardShare!\n\nYour invite code: ${inviteCode || voucherCode}\n\nSign up here: ${signupUrl}\n\nOr join directly: ${joinUrl}`,
+        });
+
+        console.log(`[company.service] Invite email sent to ${normalizedEmail} via Resend SMTP`);
+
+        // Mark email as sent in Firestore
+        await firestoreDb
+          .collection("companies")
+          .doc(companyId)
+          .collection("invitations")
+          .doc(normalizedEmail)
+          .set({ emailSent: true, emailSentAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+
+      } catch (emailErr) {
+        console.error(`[company.service] Failed to send invite email to ${normalizedEmail}:`, emailErr?.message);
+        // Don't throw — invitation is already recorded in Firestore
+      }
+    } else {
+      console.warn(`[company.service] RESEND_API_KEY not set — invitation recorded but email NOT sent for ${normalizedEmail}`);
+    }
 
     return true;
   },

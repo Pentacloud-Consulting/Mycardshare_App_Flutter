@@ -87,7 +87,7 @@ export default function AnalyticsDashboard() {
   const stats = TAB_STATS[activeTab];
 
   return (
-    <section className="relative w-full -mt-8 sm:-mt-12 lg:-mt-16 z-20">
+    <section className="relative w-full z-10">
       
       {/* Dynamic Keyframes for smooth wave motion on bars */}
       <style>{`

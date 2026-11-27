@@ -351,7 +351,9 @@ const CSS = `
   background: var(--cream);
   color: var(--ink);
   font-family: var(--font-body);
-  padding: 16px 16px 40px;
+  padding: 24px 16px 56px;
+  position: relative;
+  z-index: 10;
   overflow-x: hidden;
 }
 .fb-root *, .fb-root *::before, .fb-root *::after { box-sizing: border-box; }
@@ -527,7 +529,7 @@ const CSS = `
 .fb-btn:hover { background: var(--orange-deep); }
 .fb-mark { font-family: var(--font-display); font-weight: 700; font-size: 22px; color: var(--orange); }
 
-.fb-controls { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 14px; }
+.fb-controls { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 24px; position: relative; z-index: 20; }
 .fb-cb { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--cream-edge); background: var(--white); color: var(--ink); display: grid; place-items: center; cursor: pointer; box-shadow: 0 4px 12px rgba(110,60,30,.1); }
 .fb-cb:hover { border-color: var(--orange); color: var(--orange); }
 .fb-cb:focus-visible, .fb-btn:focus-visible { outline: 2px solid var(--orange); outline-offset: 3px; }

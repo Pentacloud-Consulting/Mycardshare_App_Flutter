@@ -7,14 +7,11 @@ import {
   Wifi,
   QrCode,
   ShieldCheck,
-  Sparkles,
   Lock,
   Clock,
   Phone,
   Mail,
-  CheckCircle2,
-  Share2,
-  ExternalLink
+  CheckCircle2
 } from 'lucide-react';
 
 // ================= WALLET ICONS =================
@@ -190,19 +187,19 @@ const OrangeWaveVisual: React.FC<{ variant?: number }> = ({ variant = 0 }) => {
 const GoogleWalletCardPass: React.FC = () => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24, scale: 0.95 }}
+      initial={{ opacity: 0, y: 18, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -20, scale: 0.95 }}
+      exit={{ opacity: 0, y: -18, scale: 0.96 }}
       transition={{ type: "spring", stiffness: 220, damping: 22 }}
-      className="relative w-full max-w-[480px] sm:max-w-[510px] mx-auto rounded-3xl bg-gradient-to-b from-[#1F1916]/95 via-[#181210]/98 to-[#100B09] border border-white/15 p-5 sm:p-6 shadow-[0_25px_60px_rgba(0,0,0,0.7),0_0_40px_rgba(212,100,44,0.18)] backdrop-blur-xl overflow-hidden group"
+      className="relative w-full max-w-[480px] sm:max-w-[500px] h-[255px] sm:h-[265px] mx-auto rounded-3xl bg-gradient-to-b from-[#1F1916]/95 via-[#181210]/98 to-[#100B09] border border-white/15 p-4 sm:p-5 shadow-[0_25px_60px_rgba(0,0,0,0.7),0_0_40px_rgba(212,100,44,0.18)] backdrop-blur-xl overflow-hidden flex flex-col justify-between group"
     >
       {/* Light sheen animation */}
       <div className="absolute -inset-full bg-gradient-to-r from-transparent via-white/5 to-transparent rotate-45 pointer-events-none group-hover:translate-x-full transition-transform duration-1000" />
 
       {/* Card Header (Google Wallet styling) */}
-      <div className="flex items-center justify-between pb-4 border-b border-white/10">
+      <div className="flex items-center justify-between pb-3 border-b border-white/10">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center p-1.5 shadow-xs">
+          <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center p-1 shadow-xs">
             <GoogleWalletIcon className="w-full h-full" />
           </div>
           <div>
@@ -210,43 +207,42 @@ const GoogleWalletCardPass: React.FC = () => {
               <span>Google Wallet</span>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34D399]" />
             </div>
-            <div className="text-[10px] text-neutral-400 uppercase tracking-widest font-semibold">Digital Business Pass</div>
+            <div className="text-[9px] text-neutral-400 uppercase tracking-widest font-semibold">Digital Business Pass</div>
           </div>
         </div>
 
         {/* Smart Tap / NFC Badge */}
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-semibold text-neutral-300">
-          <Wifi className="w-3.5 h-3.5 text-[#D4642C] rotate-90" />
+        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-semibold text-neutral-300">
+          <Wifi className="w-3 h-3 text-[#D4642C] rotate-90" />
           <span>Smart Tap</span>
         </div>
       </div>
 
       {/* Main Body */}
-      <div className="mt-4 flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-3">
         {/* Left: User Details */}
         <div className="flex-1 min-w-0">
-          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#D4642C]/15 border border-[#D4642C]/30 text-[10px] font-bold text-[#FFA370] uppercase tracking-wider mb-2">
-            <Sparkles className="w-2.5 h-2.5 text-[#D4642C]" />
+          <div className="inline-flex items-center px-2 py-0.5 rounded-md bg-[#D4642C]/15 border border-[#D4642C]/30 text-[9px] font-bold text-[#FFA370] uppercase tracking-wider mb-1">
             <span>MYCARDSHARE PASS</span>
           </div>
 
-          <h4 className="text-xl sm:text-2xl font-black text-white tracking-tight truncate">
+          <h4 className="text-lg sm:text-xl font-black text-white tracking-tight truncate">
             Alex Rivers
           </h4>
-          <p className="text-xs sm:text-sm font-semibold text-[#FFA370] tracking-tight truncate mt-0.5">
+          <p className="text-xs font-semibold text-[#FFA370] tracking-tight truncate">
             Founder &amp; Chief Executive Officer
           </p>
-          <p className="text-[11px] text-neutral-400 truncate mt-0.5 font-medium">
+          <p className="text-[10px] text-neutral-400 truncate font-medium">
             Pentacloud Technologies • Dubai
           </p>
 
           {/* Quick Contact Chips */}
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-black/40 border border-white/5 text-[10px] text-neutral-300">
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-black/40 border border-white/5 text-[10px] text-neutral-300">
               <Phone className="w-2.5 h-2.5 text-[#D4642C]" />
               <span>+1 (555) 0192</span>
             </span>
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-black/40 border border-white/5 text-[10px] text-neutral-300">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-black/40 border border-white/5 text-[10px] text-neutral-300">
               <Mail className="w-2.5 h-2.5 text-[#D4642C]" />
               <span>alex@rivers.co</span>
             </span>
@@ -255,19 +251,19 @@ const GoogleWalletCardPass: React.FC = () => {
 
         {/* Right: Dynamic QR Code */}
         <div className="flex flex-col items-center shrink-0">
-          <CardQRCode className="w-20 h-20 sm:w-22 sm:h-22" />
-          <span className="text-[9px] font-mono text-neutral-400 mt-1 uppercase tracking-wider">
+          <CardQRCode className="w-18 h-18 sm:w-20 sm:h-20" />
+          <span className="text-[8px] font-mono text-neutral-400 mt-1 uppercase tracking-wider">
             Scan to Sync
           </span>
         </div>
       </div>
 
       {/* Card Footer Bar */}
-      <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-[10px] text-neutral-400">
+      <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] text-neutral-400">
         <div className="flex items-center gap-1.5">
-          <span className="font-mono text-neutral-300 font-semibold">PASS #MCS-88294</span>
+          <span className="font-mono text-neutral-300 font-semibold text-[9px]">PASS #MCS-88294</span>
           <span>•</span>
-          <span className="text-emerald-400 font-medium flex items-center gap-1">
+          <span className="text-emerald-400 font-medium flex items-center gap-1 text-[9px]">
             <CheckCircle2 className="w-3 h-3 text-emerald-400" />
             Verified Active
           </span>
@@ -275,10 +271,10 @@ const GoogleWalletCardPass: React.FC = () => {
 
         {/* Google 4-Color Strip accent */}
         <div className="flex items-center gap-0.5">
-          <span className="w-2.5 h-1 rounded-full bg-[#4285F4]" />
-          <span className="w-2.5 h-1 rounded-full bg-[#EA4335]" />
-          <span className="w-2.5 h-1 rounded-full bg-[#FBBC05]" />
-          <span className="w-2.5 h-1 rounded-full bg-[#34A853]" />
+          <span className="w-2 h-1 rounded-full bg-[#4285F4]" />
+          <span className="w-2 h-1 rounded-full bg-[#EA4335]" />
+          <span className="w-2 h-1 rounded-full bg-[#FBBC05]" />
+          <span className="w-2 h-1 rounded-full bg-[#34A853]" />
         </div>
       </div>
     </motion.div>
@@ -289,17 +285,17 @@ const GoogleWalletCardPass: React.FC = () => {
 const AppleWalletCardPass: React.FC = () => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24, scale: 0.95 }}
+      initial={{ opacity: 0, y: 18, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -20, scale: 0.95 }}
+      exit={{ opacity: 0, y: -18, scale: 0.96 }}
       transition={{ type: "spring", stiffness: 220, damping: 22 }}
-      className="relative w-full max-w-[480px] sm:max-w-[510px] mx-auto rounded-3xl bg-gradient-to-b from-[#211A16]/95 via-[#18120F]/98 to-[#0E0907] border border-[#D4642C]/30 p-5 sm:p-6 shadow-[0_25px_60px_rgba(0,0,0,0.7),0_0_40px_rgba(212,100,44,0.22)] backdrop-blur-xl overflow-hidden group"
+      className="relative w-full max-w-[480px] sm:max-w-[500px] h-[255px] sm:h-[265px] mx-auto rounded-3xl bg-gradient-to-b from-[#211A16]/95 via-[#18120F]/98 to-[#0E0907] border border-[#D4642C]/30 p-4 sm:p-5 shadow-[0_25px_60px_rgba(0,0,0,0.7),0_0_40px_rgba(212,100,44,0.22)] backdrop-blur-xl overflow-hidden flex flex-col justify-between group"
     >
       {/* Apple Pass Top Cutout Notch Accent */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-1 bg-[#D4642C]/40 rounded-b-md" />
 
       {/* Card Header (Apple Wallet Pass styling) */}
-      <div className="flex items-center justify-between pb-3.5 border-b border-white/10">
+      <div className="flex items-center justify-between pb-3 border-b border-white/10">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-black/60 border border-white/10 flex items-center justify-center text-white">
             <AppleWalletIcon className="w-4 h-4 text-white" />
@@ -308,46 +304,46 @@ const AppleWalletCardPass: React.FC = () => {
             <div className="text-xs font-bold text-white tracking-wide uppercase font-['Space_Grotesk']">
               Apple Wallet Pass
             </div>
-            <div className="text-[10px] text-[#FFA370] font-mono tracking-wider font-semibold">
+            <div className="text-[9px] text-[#FFA370] font-mono tracking-wider font-semibold">
               MYCARDSHARE • OFFICIAL ID
             </div>
           </div>
         </div>
 
         {/* NFC Tap Wave Symbol */}
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#D4642C]/15 border border-[#D4642C]/35 text-[11px] font-semibold text-[#FFA370]">
-          <Wifi className="w-3.5 h-3.5 rotate-90" />
+        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#D4642C]/15 border border-[#D4642C]/35 text-[10px] font-semibold text-[#FFA370]">
+          <Wifi className="w-3 h-3 rotate-90" />
           <span>NFC Tap Ready</span>
         </div>
       </div>
 
       {/* Main Apple Pass Grid */}
-      <div className="mt-4 flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-3">
         {/* Pass Info */}
         <div className="flex-1 min-w-0">
-          <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest font-mono">
+          <div className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest font-mono">
             CARDHOLDER
           </div>
-          <h4 className="text-xl sm:text-2xl font-black text-white tracking-tight truncate mt-0.5">
+          <h4 className="text-lg sm:text-xl font-black text-white tracking-tight truncate mt-0.5">
             Alex Rivers
           </h4>
-          <p className="text-xs sm:text-sm font-semibold text-[#F18F58] tracking-tight truncate">
+          <p className="text-xs font-semibold text-[#F18F58] tracking-tight truncate">
             VP of Global Partnerships
           </p>
-          <p className="text-[11px] text-neutral-400 font-medium truncate mt-0.5">
+          <p className="text-[10px] text-neutral-400 font-medium truncate">
             MyCardShare Global Network
           </p>
 
           {/* Apple Wallet Metadata Grid */}
-          <div className="grid grid-cols-2 gap-2 mt-3 pt-2.5 border-t border-white/5">
+          <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-white/5">
             <div>
-              <div className="text-[9px] text-neutral-400 uppercase font-mono font-semibold">PASS TYPE</div>
-              <div className="text-xs font-bold text-white tracking-tight">Executive Elite</div>
+              <div className="text-[8px] text-neutral-400 uppercase font-mono font-semibold">PASS TYPE</div>
+              <div className="text-[11px] font-bold text-white tracking-tight">Executive Elite</div>
             </div>
             <div>
-              <div className="text-[9px] text-neutral-400 uppercase font-mono font-semibold">SECURITY</div>
-              <div className="text-xs font-bold text-emerald-400 flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3 text-emerald-400" />
+              <div className="text-[8px] text-neutral-400 uppercase font-mono font-semibold">SECURITY</div>
+              <div className="text-[11px] font-bold text-emerald-400 flex items-center gap-1">
+                <ShieldCheck className="w-2.5 h-2.5 text-emerald-400" />
                 FaceID / TouchID
               </div>
             </div>
@@ -356,18 +352,17 @@ const AppleWalletCardPass: React.FC = () => {
 
         {/* Apple Wallet Aztec/QR Code */}
         <div className="flex flex-col items-center shrink-0">
-          <CardQRCode className="w-20 h-20 sm:w-22 sm:h-22" />
-          <span className="text-[9px] font-mono text-neutral-400 mt-1 uppercase tracking-wider">
+          <CardQRCode className="w-18 h-18 sm:w-20 sm:h-20" />
+          <span className="text-[8px] font-mono text-neutral-400 mt-1 uppercase tracking-wider">
             Instant Pass
           </span>
         </div>
       </div>
 
       {/* Apple Pass Bottom Perforated Divider */}
-      <div className="mt-4 pt-3 border-t border-dashed border-white/15 flex items-center justify-between text-[10px] text-neutral-400">
+      <div className="pt-2 border-t border-dashed border-white/15 flex items-center justify-between text-[9px] text-neutral-400">
         <span className="font-mono text-neutral-300">PASS ID: PKP-2026-9482</span>
         <span className="text-[#FFA370] font-semibold flex items-center gap-1">
-          <Sparkles className="w-3 h-3 text-[#D4642C]" />
           Instant Offline Access
         </span>
       </div>
@@ -379,17 +374,17 @@ const AppleWalletCardPass: React.FC = () => {
 const SamsungWalletCardPass: React.FC = () => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24, scale: 0.95 }}
+      initial={{ opacity: 0, y: 18, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -20, scale: 0.95 }}
+      exit={{ opacity: 0, y: -18, scale: 0.96 }}
       transition={{ type: "spring", stiffness: 220, damping: 22 }}
-      className="relative w-full max-w-[480px] sm:max-w-[510px] mx-auto rounded-3xl bg-gradient-to-b from-[#1C1410]/95 via-[#160E0A]/98 to-[#0E0805] border-2 border-dashed border-[#D4642C]/40 p-5 sm:p-6 shadow-[0_25px_60px_rgba(0,0,0,0.7),0_0_40px_rgba(212,100,44,0.15)] backdrop-blur-xl overflow-hidden text-center group"
+      className="relative w-full max-w-[480px] sm:max-w-[500px] h-[255px] sm:h-[265px] mx-auto rounded-3xl bg-gradient-to-b from-[#1C1410]/95 via-[#160E0A]/98 to-[#0E0805] border-2 border-dashed border-[#D4642C]/40 p-4 sm:p-5 shadow-[0_25px_60px_rgba(0,0,0,0.7),0_0_40px_rgba(212,100,44,0.15)] backdrop-blur-xl overflow-hidden flex flex-col justify-between text-center group"
     >
       {/* Blueprint Grid Ambient Overlay */}
       <div className="absolute inset-0 bg-[radial-gradient(#D4642C_1px,transparent_1px)] [background-size:16px_16px] opacity-15 pointer-events-none" />
 
       {/* Top Header */}
-      <div className="flex items-center justify-between pb-3.5 border-b border-white/10 relative z-10">
+      <div className="flex items-center justify-between pb-2.5 border-b border-white/10 relative z-10">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-[#D4642C]/15 border border-[#D4642C]/30 flex items-center justify-center text-[#FFA370]">
             <SamsungWalletIcon className="w-4 h-4 text-[#FFA370]" />
@@ -400,47 +395,46 @@ const SamsungWalletCardPass: React.FC = () => {
         </div>
 
         {/* COMING SOON BADGE */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-[#D4642C] to-[#E2763E] text-white text-[10px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(212,100,44,0.6)] animate-pulse">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#D4642C] to-[#E2763E] text-white text-[9px] font-black uppercase tracking-widest shadow-[0_0_12px_rgba(212,100,44,0.6)] animate-pulse">
           <Clock className="w-3 h-3 text-white" />
           <span>COMING SOON</span>
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="mt-5 py-2 relative z-10 flex flex-col items-center">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#2D180E] to-[#1A0E08] border border-[#D4642C]/40 flex items-center justify-center text-[#FFA370] shadow-[0_0_25px_rgba(212,100,44,0.3)] mb-3">
-          <Lock className="w-6 h-6 text-[#FFA370]" />
+      <div className="py-1 relative z-10 flex flex-col items-center">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2D180E] to-[#1A0E08] border border-[#D4642C]/40 flex items-center justify-center text-[#FFA370] shadow-md mb-2">
+          <Lock className="w-4 h-4 text-[#FFA370]" />
         </div>
 
-        <h4 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+        <h4 className="text-base sm:text-lg font-black text-white tracking-tight">
           Samsung Wallet Pass Integration
         </h4>
-        <p className="mt-2 text-xs sm:text-sm text-neutral-300 max-w-sm leading-relaxed">
+        <p className="mt-1 text-[11px] sm:text-xs text-neutral-300 max-w-sm leading-relaxed">
           Native digital pass architecture for Galaxy devices is currently in certification. One UI Quick-Access integration rolling out soon.
         </p>
 
-        {/* Feature Highlights Pills */}
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-          <span className="px-2.5 py-1 rounded-lg bg-black/50 border border-white/10 text-[11px] text-neutral-300 font-medium flex items-center gap-1.5">
+        {/* Feature Highlights Pills (Without Sparkles icon) */}
+        <div className="mt-2.5 flex flex-wrap items-center justify-center gap-1.5">
+          <span className="px-2 py-0.5 rounded-md bg-black/50 border border-white/10 text-[10px] text-neutral-300 font-medium flex items-center gap-1">
             <ShieldCheck className="w-3 h-3 text-[#FFA370]" />
             Samsung Knox Protected
           </span>
-          <span className="px-2.5 py-1 rounded-lg bg-black/50 border border-white/10 text-[11px] text-neutral-300 font-medium flex items-center gap-1.5">
+          <span className="px-2 py-0.5 rounded-md bg-black/50 border border-white/10 text-[10px] text-neutral-300 font-medium flex items-center gap-1">
             <Wifi className="w-3 h-3 text-[#FFA370] rotate-90" />
             Quick Pay Bar Ready
           </span>
-          <span className="px-2.5 py-1 rounded-lg bg-black/50 border border-white/10 text-[11px] text-neutral-300 font-medium flex items-center gap-1.5">
-            <Sparkles className="w-3 h-3 text-[#FFA370]" />
+          <span className="px-2 py-0.5 rounded-md bg-black/50 border border-white/10 text-[10px] text-neutral-300 font-medium">
             Galaxy One UI 6.0+
           </span>
         </div>
       </div>
 
       {/* Card Footer Bar */}
-      <div className="mt-5 pt-3 border-t border-white/10 flex items-center justify-between text-[10px] text-neutral-400 relative z-10">
+      <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[9px] text-neutral-400 relative z-10">
         <span className="font-mono text-neutral-400">STATUS: IN ACTIVE DEVELOPMENT</span>
         <span className="text-[#FFA370] font-semibold flex items-center gap-1">
-          <Clock className="w-3 h-3 text-[#D4642C]" />
+          <Clock className="w-2.5 h-2.5 text-[#D4642C]" />
           Expected Q2 2025
         </span>
       </div>
@@ -508,8 +502,8 @@ export const ParallaxStrip: React.FC<ParallaxStripProps> = ({ className }) => {
     <div className="w-full flex items-center justify-center px-4">
       <div className={cn("w-full max-w-5xl mx-auto flex flex-col items-center", className)}>
         
-        {/* ================= MAIN DISPLAY BOX (WAVES + REAL ANIMATED CARDS) ================= */}
-        <div className="relative w-full min-h-[440px] sm:min-h-[460px] md:min-h-[480px] overflow-hidden rounded-3xl bg-[#140B06] border border-[#D4642C]/30 shadow-[0_20px_60px_rgba(212,100,44,0.18),0_10px_30px_rgba(0,0,0,0.5)] flex items-center justify-center p-4 sm:p-6 md:p-8">
+        {/* ================= MAIN DISPLAY BOX (LOCKED FIXED HEIGHT: NEVER SHIFTS) ================= */}
+        <div className="relative w-full h-[360px] sm:h-[380px] md:h-[400px] overflow-hidden rounded-3xl bg-[#140B06] border border-[#D4642C]/30 shadow-[0_20px_60px_rgba(212,100,44,0.18),0_10px_30px_rgba(0,0,0,0.5)] flex items-center justify-center p-4 sm:p-6">
           
           {/* Topographic Background Waves */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">

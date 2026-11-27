@@ -24,7 +24,7 @@ export default function MaximumImpact() {
   return (
     <section className="relative w-full bg-[#FAF6F2] -mt-6 sm:-mt-10 lg:-mt-14 z-20">
       {/* Dark Bento Sheet with Large Curved Top Corners */}
-      <div className="relative w-full bg-[#0D0B0A] text-white rounded-t-[36px] sm:rounded-t-[48px] lg:rounded-t-[64px] py-16 sm:py-24 lg:py-28 overflow-hidden border-t border-white/10 shadow-[0_-25px_60px_rgba(0,0,0,0.3)]">
+      <div className="relative w-full bg-[#0D0B0A] text-white rounded-t-[32px] sm:rounded-t-[48px] lg:rounded-t-[64px] py-10 sm:py-20 lg:py-28 overflow-hidden border-t border-white/10 shadow-[0_-25px_60px_rgba(0,0,0,0.3)]">
         
         {/* Subtle Top Ambient Glow Accent in Theme Matte Orange */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 max-w-2xl h-[2px] bg-gradient-to-r from-transparent via-[#D4642C]/40 to-transparent pointer-events-none" />
@@ -37,67 +37,67 @@ export default function MaximumImpact() {
         {/* Grid Pattern Background */}
         <div className="absolute inset-0 bg-[radial-gradient(#262220_1px,transparent_1px)] [background-size:24px_24px] opacity-40 pointer-events-none" />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
+        <div className="relative max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 z-10">
           
           {/* Section Header */}
-          <div className="text-center max-w-3xl mx-auto mb-14 sm:mb-20">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs sm:text-sm font-bold tracking-widest uppercase text-neutral-300 mb-4 backdrop-blur-md">
-              <span className="w-2 h-2 rounded-full bg-[#D4642C] animate-ping" />
+          <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-14 lg:mb-20 px-2">
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] sm:text-xs font-bold tracking-widest uppercase text-neutral-300 mb-2.5 sm:mb-4 backdrop-blur-md">
+              <span className="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full bg-[#D4642C] animate-ping" />
               ENGINEERED FOR
             </div>
 
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-white uppercase leading-[1.1]">
+            <h2 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight text-white uppercase leading-[1.08]">
               MAXIMUM{" "}
               <span className="bg-gradient-to-r from-[#D4642C] via-[#F18F58] to-[#FFA370] bg-clip-text text-transparent">
                 IMPACT
               </span>
             </h2>
 
-            <p className="mt-4 sm:mt-5 text-base sm:text-lg text-neutral-400 font-normal leading-relaxed">
+            <p className="mt-2.5 sm:mt-5 text-xs sm:text-base md:text-lg text-neutral-400 font-normal leading-relaxed max-w-2xl mx-auto">
               We don’t just build digital cards. We engineer professional ecosystems designed to multiply your growth and secure your network.
             </p>
           </div>
 
           {/* ==================== BENTO GRID SHOWCASE ==================== */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-stretch">
             
             {/* ================= CARD 1: ANALYTICS (Top Left - Spans 7 cols) ================= */}
-            <div className="lg:col-span-7 relative group rounded-3xl p-6 sm:p-8 bg-gradient-to-b from-[#1C1816] to-[#141110] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col justify-between transition-all duration-300 hover:border-[#D4642C]/40">
+            <div className="lg:col-span-7 relative group rounded-2xl sm:rounded-3xl p-4 sm:p-7 lg:p-8 bg-gradient-to-b from-[#1C1816] to-[#141110] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col justify-between transition-all duration-300 hover:border-[#D4642C]/40">
               {/* Card Background Ambient Glow */}
               <div className="absolute -bottom-10 -right-10 w-72 h-72 bg-[#D4642C]/25 rounded-full blur-[80px] pointer-events-none group-hover:bg-[#D4642C]/35 transition-all duration-500" />
 
               <div>
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
                   <span className="text-xs font-bold text-neutral-500 tracking-wider">04</span>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D4642C]/10 border border-[#D4642C]/30 text-[11px] font-semibold text-[#F18F58]">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#D4642C]/10 border border-[#D4642C]/30 text-[10px] sm:text-[11px] font-semibold text-[#F18F58]">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#D4642C] animate-pulse" />
                     REAL-TIME
                   </div>
                 </div>
 
                 <div className="max-w-md">
-                  <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-2.5">
-                    <BarChart3 className="w-6 h-6 text-[#D4642C]" />
+                  <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-2 sm:gap-2.5">
+                    <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-[#D4642C]" />
                     Analytics
                   </h3>
-                  <p className="mt-2 text-sm text-neutral-400 leading-relaxed">
+                  <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-neutral-400 leading-relaxed">
                     Track engagement, total scans, and conversion rates in a real-time command center.
                   </p>
                 </div>
               </div>
 
               {/* Dashboard Visuals: ANIMATED WATER FLOW WAVE + BARS */}
-              <div className="mt-8 pt-6 border-t border-white/5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="mt-5 sm:mt-8 pt-4 sm:pt-6 border-t border-white/5 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 
                 {/* Est. Total Reach Bar Chart with Dynamic Equalizer Wave (Like Image 3) */}
-                <div className="p-4 rounded-2xl bg-black/40 border border-white/5 backdrop-blur-sm">
-                  <div className="flex items-center justify-between text-xs text-neutral-400 mb-3">
-                    <span className="font-medium text-white">Est. Total Reach</span>
+                <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-black/40 border border-white/5 backdrop-blur-sm">
+                  <div className="flex items-center justify-between text-xs text-neutral-400 mb-2 sm:mb-3">
+                    <span className="font-medium text-white text-xs sm:text-sm">Est. Total Reach</span>
                     <span className="text-[10px] text-neutral-500">Last 30 Days</span>
                   </div>
                   
-                  {/* Visual Bar Graph (All Bars in Matte Orange Theme with Dynamic Equalizer Wave) */}
-                  <div className="h-24 flex items-end gap-2 pt-2 px-1">
+                  {/* Visual Bar Graph */}
+                  <div className="h-20 sm:h-24 flex items-end gap-1.5 sm:gap-2 pt-1 sm:pt-2 px-1">
                     {[
                       { h: 26, peak: false },
                       { h: 22, peak: false },
@@ -125,21 +125,21 @@ export default function MaximumImpact() {
                     ))}
                   </div>
 
-                  <div className="mt-3 flex items-center justify-between text-[11px] text-neutral-400">
+                  <div className="mt-2.5 sm:mt-3 flex items-center justify-between text-[11px] text-neutral-400">
                     <span>Growth</span>
                     <span className="text-emerald-400 font-semibold">+138.4%</span>
                   </div>
                 </div>
 
                 {/* Scans & Conversion with Fluid Water Flowing Wave Animation (100% Aligned) */}
-                <div className="p-4 rounded-2xl bg-black/40 border border-white/5 backdrop-blur-sm flex flex-col justify-between overflow-hidden">
-                  <div className="flex items-center justify-between text-xs text-neutral-400 mb-2">
-                    <span className="font-medium text-white">Scans & Conversion</span>
-                    <span className="text-xs font-bold text-[#FFA370]">94.2%</span>
+                <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-black/40 border border-white/5 backdrop-blur-sm flex flex-col justify-between overflow-hidden">
+                  <div className="flex items-center justify-between text-xs text-neutral-400 mb-1.5 sm:mb-2">
+                    <span className="font-medium text-white text-xs sm:text-sm">Scans & Conversion</span>
+                    <span className="text-xs sm:text-sm font-bold text-[#FFA370]">94.2%</span>
                   </div>
 
                   {/* SVG Water Flow Line Animation - Unified Single Precise Path */}
-                  <div className="h-20 w-full relative">
+                  <div className="h-16 sm:h-20 w-full relative">
                     <svg className="w-full h-full overflow-visible" viewBox="0 0 160 50">
                       <defs>
                         <linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1">
@@ -197,18 +197,18 @@ export default function MaximumImpact() {
               </div>
 
               {/* Bottom Row Action */}
-              <div className="mt-6 flex items-center justify-between">
+              <div className="mt-5 sm:mt-6 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <div className="h-2 w-24 sm:w-36 rounded-full bg-neutral-800 overflow-hidden flex">
+                  <div className="h-2 w-20 sm:w-36 rounded-full bg-neutral-800 overflow-hidden flex">
                     <div className="h-full w-2/3 bg-[#D4642C]" />
                     <div className="h-full w-1/3 bg-neutral-700" />
                   </div>
-                  <span className="text-[11px] text-neutral-400">8.4k Live Scans</span>
+                  <span className="text-[10px] sm:text-[11px] text-neutral-400">8.4k Live Scans</span>
                 </div>
 
                 <Link
                   href="#analytics"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#D4642C] hover:bg-[#BF5422] text-white text-xs font-bold tracking-wide shadow-[0_4px_16px_rgba(212,100,44,0.4)] transition-all duration-200 hover:-translate-y-0.5"
+                  className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-full bg-[#D4642C] hover:bg-[#BF5422] text-white text-[11px] sm:text-xs font-bold tracking-wide shadow-[0_4px_16px_rgba(212,100,44,0.4)] transition-all duration-200 hover:-translate-y-0.5 shrink-0"
                 >
                   <span>Get Started</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -217,29 +217,29 @@ export default function MaximumImpact() {
             </div>
 
             {/* ================= CARD 2: CRM SYNC (Top Right - Spans 5 cols) ================= */}
-            <div className="lg:col-span-5 relative group rounded-3xl p-6 sm:p-8 bg-gradient-to-b from-[#1C1816] to-[#141110] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col justify-between transition-all duration-300 hover:border-[#D4642C]/40">
+            <div className="lg:col-span-5 relative group rounded-2xl sm:rounded-3xl p-4 sm:p-7 lg:p-8 bg-gradient-to-b from-[#1C1816] to-[#141110] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col justify-between transition-all duration-300 hover:border-[#D4642C]/40">
               <div className="absolute top-1/2 right-0 w-60 h-60 bg-[#D4642C]/20 rounded-full blur-[70px] pointer-events-none" />
 
               <div>
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
                   <span className="text-xs font-bold text-neutral-500 tracking-wider">02</span>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D4642C]/10 border border-[#D4642C]/30 text-[11px] font-semibold text-[#F18F58]">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#D4642C]/10 border border-[#D4642C]/30 text-[10px] sm:text-[11px] font-semibold text-[#F18F58]">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#D4642C]" />
                     AUTOMATED
                   </div>
                 </div>
 
-                <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-2.5">
-                  <RefreshCw className="w-6 h-6 text-[#D4642C]" />
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-2 sm:gap-2.5">
+                  <RefreshCw className="w-5 h-5 sm:w-6 sm:h-6 text-[#D4642C]" />
                   CRM Sync
                 </h3>
-                <p className="mt-2 text-sm text-neutral-400 leading-relaxed">
+                <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-neutral-400 leading-relaxed">
                   Automatically route leads to Salesforce & HubSpot without manual data entry.
                 </p>
               </div>
 
               {/* Flowing Water Wave Cards + Dynamic Equalizer Lead Val Bars (Image 2) */}
-              <div className="relative mt-8 min-h-[190px] flex items-center justify-center">
+              <div className="relative mt-5 sm:mt-8 min-h-[170px] sm:min-h-[190px] flex items-center justify-center">
                 
                 {/* Back Card (MRR) with Flowing Wave */}
                 <div className="absolute top-0 right-4 sm:right-6 w-44 p-3.5 rounded-2xl bg-[#211C19]/90 border border-white/10 shadow-xl backdrop-blur-md transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1">
@@ -320,27 +320,27 @@ export default function MaximumImpact() {
             </div>
 
             {/* ================= CARD 3: SMART NETWORKING (Unique Network Effect - Image 3) ================= */}
-            <div className="lg:col-span-4 relative group rounded-3xl p-6 sm:p-8 bg-gradient-to-b from-[#1C1816] to-[#141110] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col justify-between transition-all duration-300 hover:border-[#D4642C]/40">
+            <div className="lg:col-span-4 relative group rounded-2xl sm:rounded-3xl p-4 sm:p-7 lg:p-8 bg-gradient-to-b from-[#1C1816] to-[#141110] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col justify-between transition-all duration-300 hover:border-[#D4642C]/40">
               <div>
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
                   <span className="text-xs font-bold text-neutral-500 tracking-wider">06</span>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D4642C]/10 border border-[#D4642C]/30 text-[11px] font-semibold text-[#F18F58]">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#D4642C]/10 border border-[#D4642C]/30 text-[10px] sm:text-[11px] font-semibold text-[#F18F58]">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#D4642C]" />
                     ECOSYSTEM
                   </div>
                 </div>
 
-                <h3 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
-                  <Network className="w-6 h-6 text-[#D4642C]" />
+                <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2 sm:gap-2.5">
+                  <Network className="w-5 h-5 sm:w-6 sm:h-6 text-[#D4642C]" />
                   Smart Networking
                 </h3>
-                <p className="mt-2 text-sm text-neutral-400 leading-relaxed">
+                <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-neutral-400 leading-relaxed">
                   Transform single interactions into powerful, interconnected business ecosystems.
                 </p>
               </div>
 
-              {/* Unique Interactive Network Animation (Sonar radar rings, laser connection pulses, active badge) */}
-              <div className="relative mt-8 p-4 rounded-2xl bg-black/50 border border-white/5 backdrop-blur-sm min-h-[160px] flex items-center justify-center overflow-hidden">
+              {/* Unique Interactive Network Animation */}
+              <div className="relative mt-5 sm:mt-8 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-black/50 border border-white/5 backdrop-blur-sm min-h-[140px] sm:min-h-[160px] flex items-center justify-center overflow-hidden">
                 
                 {/* Floating Live Interaction Ping Badge */}
                 <div className="absolute top-2 right-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#D4642C]/15 border border-[#D4642C]/40 text-[9px] font-semibold text-[#FFA370] animate-pulse z-20">
@@ -348,23 +348,23 @@ export default function MaximumImpact() {
                   <span>Lead Connected</span>
                 </div>
 
-                {/* Network Nodes Cluster with Direct Responsive Connection Lines */}
+                {/* Network Nodes Cluster */}
                 <div className="relative w-full max-w-sm flex items-center justify-between z-10 pt-2 px-1 sm:px-3">
                   
                   {/* User 1: Jenny */}
                   <div className="relative flex flex-col items-center">
-                    <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-[#D4642C] to-[#F18F58] p-0.5 shadow-md">
-                      <div className="w-full h-full rounded-full bg-[#1A1614] flex items-center justify-center text-xs font-bold text-white">
+                    <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-gradient-to-tr from-[#D4642C] to-[#F18F58] p-0.5 shadow-md">
+                      <div className="w-full h-full rounded-full bg-[#1A1614] flex items-center justify-center text-[10px] sm:text-xs font-bold text-white">
                         JN
                       </div>
                     </div>
-                    <span className="mt-1.5 text-[10px] font-semibold text-neutral-300 bg-black/80 px-2 py-0.5 rounded-full border border-white/10 whitespace-nowrap">
+                    <span className="mt-1 sm:mt-1.5 text-[9px] sm:text-[10px] font-semibold text-neutral-300 bg-black/80 px-1.5 sm:px-2 py-0.5 rounded-full border border-white/10 whitespace-nowrap">
                       Jenny
                     </span>
                   </div>
 
-                  {/* Laser Connector Line 1 (Jenny -> Lexie) */}
-                  <div className="flex-1 h-[2px] mx-1.5 sm:mx-2 relative bg-[#D4642C]/30 -translate-y-2 overflow-hidden rounded-full">
+                  {/* Laser Connector Line 1 */}
+                  <div className="flex-1 h-[2px] mx-1 sm:mx-2 relative bg-[#D4642C]/30 -translate-y-2 overflow-hidden rounded-full">
                     <div
                       className="absolute inset-0 bg-gradient-to-r from-transparent via-[#FFA370] to-transparent"
                       style={{
@@ -373,27 +373,25 @@ export default function MaximumImpact() {
                     />
                   </div>
 
-                  {/* Central Key Executive: Lexie with expanding sonar radar rings */}
+                  {/* Central Key Executive: Lexie */}
                   <div className="relative flex flex-col items-center -translate-y-2">
-                    <div className="relative w-14 h-14 flex items-center justify-center">
-                      {/* Perfectly Centered Sonar Ring 1 */}
+                    <div className="relative w-11 h-11 sm:w-14 sm:h-14 flex items-center justify-center">
                       <div className="absolute inset-0 rounded-full border-2 border-[#D4642C] animate-sonar pointer-events-none" />
-                      {/* Perfectly Centered Sonar Ring 2 */}
                       <div className="absolute inset-0 rounded-full border border-[#FFA370] animate-sonar pointer-events-none" style={{ animationDelay: '1.4s' }} />
 
-                      <div className="relative w-14 h-14 rounded-full bg-gradient-to-tr from-[#D4642C] to-[#FFA370] p-1 shadow-[0_0_24px_rgba(212,100,44,0.7)] z-10">
-                        <div className="w-full h-full rounded-full bg-[#1A1614] flex items-center justify-center text-sm font-extrabold text-[#FFA370]">
+                      <div className="relative w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-[#D4642C] to-[#FFA370] p-0.5 sm:p-1 shadow-[0_0_24px_rgba(212,100,44,0.7)] z-10">
+                        <div className="w-full h-full rounded-full bg-[#1A1614] flex items-center justify-center text-xs sm:text-sm font-extrabold text-[#FFA370]">
                           LX
                         </div>
                       </div>
                     </div>
-                    <span className="mt-1.5 text-[11px] font-bold text-white bg-[#D4642C] px-2.5 py-0.5 rounded-full shadow-md z-10 whitespace-nowrap">
+                    <span className="mt-1 sm:mt-1.5 text-[10px] sm:text-[11px] font-bold text-white bg-[#D4642C] px-2 sm:px-2.5 py-0.5 rounded-full shadow-md z-10 whitespace-nowrap">
                       Lexie • CEO
                     </span>
                   </div>
 
-                  {/* Laser Connector Line 2 (Lexie -> Marcus) */}
-                  <div className="flex-1 h-[2px] mx-1.5 sm:mx-2 relative bg-[#D4642C]/30 -translate-y-2 overflow-hidden rounded-full">
+                  {/* Laser Connector Line 2 */}
+                  <div className="flex-1 h-[2px] mx-1 sm:mx-2 relative bg-[#D4642C]/30 -translate-y-2 overflow-hidden rounded-full">
                     <div
                       className="absolute inset-0 bg-gradient-to-r from-transparent via-[#FFA370] to-transparent"
                       style={{
@@ -405,12 +403,12 @@ export default function MaximumImpact() {
 
                   {/* User 3: Marcus */}
                   <div className="relative flex flex-col items-center">
-                    <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-[#D4642C] to-[#F18F58] p-0.5 shadow-md">
-                      <div className="w-full h-full rounded-full bg-[#1A1614] flex items-center justify-center text-xs font-bold text-white">
+                    <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-gradient-to-tr from-[#D4642C] to-[#F18F58] p-0.5 shadow-md">
+                      <div className="w-full h-full rounded-full bg-[#1A1614] flex items-center justify-center text-[10px] sm:text-xs font-bold text-white">
                         MC
                       </div>
                     </div>
-                    <span className="mt-1.5 text-[10px] font-semibold text-neutral-300 bg-black/80 px-2 py-0.5 rounded-full border border-white/10 whitespace-nowrap">
+                    <span className="mt-1 sm:mt-1.5 text-[9px] sm:text-[10px] font-semibold text-neutral-300 bg-black/80 px-1.5 sm:px-2 py-0.5 rounded-full border border-white/10 whitespace-nowrap">
                       Marcus
                     </span>
                   </div>
@@ -419,11 +417,11 @@ export default function MaximumImpact() {
 
               </div>
 
-              <div className="mt-6 flex items-center justify-between">
-                <span className="text-xs text-neutral-400">3,400+ Interconnected Leads</span>
+              <div className="mt-5 sm:mt-6 flex items-center justify-between">
+                <span className="text-[11px] sm:text-xs text-neutral-400">3,400+ Interconnected Leads</span>
                 <Link
                   href="#network"
-                  className="text-xs font-semibold text-[#F18F58] hover:text-white flex items-center gap-1 transition-colors"
+                  className="text-[11px] sm:text-xs font-semibold text-[#F18F58] hover:text-white flex items-center gap-1 transition-colors"
                 >
                   Explore <ArrowRight className="w-3 h-3" />
                 </Link>
@@ -431,11 +429,11 @@ export default function MaximumImpact() {
             </div>
 
             {/* ================= CARD 4 & 5: MIDDLE COLUMN (Spans 4 cols) ================= */}
-            <div className="lg:col-span-4 flex flex-col gap-6">
+            <div className="lg:col-span-4 flex flex-col gap-4 sm:gap-6">
               
-              {/* CARD 4: DYNAMIC QR (Moving Dot Ping-Pong over Curved Arc - Image 4) */}
-              <div className="relative group rounded-3xl p-6 bg-gradient-to-b from-[#1C1816] to-[#141110] border border-white/10 shadow-xl overflow-hidden flex flex-col justify-between transition-all duration-300 hover:border-[#D4642C]/40">
-                <div className="flex items-center justify-between mb-3">
+              {/* CARD 4: DYNAMIC QR */}
+              <div className="relative group rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-gradient-to-b from-[#1C1816] to-[#141110] border border-white/10 shadow-xl overflow-hidden flex flex-col justify-between transition-all duration-300 hover:border-[#D4642C]/40">
+                <div className="flex items-center justify-between mb-2.5 sm:mb-3">
                   <span className="text-xs font-bold text-neutral-500">01</span>
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#D4642C]/10 border border-[#D4642C]/30 text-[10px] font-semibold text-[#F18F58]">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#D4642C]" />
@@ -444,17 +442,17 @@ export default function MaximumImpact() {
                 </div>
 
                 <div>
-                  <h4 className="text-xl font-bold text-white flex items-center gap-2">
-                    <QrCode className="w-5 h-5 text-[#D4642C]" />
+                  <h4 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                    <QrCode className="w-4 h-4 sm:w-5 sm:h-5 text-[#D4642C]" />
                     Dynamic QR
                   </h4>
-                  <p className="mt-1.5 text-xs text-neutral-400 leading-relaxed">
+                  <p className="mt-1 sm:mt-1.5 text-xs text-neutral-400 leading-relaxed">
                     Real-time updates ensure every shared profile stays current across all devices instantly.
                   </p>
                 </div>
 
-                {/* Global Scan Arcs with CONTINUOUS MOVING DOT (Left to Right to Left ping-pong) */}
-                <div className="mt-4 p-3 rounded-2xl bg-black/40 border border-white/5 relative h-24 flex items-center justify-between px-4 overflow-hidden">
+                {/* Global Scan Arcs */}
+                <div className="mt-3.5 sm:mt-4 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-black/40 border border-white/5 relative h-20 sm:h-24 flex items-center justify-between px-3 sm:px-4 overflow-hidden">
                   <div className="absolute inset-0 flex items-center justify-center opacity-20">
                     <Globe className="w-36 h-36 text-white" />
                   </div>
@@ -468,7 +466,6 @@ export default function MaximumImpact() {
                   {/* SVG Dotted Curve with Smooth Traveling Dot */}
                   <div className="flex-1 h-12 relative px-2">
                     <svg className="w-full h-full overflow-visible" viewBox="0 0 100 30">
-                      {/* Dotted Arch Path */}
                       <path
                         id="flightArc"
                         d="M 5,25 Q 50,2 95,25"
@@ -479,7 +476,6 @@ export default function MaximumImpact() {
                         opacity="0.7"
                       />
 
-                      {/* Moving Glowing Dot (Ping-Pong Loop: Left -> Right -> Left) */}
                       <circle r="4" fill="#FFA370" className="shadow-lg">
                         <animateMotion
                           path="M 5,25 Q 50,2 95,25"
@@ -492,7 +488,6 @@ export default function MaximumImpact() {
                         />
                       </circle>
                       
-                      {/* Soft Halo around Moving Dot */}
                       <circle r="8" fill="#D4642C" opacity="0.35">
                         <animateMotion
                           path="M 5,25 Q 50,2 95,25"
@@ -515,9 +510,9 @@ export default function MaximumImpact() {
                 </div>
               </div>
 
-              {/* CARD 5: AI CARD SCANNER (Animated Laser Viewfinder & OCR Extraction) */}
-              <div className="relative group rounded-3xl p-6 bg-gradient-to-b from-[#1C1816] to-[#141110] border border-white/10 shadow-xl overflow-hidden flex flex-col justify-between transition-all duration-300 hover:border-[#D4642C]/40">
-                <div className="flex items-center justify-between mb-3">
+              {/* CARD 5: AI CARD SCANNER */}
+              <div className="relative group rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-gradient-to-b from-[#1C1816] to-[#141110] border border-white/10 shadow-xl overflow-hidden flex flex-col justify-between transition-all duration-300 hover:border-[#D4642C]/40">
+                <div className="flex items-center justify-between mb-2.5 sm:mb-3">
                   <span className="text-xs font-bold text-neutral-500">05</span>
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#D4642C]/10 border border-[#D4642C]/30 text-[10px] font-semibold text-[#F18F58]">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#D4642C] animate-pulse" />
@@ -526,31 +521,29 @@ export default function MaximumImpact() {
                 </div>
 
                 <div>
-                  <h4 className="text-xl font-bold text-white flex items-center gap-2">
-                    <ScanLine className="w-5 h-5 text-[#D4642C]" />
+                  <h4 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                    <ScanLine className="w-4 h-4 sm:w-5 sm:h-5 text-[#D4642C]" />
                     AI Card Scanner
                   </h4>
-                  <p className="mt-1.5 text-xs text-neutral-400 leading-relaxed">
+                  <p className="mt-1 sm:mt-1.5 text-xs text-neutral-400 leading-relaxed">
                     Instantly turn physical paper business cards into verified digital contacts with 99.8% OCR accuracy.
                   </p>
                 </div>
 
                 {/* Animated Scanner Viewfinder Box */}
-                <div className="mt-4 p-2.5 rounded-2xl bg-black/60 border border-white/5 relative overflow-hidden">
-                  {/* Scanning Laser Beam (Moves smoothly down and up) */}
+                <div className="mt-3.5 sm:mt-4 p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-black/60 border border-white/5 relative overflow-hidden">
                   <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4642C] to-transparent shadow-[0_0_12px_#D4642C] z-20 pointer-events-none animate-scan-beam" />
                   
-                  {/* Viewfinder Reticle Corners */}
                   <div className="absolute top-1.5 left-1.5 w-3 h-3 border-t-2 border-l-2 border-[#D4642C] pointer-events-none z-20" />
                   <div className="absolute top-1.5 right-1.5 w-3 h-3 border-t-2 border-r-2 border-[#D4642C] pointer-events-none z-20" />
                   <div className="absolute bottom-1.5 left-1.5 w-3 h-3 border-b-2 border-l-2 border-[#D4642C] pointer-events-none z-20" />
                   <div className="absolute bottom-1.5 right-1.5 w-3 h-3 border-b-2 border-r-2 border-[#D4642C] pointer-events-none z-20" />
 
                   {/* Scanned Card Preview Mockup */}
-                  <div className="p-3.5 rounded-xl bg-gradient-to-b from-[#241F1C] to-[#1A1614] border border-[#D4642C]/25 relative z-10 space-y-3 shadow-lg">
+                  <div className="p-3 sm:p-3.5 rounded-lg sm:rounded-xl bg-gradient-to-b from-[#241F1C] to-[#1A1614] border border-[#D4642C]/25 relative z-10 space-y-2.5 sm:space-y-3 shadow-lg">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4642C] via-[#E2763E] to-[#F18F58] text-white flex items-center justify-center text-xs font-bold shadow-md shadow-[#D4642C]/20 ring-1 ring-white/20">
+                      <div className="flex items-center gap-2 sm:gap-2.5">
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-[#D4642C] via-[#E2763E] to-[#F18F58] text-white flex items-center justify-center text-[11px] sm:text-xs font-bold shadow-md shadow-[#D4642C]/20 ring-1 ring-white/20">
                           AR
                         </div>
                         <div>
@@ -558,10 +551,10 @@ export default function MaximumImpact() {
                             <span>Alex Rivers</span>
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34D399]" />
                           </div>
-                          <div className="text-[11px] text-neutral-400 font-medium">Founder &amp; CEO</div>
+                          <div className="text-[10px] sm:text-[11px] text-neutral-400 font-medium">Founder &amp; CEO</div>
                         </div>
                       </div>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                      <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold tracking-wide bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
                         <span className="w-1 h-1 rounded-full bg-emerald-400" />
                         99.8% OCR
                       </span>
@@ -569,13 +562,13 @@ export default function MaximumImpact() {
 
                     {/* Detected Data Fields */}
                     <div className="grid grid-cols-2 gap-2 pt-0.5">
-                      <div className="px-2.5 py-1.5 rounded-lg bg-black/50 text-neutral-200 border border-white/5 flex items-center gap-2">
-                        <Phone className="w-3.5 h-3.5 text-[#D4642C] shrink-0" />
-                        <span className="text-[11px] font-medium tracking-tight truncate">+1 (555) 0192</span>
+                      <div className="px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg bg-black/50 text-neutral-200 border border-white/5 flex items-center gap-1.5 sm:gap-2">
+                        <Phone className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#D4642C] shrink-0" />
+                        <span className="text-[10px] sm:text-[11px] font-medium tracking-tight truncate">+1 (555) 0192</span>
                       </div>
-                      <div className="px-2.5 py-1.5 rounded-lg bg-black/50 text-neutral-200 border border-white/5 flex items-center gap-2">
-                        <Mail className="w-3.5 h-3.5 text-[#D4642C] shrink-0" />
-                        <span className="text-[11px] font-medium tracking-tight truncate">alex@corp.io</span>
+                      <div className="px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg bg-black/50 text-neutral-200 border border-white/5 flex items-center gap-1.5 sm:gap-2">
+                        <Mail className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#D4642C] shrink-0" />
+                        <span className="text-[10px] sm:text-[11px] font-medium tracking-tight truncate">alex@corp.io</span>
                       </div>
                     </div>
                   </div>
@@ -584,28 +577,28 @@ export default function MaximumImpact() {
 
             </div>
 
-            {/* ================= CARD 6: SECURE (Animated Vault Activity - Image 5) ================= */}
-            <div className="lg:col-span-4 relative group rounded-3xl p-6 sm:p-8 bg-gradient-to-b from-[#1C1816] to-[#141110] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col justify-between transition-all duration-300 hover:border-[#D4642C]/40">
+            {/* ================= CARD 6: SECURE ================= */}
+            <div className="lg:col-span-4 relative group rounded-2xl sm:rounded-3xl p-4 sm:p-7 lg:p-8 bg-gradient-to-b from-[#1C1816] to-[#141110] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col justify-between transition-all duration-300 hover:border-[#D4642C]/40">
               <div>
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
                   <span className="text-xs font-bold text-neutral-500 tracking-wider">03</span>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D4642C]/10 border border-[#D4642C]/30 text-[11px] font-semibold text-[#F18F58]">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#D4642C]/10 border border-[#D4642C]/30 text-[10px] sm:text-[11px] font-semibold text-[#F18F58]">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#D4642C]" />
                     ENCRYPTED
                   </div>
                 </div>
 
-                <h3 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
-                  <ShieldCheck className="w-6 h-6 text-[#D4642C]" />
+                <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2 sm:gap-2.5">
+                  <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-[#D4642C]" />
                   Secure
                 </h3>
-                <p className="mt-2 text-sm text-neutral-400 leading-relaxed">
+                <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-neutral-400 leading-relaxed">
                   Bank-level encryption protecting your entire digital identity and contact vault.
                 </p>
               </div>
 
-              {/* Animated Vault Activity with Sweeping Shimmer Light Beams */}
-              <div className="mt-6 p-4 rounded-2xl bg-black/40 border border-white/5 backdrop-blur-sm space-y-3.5">
+              {/* Animated Vault Activity */}
+              <div className="mt-5 sm:mt-6 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-black/40 border border-white/5 backdrop-blur-sm space-y-2.5 sm:space-y-3.5">
                 <div className="text-xs font-semibold text-neutral-400 flex items-center justify-between">
                   <span>Vault Activity</span>
                   <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
@@ -614,28 +607,26 @@ export default function MaximumImpact() {
                   </span>
                 </div>
 
-                {/* User 1: Liam Smith with continuous sweeping scanner shimmer */}
+                {/* User 1 */}
                 <div className="space-y-1">
-                  <div className="flex justify-between text-[11px] text-neutral-300">
+                  <div className="flex justify-between text-[10px] sm:text-[11px] text-neutral-300">
                     <span>Liam Smith</span>
                     <span className="text-[#F18F58] font-mono">100% Secure</span>
                   </div>
-                  <div className="h-2 w-full bg-neutral-800 rounded-full overflow-hidden relative">
+                  <div className="h-1.5 sm:h-2 w-full bg-neutral-800 rounded-full overflow-hidden relative">
                     <div className="h-full bg-gradient-to-r from-[#D4642C] to-[#FFA370] w-full" />
-                    {/* Sweeping Shimmer Scanner Light */}
                     <div className="absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-white/50 to-transparent animate-shimmer-sweep" />
                   </div>
                 </div>
 
-                {/* User 2: Emma Williams with live scanner beam */}
+                {/* User 2 */}
                 <div className="space-y-1">
-                  <div className="flex justify-between text-[11px] text-neutral-300">
+                  <div className="flex justify-between text-[10px] sm:text-[11px] text-neutral-300">
                     <span>Emma Williams</span>
                     <span className="text-neutral-400 font-mono">Protected</span>
                   </div>
-                  <div className="h-2 w-full bg-neutral-800 rounded-full overflow-hidden relative">
+                  <div className="h-1.5 sm:h-2 w-full bg-neutral-800 rounded-full overflow-hidden relative">
                     <div className="h-full bg-neutral-600 w-3/4" />
-                    {/* Sweeping Shimmer Scanner Light */}
                     <div className="absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer-sweep" style={{ animationDelay: '1.2s' }} />
                   </div>
                 </div>
@@ -655,9 +646,9 @@ export default function MaximumImpact() {
                 </div>
               </div>
 
-              <div className="mt-6 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs text-neutral-400">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              <div className="mt-5 sm:mt-6 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[11px] sm:text-xs text-neutral-400">
+                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500" />
                   <span>SOC 2 Type II Certified</span>
                 </div>
               </div>

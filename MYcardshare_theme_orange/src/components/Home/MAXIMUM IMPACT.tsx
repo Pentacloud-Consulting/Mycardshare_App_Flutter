@@ -280,22 +280,38 @@ export default function MaximumImpact() {
                   </div>
                 </div>
 
-                {/* Small Metric Pill Card (Lead Val.) with Dynamic Height Alternating Wave Bars */}
-                <div className="absolute bottom-2 right-1 sm:right-3 w-28 p-2.5 rounded-xl bg-black/75 border border-[#D4642C]/40 shadow-xl z-20">
-                  <div className="text-[9px] text-neutral-400">Lead Val.</div>
-                  <div className="text-sm font-bold text-white">$21.60</div>
+                {/* Small Metric Pill Card (Lead Val.) with Dynamic Glowing Equalizer Bars (Like Image 2) */}
+                <div className="absolute bottom-2 right-1 sm:right-3 w-32 p-3 rounded-2xl bg-[#14100E]/95 border border-[#D4642C]/40 shadow-xl backdrop-blur-md z-20">
+                  <div className="flex items-center justify-between text-[10px] text-neutral-400">
+                    <span>Lead Val.</span>
+                    <span className="text-[9px] font-bold text-emerald-400">+18.2%</span>
+                  </div>
+                  <div className="text-base font-bold text-white tracking-tight mt-0.5">$21.60</div>
                   
                   {/* Equalizer Bars: dynamically changing heights in looping wave */}
-                  <div className="flex items-end gap-1.5 h-6 mt-1 pt-1">
-                    {[0, 1, 2, 3, 4].map((idx) => (
-                      <div
-                        key={idx}
-                        className="flex-1 bg-gradient-to-t from-[#D4642C] to-[#FFA370] rounded-xs shadow-xs"
-                        style={{
-                          animation: `barBounce 1.4s ease-in-out infinite`,
-                          animationDelay: `${idx * 0.22}s`,
-                        }}
-                      />
+                  <div className="h-7 flex items-end gap-1.5 mt-2">
+                    {[
+                      { h: 10, peak: false },
+                      { h: 16, peak: false },
+                      { h: 24, peak: true },
+                      { h: 20, peak: true },
+                      { h: 26, peak: true },
+                      { h: 14, peak: false },
+                    ].map((bar, idx) => (
+                      <div key={idx} className="flex-1 flex flex-col items-center h-full justify-end">
+                        <div
+                          className={`w-full rounded-t-sm origin-bottom bg-gradient-to-t from-[#B84E1D] via-[#D4642C] to-[#FFA370] ${
+                            bar.peak
+                              ? "shadow-[0_0_12px_rgba(212,100,44,0.8)] brightness-110"
+                              : "shadow-[0_0_6px_rgba(212,100,44,0.4)] opacity-90"
+                          }`}
+                          style={{
+                            height: `${bar.h}px`,
+                            animation: `reachBarBounce 1.5s ease-in-out infinite`,
+                            animationDelay: `${idx * 0.16}s`,
+                          }}
+                        />
+                      </div>
                     ))}
                   </div>
                 </div>

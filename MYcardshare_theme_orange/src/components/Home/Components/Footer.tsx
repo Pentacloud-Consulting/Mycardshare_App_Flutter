@@ -148,17 +148,18 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Big Watermark Banner: MYCARDSHARE with divider and dot (Image 2) */}
+        {/* Big Watermark Banner: MYCARDSHARE with divider and animated pulsing dot */}
         <div className="relative my-8 sm:my-12 flex flex-col items-center justify-center select-none overflow-hidden">
-          <div className="text-[13vw] sm:text-[11vw] md:text-[9.5vw] font-black tracking-tight text-neutral-100 uppercase leading-none whitespace-nowrap pointer-events-none transition-colors">
+          <div className="text-[13vw] sm:text-[11vw] md:text-[9.5vw] font-black tracking-tight uppercase leading-none whitespace-nowrap bg-clip-text text-transparent bg-gradient-to-r from-stone-200/90 via-[#D4642C] via-50% to-stone-200/90 animate-footer-sweep opacity-85 transition-opacity">
             MYCARDSHARE
           </div>
 
-          {/* Horizontal Line with Center Dot (from Image 2) */}
+          {/* Horizontal Line with Center Dot */}
           <div className="w-full relative flex items-center justify-center mt-[-2vw] sm:mt-[-1.5vw]">
             <div className="w-full h-px bg-neutral-200" />
-            <div className="absolute w-3 h-3 rounded-full bg-white border-2 border-[#D4642C] flex items-center justify-center">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#D4642C]" />
+            <div className="absolute w-3.5 h-3.5 rounded-full bg-white border-2 border-[#D4642C] flex items-center justify-center">
+              <span className="absolute inset-0 rounded-full bg-[#D4642C]/30 animate-ping opacity-60" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#D4642C] animate-footer-dot" />
             </div>
           </div>
         </div>

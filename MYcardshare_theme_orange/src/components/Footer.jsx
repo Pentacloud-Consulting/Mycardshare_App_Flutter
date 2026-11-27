@@ -141,16 +141,17 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Giant Watermark & Divider */}
-        <div className="relative mt-16 mb-8 select-none pointer-events-none">
-          <div className="text-[clamp(2.5rem,11vw,9.5rem)] font-black leading-none tracking-tighter text-center uppercase overflow-hidden whitespace-nowrap bg-clip-text text-transparent bg-gradient-to-br from-stone-200 via-stone-100 to-[#FAF6F2] opacity-80">
+        {/* Giant Watermark & Divider with Looping Shimmer Animation */}
+        <div className="relative mt-16 mb-8 select-none overflow-hidden">
+          <div className="text-[clamp(2.5rem,11vw,9.5rem)] font-black leading-none tracking-tighter text-center uppercase overflow-hidden whitespace-nowrap bg-clip-text text-transparent bg-gradient-to-r from-stone-200/90 via-[#D4642C] via-50% to-stone-200/90 animate-footer-sweep opacity-85">
             MYCARDSHARE
           </div>
 
           <div className="absolute left-0 right-0 bottom-2 flex items-center">
             <div className="h-[1px] w-full bg-[#EFE8E1]" />
-            <div className="absolute left-1/2 -translate-x-1/2 w-7 h-7 rounded-full border border-[#EFE8E1] bg-white flex items-center justify-center shadow-xs">
-              <div className="w-[5px] h-[5px] rounded-full bg-[#D4642C] shadow-[0_0_8px_rgba(212,100,44,0.6)]" />
+            <div className="absolute left-1/2 -translate-x-1/2 w-7 sm:w-8 h-7 sm:h-8 rounded-full border border-[#EFE8E1] bg-white flex items-center justify-center shadow-xs">
+              <span className="absolute inset-0 rounded-full bg-[#D4642C]/20 animate-ping opacity-60 pointer-events-none" />
+              <div className="w-[6px] h-[6px] rounded-full bg-[#D4642C] shadow-[0_0_10px_rgba(212,100,44,0.8)] animate-footer-dot" />
             </div>
           </div>
         </div>

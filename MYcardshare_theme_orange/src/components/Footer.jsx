@@ -74,18 +74,24 @@ export default function Footer() {
               confidence anywhere.
             </p>
             <div className="space-y-3.5 flex flex-col items-center lg:items-start">
-              <div className="flex items-center gap-3 text-stone-700">
-                <div className="w-8 h-8 rounded-lg bg-[#FAF6F2] flex items-center justify-center border border-[#EFE8E1] shrink-0 text-[#D4642C]">
+              <a
+                href="tel:+971545132807"
+                className="flex items-center gap-3 text-stone-700 hover:text-[#D4642C] transition-colors group"
+              >
+                <div className="w-8 h-8 rounded-lg bg-[#FAF6F2] flex items-center justify-center border border-[#EFE8E1] shrink-0 text-[#D4642C] group-hover:bg-[#FDF2EB] transition-colors">
                   <Phone size={14} />
                 </div>
-                <span className="text-[13px] font-medium">+1 (555) 123-4567</span>
-              </div>
-              <div className="flex items-center gap-3 text-stone-700">
-                <div className="w-8 h-8 rounded-lg bg-[#FAF6F2] flex items-center justify-center border border-[#EFE8E1] shrink-0 text-[#D4642C]">
+                <span className="text-[13px] font-medium">+971 545 132 807</span>
+              </a>
+              <a
+                href="mailto:contactus@pentacloudconsulting.com"
+                className="flex items-center gap-3 text-stone-700 hover:text-[#D4642C] transition-colors group"
+              >
+                <div className="w-8 h-8 rounded-lg bg-[#FAF6F2] flex items-center justify-center border border-[#EFE8E1] shrink-0 text-[#D4642C] group-hover:bg-[#FDF2EB] transition-colors">
                   <Mail size={14} />
                 </div>
-                <span className="text-[13px] font-medium">hello@mycardshare.com</span>
-              </div>
+                <span className="text-[13px] font-medium">contactus@pentacloudconsulting.com</span>
+              </a>
             </div>
           </div>
 

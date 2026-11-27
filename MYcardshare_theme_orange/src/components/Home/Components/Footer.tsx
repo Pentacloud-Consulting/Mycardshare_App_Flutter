@@ -69,23 +69,23 @@ export default function Footer() {
 
             <div className="flex flex-col gap-3.5 pt-2">
               <a
-                href="tel:+15551234567"
+                href="tel:+971545132807"
                 className="inline-flex items-center gap-3 text-sm text-neutral-700 hover:text-[#D4642C] transition-colors group"
               >
                 <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#FAF6F2] group-hover:bg-[#FDF2EB] text-neutral-600 group-hover:text-[#D4642C] transition-colors border border-[#EFE8E1]">
                   <Phone className="w-4 h-4" />
                 </div>
-                <span>+1 (555) 123-4567</span>
+                <span>+971 545 132 807</span>
               </a>
 
               <a
-                href="mailto:hello@mycardshare.com"
+                href="mailto:contactus@pentacloudconsulting.com"
                 className="inline-flex items-center gap-3 text-sm text-neutral-700 hover:text-[#D4642C] transition-colors group"
               >
                 <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#FAF6F2] group-hover:bg-[#FDF2EB] text-neutral-600 group-hover:text-[#D4642C] transition-colors border border-[#EFE8E1]">
                   <Mail className="w-4 h-4" />
                 </div>
-                <span>hello@mycardshare.com</span>
+                <span>contactus@pentacloudconsulting.com</span>
               </a>
             </div>
           </div>

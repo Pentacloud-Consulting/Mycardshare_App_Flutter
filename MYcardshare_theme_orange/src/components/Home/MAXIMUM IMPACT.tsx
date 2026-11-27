@@ -14,7 +14,10 @@ import {
   Lock,
   Globe,
   Radio,
-  Sparkles
+  Sparkles,
+  ScanLine,
+  Phone,
+  Mail
 } from "lucide-react";
 
 export default function MaximumImpact() {
@@ -496,55 +499,69 @@ export default function MaximumImpact() {
                 </div>
               </div>
 
-              {/* CARD 5: AI FOLLOW-UP (Animated Pipeline Flow - Image 4) */}
+              {/* CARD 5: AI CARD SCANNER (Animated Laser Viewfinder & OCR Extraction) */}
               <div className="relative group rounded-3xl p-6 bg-gradient-to-b from-[#1C1816] to-[#141110] border border-white/10 shadow-xl overflow-hidden flex flex-col justify-between transition-all duration-300 hover:border-[#D4642C]/40">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-bold text-neutral-500">05</span>
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#D4642C]/10 border border-[#D4642C]/30 text-[10px] font-semibold text-[#F18F58]">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#D4642C]" />
-                    SMART AI
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#D4642C] animate-pulse" />
+                    AI SCANNER
                   </div>
                 </div>
 
                 <div>
                   <h4 className="text-xl font-bold text-white flex items-center gap-2">
-                    <Bot className="w-5 h-5 text-[#D4642C]" />
-                    AI Follow-Up
+                    <ScanLine className="w-5 h-5 text-[#D4642C]" />
+                    AI Card Scanner
                   </h4>
                   <p className="mt-1.5 text-xs text-neutral-400 leading-relaxed">
-                    Intelligent contextual reminders to reconnect exactly when it matters most.
+                    Instantly turn physical paper business cards into verified digital contacts with 99.8% OCR accuracy.
                   </p>
                 </div>
 
-                {/* Animated Pipeline Energy Flow across nodes */}
-                <div className="mt-4 p-3 rounded-2xl bg-black/40 border border-white/5 flex items-center justify-between gap-1.5 overflow-hidden">
+                {/* Animated Scanner Viewfinder Box */}
+                <div className="mt-4 p-2.5 rounded-2xl bg-black/60 border border-white/5 relative overflow-hidden">
+                  {/* Scanning Laser Beam (Moves smoothly down and up) */}
+                  <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4642C] to-transparent shadow-[0_0_12px_#D4642C] z-20 pointer-events-none animate-scan-beam" />
                   
-                  {/* Step 1: Scan */}
-                  <div className="p-2 sm:p-2.5 rounded-xl bg-[#201B18] border border-[#D4642C]/40 text-center transition-all duration-300 group-hover:border-[#D4642C]">
-                    <div className="text-[9px] text-neutral-400">Scan</div>
-                    <div className="text-xs font-bold text-white">0 min</div>
-                  </div>
+                  {/* Viewfinder Reticle Corners */}
+                  <div className="absolute top-1.5 left-1.5 w-3 h-3 border-t-2 border-l-2 border-[#D4642C] pointer-events-none z-20" />
+                  <div className="absolute top-1.5 right-1.5 w-3 h-3 border-t-2 border-r-2 border-[#D4642C] pointer-events-none z-20" />
+                  <div className="absolute bottom-1.5 left-1.5 w-3 h-3 border-b-2 border-l-2 border-[#D4642C] pointer-events-none z-20" />
+                  <div className="absolute bottom-1.5 right-1.5 w-3 h-3 border-b-2 border-r-2 border-[#D4642C] pointer-events-none z-20" />
 
-                  {/* Flowing Connector 1 */}
-                  <div className="h-1 flex-1 rounded-full overflow-hidden bg-neutral-800 relative">
-                    <div className="w-full h-full bg-gradient-to-r from-[#D4642C] via-[#FFA370] to-[#D4642C] animate-beam-flow" />
-                  </div>
+                  {/* Scanned Card Preview Mockup */}
+                  <div className="p-3.5 rounded-xl bg-gradient-to-b from-[#241F1C] to-[#1A1614] border border-[#D4642C]/25 relative z-10 space-y-3 shadow-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4642C] via-[#E2763E] to-[#F18F58] text-white flex items-center justify-center text-xs font-bold shadow-md shadow-[#D4642C]/20 ring-1 ring-white/20">
+                          AR
+                        </div>
+                        <div>
+                          <div className="text-xs font-bold text-white tracking-tight flex items-center gap-1.5">
+                            <span>Alex Rivers</span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34D399]" />
+                          </div>
+                          <div className="text-[11px] text-neutral-400 font-medium">Founder &amp; CEO</div>
+                        </div>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                        <span className="w-1 h-1 rounded-full bg-emerald-400" />
+                        99.8% OCR
+                      </span>
+                    </div>
 
-                  {/* Step 2: Context */}
-                  <div className="p-2 sm:p-2.5 rounded-xl bg-[#201B18] border border-[#FFA370]/50 text-center shadow-xs">
-                    <div className="text-[9px] text-neutral-400">Context</div>
-                    <div className="text-xs font-bold text-[#FFA370]">+24 hrs</div>
-                  </div>
-
-                  {/* Flowing Connector 2 */}
-                  <div className="h-1 flex-1 rounded-full overflow-hidden bg-neutral-800 relative">
-                    <div className="w-full h-full bg-gradient-to-r from-[#FFA370] via-[#D4642C] to-[#FFA370] animate-beam-flow" />
-                  </div>
-
-                  {/* Step 3: Close */}
-                  <div className="p-2 sm:p-2.5 rounded-xl bg-[#D4642C] text-white text-center shadow-[0_0_15px_rgba(212,100,44,0.5)]">
-                    <div className="text-[9px] opacity-80">Close</div>
-                    <div className="text-xs font-bold">+7 days</div>
+                    {/* Detected Data Fields */}
+                    <div className="grid grid-cols-2 gap-2 pt-0.5">
+                      <div className="px-2.5 py-1.5 rounded-lg bg-black/50 text-neutral-200 border border-white/5 flex items-center gap-2">
+                        <Phone className="w-3.5 h-3.5 text-[#D4642C] shrink-0" />
+                        <span className="text-[11px] font-medium tracking-tight truncate">+1 (555) 0192</span>
+                      </div>
+                      <div className="px-2.5 py-1.5 rounded-lg bg-black/50 text-neutral-200 border border-white/5 flex items-center gap-2">
+                        <Mail className="w-3.5 h-3.5 text-[#D4642C] shrink-0" />
+                        <span className="text-[11px] font-medium tracking-tight truncate">alex@corp.io</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

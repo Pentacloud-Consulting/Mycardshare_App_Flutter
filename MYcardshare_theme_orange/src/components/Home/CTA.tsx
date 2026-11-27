@@ -106,7 +106,7 @@ export default function CTA() {
           */}
           <div className="hidden lg:flex absolute right-6 xl:right-16 bottom-0 items-end justify-center pointer-events-none z-20">
             <img
-              src="/images/CTA.png"
+              src="/images/CTA 1.png"
               alt="MyCardShare Mobile App Preview"
               className="w-[310px] xl:w-[350px] h-auto object-contain object-bottom drop-shadow-[0_30px_60px_rgba(0,0,0,0.55)] transition-transform duration-500 hover:scale-[1.02]"
             />
@@ -115,7 +115,7 @@ export default function CTA() {
           {/* Mobile & Tablet View: Clean Bottom Flush Placement with Overlap */}
           <div className="lg:hidden relative flex justify-center items-end mt-4 pt-4 px-4 z-20">
             <img
-              src="/images/CTA.png"
+              src="/images/CTA 1.png"
               alt="MyCardShare Mobile App Preview"
               className="w-[260px] sm:w-[300px] h-auto object-contain object-bottom drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)]"
             />

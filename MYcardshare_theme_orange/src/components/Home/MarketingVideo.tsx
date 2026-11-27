@@ -12,7 +12,7 @@ export default function MarketingVideo() {
   }, []);
 
   return (
-    <section className="relative w-full -mt-8 sm:-mt-12 lg:-mt-16 z-20">
+    <section className="relative w-full -mt-6 sm:-mt-10 lg:-mt-16 z-20">
       
       {/* ================= SPLIT BACKGROUND (DARK ON TOP, LIGHT ON BOTTOM) ================= */}
       {/* 
@@ -21,7 +21,7 @@ export default function MarketingVideo() {
       */}
       <div className="absolute inset-0 pointer-events-none flex flex-col">
         {/* Top Dark Background: covers Header + top 50% of Video */}
-        <div className="relative w-full flex-1 bg-[#0D0B0A] text-white rounded-t-[36px] sm:rounded-t-[48px] lg:rounded-t-[64px] border-t border-white/15 shadow-[0_-25px_60px_rgba(0,0,0,0.6)] overflow-hidden">
+        <div className="relative w-full flex-1 bg-[#0D0B0A] text-white rounded-t-[28px] sm:rounded-t-[48px] lg:rounded-t-[64px] border-t border-white/15 shadow-[0_-25px_60px_rgba(0,0,0,0.6)] overflow-hidden">
           {/* Top Ambient Glow Accent in Theme Matte Orange (#D4642C) */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 max-w-2xl h-[2px] bg-gradient-to-r from-transparent via-[#D4642C]/60 to-transparent" />
 
@@ -31,22 +31,22 @@ export default function MarketingVideo() {
         </div>
 
         {/* Bottom Light Theme Background: starts at half video and flows down */}
-        <div className="w-full h-[240px] sm:h-[340px] lg:h-[480px] bg-[#FAF6F2] relative border-b border-neutral-200/40">
+        <div className="w-full h-[180px] sm:h-[300px] lg:h-[440px] bg-[#FAF6F2] relative border-b border-neutral-200/40">
           {/* Subtle Warm Tone Reflection on the Light Surface */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 max-w-3xl h-[120px] bg-[#D4642C]/5 rounded-full blur-[80px]" />
         </div>
       </div>
 
       {/* ================= FOREGROUND CONTENT ================= */}
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-24 lg:pt-28 pb-16 sm:pb-24 lg:pb-28 z-10">
+      <div className="relative max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-10 sm:pt-20 lg:pt-28 pb-10 sm:pb-20 lg:pb-28 z-10">
         
         {/* ================= TOP HEADER AREA ================= */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-end mb-12 sm:mb-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8 lg:gap-12 items-end mb-8 sm:mb-12 lg:mb-16">
           
           {/* Left Column: Title & Badge */}
-          <div className="lg:col-span-7 space-y-4">
+          <div className="lg:col-span-7 space-y-2.5 sm:space-y-4">
             {/* Main Headline with Theme Orange Highlight */}
-            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white uppercase leading-[1.08]">
+            <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-white uppercase leading-[1.08]">
               SEE HOW IT <br className="hidden sm:inline" />
               <span className="bg-gradient-to-r from-white via-neutral-100 to-[#FFA370] bg-clip-text text-transparent">
                 WORKS IN{" "}
@@ -57,47 +57,47 @@ export default function MarketingVideo() {
             </h2>
 
             {/* Small Established / Platform Status Tag */}
-            <div className="flex items-center gap-3 pt-1">
-              <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-widest">
+            <div className="flex items-center gap-2 sm:gap-3 pt-0.5">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-neutral-500 uppercase tracking-widest">
                 Platform
               </span>
-              <span className="px-2.5 py-0.5 rounded-md bg-[#D4642C]/15 border border-[#D4642C]/30 text-xs font-bold text-[#FFA370]">
+              <span className="px-2 sm:px-2.5 py-0.5 rounded-md bg-[#D4642C]/15 border border-[#D4642C]/30 text-[11px] sm:text-xs font-bold text-[#FFA370]">
                 v2.6 Live
               </span>
             </div>
           </div>
 
           {/* Right Column: Description + Metrics Row */}
-          <div className="lg:col-span-5 flex flex-col justify-between space-y-6">
-            <p className="text-sm sm:text-base text-neutral-400 font-normal leading-relaxed max-w-md">
+          <div className="lg:col-span-5 flex flex-col justify-between space-y-4 sm:space-y-6">
+            <p className="text-xs sm:text-sm md:text-base text-neutral-400 font-normal leading-relaxed max-w-md">
               A frictionless digital card experience natively embedded in modern networking workflows.
             </p>
 
             {/* Metrics Row */}
-            <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/10">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-3 sm:pt-4 border-t border-white/10">
               <div>
-                <div className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                <div className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight">
                   +90%
                 </div>
-                <div className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-neutral-500 mt-1">
+                <div className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-wider text-neutral-400 mt-0.5 sm:mt-1">
                   Faster Access
                 </div>
               </div>
 
               <div>
-                <div className="text-2xl sm:text-3xl font-black text-[#FFA370] tracking-tight">
+                <div className="text-xl sm:text-2xl md:text-3xl font-black text-[#FFA370] tracking-tight">
                   100%
                 </div>
-                <div className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-neutral-500 mt-1">
+                <div className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-wider text-neutral-400 mt-0.5 sm:mt-1">
                   Compatibility
                 </div>
               </div>
 
               <div>
-                <div className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                <div className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight">
                   50K+
                 </div>
-                <div className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-neutral-500 mt-1">
+                <div className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-wider text-neutral-400 mt-0.5 sm:mt-1">
                   Cards Shared
                 </div>
               </div>
@@ -107,9 +107,9 @@ export default function MarketingVideo() {
         </div>
 
         {/* ================= VIDEO SHOWCASE CONTAINER (LOOPING MUTED VIDEO) ================= */}
-        <div className="relative w-full rounded-[28px] sm:rounded-[36px] lg:rounded-[44px] overflow-hidden border border-white/15 shadow-[0_25px_70px_rgba(0,0,0,0.6)] group">
+        <div className="relative w-full rounded-2xl sm:rounded-[36px] lg:rounded-[44px] overflow-hidden border border-white/15 shadow-[0_25px_70px_rgba(0,0,0,0.6)] group">
           
-          <div className="relative w-full aspect-[16/9] min-h-[340px] sm:min-h-[460px] lg:min-h-[580px] bg-gradient-to-tr from-[#141110] via-[#1F1916] to-[#2B201B]">
+          <div className="relative w-full aspect-[16/9] min-h-[220px] sm:min-h-[420px] lg:min-h-[560px] bg-gradient-to-tr from-[#141110] via-[#1F1916] to-[#2B201B]">
             
             {/* Native Looping HTML5 Video */}
             <video
@@ -128,13 +128,13 @@ export default function MarketingVideo() {
             <div className="absolute inset-0 bg-gradient-to-tr from-[#D4642C]/10 via-transparent to-black/30 pointer-events-none" />
 
             {/* Bottom Bar Info on Video */}
-            <div className="absolute bottom-4 sm:bottom-6 inset-x-4 sm:inset-x-8 flex items-center justify-between text-xs sm:text-sm text-neutral-300 z-10 pointer-events-none">
+            <div className="absolute bottom-3 sm:bottom-6 inset-x-3 sm:inset-x-8 flex items-center justify-between text-[11px] sm:text-sm text-neutral-300 z-10 pointer-events-none">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-white drop-shadow-md">
-                  Watch how top teams share & connect in 3 seconds
+                <span className="font-semibold text-white drop-shadow-md truncate">
+                  Watch how top teams share &amp; connect in 3 seconds
                 </span>
               </div>
-              <div className="hidden sm:flex items-center gap-4 text-neutral-300 drop-shadow-md">
+              <div className="hidden sm:flex items-center gap-4 text-neutral-300 drop-shadow-md shrink-0">
                 <span>NFC Tap</span>
                 <span>•</span>
                 <span>Instant QR</span>

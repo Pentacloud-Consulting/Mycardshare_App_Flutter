@@ -1,25 +1,15 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { Volume2, VolumeX } from "lucide-react";
+import React, { useRef, useEffect } from "react";
 
 export default function MarketingVideo() {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isMuted, setIsMuted] = useState(true);
 
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.play().catch(() => {});
     }
   }, []);
-
-  const toggleSound = () => {
-    if (videoRef.current) {
-      const nextMuted = !isMuted;
-      videoRef.current.muted = nextMuted;
-      setIsMuted(nextMuted);
-    }
-  };
 
   return (
     <section className="relative w-full -mt-8 sm:-mt-12 lg:-mt-16 z-20">
@@ -136,18 +126,6 @@ export default function MarketingVideo() {
             {/* Dark Cinematic Vignette & Ambient Warm Orange Gradient Overlays */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/20 pointer-events-none" />
             <div className="absolute inset-0 bg-gradient-to-tr from-[#D4642C]/10 via-transparent to-black/30 pointer-events-none" />
-
-            {/* Audio Toggle Control (Top Right) */}
-            <div className="absolute top-4 sm:top-6 right-4 sm:right-6 z-20">
-              <button
-                type="button"
-                onClick={toggleSound}
-                aria-label={isMuted ? "Unmute video" : "Mute video"}
-                className="w-10 h-10 rounded-full bg-black/60 hover:bg-black/90 text-white/90 hover:text-white border border-white/20 backdrop-blur-md flex items-center justify-center transition-all duration-200 cursor-pointer shadow-lg hover:scale-105"
-              >
-                {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-[#FFA370]" />}
-              </button>
-            </div>
 
             {/* Bottom Bar Info on Video */}
             <div className="absolute bottom-4 sm:bottom-6 inset-x-4 sm:inset-x-8 flex items-center justify-between text-xs sm:text-sm text-neutral-300 z-10 pointer-events-none">

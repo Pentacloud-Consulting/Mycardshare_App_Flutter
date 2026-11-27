@@ -2,7 +2,7 @@ import Link from "next/link";
 import {
   Twitter,
   Linkedin,
-  Github,
+  Facebook,
   Instagram,
   Mail,
   Phone,
@@ -44,10 +44,26 @@ const LINK_GROUPS = [
 ];
 
 const SOCIALS = [
-  { icon: Linkedin, href: "#", label: "LinkedIn" },
-  { icon: Instagram, href: "#", label: "Instagram" },
-  { icon: Github, href: "#", label: "GitHub" },
-  { icon: Twitter, href: "#", label: "Twitter" },
+  {
+    icon: Linkedin,
+    href: "https://www.linkedin.com/company/pentacloudconsulting/",
+    label: "LinkedIn",
+  },
+  {
+    icon: Instagram,
+    href: "https://www.instagram.com/pentacloudconsulting/",
+    label: "Instagram",
+  },
+  {
+    icon: Facebook,
+    href: "https://www.facebook.com/profile.php?id=61573242994665&mibextid=wwXIfr&rdid=a9vdt4aEsAkRZwBi&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1CP9RauVy6%2F%3Fmibextid%3DwwXIfr#",
+    label: "Facebook",
+  },
+  {
+    icon: Twitter,
+    href: "https://x.com/pentacloudind?s=21",
+    label: "X (Twitter)",
+  },
 ];
 
 export default function Footer() {
@@ -150,6 +166,8 @@ export default function Footer() {
               <a
                 key={label}
                 href={href}
+                target="_blank"
+                rel="noopener noreferrer"
                 aria-label={label}
                 className="w-9 h-9 rounded-full bg-[#FAF6F2] hover:bg-white border border-[#EFE8E1] hover:border-[#D4642C]/40 flex items-center justify-center text-stone-500 hover:text-[#D4642C] transition-all duration-300 shadow-xs"
               >

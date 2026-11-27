@@ -174,7 +174,7 @@ export default function Footer() {
           <div className="flex items-center gap-3 order-1 sm:order-2">
             {/* LinkedIn */}
             <a
-              href="https://linkedin.com"
+              href="https://www.linkedin.com/company/pentacloudconsulting/"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="LinkedIn"
@@ -187,7 +187,7 @@ export default function Footer() {
 
             {/* Instagram */}
             <a
-              href="https://instagram.com"
+              href="https://www.instagram.com/pentacloudconsulting/"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram"
@@ -198,24 +198,22 @@ export default function Footer() {
               </svg>
             </a>
 
-            {/* Network / Share */}
+            {/* Facebook */}
             <a
-              href="#network"
-              aria-label="Network"
+              href="https://www.facebook.com/profile.php?id=61573242994665&mibextid=wwXIfr&rdid=a9vdt4aEsAkRZwBi&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1CP9RauVy6%2F%3Fmibextid%3DwwXIfr#"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Facebook"
               className="w-9 h-9 rounded-full border border-neutral-200 flex items-center justify-center text-neutral-500 hover:text-[#D4642C] hover:border-[#D4642C] hover:bg-[#FAF6F2] transition-all duration-200 hover:scale-105"
             >
-              <svg className="w-4 h-4 fill-none stroke-currentColor stroke-width-2 stroke-linecap-round stroke-linejoin-round" viewBox="0 0 24 24">
-                <circle cx="18" cy="5" r="3" />
-                <circle cx="6" cy="12" r="3" />
-                <circle cx="18" cy="19" r="3" />
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+              <svg className="w-4 h-4 fill-currentColor" viewBox="0 0 24 24">
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
               </svg>
             </a>
 
             {/* X / Twitter */}
             <a
-              href="https://x.com"
+              href="https://x.com/pentacloudind?s=21"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Twitter"

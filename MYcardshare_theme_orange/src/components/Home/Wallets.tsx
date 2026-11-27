@@ -5,7 +5,7 @@ import { ParallaxStrip } from "@/components/ContentBlocks/Pagination/tsx/Paralla
 
 export default function Wallets() {
   return (
-    <section className="relative w-full bg-[#FAF6F2] pt-8 sm:pt-10 lg:pt-12 pb-3 sm:pb-4 lg:pb-5 overflow-hidden border-b border-[#EFE6DD]">
+    <section className="relative w-full bg-[#FAF6F2] pt-8 sm:pt-10 lg:pt-12 pb-6 sm:pb-8 lg:pb-10 overflow-hidden border-b border-[#EFE6DD]">
       {/* Subtle ambient warm lighting accents */}
       <div className="absolute top-1/4 -right-32 w-80 h-80 bg-[#D4642C]/8 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-10 -left-32 w-80 h-80 bg-[#D4642C]/6 rounded-full blur-[100px] pointer-events-none" />

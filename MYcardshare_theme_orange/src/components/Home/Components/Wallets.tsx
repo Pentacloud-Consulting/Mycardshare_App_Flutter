@@ -5,7 +5,7 @@ import { ParallaxStrip } from "@/components/ContentBlocks/Pagination/tsx/Paralla
 
 export default function Wallets() {
   return (
-    <section className="relative w-full bg-[#FAF6F2] py-16 sm:py-20 lg:py-24 overflow-hidden border-b border-[#EFE6DD]">
+    <section className="relative w-full bg-[#FAF6F2] pt-8 sm:pt-10 lg:pt-12 pb-6 sm:pb-8 lg:pb-10 overflow-hidden border-b border-[#EFE6DD]">
       {/* Subtle ambient warm lighting accents */}
       <div className="absolute top-1/4 -right-32 w-80 h-80 bg-[#D4642C]/8 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-10 -left-32 w-80 h-80 bg-[#D4642C]/6 rounded-full blur-[100px] pointer-events-none" />
@@ -13,7 +13,7 @@ export default function Wallets() {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
         
         {/* ================= SECTION HEADER ================= */}
-        <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
+        <div className="text-center max-w-2xl mx-auto mb-6 sm:mb-8">
           {/* Top Pill Badge */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#F6E3D8] text-[#B85222] border border-[#D4642C]/20 mb-3.5">
             <span className="w-1.5 h-1.5 rounded-full bg-[#D4642C] animate-pulse" />

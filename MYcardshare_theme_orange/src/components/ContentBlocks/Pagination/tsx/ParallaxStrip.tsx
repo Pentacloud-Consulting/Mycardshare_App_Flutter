@@ -3,11 +3,23 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import {
+  Wifi,
+  QrCode,
+  ShieldCheck,
+  Sparkles,
+  Lock,
+  Clock,
+  Phone,
+  Mail,
+  CheckCircle2,
+  Share2,
+  ExternalLink
+} from 'lucide-react';
 
 // ================= WALLET ICONS =================
 const GoogleWalletIcon: React.FC<{ className?: string }> = ({ className = "w-6 h-6" }) => (
   <svg viewBox="0 0 24 24" className={className} fill="none">
-    {/* Google 4-color stylized emblem inside a circular emblem */}
     <path
       d="M21.35 11.1H12v3.16h5.36c-.23 1.25-.94 2.31-2 3.02v2.51h3.24c1.89-1.74 2.98-4.3 2.98-7.39 0-.44-.04-.88-.23-1.3z"
       fill="#4285F4"
@@ -42,11 +54,49 @@ const SamsungWalletIcon: React.FC<{ className?: string }> = ({ className = "w-6 
   </svg>
 );
 
-// ================= ORANGE THEMED TOPOGRAPHIC WAVES (REPLACING BLUE WITH ORANGE) =================
+// ================= SHARP SVG QR CODE =================
+const CardQRCode: React.FC<{ className?: string }> = ({ className = "w-20 h-20" }) => (
+  <svg viewBox="0 0 100 100" className={cn("bg-white p-1.5 rounded-xl shadow-md shrink-0", className)}>
+    {/* Finder Top-Left */}
+    <rect x="10" y="10" width="28" height="28" fill="#1A110B" rx="4" />
+    <rect x="16" y="16" width="16" height="16" fill="#FFFFFF" rx="2" />
+    <rect x="20" y="20" width="8" height="8" fill="#D4642C" rx="1.5" />
+    
+    {/* Finder Top-Right */}
+    <rect x="62" y="10" width="28" height="28" fill="#1A110B" rx="4" />
+    <rect x="68" y="16" width="16" height="16" fill="#FFFFFF" rx="2" />
+    <rect x="72" y="20" width="8" height="8" fill="#D4642C" rx="1.5" />
+    
+    {/* Finder Bottom-Left */}
+    <rect x="10" y="62" width="28" height="28" fill="#1A110B" rx="4" />
+    <rect x="16" y="68" width="16" height="16" fill="#FFFFFF" rx="2" />
+    <rect x="20" y="72" width="8" height="8" fill="#D4642C" rx="1.5" />
+    
+    {/* QR Data modules */}
+    <rect x="44" y="12" width="6" height="6" fill="#1A110B" />
+    <rect x="52" y="18" width="6" height="6" fill="#1A110B" />
+    <rect x="44" y="26" width="6" height="6" fill="#1A110B" />
+    <rect x="12" y="44" width="6" height="6" fill="#1A110B" />
+    <rect x="22" y="48" width="6" height="6" fill="#1A110B" />
+    <rect x="32" y="44" width="6" height="6" fill="#1A110B" />
+    <rect x="44" y="44" width="12" height="12" fill="#D4642C" rx="2" />
+    <rect x="62" y="44" width="6" height="6" fill="#1A110B" />
+    <rect x="74" y="48" width="6" height="6" fill="#1A110B" />
+    <rect x="84" y="44" width="6" height="6" fill="#1A110B" />
+    <rect x="44" y="62" width="6" height="6" fill="#1A110B" />
+    <rect x="54" y="68" width="6" height="6" fill="#1A110B" />
+    <rect x="44" y="78" width="6" height="6" fill="#1A110B" />
+    <rect x="64" y="64" width="6" height="6" fill="#1A110B" />
+    <rect x="74" y="72" width="6" height="6" fill="#1A110B" />
+    <rect x="82" y="64" width="6" height="6" fill="#1A110B" />
+    <rect x="68" y="82" width="6" height="6" fill="#1A110B" />
+    <rect x="80" y="80" width="8" height="8" fill="#1A110B" />
+  </svg>
+);
+
+// ================= ORANGE THEMED TOPOGRAPHIC WAVES =================
 const OrangeWaveVisual: React.FC<{ variant?: number }> = ({ variant = 0 }) => {
-  // Variations in wave frequency / height for different wallet passes
   const waveSets = [
-    // Variant 0: Google Wallet Flow
     [
       "M-100,60 C200,120 500,10 800,140 1100,280 1400,90 1600,130",
       "M-100,90 C220,150 520,30 820,170 1120,310 1420,120 1600,160",
@@ -59,7 +109,6 @@ const OrangeWaveVisual: React.FC<{ variant?: number }> = ({ variant = 0 }) => {
       "M-100,300 C360,360 660,170 960,380 1260,520 1560,330 1600,370",
       "M-100,330 C380,390 680,190 980,410 1280,550 1580,360 1600,400",
     ],
-    // Variant 1: Apple Wallet Flow
     [
       "M-100,40 C180,140 480,-10 780,110 1080,250 1380,70 1600,100",
       "M-100,70 C200,170 500,10 800,140 1100,280 1400,100 1600,130",
@@ -72,7 +121,6 @@ const OrangeWaveVisual: React.FC<{ variant?: number }> = ({ variant = 0 }) => {
       "M-100,280 C340,380 640,150 940,350 1240,490 1540,310 1600,340",
       "M-100,310 C360,410 660,170 960,380 1260,520 1560,340 1600,370",
     ],
-    // Variant 2: Samsung Wallet Flow
     [
       "M-100,80 C220,100 520,40 820,160 1120,290 1420,110 1600,150",
       "M-100,110 C240,130 540,60 840,190 1140,320 1440,140 1600,180",
@@ -90,45 +138,34 @@ const OrangeWaveVisual: React.FC<{ variant?: number }> = ({ variant = 0 }) => {
   const currentWaves = waveSets[variant % waveSets.length];
 
   return (
-    <div className="absolute inset-0 w-full h-full bg-[#1A0E08] overflow-hidden">
-      {/* Deep warm glowing orange background mesh */}
+    <div className="absolute inset-0 w-full h-full bg-[#140A05] overflow-hidden pointer-events-none">
       <div className="absolute inset-0 bg-gradient-to-br from-[#120804] via-[#221006] to-[#0A0402]" />
-      
-      {/* Central radiating ember glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-[#D4642C]/28 rounded-full blur-[110px] pointer-events-none" />
-      <div className="absolute top-10 right-20 w-[400px] h-[250px] bg-[#FFA370]/15 rounded-full blur-[90px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-[#D4642C]/24 rounded-full blur-[110px]" />
+      <div className="absolute top-10 right-20 w-[400px] h-[250px] bg-[#FFA370]/12 rounded-full blur-[90px]" />
 
-      {/* Topographic 3D Orange Waves SVG */}
-      <svg
-        viewBox="0 0 1500 450"
-        preserveAspectRatio="xMidYMid slice"
-        className="absolute inset-0 w-full h-full opacity-90"
-      >
+      <svg viewBox="0 0 1500 450" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full opacity-80">
         <defs>
           <linearGradient id={`orangeWaveGrad-${variant}`} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#FFA370" stopOpacity="0.9" />
-            <stop offset="45%" stopColor="#D4642C" stopOpacity="0.75" />
-            <stop offset="85%" stopColor="#8A3410" stopOpacity="0.4" />
+            <stop offset="0%" stopColor="#FFA370" stopOpacity="0.85" />
+            <stop offset="45%" stopColor="#D4642C" stopOpacity="0.65" />
+            <stop offset="85%" stopColor="#8A3410" stopOpacity="0.3" />
             <stop offset="100%" stopColor="#3D1504" stopOpacity="0.1" />
           </linearGradient>
-
           <linearGradient id={`waveShadow-${variant}`} x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#D4642C" stopOpacity="0.18" />
+            <stop offset="0%" stopColor="#D4642C" stopOpacity="0.15" />
             <stop offset="100%" stopColor="#0D0603" stopOpacity="0.7" />
           </linearGradient>
         </defs>
 
-        {/* Shaded topographic wave bands */}
         {currentWaves.map((d, idx) => (
           <path
             key={`band-${idx}`}
             d={`${d} L1600,500 L-100,500 Z`}
             fill={`url(#waveShadow-${variant})`}
-            opacity={0.06 + idx * 0.015}
+            opacity={0.05 + idx * 0.012}
           />
         ))}
 
-        {/* Glowing Orange Contour Lines */}
         {currentWaves.map((d, idx) => {
           const isKeyStroke = idx % 2 === 0;
           return (
@@ -137,22 +174,281 @@ const OrangeWaveVisual: React.FC<{ variant?: number }> = ({ variant = 0 }) => {
               d={d}
               fill="none"
               stroke={`url(#orangeWaveGrad-${variant})`}
-              strokeWidth={isKeyStroke ? 2.4 : 1.5}
-              strokeOpacity={isKeyStroke ? 0.75 : 0.45}
+              strokeWidth={isKeyStroke ? 2.2 : 1.4}
+              strokeOpacity={isKeyStroke ? 0.7 : 0.4}
               strokeLinecap="round"
             />
           );
         })}
       </svg>
-
-      {/* Subtle top/bottom edge vignette */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 pointer-events-none" />
-      <div className="absolute inset-0 bg-radial from-transparent via-transparent to-black/50 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40" />
     </div>
   );
 };
 
-// ================= 3 WALLET SPECIFICATIONS =================
+// ================= REAL CARD PASS 1: GOOGLE WALLET PASS =================
+const GoogleWalletCardPass: React.FC = () => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -20, scale: 0.95 }}
+      transition={{ type: "spring", stiffness: 220, damping: 22 }}
+      className="relative w-full max-w-[480px] sm:max-w-[510px] mx-auto rounded-3xl bg-gradient-to-b from-[#1F1916]/95 via-[#181210]/98 to-[#100B09] border border-white/15 p-5 sm:p-6 shadow-[0_25px_60px_rgba(0,0,0,0.7),0_0_40px_rgba(212,100,44,0.18)] backdrop-blur-xl overflow-hidden group"
+    >
+      {/* Light sheen animation */}
+      <div className="absolute -inset-full bg-gradient-to-r from-transparent via-white/5 to-transparent rotate-45 pointer-events-none group-hover:translate-x-full transition-transform duration-1000" />
+
+      {/* Card Header (Google Wallet styling) */}
+      <div className="flex items-center justify-between pb-4 border-b border-white/10">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center p-1.5 shadow-xs">
+            <GoogleWalletIcon className="w-full h-full" />
+          </div>
+          <div>
+            <div className="text-[13px] font-bold text-white tracking-tight flex items-center gap-1.5">
+              <span>Google Wallet</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34D399]" />
+            </div>
+            <div className="text-[10px] text-neutral-400 uppercase tracking-widest font-semibold">Digital Business Pass</div>
+          </div>
+        </div>
+
+        {/* Smart Tap / NFC Badge */}
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-semibold text-neutral-300">
+          <Wifi className="w-3.5 h-3.5 text-[#D4642C] rotate-90" />
+          <span>Smart Tap</span>
+        </div>
+      </div>
+
+      {/* Main Body */}
+      <div className="mt-4 flex items-center justify-between gap-4">
+        {/* Left: User Details */}
+        <div className="flex-1 min-w-0">
+          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#D4642C]/15 border border-[#D4642C]/30 text-[10px] font-bold text-[#FFA370] uppercase tracking-wider mb-2">
+            <Sparkles className="w-2.5 h-2.5 text-[#D4642C]" />
+            <span>MYCARDSHARE PASS</span>
+          </div>
+
+          <h4 className="text-xl sm:text-2xl font-black text-white tracking-tight truncate">
+            Alex Rivers
+          </h4>
+          <p className="text-xs sm:text-sm font-semibold text-[#FFA370] tracking-tight truncate mt-0.5">
+            Founder &amp; Chief Executive Officer
+          </p>
+          <p className="text-[11px] text-neutral-400 truncate mt-0.5 font-medium">
+            Pentacloud Technologies • Dubai
+          </p>
+
+          {/* Quick Contact Chips */}
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-black/40 border border-white/5 text-[10px] text-neutral-300">
+              <Phone className="w-2.5 h-2.5 text-[#D4642C]" />
+              <span>+1 (555) 0192</span>
+            </span>
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-black/40 border border-white/5 text-[10px] text-neutral-300">
+              <Mail className="w-2.5 h-2.5 text-[#D4642C]" />
+              <span>alex@rivers.co</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Right: Dynamic QR Code */}
+        <div className="flex flex-col items-center shrink-0">
+          <CardQRCode className="w-20 h-20 sm:w-22 sm:h-22" />
+          <span className="text-[9px] font-mono text-neutral-400 mt-1 uppercase tracking-wider">
+            Scan to Sync
+          </span>
+        </div>
+      </div>
+
+      {/* Card Footer Bar */}
+      <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-[10px] text-neutral-400">
+        <div className="flex items-center gap-1.5">
+          <span className="font-mono text-neutral-300 font-semibold">PASS #MCS-88294</span>
+          <span>•</span>
+          <span className="text-emerald-400 font-medium flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+            Verified Active
+          </span>
+        </div>
+
+        {/* Google 4-Color Strip accent */}
+        <div className="flex items-center gap-0.5">
+          <span className="w-2.5 h-1 rounded-full bg-[#4285F4]" />
+          <span className="w-2.5 h-1 rounded-full bg-[#EA4335]" />
+          <span className="w-2.5 h-1 rounded-full bg-[#FBBC05]" />
+          <span className="w-2.5 h-1 rounded-full bg-[#34A853]" />
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// ================= REAL CARD PASS 2: APPLE WALLET PASS =================
+const AppleWalletCardPass: React.FC = () => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -20, scale: 0.95 }}
+      transition={{ type: "spring", stiffness: 220, damping: 22 }}
+      className="relative w-full max-w-[480px] sm:max-w-[510px] mx-auto rounded-3xl bg-gradient-to-b from-[#211A16]/95 via-[#18120F]/98 to-[#0E0907] border border-[#D4642C]/30 p-5 sm:p-6 shadow-[0_25px_60px_rgba(0,0,0,0.7),0_0_40px_rgba(212,100,44,0.22)] backdrop-blur-xl overflow-hidden group"
+    >
+      {/* Apple Pass Top Cutout Notch Accent */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-1 bg-[#D4642C]/40 rounded-b-md" />
+
+      {/* Card Header (Apple Wallet Pass styling) */}
+      <div className="flex items-center justify-between pb-3.5 border-b border-white/10">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-black/60 border border-white/10 flex items-center justify-center text-white">
+            <AppleWalletIcon className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-white tracking-wide uppercase font-['Space_Grotesk']">
+              Apple Wallet Pass
+            </div>
+            <div className="text-[10px] text-[#FFA370] font-mono tracking-wider font-semibold">
+              MYCARDSHARE • OFFICIAL ID
+            </div>
+          </div>
+        </div>
+
+        {/* NFC Tap Wave Symbol */}
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#D4642C]/15 border border-[#D4642C]/35 text-[11px] font-semibold text-[#FFA370]">
+          <Wifi className="w-3.5 h-3.5 rotate-90" />
+          <span>NFC Tap Ready</span>
+        </div>
+      </div>
+
+      {/* Main Apple Pass Grid */}
+      <div className="mt-4 flex items-center justify-between gap-4">
+        {/* Pass Info */}
+        <div className="flex-1 min-w-0">
+          <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest font-mono">
+            CARDHOLDER
+          </div>
+          <h4 className="text-xl sm:text-2xl font-black text-white tracking-tight truncate mt-0.5">
+            Alex Rivers
+          </h4>
+          <p className="text-xs sm:text-sm font-semibold text-[#F18F58] tracking-tight truncate">
+            VP of Global Partnerships
+          </p>
+          <p className="text-[11px] text-neutral-400 font-medium truncate mt-0.5">
+            MyCardShare Global Network
+          </p>
+
+          {/* Apple Wallet Metadata Grid */}
+          <div className="grid grid-cols-2 gap-2 mt-3 pt-2.5 border-t border-white/5">
+            <div>
+              <div className="text-[9px] text-neutral-400 uppercase font-mono font-semibold">PASS TYPE</div>
+              <div className="text-xs font-bold text-white tracking-tight">Executive Elite</div>
+            </div>
+            <div>
+              <div className="text-[9px] text-neutral-400 uppercase font-mono font-semibold">SECURITY</div>
+              <div className="text-xs font-bold text-emerald-400 flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                FaceID / TouchID
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Apple Wallet Aztec/QR Code */}
+        <div className="flex flex-col items-center shrink-0">
+          <CardQRCode className="w-20 h-20 sm:w-22 sm:h-22" />
+          <span className="text-[9px] font-mono text-neutral-400 mt-1 uppercase tracking-wider">
+            Instant Pass
+          </span>
+        </div>
+      </div>
+
+      {/* Apple Pass Bottom Perforated Divider */}
+      <div className="mt-4 pt-3 border-t border-dashed border-white/15 flex items-center justify-between text-[10px] text-neutral-400">
+        <span className="font-mono text-neutral-300">PASS ID: PKP-2026-9482</span>
+        <span className="text-[#FFA370] font-semibold flex items-center gap-1">
+          <Sparkles className="w-3 h-3 text-[#D4642C]" />
+          Instant Offline Access
+        </span>
+      </div>
+    </motion.div>
+  );
+};
+
+// ================= REAL CARD PASS 3: SAMSUNG WALLET (COMING SOON) =================
+const SamsungWalletCardPass: React.FC = () => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -20, scale: 0.95 }}
+      transition={{ type: "spring", stiffness: 220, damping: 22 }}
+      className="relative w-full max-w-[480px] sm:max-w-[510px] mx-auto rounded-3xl bg-gradient-to-b from-[#1C1410]/95 via-[#160E0A]/98 to-[#0E0805] border-2 border-dashed border-[#D4642C]/40 p-5 sm:p-6 shadow-[0_25px_60px_rgba(0,0,0,0.7),0_0_40px_rgba(212,100,44,0.15)] backdrop-blur-xl overflow-hidden text-center group"
+    >
+      {/* Blueprint Grid Ambient Overlay */}
+      <div className="absolute inset-0 bg-[radial-gradient(#D4642C_1px,transparent_1px)] [background-size:16px_16px] opacity-15 pointer-events-none" />
+
+      {/* Top Header */}
+      <div className="flex items-center justify-between pb-3.5 border-b border-white/10 relative z-10">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-[#D4642C]/15 border border-[#D4642C]/30 flex items-center justify-center text-[#FFA370]">
+            <SamsungWalletIcon className="w-4 h-4 text-[#FFA370]" />
+          </div>
+          <span className="text-xs font-bold text-white tracking-wide uppercase font-['Space_Grotesk']">
+            Samsung Wallet
+          </span>
+        </div>
+
+        {/* COMING SOON BADGE */}
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-[#D4642C] to-[#E2763E] text-white text-[10px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(212,100,44,0.6)] animate-pulse">
+          <Clock className="w-3 h-3 text-white" />
+          <span>COMING SOON</span>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="mt-5 py-2 relative z-10 flex flex-col items-center">
+        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#2D180E] to-[#1A0E08] border border-[#D4642C]/40 flex items-center justify-center text-[#FFA370] shadow-[0_0_25px_rgba(212,100,44,0.3)] mb-3">
+          <Lock className="w-6 h-6 text-[#FFA370]" />
+        </div>
+
+        <h4 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+          Samsung Wallet Pass Integration
+        </h4>
+        <p className="mt-2 text-xs sm:text-sm text-neutral-300 max-w-sm leading-relaxed">
+          Native digital pass architecture for Galaxy devices is currently in certification. One UI Quick-Access integration rolling out soon.
+        </p>
+
+        {/* Feature Highlights Pills */}
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+          <span className="px-2.5 py-1 rounded-lg bg-black/50 border border-white/10 text-[11px] text-neutral-300 font-medium flex items-center gap-1.5">
+            <ShieldCheck className="w-3 h-3 text-[#FFA370]" />
+            Samsung Knox Protected
+          </span>
+          <span className="px-2.5 py-1 rounded-lg bg-black/50 border border-white/10 text-[11px] text-neutral-300 font-medium flex items-center gap-1.5">
+            <Wifi className="w-3 h-3 text-[#FFA370] rotate-90" />
+            Quick Pay Bar Ready
+          </span>
+          <span className="px-2.5 py-1 rounded-lg bg-black/50 border border-white/10 text-[11px] text-neutral-300 font-medium flex items-center gap-1.5">
+            <Sparkles className="w-3 h-3 text-[#FFA370]" />
+            Galaxy One UI 6.0+
+          </span>
+        </div>
+      </div>
+
+      {/* Card Footer Bar */}
+      <div className="mt-5 pt-3 border-t border-white/10 flex items-center justify-between text-[10px] text-neutral-400 relative z-10">
+        <span className="font-mono text-neutral-400">STATUS: IN ACTIVE DEVELOPMENT</span>
+        <span className="text-[#FFA370] font-semibold flex items-center gap-1">
+          <Clock className="w-3 h-3 text-[#D4642C]" />
+          Expected Q2 2025
+        </span>
+      </div>
+    </motion.div>
+  );
+};
+
+// ================= WALLET DATA CONFIG =================
 interface WalletItem {
   id: string;
   name: string;
@@ -160,7 +456,9 @@ interface WalletItem {
   badge: string;
   tagline: string;
   headline: string;
+  isComingSoon?: boolean;
   icon: React.ReactNode;
+  cardComponent: React.ReactNode;
 }
 
 const WALLETS: WalletItem[] = [
@@ -172,6 +470,7 @@ const WALLETS: WalletItem[] = [
     tagline: "PASS EDITION 001 • GOOGLE WALLET",
     headline: "DIGITAL WALLET PASS",
     icon: <GoogleWalletIcon className="w-5 h-5 sm:w-6 sm:h-6" />,
+    cardComponent: <GoogleWalletCardPass />,
   },
   {
     id: "apple",
@@ -181,15 +480,18 @@ const WALLETS: WalletItem[] = [
     tagline: "PASS EDITION 002 • APPLE WALLET",
     headline: "DIGITAL WALLET PASS",
     icon: <AppleWalletIcon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />,
+    cardComponent: <AppleWalletCardPass />,
   },
   {
     id: "samsung",
     name: "Samsung Wallet",
     edition: "003",
-    badge: "SAMSUNG WALLET SUPPORTED",
-    tagline: "PASS EDITION 003 • SAMSUNG WALLET",
+    badge: "SAMSUNG WALLET • COMING SOON",
+    tagline: "PASS EDITION 003 • SAMSUNG WALLET (COMING SOON)",
     headline: "DIGITAL WALLET PASS",
+    isComingSoon: true,
     icon: <SamsungWalletIcon className="w-5 h-5 sm:w-6 sm:h-6 text-[#FFA370]" />,
+    cardComponent: <SamsungWalletCardPass />,
   },
 ];
 
@@ -198,60 +500,35 @@ export interface ParallaxStripProps {
   className?: string;
 }
 
-export const ParallaxStrip: React.FC<ParallaxStripProps> = ({
-  className
-}) => {
-  // 3 buttons: 1 = Google Wallet, 2 = Apple Wallet, 3 = Samsung Wallet
+export const ParallaxStrip: React.FC<ParallaxStripProps> = ({ className }) => {
+  // 1 = Google Wallet, 2 = Apple Wallet, 3 = Samsung Wallet
   const [page, setPage] = useState(1);
 
   return (
     <div className="w-full flex items-center justify-center px-4">
       <div className={cn("w-full max-w-5xl mx-auto flex flex-col items-center", className)}>
         
-        {/* ================= MAIN BOX (ORANGE THEME WAVES) ================= */}
-        <div className="relative w-full h-72 sm:h-80 md:h-96 overflow-hidden rounded-2xl bg-[#140B06] border border-[#D4642C]/30 shadow-[0_20px_60px_rgba(212,100,44,0.18),0_10px_30px_rgba(0,0,0,0.5)]">
-          <motion.div
-            className="flex h-full"
-            animate={{ x: `-${(page - 1) * 100}%` }}
-            transition={{ type: "spring", stiffness: 200, damping: 25 }}
-          >
-            {WALLETS.map((wallet, i) => (
-              <div key={wallet.id} className="min-w-full h-full relative overflow-hidden flex items-center justify-center">
-                
-                {/* Parallax Moving Orange Waves Background */}
-                <motion.div
-                  className="w-[120%] h-[120%] absolute inset-0 -top-[10%] -left-[10%]"
-                  animate={{ x: `${(page - 1 - i) * 15}%` }}
-                  transition={{ type: "spring", stiffness: 100, damping: 25 }}
-                >
-                  <OrangeWaveVisual variant={i} />
-                </motion.div>
+        {/* ================= MAIN DISPLAY BOX (WAVES + REAL ANIMATED CARDS) ================= */}
+        <div className="relative w-full min-h-[440px] sm:min-h-[460px] md:min-h-[480px] overflow-hidden rounded-3xl bg-[#140B06] border border-[#D4642C]/30 shadow-[0_20px_60px_rgba(212,100,44,0.18),0_10px_30px_rgba(0,0,0,0.5)] flex items-center justify-center p-4 sm:p-6 md:p-8">
+          
+          {/* Topographic Background Waves */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <OrangeWaveVisual variant={page - 1} />
+          </div>
 
-                {/* Central Typography Display (Matching Image 1 & 2 Layout Exactly) */}
-                <motion.div
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: page === i + 1 ? 1 : 0, y: page === i + 1 ? 0 : 16 }}
-                  transition={{ delay: 0.18 }}
-                  className="relative z-10 text-center select-none px-6"
-                >
-                  {/* Main Title: DIGITAL WALLET PASS */}
-                  <h3 className="text-3xl sm:text-5xl md:text-6xl font-black text-white uppercase tracking-tight font-['Space_Grotesk'] drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
-                    {wallet.headline}
-                  </h3>
-
-                  {/* Subtitle in Theme Peach Mono: PASS EDITION 00X • WALLET NAME */}
-                  <p className="text-[#FFA370] font-mono text-xs sm:text-sm md:text-base mt-2.5 tracking-[0.2em] uppercase font-semibold drop-shadow-sm">
-                    {wallet.tagline}
-                  </p>
-                </motion.div>
+          {/* Floating Real Wallet Pass Card Container */}
+          <div className="relative z-10 w-full flex items-center justify-center">
+            <AnimatePresence mode="wait">
+              <div key={WALLETS[page - 1].id} className="w-full flex justify-center">
+                {WALLETS[page - 1].cardComponent}
               </div>
-            ))}
-          </motion.div>
+            </AnimatePresence>
+          </div>
+
         </div>
 
         {/* ================= 3 CIRCLE BUTTONS PAGINATION STRIP ================= */}
-        {/* Only 3 buttons: Google Wallet, Apple Wallet, Samsung Wallet */}
-        <div className="mt-4 flex flex-col items-center gap-1.5">
+        <div className="mt-5 flex flex-col items-center gap-2">
           <div className="flex items-center gap-3.5 sm:gap-4 p-2.5 sm:p-3 bg-[#1A110B]/95 backdrop-blur-md rounded-full border border-[#D4642C]/30 shadow-[0_12px_32px_rgba(0,0,0,0.4),0_0_20px_rgba(212,100,44,0.15)]">
             {WALLETS.map((wallet, i) => {
               const isActive = page === i + 1;
@@ -262,7 +539,7 @@ export const ParallaxStrip: React.FC<ParallaxStripProps> = ({
                   onClick={() => setPage(i + 1)}
                   className="relative group cursor-pointer focus:outline-none"
                   aria-label={`Select ${wallet.name}`}
-                  title={wallet.name}
+                  title={wallet.isComingSoon ? `${wallet.name} (Coming Soon)` : wallet.name}
                 >
                   {/* Circle Box Button */}
                   <motion.div
@@ -286,6 +563,13 @@ export const ParallaxStrip: React.FC<ParallaxStripProps> = ({
                     <div className="relative z-10 transition-transform duration-200 group-hover:scale-105">
                       {wallet.icon}
                     </div>
+
+                    {/* Small 'SOON' Pill badge on Samsung button */}
+                    {wallet.isComingSoon && (
+                      <span className="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-gradient-to-r from-[#D4642C] to-[#E2763E] text-[8px] font-black text-white uppercase shadow-[0_0_8px_rgba(212,100,44,0.8)] border border-white/20">
+                        SOON
+                      </span>
+                    )}
                   </motion.div>
 
                   {/* Active Glowing Ring Indicator */}
@@ -307,6 +591,11 @@ export const ParallaxStrip: React.FC<ParallaxStripProps> = ({
             <span className="text-[#D4642C] font-bold font-['Space_Grotesk']">
               {WALLETS[page - 1].name}
             </span>
+            {WALLETS[page - 1].isComingSoon && (
+              <span className="px-2 py-0.5 rounded-full bg-[#D4642C]/15 border border-[#D4642C]/30 text-[10px] font-bold text-[#FFA370] uppercase">
+                Coming Soon
+              </span>
+            )}
           </div>
         </div>
 

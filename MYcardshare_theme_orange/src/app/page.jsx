@@ -1,4 +1,4 @@
-import HomeContent from "@/components/landing/HomeContent";
+import HomeContent from "@/components/Home/HomeContent";
 import { JsonLd, websiteSchema, softwareAppSchema } from "@/lib/schema";
 
 export const metadata = {

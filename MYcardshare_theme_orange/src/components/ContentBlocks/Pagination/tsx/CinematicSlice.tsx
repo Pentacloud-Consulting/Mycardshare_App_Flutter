@@ -263,49 +263,37 @@ export const CinematicSlice: React.FC<CinematicSliceProps> = ({
           style={{ backgroundColor: activeProduct.themeColor }}
         />
 
-        {/* Main Slicing Image Frame */}
+        {/* Main Image Frame */}
         <div className="relative w-full h-full rounded-3xl overflow-hidden bg-[#0D0B0A] shadow-2xl border border-white/12">
           <AnimatePresence mode="wait">
             <motion.div
               key={page}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.02 }}
+              transition={{
+                duration: 0.6,
+                ease: [0.16, 1, 0.3, 1],
+              }}
               className="relative w-full h-full"
             >
-              {/* 3 Slices Animation (Slicing the Realistic Card Showcase) */}
-              {[0, 1, 2].map((i) => (
-                <motion.div
-                  key={i}
-                  className="absolute inset-0 overflow-hidden"
-                  style={{
-                    clipPath: `inset(0 ${100 - (i + 1) * 33.33}% 0 ${i * 33.33}%)`
-                  }}
-                  initial={{ y: "100%" }}
-                  animate={{ y: "0%" }}
-                  exit={{ y: "-100%" }}
-                  transition={{
-                    duration: 0.8,
-                    ease: [0.16, 1, 0.3, 1],
-                    delay: i * 0.1
-                  }}
-                >
-                  {/* Rich Rendered MyCardShare Physical Card Visual */}
-                  <MyCardShareCardGraphic product={activeProduct} />
+              {/* Rich Rendered MyCardShare Physical Card Visual */}
+              <MyCardShareCardGraphic product={activeProduct} />
 
-                  {/* Diagonal Metallic Sheen Sweep */}
-                  <motion.div
-                    initial={{ x: '-100%' }}
-                    animate={{ x: '200%' }}
-                    transition={{ duration: 1, delay: 0.5 + (i * 0.1) }}
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 pointer-events-none"
-                  />
-                </motion.div>
-              ))}
+              {/* Diagonal Metallic Sheen Sweep */}
+              <motion.div
+                initial={{ x: "-100%" }}
+                animate={{ x: "200%" }}
+                transition={{ duration: 1.2, ease: "easeOut" }}
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent skew-x-12 pointer-events-none"
+              />
 
               {/* Text Content Overlay (Based on MyCardShare) */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                transition={{ delay: 0.45, duration: 0.7 }}
+                transition={{ delay: 0.2, duration: 0.5 }}
                 className="absolute bottom-8 left-6 sm:bottom-10 sm:left-10 z-20 pointer-events-none max-w-md sm:max-w-lg"
               >
                 {/* Pill Tag */}

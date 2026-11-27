@@ -16,6 +16,7 @@ import TailoredForYou from "@/components/Home/TailoredForYou";
 import OurProduct from "@/components/Home/OurProduct";
 import BlogSection from "@/components/Home/BlogSection";
 import CTA from "@/components/Home/CTA";
+import AppStoreModal from "@/components/Home/AppStoreModal";
 
 export default function HomeContent() {
   return (
@@ -64,6 +65,9 @@ export default function HomeContent() {
 
       {/* Existing Platform Footer */}
       <Footer />
+
+      {/* App Store Coming Soon Modal */}
+      <AppStoreModal />
     </>
   );
 }

@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { Sparkles, ArrowRight } from "lucide-react";
+import { triggerAppStoreModal } from "@/components/Home/AppStoreModal";
 
 export default function CTA() {
   return (
@@ -41,10 +42,11 @@ export default function CTA() {
             {/* ================= DOWNLOAD BUTTONS (IMAGE 1 DESIGN) ================= */}
             <div className="flex flex-wrap items-center gap-3 pt-1">
               
-              {/* Apple App Store Button */}
-              <Link
-                href="#app-store"
-                className="inline-flex items-center gap-3 px-5 py-2.5 bg-black hover:bg-neutral-900 text-white rounded-full border border-white/20 shadow-md transition-all duration-300 hover:scale-[1.03] active:scale-100 group"
+              {/* Apple App Store Button (Triggers Launching Soon Modal) */}
+              <button
+                type="button"
+                onClick={triggerAppStoreModal}
+                className="inline-flex items-center gap-3 px-5 py-2.5 bg-black hover:bg-neutral-900 text-white rounded-full border border-white/20 shadow-md transition-all duration-300 hover:scale-[1.03] active:scale-100 group cursor-pointer"
               >
                 {/* Crisp Apple Logo SVG */}
                 <svg className="w-5 h-5 fill-white shrink-0 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 384 512" fill="currentColor">
@@ -58,7 +60,7 @@ export default function CTA() {
                     App Store
                   </span>
                 </div>
-              </Link>
+              </button>
 
               {/* Google Play Store Button */}
               <a

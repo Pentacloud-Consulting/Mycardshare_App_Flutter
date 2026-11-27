@@ -44,14 +44,14 @@ export default function CTA() {
               {/* Apple App Store Button */}
               <Link
                 href="#app-store"
-                className="inline-flex items-center gap-2.5 px-4 sm:px-5 py-2.5 bg-black hover:bg-neutral-900 text-white rounded-xl border border-white/20 shadow-md transition-all duration-300 hover:scale-[1.03] active:scale-100 group"
+                className="inline-flex items-center gap-3 px-5 py-2.5 bg-black hover:bg-neutral-900 text-white rounded-full border border-white/20 shadow-md transition-all duration-300 hover:scale-[1.03] active:scale-100 group"
               >
                 {/* Crisp Apple Logo SVG */}
-                <svg className="w-5 h-5 fill-white transition-transform duration-300 group-hover:scale-110" viewBox="0 0 170 170">
-                  <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.69-3.08-7.7-7.94-12.04-14.59-6.3-9.69-11.23-20.47-14.78-32.33-3.55-11.86-5.33-23.2-5.33-34.02 0-14.07 3.37-26.04 10.11-35.91 6.74-9.87 15.54-14.93 26.4-15.18 5.43 0 11.23 1.5 17.41 4.5 6.18 3 10.27 4.56 12.28 4.67 1.56 0 5.86-1.63 12.91-4.89 7.05-3.26 13.1-4.66 18.15-4.2 13.59.87 24.32 5.99 32.18 15.36-11.85 7.18-17.65 17.07-17.41 29.69.24 9.9 4.09 18.27 11.55 25.12 7.46 6.85 16.3 10.77 26.52 11.75-2.29 7.07-5.22 14.36-8.79 21.89zM119.22 31.84c0-7.72 2.76-14.93 8.28-21.63 5.52-6.7 12.39-10.74 20.61-12.13.22 1.3.33 2.39.33 3.26 0 7.72-2.88 15.04-8.64 21.96-5.76 6.92-12.82 10.87-21.18 11.85-.22-1.09-.34-2.19-.34-3.31z" />
+                <svg className="w-5 h-5 fill-white shrink-0 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 384 512" fill="currentColor">
+                  <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z" />
                 </svg>
                 <div className="flex flex-col text-left">
-                  <span className="text-[9px] uppercase font-semibold text-neutral-300 tracking-wider">
+                  <span className="text-[9px] uppercase font-bold text-neutral-300 tracking-wider">
                     Download on the
                   </span>
                   <span className="text-xs sm:text-sm font-extrabold text-white tracking-tight -mt-0.5">
@@ -61,23 +61,25 @@ export default function CTA() {
               </Link>
 
               {/* Google Play Store Button */}
-              <Link
-                href="#play-store"
-                className="inline-flex items-center gap-2.5 px-4 sm:px-5 py-2.5 bg-black hover:bg-neutral-900 text-white rounded-xl border border-white/20 shadow-md transition-all duration-300 hover:scale-[1.03] active:scale-100 group"
+              <a
+                href="https://play.google.com/store/apps/details?id=com_pentacloud.mycarshare"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-3 px-5 py-2.5 bg-black hover:bg-neutral-900 text-white rounded-full border border-white/20 shadow-md transition-all duration-300 hover:scale-[1.03] active:scale-100 group"
               >
                 {/* Crisp Google Play Triangle SVG */}
-                <svg className="w-4 h-4 fill-white transition-transform duration-300 group-hover:scale-110" viewBox="0 0 24 24">
-                  <path d="M3.609 1.814L13.792 12 3.61 22.186a2.38 2.38 0 0 1-.61-.926V2.74c.14-.366.35-.688.61-.926zm11.24 11.24l2.185 2.184-11.787 6.8c-.378.219-.79.324-1.2.324l10.802-9.308zm0-2.108L4.047 1.638C4.457 1.638 4.87 1.743 5.25 1.96l11.784 6.8-2.185 2.186zm1.096 1.054l3.666 2.116c.866.5 1.389 1.408 1.389 2.408 0 1-.523 1.908-1.389 2.408l-3.666 2.116-2.457-2.457 2.457-2.457z" />
+                <svg className="w-4 h-4 fill-white shrink-0 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 512 512" fill="currentColor">
+                  <path d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6l-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8zM104.6 499l280.8-161.2-60.1-60.1L104.6 499z" />
                 </svg>
                 <div className="flex flex-col text-left">
-                  <span className="text-[9px] uppercase font-semibold text-neutral-300 tracking-wider">
+                  <span className="text-[9px] uppercase font-bold text-neutral-300 tracking-wider">
                     Get it on
                   </span>
                   <span className="text-xs sm:text-sm font-extrabold text-white tracking-tight -mt-0.5">
                     Play Store
                   </span>
                 </div>
-              </Link>
+              </a>
 
             </div>
 
